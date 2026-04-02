@@ -131,7 +131,7 @@ function AboutHero() {
             }}
           >
             <img
-              src="/avatar.jpg"
+              src={`${import.meta.env.BASE_URL}avatar.jpg`}
               alt="Siva Shanmuga Vadivel"
               style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 20%' }}
             />
@@ -202,7 +202,7 @@ function BioSection() {
               boxShadow: 'var(--shadow)',
             }}>
               <img
-                src="/avatar1.jpg"
+                src={`${import.meta.env.BASE_URL}avatar1.jpg`}
                 alt="Siva at work"
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 onError={e => { e.target.style.display = 'none' }}

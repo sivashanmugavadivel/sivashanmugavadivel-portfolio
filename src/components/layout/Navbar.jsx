@@ -59,7 +59,7 @@ export default function Navbar({ theme, onToggleTheme }) {
 
           {/* Logo */}
           <Link to="/" style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center' }}>
-            <img src="/Logo.png" alt="Siva Shanmuga Vadivel" style={{ height: 55, width: 55, display: 'block', borderRadius: '50%', objectFit: 'cover' }} />
+            <img src={`${import.meta.env.BASE_URL}Logo.png`} alt="Siva Shanmuga Vadivel" style={{ height: 55, width: 55, display: 'block', borderRadius: '50%', objectFit: 'cover' }} />
           </Link>
 
           {/* Desktop links */}

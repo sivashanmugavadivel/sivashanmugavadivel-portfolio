@@ -149,7 +149,7 @@ function HeroSection() {
         style={{ position: 'absolute', inset: '-15% 0', y: bgY, zIndex: 1 }}
       >
         <img
-          src="/avatar.jpg"
+          src={`${import.meta.env.BASE_URL}avatar.jpg`}
           alt=""
           aria-hidden="true"
           style={{
@@ -201,7 +201,7 @@ function HeroSection() {
         }}
       >
         <motion.img
-          src="/Avatar_nbc1.png"
+          src={`${import.meta.env.BASE_URL}Avatar_nbc1.png`}
           alt="Siva Shanmuga Vadivel"
           initial={{ scale: 1.15 }}
           animate={{ scale: 1 }}
