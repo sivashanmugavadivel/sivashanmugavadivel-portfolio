@@ -1,0 +1,42 @@
+[
+  {
+    "id": "dQw4w9WgXcQ",
+    "title": "Featured Video Title",
+    "description": "Replace this with your actual YouTube video ID and details.",
+    "type": "video",
+    "date": "2025-03-20",
+    "tags": ["featured"]
+  },
+  {
+    "id": "jNQXAC9IVRw",
+    "title": "Second Video Title",
+    "description": "Another great video. Replace with your real content.",
+    "type": "video",
+    "date": "2025-02-14",
+    "tags": ["tutorial"]
+  },
+  {
+    "id": "9bZkp7q19f0",
+    "title": "Third Video Title",
+    "description": "Yet another video. Swap out the IDs for your real YouTube videos.",
+    "type": "video",
+    "date": "2025-01-10",
+    "tags": ["vlog"]
+  },
+  {
+    "id": "uelHwf8o7_U",
+    "title": "Short #1",
+    "description": "A YouTube Short. Replace with your Short's video ID.",
+    "type": "short",
+    "date": "2025-03-05",
+    "tags": ["short"]
+  },
+  {
+    "id": "kffacxfA7G4",
+    "title": "Short #2",
+    "description": "Another Short. Replace with your real Short's video ID.",
+    "type": "short",
+    "date": "2025-02-20",
+    "tags": ["short"]
+  }
+]

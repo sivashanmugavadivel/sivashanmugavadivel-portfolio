@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <script>
+      // GitHub Pages SPA redirect trick
+      var base = '/sivashanmugavadivel-portfolio';
+      var path = window.location.pathname.replace(base, '') || '/';
+      sessionStorage.setItem('spa_redirect', path + window.location.search + window.location.hash);
+      window.location.replace(base + '/');
+    </script>
+  </head>
+  <body></body>
+</html>
