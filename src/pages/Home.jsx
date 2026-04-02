@@ -12,8 +12,12 @@ function Reveal({ children, delay = 0, y = 40, style }) {
     <motion.div
       initial={{ opacity: 0, y }}
       whileInView={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y }}
       viewport={{ once: false, margin: '-80px' }}
-      transition={{ duration: 0.65, ease: [0.25, 0.1, 0.25, 1], delay }}
+      transition={{
+        enter: { duration: 0.65, ease: [0.25, 0.1, 0.25, 1], delay },
+        default: { duration: 0.45, ease: [0.25, 0.1, 0.25, 1] },
+      }}
       style={style}
     >
       {children}
@@ -474,7 +478,10 @@ function JourneySection() {
                 initial={{ opacity: 0, x: isLeft ? -60 : 60 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: false, margin: '-60px' }}
-                transition={{ duration: 0.7, delay: i * 0.12, ease: [0.16, 1, 0.3, 1] }}
+                transition={{
+                  opacity: { duration: 0.5, ease: 'easeInOut' },
+                  x: { duration: 0.7, ease: [0.16, 1, 0.3, 1] },
+                }}
                 style={{ marginBottom: 40, position: 'relative' }}
               >
                 {/* Dot — scales in with a ripple ring */}
