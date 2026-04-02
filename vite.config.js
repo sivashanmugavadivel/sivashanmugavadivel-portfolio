@@ -64,5 +64,5 @@ function galleryAutoScan() {
 
 export default defineConfig({
   plugins: [react(), galleryAutoScan()],
-  base: '/',
+  base: '/sivashanmugavadivel-portfolio/',
 })
