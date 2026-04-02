@@ -5,12 +5,11 @@ import 'yet-another-react-lightbox/styles.css'
 import galleryData from '../data/gallery.json'
 
 /* ── Polaroid card intro ── */
-const BASE = import.meta.env.BASE_URL
 const SLIDESHOW_IMAGES = [
-  `${BASE}slideshareImages/ss1.jpg`,
-  `${BASE}slideshareImages/ss2.jpg`,
-  `${BASE}slideshareImages/ss3.png`,
-  `${BASE}slideshareImages/ss4.jpg`,
+  '/slideshareImages/ss1.jpg',
+  '/slideshareImages/ss2.jpg',
+  '/slideshareImages/ss3.png',
+  '/slideshareImages/ss4.jpg',
 ]
 
 // Fixed scatter positions — spread within screen bounds
@@ -140,7 +139,7 @@ function GalleryItem({ item, onClick }) {
       }}
     >
       <img
-        src={`${import.meta.env.BASE_URL}gallery/${item.category}/${item.filename}`}
+        src={`/gallery/${item.category}/${item.filename}`}
         alt={item.caption}
         loading="lazy"
         style={{
@@ -212,7 +211,7 @@ export default function Gallery() {
     : galleryData.filter(p => p.category === activeCategory)
 
   const slides = galleryData.map(item => ({
-    src: `${import.meta.env.BASE_URL}gallery/${item.category}/${item.filename}`,
+    src: `/gallery/${item.category}/${item.filename}`,
     alt: item.caption,
   }))
 

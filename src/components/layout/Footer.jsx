@@ -72,7 +72,7 @@ export default function Footer() {
           {/* Left — logo + name */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
             <Link to="/">
-              <img src={`${import.meta.env.BASE_URL}Logo.png`} alt="Siva" style={{ height: 34, width: 34, borderRadius: '50%', objectFit: 'cover' }} />
+              <img src="/Logo.png" alt="Siva" style={{ height: 34, width: 34, borderRadius: '50%', objectFit: 'cover' }} />
             </Link>
             <span style={{ fontSize: '0.78rem', color: 'var(--text)', fontWeight: 500 }}>
               Siva Shanmuga Vadivel

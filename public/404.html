@@ -4,10 +4,9 @@
     <meta charset="UTF-8" />
     <script>
       // GitHub Pages SPA redirect trick
-      var base = '/sivashanmugavadivel-portfolio';
-      var path = window.location.pathname.replace(base, '') || '/';
-      sessionStorage.setItem('spa_redirect', path + window.location.search + window.location.hash);
-      window.location.replace(base + '/');
+      var path = window.location.pathname + window.location.search + window.location.hash;
+      sessionStorage.setItem('spa_redirect', path);
+      window.location.replace('/');
     </script>
   </head>
   <body></body>
