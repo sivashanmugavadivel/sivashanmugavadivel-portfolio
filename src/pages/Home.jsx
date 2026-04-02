@@ -450,18 +450,18 @@ function JourneySection() {
         <SectionHeading label="Journey" title="Experience & Education" />
 
         <div style={{ position: 'relative', maxWidth: 760, margin: '0 auto' }}>
-          {/* Vertical line */}
+          {/* Vertical line draws down */}
           <motion.div
             initial={{ scaleY: 0 }}
             whileInView={{ scaleY: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 1.2, ease: 'easeInOut' }}
+            viewport={{ once: true, margin: '-40px' }}
+            transition={{ duration: 1.6, ease: [0.16, 1, 0.3, 1] }}
             style={{
               position: 'absolute',
               left: '50%',
               top: 0, bottom: 0,
               width: 1,
-              background: 'var(--border)',
+              background: 'linear-gradient(to bottom, var(--accent), var(--border))',
               transformOrigin: 'top',
             }}
           />
@@ -469,24 +469,49 @@ function JourneySection() {
           {timeline.map((item, i) => {
             const isLeft = i % 2 === 0
             return (
-              <Reveal
+              <motion.div
                 key={i}
-                delay={i * 0.1}
-                y={0}
+                initial={{ opacity: 0, x: isLeft ? -60 : 60 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, margin: '-60px' }}
+                transition={{ duration: 0.7, delay: i * 0.12, ease: [0.16, 1, 0.3, 1] }}
                 style={{ marginBottom: 40, position: 'relative' }}
               >
-                {/* Dot */}
-                <div style={{
-                  position: 'absolute',
-                  left: '50%',
-                  top: 22,
-                  transform: 'translateX(-50%)',
-                  width: 12, height: 12,
-                  borderRadius: '50%',
-                  background: 'var(--accent)',
-                  border: '2px solid var(--bg)',
-                  zIndex: 1,
-                }} />
+                {/* Dot — scales in with a ripple ring */}
+                <motion.div
+                  initial={{ scale: 0 }}
+                  whileInView={{ scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: i * 0.12 + 0.3, type: 'spring', bounce: 0.5 }}
+                  style={{
+                    position: 'absolute',
+                    left: '50%',
+                    top: 22,
+                    transform: 'translateX(-50%)',
+                    zIndex: 2,
+                  }}
+                >
+                  {/* Ripple ring */}
+                  <motion.div
+                    initial={{ scale: 1, opacity: 0.6 }}
+                    whileInView={{ scale: 2.4, opacity: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.8, delay: i * 0.12 + 0.5, ease: 'easeOut' }}
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      borderRadius: '50%',
+                      background: 'var(--accent)',
+                    }}
+                  />
+                  <div style={{
+                    width: 12, height: 12,
+                    borderRadius: '50%',
+                    background: 'var(--accent)',
+                    border: '2px solid var(--bg)',
+                    position: 'relative',
+                  }} />
+                </motion.div>
 
                 {/* Card */}
                 <div style={{
@@ -494,25 +519,65 @@ function JourneySection() {
                   marginLeft: isLeft ? 0 : 'calc(50% + 32px)',
                 }}>
                   <motion.div
-                    whileHover={{ y: -4, boxShadow: 'var(--shadow-hover)' }}
-                    transition={{ duration: 0.25 }}
+                    whileHover={{ y: -5, boxShadow: '0 12px 40px rgba(0,0,0,0.12)', borderColor: 'var(--accent)' }}
+                    transition={{ duration: 0.22 }}
                     style={{
                       background: 'var(--card-bg)',
                       border: '1px solid var(--border)',
                       borderRadius: 'var(--radius)',
                       padding: '18px 22px',
                       boxShadow: 'var(--shadow)',
+                      transition: 'border-color 0.2s',
                     }}
                   >
-                    <span style={{ fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--accent)' }}>
+                    {/* Year badge */}
+                    <motion.span
+                      initial={{ opacity: 0, y: 8 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.4, delay: i * 0.12 + 0.4 }}
+                      style={{
+                        display: 'inline-block',
+                        fontSize: '0.68rem', fontWeight: 700,
+                        letterSpacing: '0.1em', textTransform: 'uppercase',
+                        color: 'var(--accent)',
+                        background: 'var(--accent-bg)',
+                        padding: '2px 10px', borderRadius: 999,
+                        marginBottom: 10,
+                      }}
+                    >
                       {item.year}
-                    </span>
-                    <h3 style={{ margin: '6px 0 2px', fontSize: '0.95rem' }}>{item.role}</h3>
-                    <p style={{ fontSize: '0.82rem', color: 'var(--accent)', marginBottom: 6 }}>{item.org}</p>
-                    <p style={{ fontSize: '0.82rem', color: 'var(--text)', lineHeight: 1.6, margin: 0 }}>{item.desc}</p>
+                    </motion.span>
+                    <motion.h3
+                      initial={{ opacity: 0, y: 8 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.4, delay: i * 0.12 + 0.5 }}
+                      style={{ margin: '0 0 2px', fontSize: '0.95rem' }}
+                    >
+                      {item.role}
+                    </motion.h3>
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.4, delay: i * 0.12 + 0.6 }}
+                      style={{ fontSize: '0.82rem', color: 'var(--accent)', marginBottom: 6 }}
+                    >
+                      {item.org}
+                    </motion.p>
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.4, delay: i * 0.12 + 0.65 }}
+                      style={{ fontSize: '0.82rem', color: 'var(--text)', lineHeight: 1.6, margin: 0 }}
+                    >
+                      {item.desc}
+                    </motion.p>
                   </motion.div>
                 </div>
-              </Reveal>
+              </motion.div>
             )
           })}
         </div>
