@@ -12,7 +12,7 @@ function Reveal({ children, delay = 0, y = 40, style }) {
     <motion.div
       initial={{ opacity: 0, y }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-80px' }}
+      viewport={{ once: false, margin: '-80px' }}
       transition={{ duration: 0.65, ease: [0.25, 0.1, 0.25, 1], delay }}
       style={style}
     >
@@ -40,7 +40,7 @@ function SectionHeading({ label, title }) {
           <motion.span
             initial={{ scaleX: 0 }}
             whileInView={{ scaleX: 1 }}
-            viewport={{ once: true }}
+            viewport={{ once: false }}
             transition={{ duration: 0.5, delay: 0.4, ease: 'easeOut' }}
             style={{
               position: 'absolute',
@@ -363,7 +363,7 @@ function FeaturedPostsSection() {
           variants={cardContainerVariants}
           initial="hidden"
           whileInView="show"
-          viewport={{ once: true, margin: '-60px' }}
+          viewport={{ once: false, margin: '-60px' }}
         >
           {posts.map(({ slug, frontmatter }) => (
             <motion.div key={slug} variants={cardVariants}>
@@ -396,7 +396,7 @@ function FeaturedVideosSection() {
           variants={cardContainerVariants}
           initial="hidden"
           whileInView="show"
-          viewport={{ once: true, margin: '-60px' }}
+          viewport={{ once: false, margin: '-60px' }}
         >
           {featured.map(video => (
             <motion.div key={video.id} variants={cardVariants}>
@@ -454,7 +454,7 @@ function JourneySection() {
           <motion.div
             initial={{ scaleY: 0 }}
             whileInView={{ scaleY: 1 }}
-            viewport={{ once: true, margin: '-40px' }}
+            viewport={{ once: false, margin: '-40px' }}
             transition={{ duration: 1.6, ease: [0.16, 1, 0.3, 1] }}
             style={{
               position: 'absolute',
@@ -473,7 +473,7 @@ function JourneySection() {
                 key={i}
                 initial={{ opacity: 0, x: isLeft ? -60 : 60 }}
                 whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true, margin: '-60px' }}
+                viewport={{ once: false, margin: '-60px' }}
                 transition={{ duration: 0.7, delay: i * 0.12, ease: [0.16, 1, 0.3, 1] }}
                 style={{ marginBottom: 40, position: 'relative' }}
               >
@@ -481,7 +481,7 @@ function JourneySection() {
                 <motion.div
                   initial={{ scale: 0 }}
                   whileInView={{ scale: 1 }}
-                  viewport={{ once: true }}
+                  viewport={{ once: false }}
                   transition={{ duration: 0.4, delay: i * 0.12 + 0.3, type: 'spring', bounce: 0.5 }}
                   style={{
                     position: 'absolute',
@@ -495,7 +495,7 @@ function JourneySection() {
                   <motion.div
                     initial={{ scale: 1, opacity: 0.6 }}
                     whileInView={{ scale: 2.4, opacity: 0 }}
-                    viewport={{ once: true }}
+                    viewport={{ once: false }}
                     transition={{ duration: 0.8, delay: i * 0.12 + 0.5, ease: 'easeOut' }}
                     style={{
                       position: 'absolute',
@@ -534,7 +534,7 @@ function JourneySection() {
                     <motion.span
                       initial={{ opacity: 0, y: 8 }}
                       whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
+                      viewport={{ once: false }}
                       transition={{ duration: 0.4, delay: i * 0.12 + 0.4 }}
                       style={{
                         display: 'inline-block',
@@ -551,7 +551,7 @@ function JourneySection() {
                     <motion.h3
                       initial={{ opacity: 0, y: 8 }}
                       whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
+                      viewport={{ once: false }}
                       transition={{ duration: 0.4, delay: i * 0.12 + 0.5 }}
                       style={{ margin: '0 0 2px', fontSize: '0.95rem' }}
                     >
@@ -560,7 +560,7 @@ function JourneySection() {
                     <motion.p
                       initial={{ opacity: 0 }}
                       whileInView={{ opacity: 1 }}
-                      viewport={{ once: true }}
+                      viewport={{ once: false }}
                       transition={{ duration: 0.4, delay: i * 0.12 + 0.6 }}
                       style={{ fontSize: '0.82rem', color: 'var(--accent)', marginBottom: 6 }}
                     >
@@ -569,7 +569,7 @@ function JourneySection() {
                     <motion.p
                       initial={{ opacity: 0 }}
                       whileInView={{ opacity: 1 }}
-                      viewport={{ once: true }}
+                      viewport={{ once: false }}
                       transition={{ duration: 0.4, delay: i * 0.12 + 0.65 }}
                       style={{ fontSize: '0.82rem', color: 'var(--text)', lineHeight: 1.6, margin: 0 }}
                     >
