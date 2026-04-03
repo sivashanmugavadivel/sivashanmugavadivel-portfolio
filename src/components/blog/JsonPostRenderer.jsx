@@ -31,11 +31,46 @@ function SectionText({ section }) {
 
 function SectionImage({ section }) {
   const align = section.align || 'center' // 'left' | 'center' | 'right'
-  // size: 'small' (30%), 'medium' (50%), 'large' (75%), 'full' (100%), or exact e.g. '400px'
+  const float = section.float // 'left' | 'right' — wraps text around image
   const size = section.size || 'full'
   const sizeMap = { small: '30%', medium: '50%', large: '75%', full: '100%' }
   const resolvedWidth = sizeMap[size] || size
 
+  // Float mode — image sits inside text flow, text wraps around it
+  if (float) {
+    return (
+      <motion.figure
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5 }}
+        style={{
+          float,
+          width: resolvedWidth,
+          margin: float === 'right' ? '8px 0 16px 24px' : '8px 24px 16px 0',
+          borderRadius: 12, overflow: 'hidden',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
+        }}
+      >
+        <img
+          src={imgSrc(section.src)}
+          alt={section.alt || ''}
+          style={{ width: '100%', display: 'block', objectFit: 'cover', maxHeight: section.maxHeight || 300 }}
+        />
+        {section.caption && (
+          <figcaption style={{
+            textAlign: 'center', fontSize: '0.72rem', color: 'var(--text)',
+            opacity: 0.6, padding: '6px 8px', fontStyle: 'italic',
+            background: 'var(--card-bg)',
+          }}>
+            {section.caption}
+          </figcaption>
+        )}
+      </motion.figure>
+    )
+  }
+
+  // Normal block mode
   const alignStyles = {
     left:   { marginRight: 'auto', marginLeft: 0 },
     center: { marginRight: 'auto', marginLeft: 'auto' },
@@ -428,10 +463,31 @@ export default function JsonPostRenderer({ sections = [], meta, color }) {
     }
   }
 
+  // Group: a float image followed immediately by a text section renders together
+  // so the text wraps around the float. All other sections render normally.
+  const rendered = []
+  let i = 0
+  while (i < sections.length) {
+    const s = sections[i]
+    const next = sections[i + 1]
+    if (s.type === 'image' && s.float && next?.type === 'text') {
+      rendered.push(
+        <div key={i} style={{ overflow: 'hidden' }}>
+          {renderSection(s, i)}
+          {renderSection(next, i + 1)}
+        </div>
+      )
+      i += 2
+    } else {
+      rendered.push(renderSection(s, i))
+      i++
+    }
+  }
+
   return (
     <div>
       <MetaPills meta={meta} color={c} />
-      {sections.map((section, i) => renderSection(section, i))}
+      {rendered}
     </div>
   )
 }

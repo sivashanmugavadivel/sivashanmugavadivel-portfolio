@@ -13,7 +13,8 @@
       "type": "image",
       "src": "/blog/photos/Spicy-Omelet-with-Mushrooms.jpg",
       "alt": "Spicy Mushroom Masala Omelet",
-      "align": "center"
+      "float": "right",
+      "size": "small"
     },
     {
       "type": "text",
