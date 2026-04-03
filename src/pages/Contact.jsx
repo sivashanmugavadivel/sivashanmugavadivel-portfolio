@@ -155,6 +155,7 @@ function ContactForm() {
 
 /* ── Main Contact page — Split Screen ── */
 export default function Contact() {
+
   const socialLinks = [
     {
       label: 'GitHub',
@@ -372,6 +373,7 @@ export default function Contact() {
           }
         `}</style>
       </div>
+
     </div>
   )
 }

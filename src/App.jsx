@@ -1,6 +1,9 @@
 import { Routes, Route, useLocation } from 'react-router-dom'
+import { useState } from 'react'
 import { useTheme } from './hooks/useTheme'
 import { usePageLoad } from './hooks/usePageLoad'
+import { motion } from 'framer-motion'
+import FeedbackPanel from './components/FeedbackPanel'
 
 import LoadingScreen from './components/LoadingScreen'
 import Navbar from './components/layout/Navbar'
@@ -41,6 +44,7 @@ function AppRoutes() {
 export default function App() {
   const { theme, toggle } = useTheme()
   const isLoading = usePageLoad()
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
 
   return (
     <>
@@ -51,6 +55,35 @@ export default function App() {
         <AppRoutes />
       </main>
       <Footer />
+
+      {/* ── Floating Feedback Button ── */}
+      <motion.button
+        animate={{ y: [0, -10, 0] }}
+        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', scale: { duration: 0.35, ease: 'easeOut' }, x: { duration: 0.35, ease: 'easeOut' } }}
+        whileHover={{ x: -14, scale: 1.18, transition: { duration: 0.12, ease: 'easeOut' } }}
+        whileTap={{ scale: 0.95 }}
+        onClick={() => setFeedbackOpen(true)}
+        style={{
+          position: 'fixed',
+          right: -10,
+          top: '50%',
+          transform: 'translateY(-50%)',
+          zIndex: 90,
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          padding: 0,
+          width: 'clamp(90px, 12vw, 130px)',
+        }}
+      >
+        <img
+          src={`${import.meta.env.BASE_URL}fed1.png`}
+          alt="Feedback"
+          style={{ width: '100%', height: 'auto', display: 'block' }}
+        />
+      </motion.button>
+
+      <FeedbackPanel open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
     </>
   )
 }
