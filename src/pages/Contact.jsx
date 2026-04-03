@@ -84,6 +84,7 @@ function ContactForm() {
       if (res.ok) {
         setStatus('success')
         setForm({ name: '', email: '', message: '' })
+        setTimeout(() => setStatus('idle'), 10000)
       } else {
         setStatus('error')
       }
