@@ -10,10 +10,10 @@
   "servings": "1",
   "sections": [
     {
-  "type": "gallery",
-  "images": [
-        { "src": "/blog/photos/Spicy-Omelet-with-Mushrooms.jpg", "alt": "First photo" }
-      ]
+      "type": "image",
+      "src": "/blog/photos/Spicy-Omelet-with-Mushrooms.jpg",
+      "alt": "Spicy Mushroom Masala Omelet",
+      "align": "center"
     },
     {
       "type": "text",
