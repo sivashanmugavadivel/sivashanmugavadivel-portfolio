@@ -346,6 +346,7 @@ export default function Contact() {
           src={`${import.meta.env.BASE_URL}gif/ava_contact.gif`}
           alt=""
           aria-hidden="true"
+          className="contact-gif"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -360,6 +361,16 @@ export default function Contact() {
             pointerEvents: 'none',
           }}
         />
+        {/* Mobile-only GIF overrides */}
+        <style>{`
+          @media (max-width: 768px) {
+            .contact-gif {
+              width: 280px !important;
+              bottom: 0% !important;
+              right: -10% !important;
+            }
+          }
+        `}</style>
       </div>
     </div>
   )
