@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import videosData from '../data/videos.json'
+import cfg from '../data/config.json'
 
 /* ── Scroll-reveal wrapper ── */
 function Reveal({ children, delay = 0, y = 32, style }) {
@@ -366,7 +367,7 @@ export default function Videos() {
               Replace the video IDs in <code>src/data/videos.json</code> with your real YouTube video IDs.
             </p>
             <a
-              href="https://youtube.com/"
+              href={cfg.social.youtube.href}
               target="_blank"
               rel="noopener noreferrer"
               style={{
