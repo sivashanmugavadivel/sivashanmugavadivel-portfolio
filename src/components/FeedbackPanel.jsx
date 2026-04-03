@@ -66,8 +66,9 @@ export default function FeedbackPanel({ open, onClose }) {
             style={{
               position: 'fixed',
               top: '50%', left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: 'clamp(280px, 35vw, 380px)',
+              marginTop: '-220px',
+              marginLeft: '-190px',
+              width: '380px',
               zIndex: 96,
               background: yellow,
               borderRadius: 4,
