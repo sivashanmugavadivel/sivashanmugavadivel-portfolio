@@ -298,6 +298,8 @@ export default function Contact() {
         padding: 'clamp(100px,10vw,140px) clamp(32px,5vw,80px) clamp(60px,8vw,100px)',
         display: 'flex', flexDirection: 'column', justifyContent: 'center',
         minHeight: 500,
+        position: 'relative',
+        overflow: 'hidden',
       }}>
         <motion.div
           initial={{ opacity: 0, x: 60 }}
@@ -335,8 +337,29 @@ export default function Contact() {
                 <span style={{ color: 'var(--text-h)', fontSize: '0.9rem', fontWeight: 500 }}>{value}</span>
               </div>
             ))}
+
           </div>
         </motion.div>
+
+        {/* GIF — absolute overlay at bottom right */}
+        <motion.img
+          src={`${import.meta.env.BASE_URL}gif/ava_contact.gif`}
+          alt=""
+          aria-hidden="true"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          style={{
+            position: 'absolute',
+            bottom: '15%',
+            right: 0,
+            width: '350px',
+            height: 'auto',
+            objectFit: 'contain',
+            pointerEvents: 'none',
+          }}
+        />
       </div>
     </div>
   )
