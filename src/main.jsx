@@ -4,6 +4,12 @@ import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import App from './App.jsx'
 
+// Prevent browser scroll restoration from interfering with page animations
+if ('scrollRestoration' in history) {
+  history.scrollRestoration = 'manual'
+}
+window.scrollTo(0, 0)
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter basename="/sivashanmugavadivel-portfolio">

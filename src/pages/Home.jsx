@@ -1,25 +1,54 @@
 import { useState, useEffect, useRef } from 'react'
-import { motion, useScroll, useTransform } from 'framer-motion'
+import { motion, useScroll, useTransform, useInView, useAnimation } from 'framer-motion'
 import { loadAllPosts } from '../hooks/usePosts'
 import videosData from '../data/videos.json'
+import cfg from '../data/config.json'
 import PostCard from '../components/blog/PostCard'
 import VideoCard from '../components/video/VideoCard'
 import Button from '../components/ui/Button'
 
 /* ── Reusable scroll-reveal wrapper ── */
-function Reveal({ children, delay = 0, y = 40, style }) {
+function Reveal({ children, delay = 0, y = 40, x = 0, style }) {
+  const ref = useRef(null)
+  const isInView = useInView(ref, { once: false, margin: '-80px' })
+  const controls = useAnimation()
+
+  useEffect(() => {
+    if (isInView) {
+      controls.start({ opacity: 1, y: 0, x: 0, transition: { duration: 0.65, ease: [0.25, 0.1, 0.25, 1], delay } })
+    } else {
+      controls.start({ opacity: 0, y, x, transition: { duration: 0.45, ease: [0.25, 0.1, 0.25, 1] } })
+    }
+  }, [isInView, controls, delay, y, x])
+
   return (
     <motion.div
-      initial={{ opacity: 0, y }}
-      whileInView={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y }}
-      viewport={{ once: false, margin: '-80px' }}
-      transition={{
-        enter: { duration: 0.65, ease: [0.25, 0.1, 0.25, 1], delay },
-        default: { duration: 0.45, ease: [0.25, 0.1, 0.25, 1] },
-      }}
+      ref={ref}
+      initial={{ opacity: 0, y, x }}
+      animate={controls}
       style={style}
     >
+      {children}
+    </motion.div>
+  )
+}
+
+/* ── Scroll-driven motion div (enter + exit) ── */
+function ScrollMotion({ children, initial, visible, style, margin = '-60px', delay = 0 }) {
+  const ref = useRef(null)
+  const isInView = useInView(ref, { once: false, margin })
+  const controls = useAnimation()
+
+  useEffect(() => {
+    if (isInView) {
+      controls.start({ ...visible, transition: { duration: 1.0, ease: [0.16, 1, 0.3, 1], delay } })
+    } else {
+      controls.start({ ...initial, transition: { duration: 0.6, ease: [0.25, 0.1, 0.25, 1] } })
+    }
+  }, [isInView, controls])
+
+  return (
+    <motion.div ref={ref} initial={initial} animate={controls} style={style}>
       {children}
     </motion.div>
   )
@@ -94,7 +123,7 @@ function TypingName() {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3, delay: 0.3 }}
       style={{
-        fontFamily: "'Archivo Black', sans-serif",
+        fontFamily: "'Lilita One', cursive",
         fontWeight: 400,
         fontSize: 'clamp(2rem, 5.5vw, 5.5rem)',
         lineHeight: 1,
@@ -129,6 +158,9 @@ function TypingName() {
 function HeroSection() {
   const heroRef = useRef(null)
   const [mountKey, setMountKey] = useState(0)
+  // No loading screen on refresh (sessionStorage already set) — skip delays
+  const hasLoadingScreen = !sessionStorage.getItem('portfolio_loaded')
+  const avatarDelay = hasLoadingScreen ? 3.0 : 0
 
   useEffect(() => { setMountKey(k => k + 1) }, [])
 
@@ -186,12 +218,12 @@ function HeroSection() {
         <TypingName key={mountKey} />
       </motion.div>
 
-      {/* ══ LAYER 3 — Cutout PNG — slides up + rotate then spring settle ══ */}
+      {/* ══ LAYER 3 — Cutout PNG ══ */}
       <motion.div
         key={`fg-${mountKey}`}
-        initial={{ opacity: 0, y: 120, rotate: 8 }}
-        animate={{ opacity: 1, y: 0, rotate: 0 }}
-        transition={{ duration: 2.1, delay: 0.3, ease: [0.56, 0.22, 0.05, 0.99] }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.01 }}
         style={{
           position: 'absolute',
           top: 0, left: '50%',
@@ -207,9 +239,9 @@ function HeroSection() {
         <motion.img
           src={`${import.meta.env.BASE_URL}Avatar_nbc1.png`}
           alt="Siva Shanmuga Vadivel"
-          initial={{ scale: 1.15 }}
-          animate={{ scale: 1 }}
-          transition={{ duration: 2.0, delay: 3.0, type: 'spring', bounce: 0.2 }}
+          initial={{ opacity: 0, scale: 1.1 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1.2, delay: avatarDelay, ease: [0.25, 0.1, 0.25, 1] }}
           style={{
             height: '130vh',
             width: 'auto',
@@ -235,7 +267,7 @@ function HeroSection() {
           key={pos}
           initial={{ opacity: 0, scale: 0.4 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6, delay: 2.2, type: 'spring', bounce: 0.3 }}
+          transition={{ duration: 0.6, delay: hasLoadingScreen ? 2.2 : 0, type: 'spring', bounce: 0.3 }}
           style={{
             position: 'absolute', zIndex: 6, pointerEvents: 'none',
             top:    pos.includes('top')    ? 20 : undefined,
@@ -257,7 +289,7 @@ function HeroSection() {
       <motion.div
         key={`bottombar-${mountKey}`}
         initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 2.0, delay: 3.0, type: 'spring', bounce: 0.2 }}
+        transition={{ duration: 2.0, delay: avatarDelay, type: 'spring', bounce: 0.2 }}
         style={{
           position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 7,
           padding: '0 28px 44px',
@@ -420,32 +452,7 @@ function FeaturedVideosSection() {
 }
 
 /* ── Journey / Timeline Section ── */
-const timeline = [
-  {
-    year: '2024 – Present',
-    role: 'Senior Frontend Developer',
-    org: 'Freelance / Open Source',
-    desc: 'Building modern web applications and contributing to open-source projects.',
-  },
-  {
-    year: '2022 – 2024',
-    role: 'Frontend Developer',
-    org: 'Tech Startup',
-    desc: 'Led frontend architecture for a SaaS product. Built a design system from scratch.',
-  },
-  {
-    year: '2020 – 2022',
-    role: 'Junior Developer',
-    org: 'Digital Agency',
-    desc: 'Delivered responsive websites and landing pages for clients across industries.',
-  },
-  {
-    year: '2016 – 2020',
-    role: 'B.Sc. Computer Science',
-    org: 'University',
-    desc: 'Graduated with honours. Focused on algorithms, software engineering, and web tech.',
-  },
-]
+const timeline = cfg.journey
 
 function JourneySection() {
   return (
@@ -454,18 +461,18 @@ function JourneySection() {
         <SectionHeading label="Journey" title="Experience & Education" />
 
         <div style={{ position: 'relative', maxWidth: 760, margin: '0 auto' }}>
-          {/* Vertical line draws down */}
+          {/* Vertical line */}
           <motion.div
             initial={{ scaleY: 0 }}
             whileInView={{ scaleY: 1 }}
             viewport={{ once: false, margin: '-40px' }}
-            transition={{ duration: 1.6, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 1.2, ease: 'easeInOut' }}
             style={{
               position: 'absolute',
               left: '50%',
               top: 0, bottom: 0,
               width: 1,
-              background: 'linear-gradient(to bottom, var(--accent), var(--border))',
+              background: 'var(--border)',
               transformOrigin: 'top',
             }}
           />
@@ -473,118 +480,58 @@ function JourneySection() {
           {timeline.map((item, i) => {
             const isLeft = i % 2 === 0
             return (
-              <motion.div
+              <ScrollMotion
                 key={i}
-                initial={{ opacity: 0, x: isLeft ? -60 : 60 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: false, margin: '-60px' }}
-                transition={{
-                  opacity: { duration: 0.5, ease: 'easeInOut' },
-                  x: { duration: 0.7, ease: [0.16, 1, 0.3, 1] },
-                }}
-                style={{ marginBottom: 40, position: 'relative' }}
+                initial={{ opacity: 0, x: isLeft ? -40 : 40 }}
+                visible={{ opacity: 1, x: 0 }}
+                delay={i * 0.15}
+                style={{ marginBottom: 48, position: 'relative' }}
               >
-                {/* Dot — scales in with a ripple ring */}
-                <motion.div
-                  initial={{ scale: 0 }}
-                  whileInView={{ scale: 1 }}
-                  viewport={{ once: false }}
-                  transition={{ duration: 0.4, delay: i * 0.12 + 0.3, type: 'spring', bounce: 0.5 }}
-                  style={{
-                    position: 'absolute',
-                    left: '50%',
-                    top: 22,
-                    transform: 'translateX(-50%)',
-                    zIndex: 2,
-                  }}
-                >
-                  {/* Ripple ring */}
-                  <motion.div
-                    initial={{ scale: 1, opacity: 0.6 }}
-                    whileInView={{ scale: 2.4, opacity: 0 }}
-                    viewport={{ once: false }}
-                    transition={{ duration: 0.8, delay: i * 0.12 + 0.5, ease: 'easeOut' }}
-                    style={{
-                      position: 'absolute',
-                      inset: 0,
-                      borderRadius: '50%',
-                      background: 'var(--accent)',
-                    }}
-                  />
-                  <div style={{
-                    width: 12, height: 12,
-                    borderRadius: '50%',
-                    background: 'var(--accent)',
-                    border: '2px solid var(--bg)',
-                    position: 'relative',
-                  }} />
-                </motion.div>
+                {/* Dot on the line — same as About page */}
+                <div style={{
+                  position: 'absolute',
+                  left: '50%',
+                  top: 24,
+                  transform: 'translateX(-50%)',
+                  width: 12,
+                  height: 12,
+                  borderRadius: '50%',
+                  background: 'var(--accent)',
+                  border: '2px solid var(--bg)',
+                  zIndex: 1,
+                }} />
 
-                {/* Card */}
+                {/* Card — same styles as About page */}
                 <div style={{
                   width: 'calc(50% - 32px)',
                   marginLeft: isLeft ? 0 : 'calc(50% + 32px)',
                 }}>
                   <motion.div
-                    whileHover={{ y: -5, boxShadow: '0 12px 40px rgba(0,0,0,0.12)', borderColor: 'var(--accent)' }}
-                    transition={{ duration: 0.22 }}
+                    whileHover={{ y: -4, boxShadow: 'var(--shadow-hover)' }}
+                    transition={{ duration: 0.25 }}
                     style={{
                       background: 'var(--card-bg)',
                       border: '1px solid var(--border)',
                       borderRadius: 'var(--radius)',
-                      padding: '18px 22px',
+                      padding: '20px 24px',
                       boxShadow: 'var(--shadow)',
-                      transition: 'border-color 0.2s',
                     }}
                   >
-                    {/* Year badge */}
-                    <motion.span
-                      initial={{ opacity: 0, y: 8 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: false }}
-                      transition={{ duration: 0.4, delay: i * 0.12 + 0.4 }}
-                      style={{
-                        display: 'inline-block',
-                        fontSize: '0.68rem', fontWeight: 700,
-                        letterSpacing: '0.1em', textTransform: 'uppercase',
-                        color: 'var(--accent)',
-                        background: 'var(--accent-bg)',
-                        padding: '2px 10px', borderRadius: 999,
-                        marginBottom: 10,
-                      }}
-                    >
+                    <span style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 600,
+                      letterSpacing: '0.1em',
+                      textTransform: 'uppercase',
+                      color: 'var(--accent)',
+                    }}>
                       {item.year}
-                    </motion.span>
-                    <motion.h3
-                      initial={{ opacity: 0, y: 8 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: false }}
-                      transition={{ duration: 0.4, delay: i * 0.12 + 0.5 }}
-                      style={{ margin: '0 0 2px', fontSize: '0.95rem' }}
-                    >
-                      {item.role}
-                    </motion.h3>
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      whileInView={{ opacity: 1 }}
-                      viewport={{ once: false }}
-                      transition={{ duration: 0.4, delay: i * 0.12 + 0.6 }}
-                      style={{ fontSize: '0.82rem', color: 'var(--accent)', marginBottom: 6 }}
-                    >
-                      {item.org}
-                    </motion.p>
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      whileInView={{ opacity: 1 }}
-                      viewport={{ once: false }}
-                      transition={{ duration: 0.4, delay: i * 0.12 + 0.65 }}
-                      style={{ fontSize: '0.82rem', color: 'var(--text)', lineHeight: 1.6, margin: 0 }}
-                    >
-                      {item.desc}
-                    </motion.p>
+                    </span>
+                    <h3 style={{ margin: '6px 0 2px', fontSize: '1rem' }}>{item.role}</h3>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--accent)', marginBottom: 8 }}>{item.org}</p>
+                    <p style={{ fontSize: '0.875rem', color: 'var(--text)', lineHeight: 1.65, margin: 0 }}>{item.desc}</p>
                   </motion.div>
                 </div>
-              </motion.div>
+              </ScrollMotion>
             )
           })}
         </div>
@@ -601,8 +548,8 @@ function JourneySection() {
 const socials = [
   {
     label: 'Instagram',
-    handle: '@sivashanmuga',
-    href: 'https://instagram.com/',
+    handle: cfg.social.instagram.handle,
+    href: cfg.social.instagram.href,
     color: '#E1306C',
     icon: (
       <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
@@ -612,8 +559,8 @@ const socials = [
   },
   {
     label: 'Facebook',
-    handle: 'Siva Shanmuga',
-    href: 'https://facebook.com/',
+    handle: cfg.social.facebook.handle,
+    href: cfg.social.facebook.href,
     color: '#1877F2',
     icon: (
       <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
@@ -623,8 +570,8 @@ const socials = [
   },
   {
     label: 'YouTube',
-    handle: '@sivashanmuga',
-    href: 'https://youtube.com/',
+    handle: cfg.social.youtube.handle,
+    href: cfg.social.youtube.href,
     color: '#FF0000',
     icon: (
       <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
@@ -634,8 +581,8 @@ const socials = [
   },
   {
     label: 'LinkedIn',
-    handle: 'Siva Shanmuga Vadivel',
-    href: 'https://linkedin.com/',
+    handle: cfg.social.linkedin.handle,
+    href: cfg.social.linkedin.href,
     color: '#0A66C2',
     icon: (
       <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
@@ -645,12 +592,23 @@ const socials = [
   },
   {
     label: 'Facebook Page',
-    handle: 'Siva Official',
-    href: 'https://facebook.com/',
+    handle: cfg.social.facebookPage.handle,
+    href: cfg.social.facebookPage.href,
     color: '#1877F2',
     icon: (
       <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
         <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+      </svg>
+    ),
+  },
+  {
+    label: 'X / Twitter',
+    handle: cfg.social.twitter.handle,
+    href: cfg.social.twitter.href,
+    color: '#000000',
+    icon: (
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.258 5.63 5.907-5.63zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
       </svg>
     ),
   },

@@ -1,128 +1,115 @@
 import { motion, AnimatePresence } from 'framer-motion'
 
-const name = 'Siva Shanmuga Vadivel'
-const chars = name.split('')
-
-const containerVariants = {
-  hidden: {},
-  visible: {
-    transition: { staggerChildren: 0.04, delayChildren: 0.3 },
-  },
-}
-
-const charVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' } },
-}
-
-const topPanelVariants = {
-  initial: { y: 0 },
-  exit: { y: '-100%', transition: { duration: 0.7, ease: [0.76, 0, 0.24, 1], delay: 0.1 } },
-}
-
-const bottomPanelVariants = {
-  initial: { y: 0 },
-  exit: { y: '100%', transition: { duration: 0.7, ease: [0.76, 0, 0.24, 1], delay: 0.1 } },
-}
-
-const dotVariants = {
-  hidden: { scaleX: 0 },
-  visible: {
-    scaleX: 1,
-    transition: { duration: 0.4, ease: 'easeOut', delay: name.length * 0.04 + 0.5 },
-  },
-}
+const ease = [0.76, 0, 0.24, 1]
 
 export default function LoadingScreen({ isVisible }) {
   return (
     <AnimatePresence>
       {isVisible && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 9999,
-            pointerEvents: 'all',
-          }}
-        >
-          {/* Top half */}
-          <motion.div
-            variants={topPanelVariants}
-            initial="initial"
-            exit="exit"
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '50%',
-              background: 'var(--accent)',
-              display: 'flex',
-              alignItems: 'flex-end',
-              justifyContent: 'center',
-              paddingBottom: '8px',
-            }}
-          >
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              style={{
-                fontFamily: 'var(--heading)',
-                fontSize: 'clamp(1.5rem, 4vw, 3rem)',
-                fontWeight: 700,
-                color: '#fff',
-                letterSpacing: '-0.02em',
-                display: 'flex',
-                flexWrap: 'wrap',
-                justifyContent: 'center',
-                gap: '0',
-                lineHeight: 1,
-              }}
-            >
-              {chars.map((char, i) =>
-                char === ' ' ? (
-                  <span key={i} style={{ width: '0.3em', display: 'inline-block' }} />
-                ) : (
-                  <motion.span key={i} variants={charVariants}>
-                    {char}
-                  </motion.span>
-                )
-              )}
-            </motion.div>
-          </motion.div>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, pointerEvents: 'all' }}>
 
-          {/* Bottom half */}
+          {/* ── Left panel ── */}
           <motion.div
-            variants={bottomPanelVariants}
-            initial="initial"
-            exit="exit"
+            initial={{ x: 0 }}
+            exit={{ x: '-100%' }}
+            transition={{ duration: 0.9, ease, delay: 0.15 }}
             style={{
               position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: '50%',
-              background: 'var(--accent)',
+              top: 0, left: 0, bottom: 0,
+              width: '50%',
+              background: '#0a0a0a',
+              overflow: 'hidden',
+            }}
+          />
+
+          {/* ── Right panel ── */}
+          <motion.div
+            initial={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ duration: 0.9, ease, delay: 0.15 }}
+            style={{
+              position: 'absolute',
+              top: 0, right: 0, bottom: 0,
+              width: '50%',
+              background: '#0a0a0a',
+              overflow: 'hidden',
+            }}
+          />
+
+          {/* ── Centered content — name + GIF ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.25 }}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              zIndex: 10,
               display: 'flex',
-              alignItems: 'flex-start',
+              flexDirection: 'column',
+              alignItems: 'center',
               justifyContent: 'center',
-              paddingTop: '8px',
+              gap: 24,
+              pointerEvents: 'none',
             }}
           >
-            <motion.div
-              variants={dotVariants}
-              initial="hidden"
-              animate="visible"
+            <img
+              src="/sivashanmugavadivel-portfolio/gif/ava_gif1.gif"
+              alt=""
+              aria-hidden="true"
               style={{
-                width: 48,
-                height: 4,
-                background: 'rgba(255,255,255,0.5)',
+                height: 'clamp(280px, 46vw, 460px)',
+                width: 'auto',
+                objectFit: 'contain',
+              }}
+            />
+            <div style={{
+              fontFamily: "'Lilita One', cursive",
+              fontSize: 'clamp(1.6rem, 4.5vw, 3.2rem)',
+              fontWeight: 400,
+              color: '#ffffff',
+              letterSpacing: '-0.01em',
+              lineHeight: 1,
+              whiteSpace: 'nowrap',
+            }}>
+              Siva Shanmuga Vadivel
+            </div>
+            {/* Accent line */}
+            <motion.div
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1], delay: 0.35 }}
+              style={{
+                width: 'clamp(200px, 30vw, 400px)',
+                height: 2,
+                background: 'var(--accent)',
                 borderRadius: 2,
                 transformOrigin: 'left',
               }}
             />
           </motion.div>
+
+          {/* ── Center seam glow ── */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3, delay: 0.5 }}
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: 1,
+              height: '60vh',
+              background: 'linear-gradient(to bottom, transparent, var(--accent), transparent)',
+              pointerEvents: 'none',
+              zIndex: 5,
+            }}
+          />
+
         </div>
       )}
     </AnimatePresence>
