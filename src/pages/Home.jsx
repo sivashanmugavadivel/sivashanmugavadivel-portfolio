@@ -230,7 +230,7 @@ function HeroSection() {
           position: 'absolute',
           top: 0, left: '50%',
           x: '-50%',
-          y: isMobileHero ? '35%' : '-5%',
+          y: isMobileHero ? '30%' : '-5%',
           zIndex: 3,
           pointerEvents: 'none',
           display: 'flex',
@@ -245,7 +245,7 @@ function HeroSection() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1.2, delay: avatarDelay, ease: [0.25, 0.1, 0.25, 1] }}
           style={{
-            height: isMobileHero ? 'clamp(80vh, 130vw, 115vh)' : 'clamp(60vh, 90vw, 130vh)',
+            height: isMobileHero ? 'clamp(88vh, 140vw, 122vh)' : 'clamp(60vh, 90vw, 130vh)',
             width: 'auto',
             display: 'block',
             transformOrigin: 'bottom center',
