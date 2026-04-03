@@ -243,7 +243,7 @@ function HeroSection() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1.2, delay: avatarDelay, ease: [0.25, 0.1, 0.25, 1] }}
           style={{
-            height: '130vh',
+            height: 'clamp(60vh, 90vw, 130vh)',
             width: 'auto',
             display: 'block',
             transformOrigin: 'bottom center',
