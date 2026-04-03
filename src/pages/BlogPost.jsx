@@ -5,25 +5,23 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { loadPost } from '../hooks/usePosts'
 import ScrollProgress from '../components/ui/ScrollProgress'
-
-const TAG_COLORS = {
-  recipe: '#f59e0b', breakfast: '#10b981', 'high-protein': '#3b82f6',
-  healthy: '#22c55e', shrimp: '#f97316', react: '#61dafb',
-  design: '#a78bfa', animation: '#ec4899', tech: '#6366f1',
-}
-const TAG_ICONS = {
-  recipe: '🍳', breakfast: '🌅', 'high-protein': '💪',
-  healthy: '🥗', shrimp: '🦐', react: '⚛️', design: '🎨',
-  animation: '✨', tech: '💻',
-}
-const tagColor = tag => TAG_COLORS[tag] || '#7c3aed'
-const tagIcon = tags => { for (const t of tags) if (TAG_ICONS[t]) return TAG_ICONS[t]; return '📝' }
+import JsonPostRenderer from '../components/blog/JsonPostRenderer'
+import { tagColor, tagIcon } from '../data/tagMeta'
 
 function formatDate(d) {
   return new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
 }
-function readTime(content = '') {
-  return Math.max(2, Math.ceil(content.split(' ').length / 200)) + ' min read'
+
+function calcReadTime(post) {
+  if (post._source === 'json') {
+    const words = (post.sections || [])
+      .filter(s => s.type === 'text')
+      .map(s => s.body || '')
+      .join(' ')
+      .split(/\s+/).length
+    return Math.max(2, Math.ceil(words / 200)) + ' min read'
+  }
+  return Math.max(2, Math.ceil((post.content || '').split(' ').length / 200)) + ' min read'
 }
 
 export default function BlogPost() {
@@ -51,10 +49,14 @@ export default function BlogPost() {
     return <div className="container-narrow section" style={{ textAlign: 'center' }}>Loading…</div>
   }
 
-  const { frontmatter, content } = post
+  const { frontmatter } = post
   const { title, date, tags = [], excerpt } = frontmatter
   const color = tagColor(tags[0])
   const icon = tagIcon(tags)
+  const readTime = calcReadTime(post)
+
+  // Author: from JSON meta, or fallback
+  const author = (post.meta?.author) || 'Siva Shanmuga Vadivel'
 
   return (
     <>
@@ -80,7 +82,6 @@ export default function BlogPost() {
             alignSelf: 'flex-start',
           }}
         >
-          {/* Back link */}
           <Link to="/blog" style={{
             fontSize: '0.75rem', color: '#666680', textDecoration: 'none',
             display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600,
@@ -88,7 +89,6 @@ export default function BlogPost() {
             ← Blog
           </Link>
 
-          {/* Icon */}
           <motion.div
             animate={{ rotate: [0, 8, -8, 0] }}
             transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
@@ -97,7 +97,6 @@ export default function BlogPost() {
             {icon}
           </motion.div>
 
-          {/* Color bar */}
           <motion.div
             initial={{ scaleX: 0 }}
             animate={{ scaleX: 1 }}
@@ -109,7 +108,6 @@ export default function BlogPost() {
             }}
           />
 
-          {/* Tags */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {tags.map(tag => (
               <motion.span
@@ -128,17 +126,15 @@ export default function BlogPost() {
             ))}
           </div>
 
-          {/* Meta */}
           <div style={{ borderTop: '1px solid #2a2a3a', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ fontSize: '0.7rem', color: '#666680', fontFamily: 'monospace', lineHeight: 1.5 }}>
               📅<br />{formatDate(date)}
             </div>
             <div style={{ fontSize: '0.7rem', color: '#666680', fontFamily: 'monospace' }}>
-              ⏱ {readTime(content)}
+              ⏱ {readTime}
             </div>
           </div>
 
-          {/* Vertical author */}
           <div style={{
             writingMode: 'vertical-rl', textOrientation: 'mixed',
             fontSize: '0.6rem', color: '#2a2a3a',
@@ -168,14 +164,13 @@ export default function BlogPost() {
             {title}
           </motion.h1>
 
-          {/* Excerpt callout */}
           {excerpt && (
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.35 }}
               style={{
-                padding: '14px 18px', borderRadius: 10, marginBottom: 32,
+                padding: '14px 18px', borderRadius: 10,
                 background: `${color}12`, borderLeft: `3px solid ${color}`,
                 fontSize: '0.92rem', color: 'var(--text)', lineHeight: 1.7,
                 fontStyle: 'italic', margin: '0 0 32px',
@@ -185,19 +180,22 @@ export default function BlogPost() {
             </motion.p>
           )}
 
-          {/* Prose */}
-          <div className="magazine-prose">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
-          </div>
+          {/* Content — JSON sections or MD prose */}
+          {post._source === 'json' ? (
+            <JsonPostRenderer sections={post.sections} meta={post.meta} color={color} />
+          ) : (
+            <div className="magazine-prose">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.content}</ReactMarkdown>
+            </div>
+          )}
 
-          {/* Footer */}
           <div style={{
             marginTop: 56, paddingTop: 24,
             borderTop: '1px solid var(--border)',
             display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12,
           }}>
             <span style={{ fontSize: '0.85rem', color: 'var(--text)', fontStyle: 'italic', opacity: 0.7 }}>
-              — Siva Shanmuga Vadivel
+              — {author}
             </span>
             <Link to="/blog" style={{
               fontSize: '0.85rem', fontWeight: 600, color: 'var(--accent)',

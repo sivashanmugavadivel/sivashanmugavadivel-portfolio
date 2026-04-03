@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
+import { tagColor, tagIcon } from '../data/tagMeta'
 
 // ─── Sample posts for preview ───────────────────────────────────────────────
 const SAMPLE_POSTS = [
@@ -32,31 +33,6 @@ const SAMPLE_POSTS = [
     },
   },
 ]
-
-// ─── Tag color map ────────────────────────────────────────────────────────────
-const TAG_COLORS = {
-  recipe: '#f59e0b',
-  breakfast: '#10b981',
-  'high-protein': '#3b82f6',
-  healthy: '#22c55e',
-  shrimp: '#f97316',
-  react: '#61dafb',
-  design: '#a78bfa',
-  animation: '#ec4899',
-  tech: '#6366f1',
-}
-const tagColor = tag => TAG_COLORS[tag] || '#7c3aed'
-
-// ─── Tag emoji / icon map ────────────────────────────────────────────────────
-const TAG_ICONS = {
-  recipe: '🍳', breakfast: '🌅', 'high-protein': '💪',
-  healthy: '🥗', shrimp: '🦐', react: '⚛️', design: '🎨',
-  animation: '✨', tech: '💻',
-}
-const tagIcon = tags => {
-  for (const t of tags) if (TAG_ICONS[t]) return TAG_ICONS[t]
-  return '📝'
-}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function formatDate(d) {

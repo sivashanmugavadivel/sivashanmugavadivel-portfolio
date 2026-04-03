@@ -1,0 +1,127 @@
+{
+  "slug": "spiced-shrimp-veggie-yogurt-salad-bowl",
+  "title": "Spiced Shrimp & Veggie Yogurt Salad Bowl – High Protein Breakfast",
+  "date": "2026-03-18",
+  "tags": ["recipe", "breakfast", "high-protein", "healthy", "shrimp"],
+  "excerpt": "A fresh, protein-rich breakfast bowl made with juicy shrimp, lightly cooked vegetables, and a creamy yogurt finish. Bold spices, crunch, and refreshing tang — perfect for starting your day on a flavorful note.",
+  "author": "Siva Shanmuga Vadivel",
+  "cookTime": "30 min",
+  "difficulty": "Easy",
+  "servings": "1",
+  "sections": [
+    {
+      "type": "text",
+      "body": "A fresh, protein-rich breakfast bowl made with juicy shrimp, lightly cooked vegetables, and a creamy yogurt finish. This dish brings together bold spices, crunch, and a refreshing tang — perfect for starting your day on a flavorful note."
+    },
+    {
+      "type": "ingredient-group",
+      "heading": "Shrimp",
+      "items": [
+        "1 cup small shrimp (peeled, deveined, tail-off, frozen/raw)",
+        "Salt to taste",
+        "Black pepper to taste",
+        "1/4 tsp garam masala",
+        "1/2 tsp red chili powder",
+        "1 tsp lemon juice"
+      ]
+    },
+    {
+      "type": "ingredient-group",
+      "heading": "Vegetables",
+      "items": [
+        "1/2 cup broccoli",
+        "1/2 cup cauliflower",
+        "1/4 cup green peas",
+        "1/4 cup carrot, chopped",
+        "1/4 cup beans, chopped",
+        "Salt, pepper, chili powder (light seasoning)"
+      ]
+    },
+    {
+      "type": "ingredient-group",
+      "heading": "Cooking Base",
+      "items": [
+        "2 tbsp oil (your choice)",
+        "1 tsp mustard seeds",
+        "1 tsp cumin seeds",
+        "Curry leaves",
+        "1 medium red onion (~100g), chopped",
+        "1 medium tomato, chopped",
+        "1 tsp ginger garlic paste"
+      ]
+    },
+    {
+      "type": "ingredient-group",
+      "heading": "Final Mix",
+      "items": [
+        "100 ml thick curd (yogurt), well beaten"
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "steps",
+      "heading": "Preparation",
+      "items": [
+        {
+          "step": 1,
+          "title": "Cook the Shrimp",
+          "body": "Boil frozen shrimp in water for about 5–7 minutes until fully cooked. Drain and let sit for 30 seconds to remove excess water. Marinate with salt, black pepper, garam masala, red chili powder, and lemon juice. Let it rest for 15 minutes."
+        },
+        {
+          "step": 2,
+          "title": "Cook the Vegetables",
+          "body": "Lightly cook broccoli and cauliflower until slightly crunchy — not soft. Cook peas, carrot, and beans until just done. Season lightly with salt, pepper, and chili powder."
+        },
+        {
+          "step": 3,
+          "title": "Prepare the Masala Base",
+          "body": "Heat oil in a pan on medium flame. Add mustard seeds, cumin seeds, and curry leaves. Once they splutter, add chopped onion and sauté until soft and slightly translucent. Add tomato and cook for 2 minutes. Add ginger garlic paste and sauté until the raw smell disappears."
+        },
+        {
+          "step": 4,
+          "title": "Combine Everything",
+          "body": "Add marinated shrimp and vegetables to the pan. Cook for 4–5 minutes until everything is well mixed and coated with masala. Taste and adjust salt if needed."
+        },
+        {
+          "step": 5,
+          "title": "Final Yogurt Mix",
+          "body": "Beat thick curd for about 2 minutes until smooth. Let the cooked mixture cool slightly — this step is important. Then gently mix it into the curd."
+        }
+      ]
+    },
+    {
+      "type": "callout",
+      "variant": "tip",
+      "body": "Let the cooked mixture cool slightly before mixing into the curd — adding hot food to yogurt can cause it to split and turn watery."
+    },
+    {
+      "type": "callout",
+      "variant": "note",
+      "body": "Serve fresh as a warm or slightly cooled salad bowl. Add a squeeze of lemon or fresh coriander on top for extra flavor."
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "nutrition",
+      "heading": "Nutrition Information",
+      "rows": [
+        { "nutrient": "Calories",      "amount": "~300–350 kcal" },
+        { "nutrient": "Protein",       "amount": "~28–32 g" },
+        { "nutrient": "Carbohydrates", "amount": "~18–22 g" },
+        { "nutrient": "Fiber",         "amount": "~5–6 g" },
+        { "nutrient": "Net Carbs",     "amount": "~13–16 g" },
+        { "nutrient": "Fat",           "amount": "~32–35 g" },
+        { "nutrient": "Cholesterol",   "amount": "~190–210 mg" }
+      ],
+      "notes": "Protein breakdown: Shrimp ~20–22g, Vegetables ~5–6g, Curd (100ml) ~3–4g. Key vitamins & minerals: Vitamin B12, Iron, Zinc, Selenium, Calcium (from curd), Potassium ~800–900mg. Satiety level: Very filling — high protein + healthy fats keep you full for 3–5 hours.",
+      "score": "9 / 10"
+    },
+    {
+      "type": "text",
+      "body": "This bowl is a great example of how breakfast doesn't have to be boring. With the right spices and a balance of protein, fiber, and healthy fats, you can build a meal that's both delicious and genuinely nourishing.\n\n*— Siva Shanmuga Vadivel*"
+    }
+  ]
+}

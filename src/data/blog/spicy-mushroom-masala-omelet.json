@@ -1,0 +1,97 @@
+{
+  "slug": "spicy-mushroom-masala-omelet",
+  "title": "Spicy Mushroom Masala Omelet – Easy High-Protein Breakfast",
+  "date": "2026-02-10",
+  "tags": ["recipe", "breakfast", "high-protein", "healthy"],
+  "excerpt": "If you're looking for a quick, flavorful, and protein-packed breakfast, this Mushroom Masala Omelet is a perfect choice. Bold spices, earthy mushrooms, and fluffy eggs come together in minutes.",
+  "author": "Siva Shanmuga Vadivel",
+  "cookTime": "15 min",
+  "difficulty": "Easy",
+  "servings": "1",
+  "sections": [
+    {
+      "type": "text",
+      "body": "If you're looking for a quick, flavorful, and protein-packed breakfast, this Mushroom Masala Omelet is a perfect choice. Bold spices, earthy mushrooms, and fluffy eggs come together in minutes — a simple yet satisfying way to start your day."
+    },
+    {
+      "type": "ingredient-group",
+      "heading": "Main Ingredients",
+      "items": [
+        "1 cup white button mushrooms, sliced",
+        "3 eggs",
+        "1/4 cup red onion, chopped",
+        "1/4 cup green bell pepper, chopped",
+        "3–4 garlic cloves, minced",
+        "1 tsp oil (olive oil or any cooking oil)",
+        "1–2 tsp lemon juice",
+        "Salt to taste",
+        "Black pepper to taste"
+      ]
+    },
+    {
+      "type": "ingredient-group",
+      "heading": "Masala Mix",
+      "items": [
+        "1/2 tsp red chili powder",
+        "1/2 tsp Kashmiri chili powder",
+        "1/4 tsp garam masala",
+        "1/2 tsp coriander powder"
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "steps",
+      "heading": "Instructions",
+      "items": [
+        {
+          "step": 1,
+          "title": "Marinate the Mushrooms",
+          "body": "Wash and slice the mushrooms. Mix with chili powders, garam masala, coriander powder, salt, black pepper, and lemon juice. Let it rest for 10–15 minutes so the spices soak in."
+        },
+        {
+          "step": 2,
+          "title": "Cook the Mushroom Filling",
+          "body": "Heat a pan on medium flame. Sauté onion and garlic for 1–2 minutes. Add bell pepper and cook for another minute. Add the marinated mushrooms and cook for 3–5 minutes until the moisture releases and the filling is fragrant."
+        },
+        {
+          "step": 3,
+          "title": "Prepare the Egg Mixture",
+          "body": "Crack 3 eggs into a bowl. Add a pinch of salt and black pepper. Beat until smooth and slightly frothy."
+        },
+        {
+          "step": 4,
+          "title": "Make the Omelet",
+          "body": "Spread the mushroom mixture evenly in the pan. Pour the beaten eggs over the top. Cook on low-medium heat until the bottom sets. Flip or fold the omelet and cook for another 1–2 minutes until fully done."
+        }
+      ]
+    },
+    {
+      "type": "callout",
+      "variant": "tip",
+      "body": "Let the mushrooms marinate for the full 15 minutes — that resting time is what makes the spice flavor deep rather than sharp."
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "nutrition",
+      "heading": "Nutrition Information",
+      "rows": [
+        { "nutrient": "Calories",       "amount": "~350–400 kcal" },
+        { "nutrient": "Protein",        "amount": "~24–26 g" },
+        { "nutrient": "Carbohydrates",  "amount": "~12–14 g" },
+        { "nutrient": "Net Carbs",      "amount": "~9–10 g" },
+        { "nutrient": "Fat",            "amount": "~19–20 g" },
+        { "nutrient": "Cholesterol",    "amount": "~550 mg" }
+      ],
+      "notes": "Key vitamins & minerals: Vitamin B12, Choline, Selenium, Vitamin D, Potassium, Antioxidants. Satiety level: Very filling — keeps you full for 3–4 hours.",
+      "score": "9 / 10"
+    },
+    {
+      "type": "text",
+      "body": "This Mushroom Masala Omelet combines bold Indian-inspired flavors with everyday ingredients for a breakfast that's ready in under 15 minutes. Perfect for busy mornings when you don't want to compromise on taste or nutrition.\n\n*— Siva Shanmuga Vadivel*"
+    }
+  ]
+}

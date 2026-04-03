@@ -1,20 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-
-const TAG_COLORS = {
-  recipe: '#f59e0b', breakfast: '#10b981', 'high-protein': '#3b82f6',
-  healthy: '#22c55e', shrimp: '#f97316', react: '#61dafb',
-  design: '#a78bfa', animation: '#ec4899', tech: '#6366f1',
-}
-const TAG_ICONS = {
-  recipe: '🍳', breakfast: '🌅', 'high-protein': '💪',
-  healthy: '🥗', shrimp: '🦐', react: '⚛️', design: '🎨',
-  animation: '✨', tech: '💻',
-}
-
-const tagColor = tag => TAG_COLORS[tag] || '#7c3aed'
-const tagIcon = tags => { for (const t of tags) if (TAG_ICONS[t]) return TAG_ICONS[t]; return '📝' }
+import { tagColor, tagIcon } from '../../data/tagMeta'
 
 function formatDate(d) {
   return new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
