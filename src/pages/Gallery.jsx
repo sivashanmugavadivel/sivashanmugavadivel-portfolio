@@ -4,8 +4,9 @@ import Lightbox from 'yet-another-react-lightbox'
 import 'yet-another-react-lightbox/styles.css'
 import galleryData from '../data/gallery.json'
 
-/* ── Polaroid card intro ── */
 const BASE = import.meta.env.BASE_URL
+
+/* ── Polaroid intro (kept from original) ── */
 const SLIDESHOW_IMAGES = [
   `${BASE}slideshareImages/ss1.jpg`,
   `${BASE}slideshareImages/ss2.jpg`,
@@ -15,7 +16,6 @@ const SLIDESHOW_IMAGES = [
 
 const isMobileGallery = window.innerWidth <= 768
 
-// Fixed scatter positions — spread within screen bounds
 const CARD_CONFIGS = isMobileGallery ? [
   { x: '-90px', y: '-120px', rotate: -12 },
   { x:  '90px', y: '-120px', rotate:  10 },
@@ -28,7 +28,6 @@ const CARD_CONFIGS = isMobileGallery ? [
   { x:  '240px', y:   '85px', rotate:  -9 },
 ]
 
-// Each card flies in from a closer off-screen origin (softer entry)
 const ORIGINS = [
   { x: '-60vw', y: '-40vh', rotate: -20 },
   { x:  '60vw', y: '-40vh', rotate:  20 },
@@ -40,15 +39,11 @@ function PolaroidIntro({ onDone }) {
   const [phase, setPhase] = useState('loading')
   const [loaded, setLoaded] = useState(0)
 
-  // Preload all images first, then start animation
   useEffect(() => {
     let count = 0
     SLIDESHOW_IMAGES.forEach(src => {
       const img = new Image()
-      img.onload = img.onerror = () => {
-        count++
-        setLoaded(count)
-      }
+      img.onload = img.onerror = () => { count++; setLoaded(count) }
       img.src = src
     })
   }, [])
@@ -57,7 +52,7 @@ function PolaroidIntro({ onDone }) {
     if (loaded < SLIDESHOW_IMAGES.length) return
     setPhase('fly-in')
     const hold = setTimeout(() => setPhase('fly-out'), 2800)
-    const done = setTimeout(() => onDone(),            3800)
+    const done = setTimeout(() => onDone(), 3800)
     return () => { clearTimeout(hold); clearTimeout(done) }
   }, [loaded, onDone])
 
@@ -75,7 +70,7 @@ function PolaroidIntro({ onDone }) {
     >
       {phase !== 'loading' && SLIDESHOW_IMAGES.map((src, i) => {
         const origin = ORIGINS[i]
-        const land   = CARD_CONFIGS[i]
+        const land = CARD_CONFIGS[i]
         return (
           <motion.div
             key={src}
@@ -93,15 +88,11 @@ function PolaroidIntro({ onDone }) {
               width: isMobileGallery ? 'clamp(100px, 36vw, 150px)' : 'clamp(180px, 22vw, 280px)',
               background: '#fff',
               borderRadius: 4,
-              boxShadow: '0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.1)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
               padding: '10px 10px 32px',
             }}
           >
-            <img
-              src={src}
-              alt=""
-              style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', display: 'block', borderRadius: 2 }}
-            />
+            <img src={src} alt="" style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', display: 'block', borderRadius: 2 }} />
           </motion.div>
         )
       })}
@@ -109,116 +100,152 @@ function PolaroidIntro({ onDone }) {
   )
 }
 
-/* ── Filter pill ── */
-function FilterPill({ label, active, onClick }) {
-  return (
-    <motion.button
-      onClick={onClick}
-      layout
-      whileHover={{ scale: 1.04 }}
-      whileTap={{ scale: 0.97 }}
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        padding: '6px 18px',
-        borderRadius: 999,
-        fontFamily: 'var(--sans)',
-        fontSize: '0.82rem',
-        fontWeight: 500,
-        cursor: 'pointer',
-        border: active ? '1.5px solid var(--accent)' : '1.5px solid var(--border)',
-        background: active ? 'var(--accent-bg)' : 'transparent',
-        color: active ? 'var(--accent)' : 'var(--text)',
-        transition: 'background 0.2s, border-color 0.2s, color 0.2s',
-      }}
-    >
-      {label.charAt(0).toUpperCase() + label.slice(1)}
-    </motion.button>
-  )
-}
+/* ── 3D Carousel ── */
+function GalleryCarousel({ items, onOpen }) {
+  const [active, setActive] = useState(0)
 
-/* ── Single gallery item ── */
-function GalleryItem({ item, onClick }) {
-  const [hovered, setHovered] = useState(false)
+  const prev = () => setActive(i => (i - 1 + items.length) % items.length)
+  const next = () => setActive(i => (i + 1) % items.length)
+
+  const getPos = (i) => {
+    const diff = ((i - active) + items.length) % items.length
+    if (diff === 0) return 'center'
+    if (diff === 1) return 'right1'
+    if (diff === items.length - 1) return 'left1'
+    if (diff === 2) return 'right2'
+    if (diff === items.length - 2) return 'left2'
+    return 'hidden'
+  }
+
+  const posStyles = {
+    center: { x: '0%',    scale: 1,     opacity: 1,   zIndex: 5, rotateY:   0 },
+    left1:  { x: '-52%',  scale: 0.82,  opacity: 0.85, zIndex: 4, rotateY:  12 },
+    right1: { x:  '52%',  scale: 0.82,  opacity: 0.85, zIndex: 4, rotateY: -12 },
+    left2:  { x: '-90%',  scale: 0.65,  opacity: 0.5,  zIndex: 3, rotateY:  18 },
+    right2: { x:  '90%',  scale: 0.65,  opacity: 0.5,  zIndex: 3, rotateY: -18 },
+    hidden: { x:   '0%',  scale: 0.4,   opacity: 0,    zIndex: 1, rotateY:   0 },
+  }
 
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, scale: 0.92 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.92 }}
-      transition={{ duration: 0.35, ease: 'easeOut' }}
-      onClick={onClick}
-      onHoverStart={() => setHovered(true)}
-      onHoverEnd={() => setHovered(false)}
-      style={{
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 40 }}>
+
+      {/* Stage */}
+      <div style={{
         position: 'relative',
-        borderRadius: 'var(--radius)',
-        overflow: 'hidden',
-        cursor: 'pointer',
-        breakInside: 'avoid',
-        marginBottom: 16,
-        boxShadow: 'var(--shadow)',
-      }}
-    >
-      <img
-        src={`${import.meta.env.BASE_URL}gallery/${item.category}/${item.filename}`}
-        alt={item.caption}
-        loading="lazy"
-        style={{
-          display: 'block',
-          width: '100%',
-          height: 'auto',
-          transition: 'transform 0.5s ease',
-          transform: hovered ? 'scale(1.05)' : 'scale(1)',
-        }}
-      />
+        width: '100%',
+        height: 'clamp(300px, 50vw, 500px)',
+        perspective: 1200,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        {items.map((item, i) => {
+          const pos = getPos(i)
+          const isCenter = pos === 'center'
+          const src = `${BASE}gallery/${item.category}/${item.filename}`
 
-      {/* Caption overlay — slides up on hover */}
-      <motion.div
-        animate={{ y: hovered ? 0 : '100%' }}
-        transition={{ duration: 0.28, ease: 'easeOut' }}
-        style={{
-          position: 'absolute',
-          bottom: 0, left: 0, right: 0,
-          padding: '32px 14px 14px',
-          background: 'linear-gradient(to top, rgba(0,0,0,0.78), transparent)',
-        }}
-      >
-        <p style={{ color: '#fff', fontWeight: 500, fontSize: '0.875rem', margin: '0 0 6px' }}>
-          {item.caption}
-        </p>
-        <span style={{
-          padding: '2px 10px',
-          borderRadius: 999,
-          fontSize: '0.68rem',
-          fontWeight: 600,
-          background: 'rgba(255,255,255,0.15)',
-          color: 'rgba(255,255,255,0.85)',
-          textTransform: 'capitalize',
-        }}>
-          {item.category}
+          return (
+            <motion.div
+              key={`${item.category}/${item.filename}`}
+              animate={posStyles[pos]}
+              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+              drag={isCenter ? 'x' : false}
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.15}
+              onDragEnd={(_, info) => {
+                if (info.offset.x < -60) next()
+                else if (info.offset.x > 60) prev()
+              }}
+              onClick={() => { if (!isCenter) setActive(i); else onOpen(i) }}
+              style={{
+                position: 'absolute',
+                width: 'clamp(200px, 32vw, 380px)',
+                aspectRatio: '4/5',
+                borderRadius: 20,
+                overflow: 'hidden',
+                cursor: isCenter ? 'pointer' : 'pointer',
+                transformStyle: 'preserve-3d',
+                boxShadow: isCenter
+                  ? '0 24px 60px rgba(0,0,0,0.25)'
+                  : '0 8px 24px rgba(0,0,0,0.12)',
+              }}
+            >
+              <img
+                src={src}
+                alt={item.caption}
+                loading="lazy"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              />
+
+              {/* Center card overlay with play/expand icon */}
+              {isCenter && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  style={{
+                    position: 'absolute', inset: 0,
+                    background: 'linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 60%)',
+                    display: 'flex', alignItems: 'flex-end',
+                    padding: '16px',
+                  }}
+                >
+                  <div style={{ flex: 1 }}>
+                    <p style={{ color: '#fff', fontWeight: 600, fontSize: '0.9rem', margin: 0 }}>{item.caption}</p>
+                    <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.75rem', margin: '2px 0 0', textTransform: 'capitalize' }}>{item.category}</p>
+                  </div>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: '50%',
+                    background: 'rgba(255,255,255,0.9)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    flexShrink: 0,
+                  }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
+                      <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
+                    </svg>
+                  </div>
+                </motion.div>
+              )}
+            </motion.div>
+          )
+        })}
+      </div>
+
+      {/* Nav arrows */}
+      <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+        <motion.button
+          onClick={prev}
+          whileHover={{ scale: 1.1, borderColor: 'var(--text-h)' }}
+          whileTap={{ scale: 0.92 }}
+          style={{
+            width: 44, height: 44, borderRadius: '50%',
+            border: '1.5px solid var(--border)',
+            background: 'transparent', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: 'var(--text-h)', transition: 'border-color 0.2s',
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="15,18 9,12 15,6"/></svg>
+        </motion.button>
+
+        <span style={{ fontSize: '0.8rem', color: 'var(--text)', minWidth: 48, textAlign: 'center' }}>
+          {active + 1} / {items.length}
         </span>
-      </motion.div>
 
-      {/* Expand icon */}
-      <motion.div
-        animate={{ opacity: hovered ? 1 : 0, scale: hovered ? 1 : 0.7 }}
-        transition={{ duration: 0.2 }}
-        style={{
-          position: 'absolute', top: 10, right: 10,
-          width: 30, height: 30, borderRadius: '50%',
-          background: 'rgba(0,0,0,0.45)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: '#fff',
-        }}
-      >
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
-          <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
-        </svg>
-      </motion.div>
-    </motion.div>
+        <motion.button
+          onClick={next}
+          whileHover={{ scale: 1.1, borderColor: 'var(--text-h)' }}
+          whileTap={{ scale: 0.92 }}
+          style={{
+            width: 44, height: 44, borderRadius: '50%',
+            border: '1.5px solid var(--border)',
+            background: 'transparent', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: 'var(--text-h)', transition: 'border-color 0.2s',
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="9,18 15,12 9,6"/></svg>
+        </motion.button>
+      </div>
+    </div>
   )
 }
 
@@ -233,27 +260,21 @@ export default function Gallery() {
     ? galleryData
     : galleryData.filter(p => p.category === activeCategory)
 
-  const slides = galleryData.map(item => ({
-    src: `${import.meta.env.BASE_URL}gallery/${item.category}/${item.filename}`,
+  const slides = filtered.map(item => ({
+    src: `${BASE}gallery/${item.category}/${item.filename}`,
     alt: item.caption,
   }))
 
-  const openLightbox = (item) => {
-    const idx = galleryData.findIndex(d => d.filename === item.filename && d.category === item.category)
-    setLightboxIndex(idx)
-  }
-
   return (
-    <div>
+    <div style={{ background: 'var(--bg)', minHeight: '100vh' }}>
       <AnimatePresence>
         {showIntro && <PolaroidIntro onDone={() => setShowIntro(false)} />}
       </AnimatePresence>
 
-      {/* Header */}
+      {/* ── Header ── */}
       <section style={{
         paddingTop: 'clamp(100px, 14vw, 160px)',
-        paddingBottom: 'clamp(40px, 5vw, 64px)',
-        background: 'var(--bg)',
+        paddingBottom: 'clamp(32px, 4vw, 48px)',
         textAlign: 'center',
       }}>
         <div className="page-container">
@@ -262,42 +283,60 @@ export default function Gallery() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
           >
-            <span className="section-label">Photography</span>
-            <h1 style={{ fontSize: 'clamp(2.2rem, 6vw, 4rem)', marginTop: 8, marginBottom: 16 }}>
-              Gallery
+            <span className="section-label">Gallery</span>
+            <h1 style={{ fontSize: 'clamp(2.2rem, 6vw, 4rem)', marginTop: 8, marginBottom: 12 }}>
+              My Visual Diary
             </h1>
-            <p style={{ color: 'var(--text)', maxWidth: 440, margin: '0 auto', lineHeight: 1.7 }}>
-              Moments captured through the lens — from landscapes to city life.
+            <p style={{ color: 'var(--text)', maxWidth: 420, margin: '0 auto', lineHeight: 1.7 }}>
+              See the world through my lens:<br />adventures in photos and videos
             </p>
           </motion.div>
         </div>
       </section>
 
-      {/* Category filter bar */}
-      <section style={{ paddingBottom: 'clamp(32px, 4vw, 48px)', background: 'var(--bg)' }}>
+      {/* ── Category pills ── */}
+      <section style={{ paddingBottom: 'clamp(32px, 4vw, 48px)' }}>
         <div className="page-container">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}
+            style={{
+              display: 'flex', gap: 8, flexWrap: 'wrap',
+              alignItems: 'center', justifyContent: 'center',
+            }}
           >
-            {categories.map(cat => (
-              <FilterPill
+            {categories.map((cat, i) => (
+              <motion.button
                 key={cat}
-                label={cat}
-                active={activeCategory === cat}
                 onClick={() => setActiveCategory(cat)}
-              />
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.97 }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25 + i * 0.04 }}
+                style={{
+                  padding: '8px 20px', borderRadius: 999,
+                  fontFamily: 'var(--sans)', fontSize: '0.85rem', fontWeight: 500,
+                  cursor: 'pointer',
+                  border: activeCategory === cat ? '1.5px solid var(--text-h)' : '1.5px solid var(--border)',
+                  background: activeCategory === cat ? 'var(--text-h)' : 'transparent',
+                  color: activeCategory === cat ? 'var(--bg)' : 'var(--text-h)',
+                  transition: 'all 0.2s',
+                }}
+              >
+                {cat.charAt(0).toUpperCase() + cat.slice(1)}
+              </motion.button>
             ))}
+
           </motion.div>
 
-          {/* Image count */}
+          {/* Photo count */}
           <motion.p
             key={activeCategory}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            style={{ textAlign: 'center', color: 'var(--text)', fontSize: '0.8rem', marginTop: 12 }}
+            style={{ textAlign: 'center', color: 'var(--text)', fontSize: '0.78rem', marginTop: 12, marginBottom: 0 }}
           >
             {filtered.length} {filtered.length === 1 ? 'photo' : 'photos'}
             {activeCategory !== 'all' && ` in ${activeCategory}`}
@@ -305,8 +344,8 @@ export default function Gallery() {
         </div>
       </section>
 
-      {/* Masonry grid */}
-      <section style={{ paddingBottom: 'clamp(64px, 8vw, 96px)', background: 'var(--bg)' }}>
+      {/* ── 3D Carousel ── */}
+      <section style={{ paddingBottom: 'clamp(64px, 8vw, 96px)' }}>
         <div className="page-container">
           <AnimatePresence mode="wait">
             {filtered.length === 0 ? (
@@ -317,10 +356,7 @@ export default function Gallery() {
                 exit={{ opacity: 0 }}
                 style={{ textAlign: 'center', padding: '64px 0', color: 'var(--text)' }}
               >
-                <p style={{ marginBottom: 8 }}>No photos in this category yet.</p>
-                <p style={{ fontSize: '0.82rem' }}>
-                  Add images to <code>public/gallery/{activeCategory}/</code>
-                </p>
+                <p>No photos in this category yet.</p>
               </motion.div>
             ) : (
               <motion.div
@@ -328,16 +364,12 @@ export default function Gallery() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.25 }}
-                style={{ columns: '3 260px', columnGap: 16 }}
+                transition={{ duration: 0.3 }}
               >
-                {filtered.map((item, i) => (
-                  <GalleryItem
-                    key={`${item.category}/${item.filename}`}
-                    item={item}
-                    onClick={() => openLightbox(item)}
-                  />
-                ))}
+                <GalleryCarousel
+                  items={filtered}
+                  onOpen={(i) => setLightboxIndex(i)}
+                />
               </motion.div>
             )}
           </AnimatePresence>
