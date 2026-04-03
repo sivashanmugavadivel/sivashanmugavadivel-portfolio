@@ -16,6 +16,7 @@ import Videos from './pages/Videos'
 import Blog from './pages/Blog'
 import BlogPost from './pages/BlogPost'
 import NotFound from './pages/NotFound'
+import PrivacyPolicy from './pages/PrivacyPolicy'
 
 import './App.css'
 
@@ -30,6 +31,7 @@ function AppRoutes() {
         <Route path="/videos" element={<Videos />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogPost />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </PageWrapper>

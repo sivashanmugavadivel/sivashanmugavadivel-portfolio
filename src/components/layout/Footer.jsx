@@ -107,14 +107,14 @@ export default function Footer() {
 
           {/* Right — contact */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
-            <a
+            {/* <a
               href="mailto:hello@sivashanmuga.dev"
               style={{ fontSize: '0.78rem', color: 'var(--text)', textDecoration: 'none', transition: 'color var(--transition)' }}
               onMouseEnter={e => e.currentTarget.style.color = 'var(--accent)'}
               onMouseLeave={e => e.currentTarget.style.color = 'var(--text)'}
             >
               hello@sivashanmuga.dev
-            </a>
+            </a> */}
             <motion.div whileHover={{ x: 3 }} transition={{ duration: 0.15 }}>
               <Link
                 to="/contact"
@@ -142,9 +142,19 @@ export default function Footer() {
           <p style={{ fontSize: '0.72rem', color: 'var(--text)', opacity: 0.5, margin: 0 }}>
             © {year} Siva Shanmuga Vadivel. All rights reserved.
           </p>
-          <p style={{ fontSize: '0.72rem', color: 'var(--text)', opacity: 0.5, margin: 0 }}>
-            Built with React & Framer Motion
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <Link
+              to="/privacy"
+              style={{ fontSize: '0.72rem', color: 'var(--text)', opacity: 0.5, textDecoration: 'none', transition: 'opacity 0.2s' }}
+              onMouseEnter={e => e.currentTarget.style.opacity = 1}
+              onMouseLeave={e => e.currentTarget.style.opacity = 0.5}
+            >
+              Privacy Policy
+            </Link>
+            <p style={{ fontSize: '0.72rem', color: 'var(--text)', opacity: 0.5, margin: 0 }}>
+              Built with Love & Care mixed in equal ratio
+            </p>
+          </div>
         </div>
       </div>
     </footer>
