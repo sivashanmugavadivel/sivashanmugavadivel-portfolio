@@ -1,5 +1,7 @@
-import { motion } from 'framer-motion'
+import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion'
+import { useRef, useState } from 'react'
 import Button from '../components/ui/Button'
+import cfg from '../data/config.json'
 
 /* ── Reusable scroll-reveal wrapper ── */
 function Reveal({ children, delay = 0, y = 32, x = 0, style }) {
@@ -79,108 +81,252 @@ const timeline = [
 ]
 
 const socials = [
-  { label: 'GitHub', href: 'https://github.com/', icon: (
+  { label: 'GitHub', href: cfg.social.github.href, icon: (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
       <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
     </svg>
   )},
-  { label: 'LinkedIn', href: 'https://linkedin.com/', icon: (
+  { label: 'LinkedIn', href: cfg.social.linkedin.href, icon: (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
       <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
     </svg>
   )},
-  { label: 'X / Twitter', href: 'https://x.com/', icon: (
+  { label: 'X / Twitter', href: cfg.social.twitter.href, icon: (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
       <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.258 5.63 5.907-5.63zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
     </svg>
   )},
 ]
 
+/* ── Animated image frame ── */
+function ImageFrame({ name }) {
+  const ref = useRef(null)
+  const [hovered, setHovered] = useState(false)
+
+  const mouseX = useMotionValue(0)
+  const mouseY = useMotionValue(0)
+
+  const rotateX = useTransform(mouseY, [-0.5, 0.5], [8, -8])
+  const rotateY = useTransform(mouseX, [-0.5, 0.5], [-8, 8])
+  const springX = useSpring(rotateX, { stiffness: 120, damping: 20 })
+  const springY = useSpring(rotateY, { stiffness: 120, damping: 20 })
+
+  const handleMouseMove = (e) => {
+    const rect = ref.current.getBoundingClientRect()
+    mouseX.set((e.clientX - rect.left) / rect.width - 0.5)
+    mouseY.set((e.clientY - rect.top) / rect.height - 0.5)
+  }
+  const handleMouseLeave = () => {
+    mouseX.set(0)
+    mouseY.set(0)
+    setHovered(false)
+  }
+
+  return (
+    <motion.div
+      ref={ref}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={handleMouseLeave}
+      initial={{ opacity: 0, x: 60 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 1, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+      style={{
+        flex: '0 0 auto',
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        perspective: 800,
+        marginTop: 40,
+      }}
+    >
+      {/* Outer rotating ring */}
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ duration: 14, repeat: Infinity, ease: 'linear' }}
+        style={{
+          position: 'absolute',
+          width: 'clamp(340px, 40vw, 500px)',
+          height: 'clamp(340px, 40vw, 500px)',
+          borderRadius: '62% 38% 46% 54% / 60% 44% 56% 40%',
+          border: '2px solid var(--accent)',
+          opacity: 0.4,
+        }}
+      />
+
+      {/* Inner dashed counter-ring */}
+      <motion.div
+        animate={{ rotate: -360 }}
+        transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+        style={{
+          position: 'absolute',
+          width: 'clamp(315px, 37vw, 470px)',
+          height: 'clamp(315px, 37vw, 470px)',
+          borderRadius: '46% 54% 62% 38% / 44% 56% 44% 56%',
+          border: '1.5px dashed var(--accent)',
+          opacity: 0.2,
+        }}
+      />
+
+      {/* Glow blob — static */}
+      <div
+        style={{
+          position: 'absolute',
+          width: 'clamp(200px, 24vw, 320px)',
+          height: 'clamp(200px, 24vw, 320px)',
+          borderRadius: '50%',
+          background: 'var(--accent)',
+          opacity: 0.1,
+          filter: 'blur(52px)',
+          pointerEvents: 'none',
+        }}
+      />
+
+      {/* 3D-tilting image container */}
+      <motion.div
+        style={{
+          rotateX: springX,
+          rotateY: springY,
+          transformStyle: 'preserve-3d',
+          position: 'relative',
+          zIndex: 1,
+        }}
+      >
+        {/* Blob clip */}
+        <motion.div
+          animate={{
+            borderRadius: hovered
+              ? ['58% 42% 50% 50% / 48% 48% 52% 52%', '48% 52% 42% 58% / 52% 40% 60% 48%']
+              : '58% 42% 50% 50% / 48% 48% 52% 52%',
+          }}
+          transition={{ duration: 3, repeat: hovered ? Infinity : 0, repeatType: 'mirror', ease: 'easeInOut' }}
+          style={{
+            width: 'clamp(310px, 38vw, 490px)',
+            height: 'clamp(400px, 50vw, 580px)',
+            overflow: 'hidden',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.35)',
+          }}
+        >
+          {/* Image with subtle scale on hover */}
+          <motion.img
+            src={`${import.meta.env.BASE_URL}about.png`}
+            alt={name}
+            animate={{ scale: hovered ? 1.06 : 1 }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 30%', display: 'block' }}
+          />
+
+
+        </motion.div>
+      </motion.div>
+    </motion.div>
+  )
+}
+
 /* ── About Hero ── */
 function AboutHero() {
   return (
-    <section
-      style={{
-        paddingTop: 'clamp(100px, 14vw, 160px)',
-        paddingBottom: 'clamp(60px, 8vw, 96px)',
-        background: 'var(--bg)',
-      }}
-    >
+    <section style={{
+      paddingTop: 'clamp(20px, 3vw, 40px)',
+      paddingBottom: 'clamp(40px, 6vw, 72px)',
+      background: 'var(--bg)',
+      overflow: 'hidden',
+    }}>
       <div className="page-container">
         <div style={{
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
-          textAlign: 'center',
-          gap: 24,
+          justifyContent: 'space-between',
+          gap: 'clamp(40px, 6vw, 80px)',
+          flexWrap: 'wrap',
         }}>
 
-          {/* Avatar */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.85 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-            style={{
-              width: 140,
-              height: 140,
-              borderRadius: '50%',
-              overflow: 'hidden',
-              border: '3px solid var(--accent-border)',
-              boxShadow: 'var(--glow)',
-              flexShrink: 0,
-            }}
-          >
-            <img
-              src={`${import.meta.env.BASE_URL}avatar.jpg`}
-              alt="Siva Shanmuga Vadivel"
-              style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 20%' }}
-            />
-          </motion.div>
+          {/* ── Left — text ── */}
+          <div style={{ flex: '1 1 320px', minWidth: 0 }}>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+              style={{ fontSize: '1rem', color: 'var(--text)', marginBottom: 8 }}
+            >
+              Hello, It's Me
+            </motion.p>
 
-          {/* Name + tagline */}
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', marginBottom: 12 }}>
-              Siva Shanmuga Vadivel
-            </h1>
-            <p style={{ color: 'var(--text)', fontSize: 'clamp(1rem, 2vw, 1.2rem)', maxWidth: 480, margin: '0 auto 24px' }}>
-              Developer · Creator · Lifelong learner
-            </p>
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+              style={{ fontSize: 'clamp(1.5rem, 3.8vw, 3.4rem)', lineHeight: 1.1, marginBottom: 16, fontFamily: "'Lilita One', cursive", whiteSpace: 'nowrap' }}
+            >
+              {cfg.personal.name}
+            </motion.h1>
 
-            {/* Social links */}
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              style={{ fontSize: 'clamp(1rem, 2vw, 1.25rem)', marginBottom: 32, color: 'var(--text)' }}
+            >
+              And I'm a{' '}
+              <span style={{ color: 'var(--accent)', fontWeight: 600 }}>
+                {cfg.personal.tagline}
+              </span>
+            </motion.p>
+
+            {/* Social icons */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 36 }}
+            >
               {socials.map(({ label, href, icon }) => (
                 <motion.a
                   key={label}
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  whileHover={{ y: -3, boxShadow: 'var(--glow)' }}
+                  whileHover={{ y: -3, scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                   title={label}
                   style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: 44,
-                    height: 44,
-                    borderRadius: '50%',
-                    background: 'var(--social-bg)',
-                    border: '1px solid var(--border)',
-                    color: 'var(--text-h)',
-                    transition: 'color var(--transition)',
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    width: 42, height: 42, borderRadius: '50%',
+                    background: 'var(--card-bg)',
+                    border: '1.5px solid var(--accent)',
+                    color: 'var(--accent)',
+                    transition: 'background 0.2s, box-shadow 0.2s',
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.background = 'var(--accent)'
+                    e.currentTarget.style.color = '#fff'
+                    e.currentTarget.style.boxShadow = '0 0 18px var(--accent)'
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = 'var(--card-bg)'
+                    e.currentTarget.style.color = 'var(--accent)'
+                    e.currentTarget.style.boxShadow = 'none'
                   }}
                 >
                   {icon}
                 </motion.a>
               ))}
-            </div>
-          </motion.div>
+            </motion.div>
+          </div>
+
+          {/* ── Right — image frame ── */}
+          <ImageFrame name={cfg.personal.name} />
+
         </div>
       </div>
+
+      <style>{`
+        @media (max-width: 700px) {
+          .about-hero-inner { flex-direction: column-reverse !important; text-align: center; }
+          .about-hero-inner .social-row { justify-content: center !important; }
+        }
+      `}</style>
     </section>
   )
 }
