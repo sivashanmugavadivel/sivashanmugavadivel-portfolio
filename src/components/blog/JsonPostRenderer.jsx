@@ -226,7 +226,23 @@ function SectionGallery({ section }) {
   )
 }
 
+// Extract YouTube video ID from any URL format or bare ID
+function extractYouTubeId(input) {
+  if (!input) return null
+  // Already a bare ID (no slashes or dots)
+  if (/^[a-zA-Z0-9_-]{11}$/.test(input)) return input
+  // youtube.com/watch?v=ID
+  const watchMatch = input.match(/[?&]v=([a-zA-Z0-9_-]{11})/)
+  if (watchMatch) return watchMatch[1]
+  // youtu.be/ID or youtube.com/shorts/ID or youtube.com/embed/ID
+  const pathMatch = input.match(/(?:youtu\.be\/|\/shorts\/|\/embed\/|\/v\/)([a-zA-Z0-9_-]{11})/)
+  if (pathMatch) return pathMatch[1]
+  return null
+}
+
 function SectionVideo({ section, color }) {
+  const youtubeId = extractYouTubeId(section.youtubeId)
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -241,9 +257,9 @@ function SectionVideo({ section, color }) {
         boxShadow: `0 4px 24px ${color}22`,
         border: `1px solid ${color}33`,
       }}>
-        {section.youtubeId ? (
+        {youtubeId ? (
           <iframe
-            src={`https://www.youtube.com/embed/${section.youtubeId}`}
+            src={`https://www.youtube.com/embed/${youtubeId}`}
             title={section.caption || 'Video'}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
