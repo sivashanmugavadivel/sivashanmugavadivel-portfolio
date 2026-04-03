@@ -39,6 +39,7 @@ export default function Navbar({ theme, onToggleTheme }) {
 
       {/* ── Transparent nav bar — adds subtle bg when scrolled on non-home pages ── */}
       <motion.nav
+        className="nav-bar"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
@@ -47,7 +48,7 @@ export default function Navbar({ theme, onToggleTheme }) {
           alignItems: 'center',
           justifyContent: 'space-between',
           minHeight: 64,
-          padding: 'max(35px, env(safe-area-inset-top)) 28px 12px',
+          padding: '0 28px',
           gap: 12,
           background: (!isHome && scrolled)
             ? 'var(--navbar-bg)'
@@ -203,6 +204,7 @@ export default function Navbar({ theme, onToggleTheme }) {
         @media (max-width: 768px) {
           .nav-desktop { display: none !important; }
           .nav-hamburger { display: flex !important; }
+          .nav-bar { padding-top: max(35px, env(safe-area-inset-top)) !important; }
         }
       `}</style>
     </header>
