@@ -109,43 +109,117 @@ function SectionImage({ section }) {
 
 function SectionGallery({ section }) {
   const images = section.images || []
+  const [active, setActive] = useState(0)
+
+  const prev = () => setActive(i => (i - 1 + images.length) % images.length)
+  const next = () => setActive(i => (i + 1) % images.length)
+
+  // Position config relative to active index
+  function getPos(i) {
+    const total = images.length
+    let diff = i - active
+    // Wrap around
+    if (diff > total / 2) diff -= total
+    if (diff < -total / 2) diff += total
+
+    if (diff === 0)  return { x: '0%',    scale: 1,    zIndex: 10, rotateY: 0,   opacity: 1,    blur: 0 }
+    if (diff === 1)  return { x: '52%',   scale: 0.78, zIndex: 7,  rotateY: -28, opacity: 0.85, blur: 0 }
+    if (diff === -1) return { x: '-52%',  scale: 0.78, zIndex: 7,  rotateY: 28,  opacity: 0.85, blur: 0 }
+    if (diff === 2)  return { x: '88%',   scale: 0.58, zIndex: 4,  rotateY: -42, opacity: 0.55, blur: 2 }
+    if (diff === -2) return { x: '-88%',  scale: 0.58, zIndex: 4,  rotateY: 42,  opacity: 0.55, blur: 2 }
+    return                  { x: '120%',  scale: 0.4,  zIndex: 1,  rotateY: -55, opacity: 0,    blur: 4 }
+  }
+
   return (
-    <div style={{ margin: '24px 0' }}>
+    <div style={{ margin: '32px 0' }}>
       {section.heading && (
-        <h3 style={{ margin: '0 0 14px', fontSize: '0.9rem', color: 'var(--text-h)', fontWeight: 700 }}>
+        <h3 style={{ margin: '0 0 20px', fontSize: '0.9rem', color: 'var(--text-h)', fontWeight: 700, textAlign: 'center' }}>
           {section.heading}
         </h3>
       )}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-        gap: 10,
-      }}>
-        {images.map((img, i) => (
-          <motion.figure
-            key={i}
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, delay: i * 0.05 }}
-            whileHover={{ scale: 1.03 }}
-            style={{ margin: 0, borderRadius: 10, overflow: 'hidden', cursor: 'pointer' }}
-          >
-            <img
-              src={imgSrc(img.src)}
-              alt={img.alt || ''}
-              style={{ width: '100%', height: 140, objectFit: 'cover', display: 'block' }}
+
+      {/* Carousel */}
+      <div style={{ position: 'relative', height: 320, perspective: 1200, overflow: 'hidden' }}>
+        {images.map((img, i) => {
+          const pos = getPos(i)
+          return (
+            <motion.div
+              key={i}
+              onClick={() => setActive(i)}
+              animate={{
+                x: pos.x, scale: pos.scale, rotateY: pos.rotateY,
+                opacity: pos.opacity, filter: `blur(${pos.blur}px)`,
+                zIndex: pos.zIndex,
+              }}
+              transition={{ type: 'spring', stiffness: 260, damping: 28 }}
+              style={{
+                position: 'absolute',
+                top: '50%', left: '50%',
+                marginTop: -130, marginLeft: -140,
+                width: 280, height: 260,
+                borderRadius: 16, overflow: 'hidden',
+                cursor: i === active ? 'default' : 'pointer',
+                boxShadow: i === active
+                  ? '0 20px 60px rgba(0,0,0,0.35)'
+                  : '0 8px 24px rgba(0,0,0,0.2)',
+                transformStyle: 'preserve-3d',
+              }}
+            >
+              <img
+                src={imgSrc(img.src)}
+                alt={img.alt || ''}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              />
+              {/* Caption overlay on active */}
+              {i === active && img.caption && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  style={{
+                    position: 'absolute', bottom: 0, left: 0, right: 0,
+                    padding: '10px 14px',
+                    background: 'linear-gradient(transparent, rgba(0,0,0,0.6))',
+                    color: '#fff', fontSize: '0.75rem', fontStyle: 'italic',
+                  }}
+                >
+                  {img.caption}
+                </motion.div>
+              )}
+            </motion.div>
+          )
+        })}
+      </div>
+
+      {/* Navigation */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginTop: 20 }}>
+        <motion.button
+          onClick={prev} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+          style={{
+            width: 40, height: 40, borderRadius: '50%', border: '1.5px solid var(--border)',
+            background: 'var(--card-bg)', cursor: 'pointer', color: 'var(--text)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem',
+          }}
+        >←</motion.button>
+        {/* Dots */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          {images.map((_, i) => (
+            <motion.div
+              key={i}
+              onClick={() => setActive(i)}
+              animate={{ width: i === active ? 20 : 6, background: i === active ? 'var(--accent)' : 'var(--border)' }}
+              style={{ height: 6, borderRadius: 999, cursor: 'pointer' }}
+              transition={{ duration: 0.25 }}
             />
-            {img.caption && (
-              <figcaption style={{
-                fontSize: '0.7rem', padding: '5px 8px',
-                background: 'var(--card-bg)', color: 'var(--text)', opacity: 0.7,
-              }}>
-                {img.caption}
-              </figcaption>
-            )}
-          </motion.figure>
-        ))}
+          ))}
+        </div>
+        <motion.button
+          onClick={next} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+          style={{
+            width: 40, height: 40, borderRadius: '50%', border: '1.5px solid var(--border)',
+            background: 'var(--card-bg)', cursor: 'pointer', color: 'var(--text)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem',
+          }}
+        >→</motion.button>
       </div>
     </div>
   )
