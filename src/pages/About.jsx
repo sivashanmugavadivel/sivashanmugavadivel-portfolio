@@ -143,6 +143,7 @@ function ImageFrame({ name }) {
     >
       {/* Outer rotating ring */}
       <motion.div
+        className="about-image-ring-outer"
         animate={{ rotate: 360 }}
         transition={{ duration: 14, repeat: Infinity, ease: 'linear' }}
         style={{
@@ -157,6 +158,7 @@ function ImageFrame({ name }) {
 
       {/* Inner dashed counter-ring */}
       <motion.div
+        className="about-image-ring-inner"
         animate={{ rotate: -360 }}
         transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
         style={{
@@ -195,6 +197,7 @@ function ImageFrame({ name }) {
       >
         {/* Blob clip */}
         <motion.div
+          className="about-image-blob"
           animate={{
             borderRadius: hovered
               ? ['58% 42% 50% 50% / 48% 48% 52% 52%', '48% 52% 42% 58% / 52% 40% 60% 48%']
@@ -232,9 +235,9 @@ function AboutHero() {
       paddingBottom: 'clamp(40px, 6vw, 72px)',
       background: 'var(--bg)',
       overflow: 'hidden',
-    }}>
+    }} className="about-hero-section">
       <div className="page-container">
-        <div style={{
+        <div className="about-hero-inner" style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -257,7 +260,7 @@ function AboutHero() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-              style={{ fontSize: 'clamp(1.5rem, 3.8vw, 3.4rem)', lineHeight: 1.1, marginBottom: 16, fontFamily: "'Lilita One', cursive", whiteSpace: 'nowrap' }}
+              style={{ fontSize: 'clamp(1.5rem, 3.8vw, 3.4rem)', lineHeight: 1.1, marginBottom: 16, fontFamily: "'Lilita One', cursive" }}
             >
               {cfg.personal.name}
             </motion.h1>
@@ -322,9 +325,13 @@ function AboutHero() {
       </div>
 
       <style>{`
-        @media (max-width: 700px) {
-          .about-hero-inner { flex-direction: column-reverse !important; text-align: center; }
+        @media (max-width: 768px) {
+          .about-hero-section { padding-top: 90px !important; }
+          .about-hero-inner { flex-direction: column-reverse !important; text-align: center; align-items: center !important; }
           .about-hero-inner .social-row { justify-content: center !important; }
+          .about-image-ring-outer { width: 260px !important; height: 260px !important; }
+          .about-image-ring-inner { width: 240px !important; height: 240px !important; }
+          .about-image-blob { width: 220px !important; height: 280px !important; }
         }
       `}</style>
     </section>
