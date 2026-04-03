@@ -98,6 +98,7 @@ const FULL_NAME = 'SIVA SHANMUGA VADIVEL'
 function TypingName() {
   const [displayed, setDisplayed] = useState('')
   const [showCursor, setShowCursor] = useState(true)
+  const isMobile = window.innerWidth <= 768
 
   useEffect(() => {
     let i = 0
@@ -125,7 +126,7 @@ function TypingName() {
       style={{
         fontFamily: "'Lilita One', cursive",
         fontWeight: 400,
-        fontSize: 'clamp(2rem, 5.5vw, 5.5rem)',
+        fontSize: isMobile ? 'clamp(1.1rem, 5vw, 1.6rem)' : 'clamp(2rem, 5.5vw, 5.5rem)',
         lineHeight: 1,
         letterSpacing: '0.02em',
         color: '#ffffff',
@@ -161,6 +162,7 @@ function HeroSection() {
   // No loading screen on refresh (sessionStorage already set) — skip delays
   const hasLoadingScreen = !sessionStorage.getItem('portfolio_loaded')
   const avatarDelay = hasLoadingScreen ? 3.0 : 0
+  const isMobileHero = window.innerWidth <= 768
 
   useEffect(() => { setMountKey(k => k + 1) }, [])
 
@@ -228,7 +230,7 @@ function HeroSection() {
           position: 'absolute',
           top: 0, left: '50%',
           x: '-50%',
-          y: '-5%',
+          y: isMobileHero ? '25%' : '-5%',
           zIndex: 3,
           pointerEvents: 'none',
           display: 'flex',
