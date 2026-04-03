@@ -1,0 +1,126 @@
+{
+  "personal": {
+    "name": "Siva Shanmuga Vadivel",
+    "shortName": "Siva",
+    "tagline": "Developer · Creator · Lifelong learner",
+    "bio": "Building modern & interactive web experiences. Open for freelance & collaboration.",
+    "location": "India",
+    "availability": "Available for freelance",
+    "avatar": "avatar.jpg",
+    "avatarCutout": "Avatar_nbc1.png",
+    "logo": "Logo.png"
+  },
+
+  "contact": {
+    "email": "sivashanmugavadivelofficial@gmail.com",
+    "phone": "",
+    "timezone": "IST (UTC+5:30)"
+  },
+
+  "social": {
+    "instagram": {
+      "href": "https://www.instagram.com/sivashanmugavadivelv/?utm_source=ig_embed&ig_rid=127ec84d-c6d1-4c45-b121-48d3605e95e5",
+      "handle": "@sivashanmugavadivelv"
+    },
+    "youtube": {
+      "href": "https://www.youtube.com/c/SIVASHANMUGAVADIVEL?sub_confirmation=1",
+      "handle": "SIVA SHANMUGA VADIVEL"
+    },
+    "linkedin": {
+      "href": "https://in.linkedin.com/in/sivashanmugavadivel",
+      "handle": "@sivashanmugavadivel"
+    },
+    "facebook": {
+      "href": "https://www.facebook.com/siva.shanmugavadivel.18?mibextid=ZbWKwL",
+      "handle": "Siva Shanmuga Vadivel"
+    },
+    "facebookPage": {
+      "href": "https://www.facebook.com/Kangeyam.638701?mibextid=ZbWKwL",
+      "handle": "Kangeyam Kaalai"
+    },
+    "github": {
+      "href": "https://github.com/sivashanmugavadivel",
+      "handle": "@sivashanmugavadivel"
+    },
+    "twitter": {
+      "href": "https://x.com/vadivel97",
+      "handle": "@vadivel97"
+    }
+  },
+
+  "seo": {
+    "title": "Siva Shanmuga Vadivel",
+    "description": "Personal portfolio, blog, gallery and videos.",
+    "ogImage": "avatar.jpg",
+    "siteUrl": "https://sivashanmugavadivel.github.io/sivashanmugavadivel-portfolio/"
+  },
+
+  "hero": {
+    "headline": "SIVA SHANMUGA VADIVEL",
+    "subtext": "Building modern & interactive\nweb experiences."
+  },
+
+  "about": {
+    "heading": "Nice to meet you",
+    "paragraphs": [
+      "I'm a passionate developer who loves building beautiful, performant web experiences. I care deeply about the details — from pixel-perfect layouts to smooth animations that make interfaces feel alive.",
+      "When I'm not coding, you'll find me taking photos, watching tutorials, or exploring new places."
+    ],
+    "highlights": [
+      { "icon": "💻", "label": "Web Development", "desc": "Modern React & CSS" },
+      { "icon": "🎨", "label": "UI / UX Design",  "desc": "Clean, thoughtful interfaces" },
+      { "icon": "✍️", "label": "Writing",          "desc": "Sharing what I learn" }
+    ]
+  },
+
+  "journey": [
+    {
+      "year": "2024 – Present",
+      "role": "Senior Frontend Developer",
+      "org": "Freelance / Open Source",
+      "desc": "Building modern web applications and contributing to open-source projects."
+    },
+    {
+      "year": "2022 – 2024",
+      "role": "Frontend Developer",
+      "org": "Tech Startup",
+      "desc": "Led frontend architecture for a SaaS product. Built a design system from scratch."
+    },
+    {
+      "year": "2020 – 2022",
+      "role": "Junior Developer",
+      "org": "Digital Agency",
+      "desc": "Delivered responsive websites and landing pages for clients across industries."
+    },
+    {
+      "year": "2016 – 2020",
+      "role": "B.Sc. Computer Science",
+      "org": "University",
+      "desc": "Graduated with honours. Focused on algorithms, software engineering, and web tech."
+    }
+  ],
+
+  "skills": [
+    {
+      "category": "Frontend",
+      "items": ["React", "TypeScript", "CSS / Sass", "Framer Motion", "Next.js"]
+    },
+    {
+      "category": "Backend",
+      "items": ["Node.js", "Python", "REST APIs", "PostgreSQL", "MongoDB"]
+    },
+    {
+      "category": "Tools",
+      "items": ["Git", "Vite", "Figma", "VS Code", "Linux"]
+    },
+    {
+      "category": "Other",
+      "items": ["Photography", "Video Editing", "Technical Writing", "UI Design"]
+    }
+  ],
+
+  "footer": {
+    "copyright": "Siva Shanmuga Vadivel",
+    "builtWith": "Built with React & Framer Motion"
+  }
+}
