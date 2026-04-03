@@ -10,6 +10,12 @@
   "servings": "1",
   "sections": [
     {
+  "type": "gallery",
+  "images": [
+        { "src": "/blog/photos/Spicy-Omelet-with-Mushrooms.jpg", "alt": "First photo" }
+      ]
+    },
+    {
       "type": "text",
       "body": "If you're looking for a quick, flavorful, and protein-packed breakfast, this Mushroom Masala Omelet is a perfect choice. Bold spices, earthy mushrooms, and fluffy eggs come together in minutes — a simple yet satisfying way to start your day."
     },

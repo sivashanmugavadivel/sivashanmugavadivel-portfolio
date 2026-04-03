@@ -30,13 +30,26 @@ function SectionText({ section }) {
 }
 
 function SectionImage({ section }) {
+  const align = section.align || 'center' // 'left' | 'center' | 'right'
+
+  const alignStyles = {
+    left:   { marginRight: 'auto', marginLeft: 0 },
+    center: { marginRight: 'auto', marginLeft: 'auto' },
+    right:  { marginRight: 0,      marginLeft: 'auto' },
+  }
+  const widthStyles = {
+    left:   { width: '60%' },
+    center: { width: '100%' },
+    right:  { width: '60%' },
+  }
+
   return (
     <motion.figure
       initial={{ opacity: 0, y: 12 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5 }}
-      style={{ margin: '24px 0' }}
+      style={{ margin: '24px 0', ...alignStyles[align], ...widthStyles[align] }}
     >
       <img
         src={imgSrc(section.src)}
@@ -49,7 +62,8 @@ function SectionImage({ section }) {
       />
       {section.caption && (
         <figcaption style={{
-          textAlign: 'center', fontSize: '0.78rem', color: 'var(--text)',
+          textAlign: align === 'center' ? 'center' : align,
+          fontSize: '0.78rem', color: 'var(--text)',
           opacity: 0.6, marginTop: 8, fontStyle: 'italic',
         }}>
           {section.caption}
