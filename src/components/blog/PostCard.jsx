@@ -81,38 +81,37 @@ export default function PostCard({ slug, frontmatter }) {
         </div>
 
         {/* BACK */}
-        <Link to={`/blog/${slug}`} style={{ textDecoration: 'none' }}>
+        <Link to={`/blog/${slug}`} style={{
+          textDecoration: 'none',
+          position: 'absolute', inset: 0,
+          backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden',
+          transform: 'rotateY(180deg)',
+          borderRadius: 16, overflow: 'hidden',
+          background: `linear-gradient(145deg, ${color}ee 0%, ${color}bb 100%)`,
+          display: 'flex', flexDirection: 'column', gap: 12, padding: 24,
+          justifyContent: 'space-between',
+        }}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {tags.map(tag => (
+              <span key={tag} style={{
+                fontSize: '0.68rem', fontWeight: 700, padding: '3px 9px', borderRadius: 999,
+                background: 'rgba(255,255,255,0.25)', color: '#fff',
+              }}>{tag}</span>
+            ))}
+          </div>
+          <p style={{
+            margin: 0, fontSize: '0.85rem', color: 'rgba(255,255,255,0.92)', lineHeight: 1.6,
+            display: '-webkit-box', WebkitLineClamp: 4,
+            WebkitBoxOrient: 'vertical', overflow: 'hidden',
+          }}>{excerpt}</p>
           <div style={{
-            position: 'absolute', inset: 0,
-            backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden',
-            transform: 'rotateY(180deg)',
-            borderRadius: 16, overflow: 'hidden',
-            background: `linear-gradient(145deg, ${color}ee 0%, ${color}bb 100%)`,
-            display: 'flex', flexDirection: 'column', gap: 12, padding: 24,
-            justifyContent: 'space-between',
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            padding: '10px 20px', borderRadius: 999,
+            background: 'rgba(255,255,255,0.22)',
+            color: '#fff', fontWeight: 700, fontSize: '0.88rem',
+            alignSelf: 'flex-start', border: '1.5px solid rgba(255,255,255,0.4)',
           }}>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              {tags.map(tag => (
-                <span key={tag} style={{
-                  fontSize: '0.68rem', fontWeight: 700, padding: '3px 9px', borderRadius: 999,
-                  background: 'rgba(255,255,255,0.25)', color: '#fff',
-                }}>{tag}</span>
-              ))}
-            </div>
-            <p style={{
-              margin: 0, fontSize: '0.85rem', color: 'rgba(255,255,255,0.92)', lineHeight: 1.6,
-              display: '-webkit-box', WebkitLineClamp: 4,
-              WebkitBoxOrient: 'vertical', overflow: 'hidden',
-            }}>{excerpt}</p>
-            <div style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              padding: '10px 20px', borderRadius: 999,
-              background: 'rgba(255,255,255,0.22)',
-              color: '#fff', fontWeight: 700, fontSize: '0.88rem',
-              alignSelf: 'flex-start', border: '1.5px solid rgba(255,255,255,0.4)',
-            }}>
-              Read Post →
-            </div>
+            Read Post →
           </div>
         </Link>
       </motion.div>
