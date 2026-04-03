@@ -37,7 +37,7 @@ const SectionHeading = ({ heading, color }) => heading ? (
   }}>{heading}</h3>
 ) : null
 
-function SectionImage({ section }) {
+function SectionImage({ section, color }) {
   const align = section.align || 'center' // 'left' | 'center' | 'right'
   const float = section.float // 'left' | 'right' — wraps text around image
   const size = section.size || 'full'
@@ -48,7 +48,7 @@ function SectionImage({ section }) {
   if (float) {
     return (
       <>
-        <SectionHeading heading={section.heading} />
+        <SectionHeading heading={section.heading} color={color} />
       <motion.figure
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
@@ -90,7 +90,7 @@ function SectionImage({ section }) {
 
   return (
     <>
-    <SectionHeading heading={section.heading} />
+    <SectionHeading heading={section.heading} color={color} />
     <motion.figure
       initial={{ opacity: 0, y: 12 }}
       whileInView={{ opacity: 1, y: 0 }}
@@ -264,7 +264,7 @@ function SectionVideo({ section, color }) {
       transition={{ duration: 0.5 }}
       style={{ margin: '24px 0' }}
     >
-      <SectionHeading heading={section.heading} />
+      <SectionHeading heading={section.heading} color={color} />
       <div style={{
         position: 'relative', paddingBottom: '56.25%', height: 0,
         borderRadius: 12, overflow: 'hidden',
@@ -555,7 +555,7 @@ export default function JsonPostRenderer({ sections = [], meta, color }) {
   function renderSection(section, i) {
     switch (section.type) {
       case 'text':             return <SectionText key={i} section={section} />
-      case 'image':            return <SectionImage key={i} section={section} />
+      case 'image':            return <SectionImage key={i} section={section} color={c} />
       case 'gallery':          return <SectionGallery key={i} section={section} />
       case 'video':            return <SectionVideo key={i} section={section} color={c} />
       case 'ingredient-group': return <SectionIngredientGroup key={i} section={section} color={c} />
