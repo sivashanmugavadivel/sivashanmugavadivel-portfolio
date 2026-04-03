@@ -50,11 +50,9 @@ export default function Navbar({ theme, onToggleTheme }) {
           minHeight: 64,
           padding: '0 28px',
           gap: 12,
-          background: (!isHome && scrolled)
-            ? 'var(--navbar-bg)'
-            : 'transparent',
-          backdropFilter: (!isHome && scrolled) ? 'blur(16px)' : 'none',
-          WebkitBackdropFilter: (!isHome && scrolled) ? 'blur(16px)' : 'none',
+          background: 'transparent',
+          backdropFilter: 'none',
+          WebkitBackdropFilter: 'none',
           transition: 'background 0.3s ease',
         }}>
 
