@@ -126,7 +126,7 @@ function TypingName() {
       style={{
         fontFamily: "'Lilita One', cursive",
         fontWeight: 400,
-        fontSize: isMobile ? 'clamp(1.1rem, 5vw, 1.6rem)' : 'clamp(2rem, 5.5vw, 5.5rem)',
+        fontSize: isMobile ? 'clamp(1.4rem, 6vw, 2rem)' : 'clamp(2rem, 5.5vw, 5.5rem)',
         lineHeight: 1,
         letterSpacing: '0.02em',
         color: '#ffffff',
@@ -230,7 +230,7 @@ function HeroSection() {
           position: 'absolute',
           top: 0, left: '50%',
           x: '-50%',
-          y: isMobileHero ? '25%' : '-5%',
+          y: isMobileHero ? '35%' : '-5%',
           zIndex: 3,
           pointerEvents: 'none',
           display: 'flex',
@@ -245,7 +245,7 @@ function HeroSection() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1.2, delay: avatarDelay, ease: [0.25, 0.1, 0.25, 1] }}
           style={{
-            height: 'clamp(60vh, 90vw, 130vh)',
+            height: isMobileHero ? 'clamp(70vh, 110vw, 100vh)' : 'clamp(60vh, 90vw, 130vh)',
             width: 'auto',
             display: 'block',
             transformOrigin: 'bottom center',
