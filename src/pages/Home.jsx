@@ -245,7 +245,7 @@ function HeroSection() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1.2, delay: avatarDelay, ease: [0.25, 0.1, 0.25, 1] }}
           style={{
-            height: isMobileHero ? 'clamp(88vh, 140vw, 122vh)' : 'clamp(60vh, 90vw, 130vh)',
+            height: isMobileHero ? 'clamp(95vh, 150vw, 130vh)' : 'clamp(60vh, 90vw, 130vh)',
             width: 'auto',
             display: 'block',
             transformOrigin: 'bottom center',
