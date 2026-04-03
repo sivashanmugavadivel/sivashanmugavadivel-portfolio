@@ -13,37 +13,59 @@ const SLIDESHOW_IMAGES = [
   `${BASE}slideshareImages/ss4.jpg`,
 ]
 
+const isMobileGallery = window.innerWidth <= 768
+
 // Fixed scatter positions — spread within screen bounds
-const CARD_CONFIGS = [
-  { x: '-280px', y: '-120px', rotate: -14 },
-  { x:  '220px', y: '-140px', rotate:  12 },
-  { x: '-220px', y:  '110px', rotate:   9 },
-  { x:  '260px', y:   '90px', rotate: -11 },
+const CARD_CONFIGS = isMobileGallery ? [
+  { x: '-28vw', y: '-22vh', rotate: -12 },
+  { x:  '28vw', y: '-22vh', rotate:  10 },
+  { x: '-28vw', y:  '22vh', rotate:   8 },
+  { x:  '28vw', y:  '22vh', rotate:  -9 },
+] : [
+  { x: '-260px', y: '-110px', rotate: -12 },
+  { x:  '200px', y: '-130px', rotate:  10 },
+  { x: '-200px', y:  '100px', rotate:   8 },
+  { x:  '240px', y:   '85px', rotate:  -9 },
 ]
 
-// Each card flies in from a different off-screen origin
+// Each card flies in from a closer off-screen origin (softer entry)
 const ORIGINS = [
-  { x: '-120vw', y: '-60vh', rotate: -40 },
-  { x:  '120vw', y: '-80vh', rotate:  40 },
-  { x: '-100vw', y:  '80vh', rotate: -30 },
-  { x:  '100vw', y:  '60vh', rotate:  30 },
+  { x: '-60vw', y: '-40vh', rotate: -20 },
+  { x:  '60vw', y: '-40vh', rotate:  20 },
+  { x: '-60vw', y:  '40vh', rotate: -15 },
+  { x:  '60vw', y:  '40vh', rotate:  15 },
 ]
 
 function PolaroidIntro({ onDone }) {
-  const [phase, setPhase] = useState('fly-in') // fly-in → hold → fly-out → done
+  const [phase, setPhase] = useState('loading')
+  const [loaded, setLoaded] = useState(0)
+
+  // Preload all images first, then start animation
+  useEffect(() => {
+    let count = 0
+    SLIDESHOW_IMAGES.forEach(src => {
+      const img = new Image()
+      img.onload = img.onerror = () => {
+        count++
+        setLoaded(count)
+      }
+      img.src = src
+    })
+  }, [])
 
   useEffect(() => {
-    // After all cards land (~1.4s), hold briefly, then scatter out
-    const hold    = setTimeout(() => setPhase('fly-out'), 2200)
-    const done    = setTimeout(() => onDone(),            3200)
+    if (loaded < SLIDESHOW_IMAGES.length) return
+    setPhase('fly-in')
+    const hold = setTimeout(() => setPhase('fly-out'), 2800)
+    const done = setTimeout(() => onDone(),            3800)
     return () => { clearTimeout(hold); clearTimeout(done) }
-  }, [onDone])
+  }, [loaded, onDone])
 
   return (
     <motion.div
       initial={{ opacity: 1 }}
       animate={{ opacity: phase === 'fly-out' ? 0 : 1 }}
-      transition={{ duration: 0.6, delay: phase === 'fly-out' ? 0.4 : 0 }}
+      transition={{ duration: 0.8, delay: phase === 'fly-out' ? 0.3 : 0 }}
       style={{
         position: 'fixed', inset: 0, zIndex: 200,
         background: 'var(--bg)',
@@ -51,7 +73,7 @@ function PolaroidIntro({ onDone }) {
         pointerEvents: phase === 'fly-out' ? 'none' : 'all',
       }}
     >
-      {SLIDESHOW_IMAGES.map((src, i) => {
+      {phase !== 'loading' && SLIDESHOW_IMAGES.map((src, i) => {
         const origin = ORIGINS[i]
         const land   = CARD_CONFIGS[i]
         return (
@@ -59,16 +81,16 @@ function PolaroidIntro({ onDone }) {
             key={src}
             initial={{ x: origin.x, y: origin.y, rotate: origin.rotate, opacity: 0 }}
             animate={phase === 'fly-out'
-              ? { x: ORIGINS[(i + 2) % 4].x, y: ORIGINS[(i + 2) % 4].y, rotate: origin.rotate * -1.5, opacity: 0 }
+              ? { x: ORIGINS[(i + 2) % 4].x, y: ORIGINS[(i + 2) % 4].y, rotate: origin.rotate * -1.2, opacity: 0 }
               : { x: land.x, y: land.y, rotate: land.rotate, opacity: 1 }
             }
             transition={phase === 'fly-out'
-              ? { duration: 0.55, delay: i * 0.06, ease: [0.4, 0, 1, 1] }
-              : { duration: 0.65, delay: i * 0.12, ease: [0.16, 1, 0.3, 1] }
+              ? { duration: 0.7, delay: i * 0.05, ease: [0.4, 0, 0.6, 1] }
+              : { duration: 1.0, delay: i * 0.15, ease: [0.16, 1, 0.3, 1] }
             }
             style={{
               position: 'absolute',
-              width: 'clamp(180px, 22vw, 280px)',
+              width: isMobileGallery ? 'clamp(100px, 36vw, 150px)' : 'clamp(180px, 22vw, 280px)',
               background: '#fff',
               borderRadius: 4,
               boxShadow: '0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.1)',
