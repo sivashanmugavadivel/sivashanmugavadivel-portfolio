@@ -230,7 +230,7 @@ function HeroSection() {
           position: 'absolute',
           top: 0, left: '50%',
           x: '-50%',
-          y: isMobileHero ? '30%' : '-5%',
+          y: isMobileHero ? '22%' : '-5%',
           zIndex: 3,
           pointerEvents: 'none',
           display: 'flex',
