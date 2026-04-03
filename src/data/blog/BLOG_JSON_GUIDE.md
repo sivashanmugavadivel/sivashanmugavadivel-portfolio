@@ -64,11 +64,12 @@ Prose content. Supports markdown (`**bold**`, `*italic*`, `[links](url)`, etc.)
 ---
 
 ### `image`
-Single image block. Supports alignment and size control.
+Single image block. Supports heading, alignment, float, and size control.
 
 ```json
 {
   "type": "image",
+  "heading": "The Final Dish",
   "src": "/blog/photos/my-photo.jpg",
   "alt": "Description of image",
   "caption": "Optional caption below image",
@@ -77,6 +78,19 @@ Single image block. Supports alignment and size control.
   "maxHeight": 420
 }
 ```
+
+**All fields:**
+
+| Field | Required | Description |
+|---|---|---|
+| `src` | ✅ | Path to image — `/blog/photos/file.jpg` or external URL |
+| `alt` | ✅ | Accessibility description |
+| `heading` | ⬜ | Bold uppercase label shown above the image |
+| `caption` | ⬜ | Small italic text shown below the image |
+| `align` | ⬜ | Standalone block alignment (see below) |
+| `float` | ⬜ | Float beside text (see below) — use instead of `align` |
+| `size` | ⬜ | Image width (see below) |
+| `maxHeight` | ⬜ | Max height in px before cropping (default: `420`) |
 
 **`align` options** — standalone image block:
 
@@ -110,7 +124,7 @@ Single image block. Supports alignment and size control.
 ---
 
 ### `gallery`
-Multiple images in a responsive grid.
+Multiple images in a **3D fan carousel** with prev/next navigation and dot indicators.
 
 ```json
 {
@@ -132,7 +146,8 @@ YouTube embed or local video file.
 ```json
 {
   "type": "video",
-  "youtubeId": "dQw4w9WgXcQ",
+  "heading": "Watch How to Make It",
+  "youtubeId": "https://youtube.com/shorts/g2ZtruzKL40",
   "caption": "Optional caption below video"
 }
 ```
@@ -141,13 +156,26 @@ For a local video file:
 ```json
 {
   "type": "video",
+  "heading": "Behind the Scenes",
   "src": "/blog/videos/my-video.mp4",
   "caption": "Optional caption"
 }
 ```
 
-> `youtubeId` is the part after `?v=` in the YouTube URL.
-> Example: `https://youtube.com/watch?v=dQw4w9WgXcQ` → `"youtubeId": "dQw4w9WgXcQ"`
+> **`youtubeId` accepts any YouTube URL format — just paste the full URL:**
+> - `"https://youtube.com/watch?v=dQw4w9WgXcQ"`
+> - `"https://youtu.be/dQw4w9WgXcQ"`
+> - `"https://youtube.com/shorts/dQw4w9WgXcQ"`
+> - `"dQw4w9WgXcQ"` (bare ID also works)
+
+**All fields:**
+
+| Field | Required | Description |
+|---|---|---|
+| `youtubeId` | ⬜ | YouTube URL or video ID |
+| `src` | ⬜ | Local video file path (use if no youtubeId) |
+| `heading` | ⬜ | Bold uppercase label shown above the video |
+| `caption` | ⬜ | Small italic text shown below the video |
 
 ---
 

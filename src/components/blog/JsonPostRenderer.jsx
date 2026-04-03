@@ -30,6 +30,13 @@ function SectionText({ section }) {
   )
 }
 
+const SectionHeading = ({ heading, color }) => heading ? (
+  <h3 style={{
+    margin: '0 0 10px', fontSize: '0.88rem', fontWeight: 800,
+    textTransform: 'uppercase', letterSpacing: '0.08em', color: color || 'var(--text-h)',
+  }}>{heading}</h3>
+) : null
+
 function SectionImage({ section }) {
   const align = section.align || 'center' // 'left' | 'center' | 'right'
   const float = section.float // 'left' | 'right' — wraps text around image
@@ -40,6 +47,8 @@ function SectionImage({ section }) {
   // Float mode — image sits inside text flow, text wraps around it
   if (float) {
     return (
+      <>
+        <SectionHeading heading={section.heading} />
       <motion.figure
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
@@ -68,6 +77,7 @@ function SectionImage({ section }) {
           </figcaption>
         )}
       </motion.figure>
+      </>
     )
   }
 
@@ -79,12 +89,14 @@ function SectionImage({ section }) {
   }
 
   return (
+    <>
+    <SectionHeading heading={section.heading} />
     <motion.figure
       initial={{ opacity: 0, y: 12 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5 }}
-      style={{ margin: '24px 0', width: resolvedWidth, ...alignStyles[align] }}
+      style={{ margin: '4px 0 24px', width: resolvedWidth, ...alignStyles[align] }}
     >
       <img
         src={imgSrc(section.src)}
@@ -105,6 +117,7 @@ function SectionImage({ section }) {
         </figcaption>
       )}
     </motion.figure>
+    </>
   )
 }
 
@@ -251,6 +264,7 @@ function SectionVideo({ section, color }) {
       transition={{ duration: 0.5 }}
       style={{ margin: '24px 0' }}
     >
+      <SectionHeading heading={section.heading} />
       <div style={{
         position: 'relative', paddingBottom: '56.25%', height: 0,
         borderRadius: 12, overflow: 'hidden',
