@@ -31,16 +31,15 @@ function SectionText({ section }) {
 
 function SectionImage({ section }) {
   const align = section.align || 'center' // 'left' | 'center' | 'right'
+  // size: 'small' (30%), 'medium' (50%), 'large' (75%), 'full' (100%), or exact e.g. '400px'
+  const size = section.size || 'full'
+  const sizeMap = { small: '30%', medium: '50%', large: '75%', full: '100%' }
+  const resolvedWidth = sizeMap[size] || size
 
   const alignStyles = {
     left:   { marginRight: 'auto', marginLeft: 0 },
     center: { marginRight: 'auto', marginLeft: 'auto' },
     right:  { marginRight: 0,      marginLeft: 'auto' },
-  }
-  const widthStyles = {
-    left:   { width: '60%' },
-    center: { width: '100%' },
-    right:  { width: '60%' },
   }
 
   return (
@@ -49,14 +48,14 @@ function SectionImage({ section }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5 }}
-      style={{ margin: '24px 0', ...alignStyles[align], ...widthStyles[align] }}
+      style={{ margin: '24px 0', width: resolvedWidth, ...alignStyles[align] }}
     >
       <img
         src={imgSrc(section.src)}
         alt={section.alt || ''}
         style={{
           width: '100%', borderRadius: 12, display: 'block',
-          objectFit: 'cover', maxHeight: 420,
+          objectFit: 'cover', maxHeight: section.maxHeight || 420,
           boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
         }}
       />
