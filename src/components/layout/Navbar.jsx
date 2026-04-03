@@ -47,7 +47,7 @@ export default function Navbar({ theme, onToggleTheme }) {
           alignItems: 'center',
           justifyContent: 'space-between',
           minHeight: 64,
-          padding: 'max(32px, env(safe-area-inset-top)) 28px 12px',
+          padding: 'max(35px, env(safe-area-inset-top)) 28px 12px',
           gap: 12,
           background: (!isHome && scrolled)
             ? 'var(--navbar-bg)'
