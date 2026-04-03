@@ -35,7 +35,7 @@ export default function Navbar({ theme, onToggleTheme }) {
   const useWhite = isHome && !scrolled
 
   return (
-    <header style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, paddingTop: 'env(safe-area-inset-top)' }}>
+    <header style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100 }}>
 
       {/* ── Transparent nav bar — adds subtle bg when scrolled on non-home pages ── */}
       <motion.nav
@@ -46,8 +46,8 @@ export default function Navbar({ theme, onToggleTheme }) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          height: 64,
-          padding: '0 28px',
+          minHeight: 64,
+          padding: 'max(12px, env(safe-area-inset-top)) 28px 12px',
           gap: 12,
           background: (!isHome && scrolled)
             ? 'var(--navbar-bg)'
