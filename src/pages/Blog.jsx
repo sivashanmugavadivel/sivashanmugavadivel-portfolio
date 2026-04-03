@@ -14,10 +14,10 @@ const itemVariants = {
 }
 
 export default function Blog() {
-  const [posts, setPosts] = useState([])
+  const [posts, setPosts] = useState(null)
 
   useEffect(() => {
-    loadAllPosts().then(setPosts)
+    loadAllPosts().then(setPosts).catch(() => setPosts([]))
   }, [])
 
   return (
@@ -35,8 +35,10 @@ export default function Blog() {
         </p>
       </motion.div>
 
-      {posts.length === 0 ? (
+      {posts === null ? (
         <p style={{ textAlign: 'center', color: 'var(--text)' }}>Loading posts…</p>
+      ) : posts.length === 0 ? (
+        <p style={{ textAlign: 'center', color: 'var(--text)' }}>No posts found.</p>
       ) : (
         <motion.div
           className="grid-3"
