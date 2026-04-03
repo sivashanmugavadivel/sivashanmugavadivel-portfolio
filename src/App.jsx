@@ -20,6 +20,7 @@ import Blog from './pages/Blog'
 import BlogPost from './pages/BlogPost'
 import NotFound from './pages/NotFound'
 import PrivacyPolicy from './pages/PrivacyPolicy'
+import BlogDesignShowcase from './pages/BlogDesignShowcase'
 
 import './App.css'
 
@@ -35,6 +36,7 @@ function AppRoutes() {
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogPost />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/blog-design-picker" element={<BlogDesignShowcase />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </PageWrapper>
