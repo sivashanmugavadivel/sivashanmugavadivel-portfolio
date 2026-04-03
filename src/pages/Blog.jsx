@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { Link } from 'react-router-dom'
 import { loadAllPosts } from '../hooks/usePosts'
 import PostCard from '../components/blog/PostCard'
 
@@ -33,6 +34,21 @@ export default function Blog() {
         <p style={{ maxWidth: 480, margin: '12px auto 0', color: 'var(--text)' }}>
           Thoughts on web development, design, and technology.
         </p>
+        <Link to="/blog-design-picker">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.96 }}
+            style={{
+              marginTop: 20, padding: '10px 24px', borderRadius: 999,
+              background: 'var(--accent)', color: '#fff',
+              border: 'none', cursor: 'pointer',
+              fontWeight: 700, fontSize: '0.88rem',
+              boxShadow: '0 4px 16px rgba(124,58,237,0.35)',
+            }}
+          >
+            🎨 Pick a card design
+          </motion.button>
+        </Link>
       </motion.div>
 
       {posts === null ? (
