@@ -121,7 +121,7 @@ function SectionImage({ section, color }) {
   )
 }
 
-function SectionGallery({ section }) {
+function SectionGallery({ section, color }) {
   const images = section.images || []
   const [active, setActive] = useState(0)
 
@@ -147,7 +147,7 @@ function SectionGallery({ section }) {
   return (
     <div style={{ margin: '32px 0' }}>
       {section.heading && (
-        <h3 style={{ margin: '0 0 20px', fontSize: '0.9rem', color: 'var(--text-h)', fontWeight: 700, textAlign: 'center' }}>
+        <h3 style={{ margin: '0 0 20px', fontSize: '0.88rem', color: color || 'var(--text-h)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'center' }}>
           {section.heading}
         </h3>
       )}
@@ -556,7 +556,7 @@ export default function JsonPostRenderer({ sections = [], meta, color }) {
     switch (section.type) {
       case 'text':             return <SectionText key={i} section={section} />
       case 'image':            return <SectionImage key={i} section={section} color={c} />
-      case 'gallery':          return <SectionGallery key={i} section={section} />
+      case 'gallery':          return <SectionGallery key={i} section={section} color={c} />
       case 'video':            return <SectionVideo key={i} section={section} color={c} />
       case 'ingredient-group': return <SectionIngredientGroup key={i} section={section} color={c} />
       case 'steps':            return <SectionSteps key={i} section={section} color={c} />
