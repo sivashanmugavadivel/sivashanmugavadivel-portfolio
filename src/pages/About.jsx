@@ -102,6 +102,7 @@ const socials = [
 function ImageFrame({ name }) {
   const ref = useRef(null)
   const [hovered, setHovered] = useState(false)
+  const isMobile = window.innerWidth <= 768
 
   const mouseX = useMotionValue(0)
   const mouseY = useMotionValue(0)
@@ -148,8 +149,8 @@ function ImageFrame({ name }) {
         transition={{ duration: 14, repeat: Infinity, ease: 'linear' }}
         style={{
           position: 'absolute',
-          width: 'clamp(340px, 40vw, 500px)',
-          height: 'clamp(340px, 40vw, 500px)',
+          width: isMobile ? '260px' : 'clamp(340px, 40vw, 500px)',
+          height: isMobile ? '260px' : 'clamp(340px, 40vw, 500px)',
           borderRadius: '62% 38% 46% 54% / 60% 44% 56% 40%',
           border: '2px solid var(--accent)',
           opacity: 0.4,
@@ -163,8 +164,8 @@ function ImageFrame({ name }) {
         transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
         style={{
           position: 'absolute',
-          width: 'clamp(315px, 37vw, 470px)',
-          height: 'clamp(315px, 37vw, 470px)',
+          width: isMobile ? '240px' : 'clamp(315px, 37vw, 470px)',
+          height: isMobile ? '240px' : 'clamp(315px, 37vw, 470px)',
           borderRadius: '46% 54% 62% 38% / 44% 56% 44% 56%',
           border: '1.5px dashed var(--accent)',
           opacity: 0.2,
@@ -205,8 +206,8 @@ function ImageFrame({ name }) {
           }}
           transition={{ duration: 3, repeat: hovered ? Infinity : 0, repeatType: 'mirror', ease: 'easeInOut' }}
           style={{
-            width: 'clamp(310px, 38vw, 490px)',
-            height: 'clamp(400px, 50vw, 580px)',
+            width: isMobile ? '220px' : 'clamp(310px, 38vw, 490px)',
+            height: isMobile ? '280px' : 'clamp(400px, 50vw, 580px)',
             overflow: 'hidden',
             boxShadow: '0 20px 60px rgba(0,0,0,0.35)',
           }}
@@ -229,13 +230,14 @@ function ImageFrame({ name }) {
 
 /* ── About Hero ── */
 function AboutHero() {
+  const isMobile = window.innerWidth <= 768
   return (
     <section style={{
-      paddingTop: 'clamp(20px, 3vw, 40px)',
+      paddingTop: isMobile ? '90px' : 'clamp(20px, 3vw, 40px)',
       paddingBottom: 'clamp(40px, 6vw, 72px)',
       background: 'var(--bg)',
       overflow: 'hidden',
-    }} className="about-hero-section">
+    }}>
       <div className="page-container">
         <div className="about-hero-inner" style={{
           display: 'flex',

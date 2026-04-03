@@ -17,10 +17,10 @@ const isMobileGallery = window.innerWidth <= 768
 
 // Fixed scatter positions — spread within screen bounds
 const CARD_CONFIGS = isMobileGallery ? [
-  { x: '-28vw', y: '-22vh', rotate: -12 },
-  { x:  '28vw', y: '-22vh', rotate:  10 },
-  { x: '-28vw', y:  '22vh', rotate:   8 },
-  { x:  '28vw', y:  '22vh', rotate:  -9 },
+  { x: '-90px', y: '-120px', rotate: -12 },
+  { x:  '90px', y: '-120px', rotate:  10 },
+  { x: '-90px', y:  '120px', rotate:   8 },
+  { x:  '90px', y:  '120px', rotate:  -9 },
 ] : [
   { x: '-260px', y: '-110px', rotate: -12 },
   { x:  '200px', y: '-130px', rotate:  10 },
