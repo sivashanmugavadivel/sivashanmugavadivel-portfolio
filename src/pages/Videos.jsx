@@ -579,12 +579,25 @@ const IGIcon = () => (
 function InstagramCarousel({ posts }) {
   const [active, setActive] = useState(0)
   const [hovered, setHovered] = useState(false) // eslint-disable-line
+  const [cardWidth, setCardWidth] = useState(260)
+  const centerCardRef = useRef(null)
 
   const prev = () => { setActive(i => (i - 1 + posts.length) % posts.length) }
   const next = () => { setActive(i => (i + 1) % posts.length) }
 
   // Reset active index when posts list changes (category filter)
   useEffect(() => { setActive(0) }, [posts])
+
+  // Measure actual card width on mount, resize, and active change (for correct embed scale on mobile)
+  useEffect(() => {
+    function measure() {
+      if (centerCardRef.current) setCardWidth(centerCardRef.current.offsetWidth)
+    }
+    // Delay slightly to let layout settle after active change
+    const t = setTimeout(measure, 50)
+    window.addEventListener('resize', measure)
+    return () => { clearTimeout(t); window.removeEventListener('resize', measure) }
+  }, [active])
 
   // Load Instagram embed script once, then process
   useEffect(() => {
@@ -636,7 +649,7 @@ function InstagramCarousel({ posts }) {
       <div style={{ width: '100%', overflow: 'hidden' }}>
         <div style={{
           position: 'relative', width: '100%',
-          height: 'clamp(400px, 60vw, 600px)',
+          height: 'clamp(400px, 80vw, 600px)',
           perspective: 1200, display: 'flex',
           alignItems: 'center', justifyContent: 'center',
         }}>
@@ -655,12 +668,13 @@ function InstagramCarousel({ posts }) {
                   if (info.offset.x < -60) next()
                   else if (info.offset.x > 60) prev()
                 }}
+                ref={isCenter ? centerCardRef : null}
                 onClick={() => { if (!isCenter) setActive(i) }}
                 onHoverStart={() => isCenter && setHovered(true)}
                 onHoverEnd={() => setHovered(false)}
                 style={{
                   position: 'absolute',
-                  width: 'clamp(180px, 22vw, 280px)',
+                  width: 'clamp(140px, 42vw, 280px)',
                   aspectRatio: '9/16',
                   borderRadius: 20,
                   overflow: 'hidden',
@@ -673,17 +687,16 @@ function InstagramCarousel({ posts }) {
                     : '0 8px 24px rgba(0,0,0,0.2)',
                   transition: 'box-shadow 0.3s ease',
                   background: 'linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)',
-                  '--ig-scale': isCenter ? '0.82' : '0.62',
                 }}
               >
                 {/* Embed preview for all cards — pointer-events off, scaled to fit */}
                 {pos !== 'hidden' && (
                   <div style={{ position: 'absolute', inset: 0, background: '#fff',
                     overflow: 'hidden', pointerEvents: 'none' }}>
-                    {/* Instagram embeds render at ~328px wide; scale down to fit card */}
+                    {/* Scale embed to fit actual card width — fixes mobile zoom */}
                     <div style={{
                       width: 328, transformOrigin: 'top left',
-                      transform: 'scale(var(--ig-scale, 0.76))',
+                      transform: `scale(${isCenter ? (cardWidth / 328).toFixed(3) : ((cardWidth * 0.78) / 328).toFixed(3)})`,
                     }}>
                       <blockquote
                         className="instagram-media"
