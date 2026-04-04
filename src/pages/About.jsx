@@ -248,7 +248,7 @@ function AboutHero() {
         }}>
 
           {/* ── Left — text ── */}
-          <div style={{ flex: '1 1 320px', minWidth: 0 }}>
+          <div style={{ flex: '1 1 420px', minWidth: 0 }}>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -262,7 +262,7 @@ function AboutHero() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-              style={{ fontSize: 'clamp(1.5rem, 3.8vw, 3.4rem)', lineHeight: 1.1, marginBottom: 16, fontFamily: "'Lilita One', cursive" }}
+              style={{ fontSize: 'clamp(1.5rem, 4.2vw, 3.8rem)', lineHeight: 1.1, marginBottom: 16, fontFamily: "'Lilita One', cursive", whiteSpace: 'nowrap' }}
             >
               {cfg.personal.name}
             </motion.h1>
