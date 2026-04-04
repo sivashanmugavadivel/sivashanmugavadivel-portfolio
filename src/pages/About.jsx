@@ -233,7 +233,7 @@ function AboutHero() {
   const isMobile = window.innerWidth <= 768
   return (
     <section style={{
-      paddingTop: isMobile ? '90px' : 'clamp(20px, 3vw, 40px)',
+      paddingTop: isMobile ? '120px' : 'clamp(20px, 3vw, 40px)',
       paddingBottom: 'clamp(40px, 6vw, 72px)',
       background: 'var(--bg)',
       overflow: 'hidden',
