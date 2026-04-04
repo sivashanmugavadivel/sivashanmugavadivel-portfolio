@@ -458,7 +458,7 @@ const timeline = cfg.journey
 
 function JourneySection() {
   return (
-    <section className="section" style={{ background: 'var(--bg)' }}>
+    <section className="section" style={{ background: 'var(--bg)', overflow: 'hidden' }}>
       <div className="page-container">
         <SectionHeading label="Journey" title="Experience & Education" />
 
@@ -484,8 +484,8 @@ function JourneySection() {
             return (
               <ScrollMotion
                 key={i}
-                initial={{ opacity: 0, x: isLeft ? -40 : 40 }}
-                visible={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0, y: 30 }}
+                visible={{ opacity: 1, y: 0 }}
                 delay={i * 0.15}
                 style={{ marginBottom: 48, position: 'relative' }}
               >
