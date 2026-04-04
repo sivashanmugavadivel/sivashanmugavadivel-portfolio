@@ -15,7 +15,11 @@ export default function PostCard({ slug, frontmatter }) {
   const color = tagColor(tags[0])
 
   useEffect(() => {
-    setIsTouch(window.matchMedia('(hover: none)').matches)
+    const touch =
+      window.matchMedia('(pointer: coarse)').matches ||
+      window.matchMedia('(hover: none)').matches ||
+      navigator.maxTouchPoints > 0
+    setIsTouch(touch)
     setFlipped(false)
   }, [])
 

@@ -421,12 +421,21 @@ export default function Videos() {
       {featured && (
         <section style={{ paddingBottom: 'clamp(48px, 6vw, 80px)', background: 'var(--bg)' }}>
           <div className="page-container">
-            <Reveal delay={0.1}>
-              <span className="section-label" style={{ display: 'block', marginBottom: 16 }}>Featured</span>
-            </Reveal>
-            <Reveal delay={0.2} y={24}>
+            <motion.span
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              style={{ display: 'block', marginBottom: 16 }}
+            >
+              <span className="section-label">Featured</span>
+            </motion.span>
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
               <VideoCardFull video={featured} featured />
-            </Reveal>
+            </motion.div>
           </div>
         </section>
       )}
