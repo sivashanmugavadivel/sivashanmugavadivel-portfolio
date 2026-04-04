@@ -6,9 +6,7 @@
       // GitHub Pages SPA redirect trick
       var base = '/sivashanmugavadivel-portfolio';
       var path = window.location.pathname.replace(base, '') || '/';
-      var redirect = path + window.location.search + window.location.hash;
-      console.log('[404.html] caught path:', redirect, '— redirecting to', base + '/');
-      sessionStorage.setItem('spa_redirect', redirect);
+      sessionStorage.setItem('spa_redirect', path + window.location.search + window.location.hash);
       window.location.replace(base + '/');
     </script>
   </head>
