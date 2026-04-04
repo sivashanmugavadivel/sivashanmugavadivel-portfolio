@@ -19,6 +19,7 @@
         console.log('[index.html] spa_redirect in sessionStorage:', redirect);
         if (redirect) {
           sessionStorage.removeItem('spa_redirect');
+          sessionStorage.setItem('spa_redirected', '1');
           var base = '/sivashanmugavadivel-portfolio';
           var target = base + redirect;
           console.log('[index.html] restoring path to:', target);

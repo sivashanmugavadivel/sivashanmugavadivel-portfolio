@@ -47,7 +47,7 @@ export default function PageWrapper({ children }) {
   const variant = pageVariants[location.pathname] || defaultVariant
 
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence>
       <motion.div
         key={location.pathname}
         initial={variant.initial}

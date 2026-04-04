@@ -2,11 +2,14 @@ import { useState, useEffect } from 'react'
 
 export function usePageLoad() {
   const [isLoading, setIsLoading] = useState(() => {
-    const hasSpaRedirect = !!sessionStorage.getItem('spa_redirect')
+    const wasSpaRedirected = !!sessionStorage.getItem('spa_redirected')
     const hasLoaded = !!sessionStorage.getItem('portfolio_loaded')
-    const result = !hasSpaRedirect && !hasLoaded
-    console.log('[usePageLoad] spa_redirect:', hasSpaRedirect, '| portfolio_loaded:', hasLoaded, '| isLoading:', result)
-    return result
+    // Skip loading screen if arriving via SPA redirect (direct URL navigation on GitHub Pages)
+    if (wasSpaRedirected) {
+      sessionStorage.removeItem('spa_redirected')
+      return false
+    }
+    return !hasLoaded
   })
 
   useEffect(() => {
