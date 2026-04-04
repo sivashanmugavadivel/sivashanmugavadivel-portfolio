@@ -145,6 +145,71 @@ function VideoCardFull({ video, featured = false }) {
   )
 }
 
+/* ── Shorts section with category filter ── */
+function ShortsSection({ shorts }) {
+  const categories = ['all', ...Array.from(new Set(shorts.map(s => s.category).filter(Boolean))).sort()]
+  const [activeCategory, setActiveCategory] = useState('all')
+
+  const filtered = activeCategory === 'all' ? shorts : shorts.filter(s => s.category === activeCategory)
+
+  return (
+    <section className="section" style={{ background: 'var(--bg)' }}>
+      <div className="page-container">
+        <div style={{ marginBottom: 32, textAlign: 'center' }}>
+          <span className="section-label" style={{ display: 'block', marginBottom: 4 }}>Short Form</span>
+          <h2>YouTube Shorts</h2>
+        </div>
+
+        {/* Category pills — same style as Gallery */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}
+        >
+          {categories.map((cat, i) => (
+            <motion.button
+              key={cat}
+              onClick={() => setActiveCategory(cat)}
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.97 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 + i * 0.04 }}
+              style={{
+                padding: '8px 20px', borderRadius: 999,
+                fontFamily: 'var(--sans)', fontSize: '0.85rem', fontWeight: 500,
+                cursor: 'pointer',
+                border: activeCategory === cat ? '1.5px solid var(--text-h)' : '1.5px solid var(--border)',
+                background: activeCategory === cat ? 'var(--text-h)' : 'transparent',
+                color: activeCategory === cat ? 'var(--bg)' : 'var(--text-h)',
+                transition: 'all 0.2s',
+              }}
+            >
+              {cat.charAt(0).toUpperCase() + cat.slice(1)}
+            </motion.button>
+          ))}
+        </motion.div>
+
+        {/* Count */}
+        <motion.p
+          key={activeCategory}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--text)', opacity: 0.6, marginBottom: 32 }}
+        >
+          {filtered.length} {filtered.length === 1 ? 'short' : 'shorts'}
+          {activeCategory !== 'all' && ` in ${activeCategory}`}
+        </motion.p>
+
+        <motion.div key={activeCategory} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+          <ShortsCarousel shorts={filtered} />
+        </motion.div>
+      </div>
+    </section>
+  )
+}
+
 /* ── Shorts carousel ── */
 function ShortsCarousel({ shorts }) {
   const [active, setActive] = useState(0)
@@ -466,19 +531,7 @@ export default function Videos() {
 
       {/* Shorts */}
       {shorts.length > 0 && (
-        <section className="section" style={{ background: 'var(--bg)' }}>
-          <div className="page-container">
-            <Reveal delay={0}>
-              <div style={{ marginBottom: 40, textAlign: 'center' }}>
-                <span className="section-label" style={{ display: 'block', marginBottom: 4 }}>Short Form</span>
-                <h2>YouTube Shorts</h2>
-              </div>
-            </Reveal>
-            <Reveal delay={0.1}>
-              <ShortsCarousel shorts={shorts} />
-            </Reveal>
-          </div>
-        </section>
+        <ShortsSection shorts={shorts} />
       )}
 
       {/* CTA */}

@@ -151,97 +151,109 @@
     },
     {
       "id": "https://youtube.com/shorts/1PVaLLKoGno?si=MkaWbNZadIJPrSn4",
-      "title": "Short #2",
+      "title": "USA Snowfall",
       "description": "#USA #travel #vlogs #snowfall.",
       "type": "short",
+      "category": "Travel",
       "date": "2025-02-20",
       "tags": ["short"]
     },
     {
       "id": "https://youtube.com/shorts/CGXdtOeAOgU?si=QWrRrpSqKOCEAjwM",
-      "title": "Short #1",
+      "title": "Yercaud Trip",
       "description": "#Trip #Friends #2025 #tamilnadu #yarcaud.",
       "type": "short",
+      "category": "Travel",
       "date": "2025-02-20",
       "tags": ["short"]
     },
     {
       "id": "https://youtube.com/shorts/WKe2f3h_LRs?si=TrZHEt9XWvoxX7jG",
-      "title": "Short #2",
+      "title": "Valentine’s Day for Singles",
       "description": "Valentine’s Day😂 for Single boys be like | Tamil Shorts.",
       "type": "short",
+      "category": "Fun",
       "date": "2025-02-20",
       "tags": ["short"]
     },
     {
       "id": "https://youtube.com/shorts/OLWjM8pfr-Y?si=aRflR_r-uCxhqYek",
-      "title": "Short #3",
+      "title": "Walmart Shopping",
       "description": "USA #walmart #shopping #mountvernon #Illinois.",
       "type": "short",
+      "category": "Travel",
       "date": "2025-02-20",
       "tags": ["short"]
     },
     {
       "id": "https://youtube.com/shorts/_NPbSD7dZBE?si=PYVwuZnvZgz67__S",
-      "title": "Short #4",
+      "title": "Kumbhabhishekam",
       "description": "Arulmigu Shri Kariyakali Amman Kumbhabhishekam #maniyankulam.",
       "type": "short",
+      "category": "Culture",
       "date": "2025-03-05",
       "tags": ["short"]
     },
     {
       "id": "https://youtube.com/shorts/V0LqZdyD-mI?si=QhzENjpb4JDvsm3D",
-      "title": "Short #4",
+      "title": "Valentine’s Day Wish",
       "description": "Valentine’s Day wish panren… yaarum illa .",
       "type": "short",
+      "category": "Fun",
       "date": "2025-03-05",
       "tags": ["short"]
     },
     {
       "id": "https://youtube.com/shorts/cutlTW4B28Y?si=B7zJpqW3glkjmevq",
-      "title": "Short #5",
+      "title": "Easy Chicken Briyani",
       "description": "Easy Chicken Briyani in 1 minute 🍗🔥 | Tamil Shorts.",
       "type": "short",
+      "category": "Cooking",
       "date": "2025-02-20",
       "tags": ["short"]
     },
     {
       "id": "https://youtube.com/shorts/oBhpwi3CyEk?si=OVNkAHaTQZcn0Qk3",
-      "title": "Short #6",
+      "title": "Valentine’s Bouquets",
       "description": "Exploring Valentine’s Day bouquets at Walmart 💐 | Tamil Shorts.",
       "type": "short",
+      "category": "Travel",
       "date": "2025-02-20",
       "tags": ["short"]
     },
     {
       "id": "https://youtube.com/shorts/g2ZtruzKL40?si=6_YGUyrso1CyZ96R",
-      "title": "Short #7",
+      "title": "Spicy Mushroom Omelet",
       "description": "Spicy Mushroom Omelet in 1 minute 🍳🔥 | Tamil Shorts.",
       "type": "short",
+      "category": "Cooking",
       "date": "2025-02-20",
       "tags": ["short"]
     },
     {
       "id": "https://youtube.com/shorts/2WuRRNqlgCM?si=KDFnHI-ZWcp6AiWQ",
-      "title": "Short #8",
+      "title": "Flower Bouquets at Walmart",
       "description": "Exploring Valentine’s Day flower bouquets at Walmart USA 💐 | #love | Tamil vlog.",
       "type": "short",
+      "category": "Travel",
       "date": "2025-02-20",
       "tags": ["short"]
     },
     {
       "id": "https://youtube.com/shorts/M9m6vGQDdi0?si=5-HdJ1I93cCwbEG3",
-      "title": "Short #9",
+      "title": "Midnight Noodles",
       "description": "Midnight hunger? Try this noodles 😍 | Tamil Cooking Short.",
       "type": "short",
+      "category": "Cooking",
       "date": "2025-02-20",
       "tags": ["short"]
     },
     {
       "id": "https://youtube.com/shorts/4qGtKCIt77Y?si=QvyqpvdbEHIRg6gp",
-      "title": "Short #10",
+      "title": "Bouquet for Myself",
       "description": "Valentine’s Day bouquet at Walmart… for myself 😅 | Tamil Shorts.",
       "type": "short",
+      "category": "Fun",
       "date": "2025-02-20",
       "tags": ["short"]
     }
