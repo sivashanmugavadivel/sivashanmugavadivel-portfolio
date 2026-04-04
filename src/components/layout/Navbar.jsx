@@ -202,7 +202,6 @@ export default function Navbar({ theme, onToggleTheme }) {
         @media (max-width: 768px) {
           .nav-desktop { display: none !important; }
           .nav-hamburger { display: flex !important; }
-          .nav-bar { padding-top: max(35px, env(safe-area-inset-top)) !important; }
         }
       `}</style>
     </header>

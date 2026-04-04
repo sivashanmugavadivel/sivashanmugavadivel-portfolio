@@ -207,7 +207,7 @@ function HeroSection() {
         key={`bigname-${mountKey}`}
         style={{
           position: 'fixed',
-          top: isMobileHero ? 'calc(64px + 4%)' : '18%',
+          top: isMobileHero ? 'calc(64px + 2%)' : '18%',
           left: 0, right: 0,
           zIndex: 2,
           display: 'flex',
