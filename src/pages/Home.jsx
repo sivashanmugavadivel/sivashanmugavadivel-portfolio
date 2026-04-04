@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, useScroll, useTransform, useInView, useAnimation } from 'framer-motion'
 import { loadAllPosts } from '../hooks/usePosts'
-import videosData from '../data/videos.json'
 import cfg from '../data/config.json'
 import PostCard from '../components/blog/PostCard'
 import VideoCard from '../components/video/VideoCard'
@@ -422,7 +421,7 @@ function FeaturedPostsSection() {
 
 /* ── Featured Videos Section ── */
 function FeaturedVideosSection() {
-  const featured = videosData.filter(v => v.type === 'video').slice(0, 2)
+  const featured = (cfg.videos || []).filter(v => v.type === 'video').slice(0, 1)
 
   return (
     <section className="section" style={{ background: 'var(--bg-secondary)' }}>
@@ -430,11 +429,11 @@ function FeaturedVideosSection() {
         <SectionHeading label="Videos" title="Watch" />
 
         <motion.div
-          className="grid-2"
           variants={cardContainerVariants}
           initial="hidden"
           whileInView="show"
           viewport={{ once: false, margin: '-60px' }}
+          style={{ maxWidth: 600, margin: '0 auto' }}
         >
           {featured.map(video => (
             <motion.div key={video.id} variants={cardVariants}>

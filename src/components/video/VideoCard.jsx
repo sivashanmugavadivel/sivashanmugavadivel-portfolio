@@ -1,8 +1,21 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 
+function youtubeId(raw) {
+  if (!raw) return raw
+  try {
+    const url = new URL(raw)
+    if (url.hostname === 'youtu.be') return url.pathname.slice(1).split('?')[0]
+    if (url.searchParams.get('v')) return url.searchParams.get('v')
+    const m = url.pathname.match(/\/(shorts|embed)\/([^/?]+)/)
+    if (m) return m[2]
+  } catch {}
+  return raw
+}
+
 export default function VideoCard({ video }) {
-  const { id, title, description } = video
+  const { title, description } = video
+  const id = youtubeId(video.id)
   const [playing, setPlaying] = useState(false)
   const thumb = `https://img.youtube.com/vi/${id}/hqdefault.jpg`
 
