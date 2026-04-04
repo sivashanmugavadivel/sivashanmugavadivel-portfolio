@@ -476,6 +476,7 @@ function VideosHeader1() {
 export default function Videos() {
   const regularVideos = (cfg.videos || []).filter(v => v.type === 'video')
   const shorts = (cfg.videos || []).filter(v => v.type === 'short')
+  console.log('[Videos] rendering — regularVideos:', regularVideos.length, '| shorts:', shorts.length)
 
   return (
     <div>
