@@ -3,18 +3,9 @@ import { motion } from 'framer-motion'
 import videosData from '../data/videos.json'
 import cfg from '../data/config.json'
 
-/* ── Scroll-reveal wrapper — uses animate so above-fold content always shows ── */
-function Reveal({ children, delay = 0, y = 32, style }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1], delay }}
-      style={style}
-    >
-      {children}
-    </motion.div>
-  )
+/* ── No-op wrapper — PageWrapper handles page entry animation ── */
+function Reveal({ children, style }) {
+  return <div style={style}>{children}</div>
 }
 
 /* ── Video card — thumbnail that swaps to iframe on click ── */
@@ -420,21 +411,8 @@ export default function Videos() {
       {featured && (
         <section style={{ paddingBottom: 'clamp(48px, 6vw, 80px)', background: 'var(--bg)' }}>
           <div className="page-container">
-            <motion.span
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              style={{ display: 'block', marginBottom: 16 }}
-            >
-              <span className="section-label">Featured</span>
-            </motion.span>
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              <VideoCardFull video={featured} featured />
-            </motion.div>
+            <span className="section-label" style={{ display: 'block', marginBottom: 16 }}>Featured</span>
+            <VideoCardFull video={featured} featured />
           </div>
         </section>
       )}
@@ -455,16 +433,13 @@ export default function Videos() {
               dragConstraints={{ right: 0, left: -(rest.length * 420) }}
               whileTap={{ cursor: 'grabbing' }}
             >
-              {rest.map((video, i) => (
-                <motion.div
+              {rest.map((video) => (
+                <div
                   key={video.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.3 + i * 0.1 }}
                   style={{ flex: '0 0 clamp(280px, 38vw, 440px)', scrollSnapAlign: 'start' }}
                 >
                   <VideoCardFull video={video} />
-                </motion.div>
+                </div>
               ))}
             </motion.div>
           </div>

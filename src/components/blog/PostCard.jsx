@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { tagColor, tagIcon } from '../../data/tagMeta'
 
@@ -14,71 +14,88 @@ export default function PostCard({ slug, frontmatter }) {
   const color = tagColor(tags[0])
 
   return (
-    <div
-      style={{
-        height: 280, borderRadius: 16, overflow: 'hidden',
-        cursor: 'pointer', position: 'relative',
-        background: `linear-gradient(145deg, var(--card-bg) 0%, ${color}11 100%)`,
-        border: `1px solid ${color}33`,
-        boxShadow: `0 4px 24px ${color}18`,
-      }}
-      onClick={() => setFlipped(f => !f)}
-      onMouseEnter={() => setFlipped(true)}
-      onMouseLeave={() => setFlipped(false)}
-    >
-      {/* ── Front ── */}
-      <div style={{
-        display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center',
-        gap: 14, padding: 24, height: '100%',
-      }}>
-        <motion.div
-          animate={flipped ? {} : { x: ['-100%', '200%'] }}
-          transition={{ duration: 2.5, repeat: Infinity, repeatDelay: 3, ease: 'easeInOut' }}
-          style={{
-            position: 'absolute', inset: 0,
-            background: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.18) 50%, transparent 60%)',
-            pointerEvents: 'none',
-          }}
-        />
-        <motion.div
-          animate={{ scale: [1, 1.08, 1] }}
-          transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-          style={{ fontSize: 56, lineHeight: 1, filter: `drop-shadow(0 4px 16px ${color}88)`, position: 'relative' }}
-        >
-          {icon}
-        </motion.div>
-        <h3 style={{
-          margin: 0, fontSize: '1rem', fontWeight: 700,
-          color: 'var(--text-h)', textAlign: 'center', lineHeight: 1.35,
-          position: 'relative',
-        }}>{title}</h3>
-        <time style={{ fontSize: '0.75rem', color: 'var(--text)', opacity: 0.6, position: 'relative' }}>
-          {formatDate(date)}
-        </time>
-        <div style={{
-          position: 'absolute', bottom: 14, right: 16,
-          fontSize: '0.7rem', color, opacity: 0.6, fontWeight: 600,
-        }}>
-          tap to flip ↻
-        </div>
-      </div>
+    <>
+      <style>{`
+        .postcard-inner {
+          position: relative;
+          width: 100%;
+          height: 100%;
+          transition: transform 0.55s cubic-bezier(0.23, 1, 0.32, 1);
+          transform-style: preserve-3d;
+        }
+        .postcard-inner.flipped {
+          transform: rotateY(180deg);
+        }
+        .postcard-face {
+          position: absolute;
+          inset: 0;
+          border-radius: 16px;
+          backface-visibility: hidden;
+          -webkit-backface-visibility: hidden;
+          overflow: hidden;
+        }
+        .postcard-back {
+          transform: rotateY(180deg);
+        }
+      `}</style>
 
-      {/* ── Back — slide up overlay ── */}
-      <AnimatePresence>
-        {flipped && (
-          <motion.div
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
+      <div
+        style={{ perspective: '1000px', height: 280, cursor: 'pointer' }}
+        onClick={() => setFlipped(f => !f)}
+        onMouseEnter={() => setFlipped(true)}
+        onMouseLeave={() => setFlipped(false)}
+      >
+        <div className={`postcard-inner${flipped ? ' flipped' : ''}`}>
+
+          {/* ── FRONT ── */}
+          <div
+            className="postcard-face"
             style={{
-              position: 'absolute', inset: 0,
-              background: `linear-gradient(145deg, ${color}ee 0%, ${color}bb 100%)`,
-              borderRadius: 16,
+              background: `linear-gradient(145deg, var(--card-bg) 0%, ${color}11 100%)`,
+              border: `1px solid ${color}33`,
+              boxShadow: `0 4px 24px ${color}18`,
               display: 'flex', flexDirection: 'column',
-              gap: 12, padding: 20,
-              justifyContent: 'space-between',
+              alignItems: 'center', justifyContent: 'center', gap: 14, padding: 24,
+            }}
+          >
+            <motion.div
+              animate={flipped ? {} : { x: ['-100%', '200%'] }}
+              transition={{ duration: 2.5, repeat: Infinity, repeatDelay: 3, ease: 'easeInOut' }}
+              style={{
+                position: 'absolute', inset: 0,
+                background: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.18) 50%, transparent 60%)',
+                pointerEvents: 'none',
+              }}
+            />
+            <motion.div
+              animate={{ scale: [1, 1.08, 1] }}
+              transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+              style={{ fontSize: 56, lineHeight: 1, filter: `drop-shadow(0 4px 16px ${color}88)`, position: 'relative' }}
+            >
+              {icon}
+            </motion.div>
+            <h3 style={{
+              margin: 0, fontSize: '1rem', fontWeight: 700,
+              color: 'var(--text-h)', textAlign: 'center', lineHeight: 1.35, position: 'relative',
+            }}>{title}</h3>
+            <time style={{ fontSize: '0.75rem', color: 'var(--text)', opacity: 0.6, position: 'relative' }}>
+              {formatDate(date)}
+            </time>
+            <div style={{
+              position: 'absolute', bottom: 14, right: 16,
+              fontSize: '0.7rem', color, opacity: 0.6, fontWeight: 600,
+            }}>
+              tap to flip ↻
+            </div>
+          </div>
+
+          {/* ── BACK ── */}
+          <div
+            className="postcard-face postcard-back"
+            style={{
+              background: `linear-gradient(145deg, ${color}ee 0%, ${color}bb 100%)`,
+              display: 'flex', flexDirection: 'column',
+              gap: 12, padding: 24, justifyContent: 'space-between',
             }}
           >
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -108,9 +125,10 @@ export default function PostCard({ slug, frontmatter }) {
             >
               Read Post →
             </Link>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+          </div>
+
+        </div>
+      </div>
+    </>
   )
 }
