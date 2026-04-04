@@ -378,17 +378,38 @@ function ShortsCarousel({ shorts }) {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15,18 9,12 15,6"/></svg>
         </motion.button>
 
-        {/* Dots */}
-        <div style={{ display: 'flex', gap: 8 }}>
-          {shorts.map((_, i) => (
-            <motion.button
-              key={i}
-              onClick={() => { setPlaying(false); setActive(i) }}
-              animate={{ width: i === active ? 24 : 8, background: i === active ? 'var(--accent)' : 'var(--border)' }}
-              transition={{ duration: 0.3 }}
-              style={{ height: 8, borderRadius: 999, border: 'none', cursor: 'pointer', padding: 0 }}
-            />
-          ))}
+        {/* Dots — windowed to 5 around active to prevent overflow */}
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          {shorts.length <= 7
+            ? shorts.map((_, i) => (
+                <motion.button
+                  key={i}
+                  onClick={() => { setPlaying(false); setActive(i) }}
+                  animate={{ width: i === active ? 20 : 7, background: i === active ? 'var(--accent)' : 'var(--border)' }}
+                  transition={{ duration: 0.3 }}
+                  style={{ height: 7, borderRadius: 999, border: 'none', cursor: 'pointer', padding: 0, flexShrink: 0 }}
+                />
+              ))
+            : (() => {
+                const total = shorts.length
+                const half = 2
+                let start = Math.max(0, active - half)
+                let end = Math.min(total - 1, active + half)
+                if (active - half < 0) end = Math.min(total - 1, 4)
+                if (active + half > total - 1) start = Math.max(0, total - 5)
+                const visible = []
+                for (let i = start; i <= end; i++) visible.push(i)
+                return visible.map(i => (
+                  <motion.button
+                    key={i}
+                    onClick={() => { setPlaying(false); setActive(i) }}
+                    animate={{ width: i === active ? 20 : 7, background: i === active ? 'var(--accent)' : 'var(--border)' }}
+                    transition={{ duration: 0.3 }}
+                    style={{ height: 7, borderRadius: 999, border: 'none', cursor: 'pointer', padding: 0, flexShrink: 0 }}
+                  />
+                ))
+              })()
+          }
         </div>
 
         <motion.button
