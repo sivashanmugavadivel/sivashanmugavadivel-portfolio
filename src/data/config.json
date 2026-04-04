@@ -75,28 +75,28 @@
 
   "journey": [
     {
-      "year": "2024 – Present",
-      "role": "Senior Frontend Developer",
-      "org": "Freelance / Open Source",
-      "desc": "Building modern web applications and contributing to open-source projects."
+      "year": "2023 – Present",
+      "role": "Automation & Integration Engineer (Onsite – USA)",
+      "org": "Chennova Software Pvt. Ltd. (Client: Continental Tires)",
+      "desc": "Leading PLC-to-enterprise integration and TIGER rollout across production machines. Implemented OPC UA and Modbus communication, developed machine logic (heartbeat, recipe handling), and supported commissioning, testing, and live plant troubleshooting."
     },
     {
-      "year": "2022 – 2024",
-      "role": "Frontend Developer",
-      "org": "Tech Startup",
-      "desc": "Led frontend architecture for a SaaS product. Built a design system from scratch."
+      "year": "2020 – Present",
+      "role": "Junior PLC & Industrial Software Engineer",
+      "org": "Chennova Software Pvt. Ltd.",
+      "desc": "Developed industrial software platforms integrating PLC systems with .NET applications using OPC UA. Built PLC code-generation tools, designed web-based configuration systems, and deployed solutions using Docker for smart manufacturing environments."
     },
     {
-      "year": "2020 – 2022",
-      "role": "Junior Developer",
-      "org": "Digital Agency",
-      "desc": "Delivered responsive websites and landing pages for clients across industries."
+      "year": "2019 – 2020",
+      "role": "Project Engineer",
+      "org": "Syscoms Automation and Panels, Chennai",
+      "desc": "Worked on control panel design, PLC programming, and HMI/SCADA development. Handled commissioning and servicing of industrial systems including furnace automation projects."
     },
     {
-      "year": "2016 – 2020",
-      "role": "B.Sc. Computer Science",
-      "org": "University",
-      "desc": "Graduated with honours. Focused on algorithms, software engineering, and web tech."
+      "year": "2015 – 2019",
+      "role": "Bachelor of Engineering (Electrical & Electronics)",
+      "org": "M. Kumarasamy College of Engineering",
+      "desc": "Focused on industrial automation, control systems, and PLC-based applications. Completed training in industrial automation and electrical systems."
     }
   ],
 
@@ -365,5 +365,112 @@
       "date": "2023-01-24",
       "tags": ["short"]
     }
+  ],
+
+  "instagram": [
+    {
+      "url": "https://www.instagram.com/reel/DVLgz1vkSRC/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
+      "caption": "Add your post caption here",
+      "category": "cooking",
+      "thumbnail": ""
+    },
+    {
+      "url": "https://www.instagram.com/reel/DVT1nQcEWF7/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
+      "caption": "#kangayam #kaalai #tamil #kangayamkaalai #iconicstatue",
+      "category": "Culture",
+      "thumbnail": ""
+    },
+    {
+      "url": "https://www.instagram.com/reel/DTDEoeZD09F/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
+      "caption": "Arudhra Kabaleeshwarar Dharisanam",
+      "category": "Culture",
+      "thumbnail": ""
+    },
+    {
+      "url": "https://www.instagram.com/reel/DUZd2MRkUws/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
+      "caption": "#Yercaud #friends #trip #memories",
+      "category": "Tourism",
+      "thumbnail": ""
+    },
+    {
+      "url": "https://www.instagram.com/reel/DS5b8yIEl5K/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
+      "caption": "#Trip #Yarcaud #Friends #2025.",
+      "category": "Tourism",
+      "thumbnail": ""
+    },
+    {
+      "url": "https://www.instagram.com/reel/DPSxW6Gj2Rq/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
+      "caption": "Ayudha pooja... 🙏",
+      "category": "Culture",
+      "thumbnail": ""
+    },
+    {
+      "url": "https://www.instagram.com/reel/DN7GeKnD0yX/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
+      "caption": "#festival #Traditional_look #Shri_Kariyakali_Amman #Kumbhabhishekam",
+      "category": "Culture",
+      "thumbnail": ""
+    },
+    {
+      "url": "https://www.instagram.com/reel/DLteVBQPpr7/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
+      "caption": "#GRT Grant Hotel.. #Chennai",
+      "category": "Office",
+      "thumbnail": ""
+    },
+    {
+      "url": "https://www.instagram.com/reel/DK_M8LOvy2T/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
+      "caption": "Team dinner... #SamcoMulticusineRestaurant #Chennai #tynampet",
+      "category": "Office",
+      "thumbnail": ""
+    },
+    {
+      "url": "https://www.instagram.com/reel/DJyD5KdPucq/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
+      "caption": "Finally reached #India started from #MountVernon #usa after a lomg time...",
+      "category": "Travel",
+      "thumbnail": ""
+    },
+    {
+      "url": "https://www.instagram.com/reel/DJpWPA3vQRJ/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
+      "caption": "Farewell party... Bye Bye to USA",
+      "category": "Party",
+      "thumbnail": ""
+    },
+    {
+      "url": "https://www.instagram.com/reel/DIxnZ9SuJtB/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
+      "caption": "#Solotravel #recap",
+      "category": "Tourism",
+      "thumbnail": ""
+    },
+    {
+      "url": "https://www.instagram.com/reel/CyDelHoAaxo/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
+      "caption": "Aircraft landing _chicago _O'Hare_International_Airport _USA From _Franfurt_International_Airport _Germany",
+      "category": "Travel",
+      "thumbnail": ""
+    },
+    {
+      "url": "https://www.instagram.com/reel/Cx9AlXnL3Dm/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
+      "caption": "_takeoff _Farnkfurt _Germany",
+      "category": "Travel",
+      "thumbnail": ""
+    },
+    {
+      "url": "https://www.instagram.com/reel/Cx5wGS-r8xR/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
+      "caption": "Beauty of Sky...",
+      "category": "Travel",
+      "thumbnail": ""
+    },
+     {
+      "url": "https://www.instagram.com/reel/Cx3l0jEuM53/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
+      "caption": "_Chiacago _Union _Station _USA",
+      "category": "Travel",
+      "thumbnail": ""
+    },
+     {
+      "url": "https://www.instagram.com/reel/CsAi2dwgkNy/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
+      "caption": "#Memories #USA #Travel #India #Life #to #be #positive",
+      "category": "Travel",
+      "thumbnail": ""
+    }
+    
+    
   ]
 }

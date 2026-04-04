@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import cfg from '../data/config.json'
 
@@ -215,16 +215,20 @@ function ShortsCarousel({ shorts }) {
     const diff = i - active
     const wrapped = ((diff + shorts.length) % shorts.length)
     if (wrapped === 0) return 'center'
-    if (wrapped === 1 || wrapped === -(shorts.length - 1)) return 'right'
-    if (wrapped === shorts.length - 1 || wrapped === -1) return 'left'
+    if (wrapped === 1 || wrapped === -(shorts.length - 1)) return 'right1'
+    if (wrapped === shorts.length - 1 || wrapped === -1) return 'left1'
+    if (wrapped === 2 || wrapped === -(shorts.length - 2)) return 'right2'
+    if (wrapped === shorts.length - 2 || wrapped === -2) return 'left2'
     return 'hidden'
   }
 
   const posStyles = {
-    center: { x: '0%',    scale: 1,    opacity: 1,   zIndex: 3, rotateY:   0 },
-    left:   { x: '-62%',  scale: 0.78, opacity: 0.6, zIndex: 2, rotateY:  18 },
-    right:  { x:  '62%',  scale: 0.78, opacity: 0.6, zIndex: 2, rotateY: -18 },
-    hidden: { x:   '0%',  scale: 0.5,  opacity: 0,   zIndex: 1, rotateY:   0 },
+    center: { x:    '0%', scale: 1,    opacity: 1,   zIndex: 5, rotateY:   0 },
+    left1:  { x:  '-52%', scale: 0.80, opacity: 0.85, zIndex: 4, rotateY:  12 },
+    right1: { x:   '52%', scale: 0.80, opacity: 0.85, zIndex: 4, rotateY: -12 },
+    left2:  { x:  '-95%', scale: 0.62, opacity: 0.55, zIndex: 3, rotateY:  20 },
+    right2: { x:   '95%', scale: 0.62, opacity: 0.55, zIndex: 3, rotateY: -20 },
+    hidden: { x:    '0%', scale: 0.4,  opacity: 0,   zIndex: 1, rotateY:   0 },
   }
 
   return (
@@ -235,8 +239,8 @@ function ShortsCarousel({ shorts }) {
       <div style={{
         position: 'relative',
         width: '100%',
-        height: 'clamp(340px, 55vw, 520px)',
-        perspective: 1000,
+        height: 'clamp(400px, 60vw, 600px)',
+        perspective: 1200,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -264,7 +268,7 @@ function ShortsCarousel({ shorts }) {
               onHoverEnd={() => setHovered(false)}
               style={{
                 position: 'absolute',
-                width: 'clamp(160px, 22vw, 240px)',
+                width: 'clamp(180px, 22vw, 280px)',
                 aspectRatio: '9/16',
                 borderRadius: 20,
                 overflow: 'hidden',
@@ -377,39 +381,17 @@ function ShortsCarousel({ shorts }) {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15,18 9,12 15,6"/></svg>
         </motion.button>
 
-        {/* Dots — windowed to 5 around active to prevent overflow */}
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-          {shorts.length <= 7
-            ? shorts.map((_, i) => (
-                <motion.button
-                  key={i}
-                  onClick={() => { setPlaying(false); setActive(i) }}
-                  animate={{ width: i === active ? 20 : 7, background: i === active ? 'var(--accent)' : 'var(--border)' }}
-                  transition={{ duration: 0.3 }}
-                  style={{ height: 7, borderRadius: 999, border: 'none', cursor: 'pointer', padding: 0, flexShrink: 0 }}
-                />
-              ))
-            : (() => {
-                const total = shorts.length
-                const half = 2
-                let start = Math.max(0, active - half)
-                let end = Math.min(total - 1, active + half)
-                if (active - half < 0) end = Math.min(total - 1, 4)
-                if (active + half > total - 1) start = Math.max(0, total - 5)
-                const visible = []
-                for (let i = start; i <= end; i++) visible.push(i)
-                return visible.map(i => (
-                  <motion.button
-                    key={i}
-                    onClick={() => { setPlaying(false); setActive(i) }}
-                    animate={{ width: i === active ? 20 : 7, background: i === active ? 'var(--accent)' : 'var(--border)' }}
-                    transition={{ duration: 0.3 }}
-                    style={{ height: 7, borderRadius: 999, border: 'none', cursor: 'pointer', padding: 0, flexShrink: 0 }}
-                  />
-                ))
-              })()
-          }
-        </div>
+        <motion.div
+          key={active}
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25 }}
+          style={{ minWidth: 72, textAlign: 'center', fontFamily: 'var(--sans)', userSelect: 'none' }}
+        >
+          <span style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--accent)' }}>{active + 1}</span>
+          <span style={{ fontSize: '1rem', color: 'var(--text)', margin: '0 4px' }}>/</span>
+          <span style={{ fontSize: '1rem', color: 'var(--text)' }}>{shorts.length}</span>
+        </motion.div>
 
         <motion.button
           onClick={next} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.92 }}
@@ -587,6 +569,265 @@ function SubscribeDesignPicker() {
   return <DesignG href={href} />
 }
 
+const IGIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/>
+  </svg>
+)
+
+/* ── Instagram Carousel (same 3D style as ShortsCarousel) ── */
+function InstagramCarousel({ posts }) {
+  const [active, setActive] = useState(0)
+  const [hovered, setHovered] = useState(false) // eslint-disable-line
+
+  const prev = () => { setActive(i => (i - 1 + posts.length) % posts.length) }
+  const next = () => { setActive(i => (i + 1) % posts.length) }
+
+  // Reset active index when posts list changes (category filter)
+  useEffect(() => { setActive(0) }, [posts])
+
+  // Load Instagram embed script once, then process
+  useEffect(() => {
+    const process = () => { if (window.instgrm) window.instgrm.Embeds.process() }
+    if (!window.instgrm) {
+      const s = document.createElement('script')
+      s.src = 'https://www.instagram.com/embed.js'
+      s.async = true
+      s.onload = process
+      document.body.appendChild(s)
+    } else {
+      process()
+    }
+  }, [])
+
+  // Re-process embeds whenever visible posts or active index changes
+  useEffect(() => {
+    // Small delay to let React finish rendering the new blockquotes
+    const t = setTimeout(() => {
+      if (window.instgrm) window.instgrm.Embeds.process()
+    }, 80)
+    return () => clearTimeout(t)
+  }, [active, posts])
+
+  const getPos = (i) => {
+    const diff = i - active
+    const wrapped = ((diff + posts.length) % posts.length)
+    if (wrapped === 0) return 'center'
+    if (wrapped === 1 || wrapped === -(posts.length - 1)) return 'right1'
+    if (wrapped === posts.length - 1 || wrapped === -1) return 'left1'
+    if (wrapped === 2 || wrapped === -(posts.length - 2)) return 'right2'
+    if (wrapped === posts.length - 2 || wrapped === -2) return 'left2'
+    return 'hidden'
+  }
+
+  const posStyles = {
+    center: { x:    '0%', scale: 1,    opacity: 1,    zIndex: 5, rotateY:   0 },
+    left1:  { x:  '-52%', scale: 0.80, opacity: 0.85, zIndex: 4, rotateY:  12 },
+    right1: { x:   '52%', scale: 0.80, opacity: 0.85, zIndex: 4, rotateY: -12 },
+    left2:  { x:  '-95%', scale: 0.62, opacity: 0.55, zIndex: 3, rotateY:  20 },
+    right2: { x:   '95%', scale: 0.62, opacity: 0.55, zIndex: 3, rotateY: -20 },
+    hidden: { x:    '0%', scale: 0.4,  opacity: 0,    zIndex: 1, rotateY:   0 },
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 32 }}>
+
+      {/* Stage */}
+      <div style={{ width: '100%', overflow: 'hidden' }}>
+        <div style={{
+          position: 'relative', width: '100%',
+          height: 'clamp(400px, 60vw, 600px)',
+          perspective: 1200, display: 'flex',
+          alignItems: 'center', justifyContent: 'center',
+        }}>
+          {posts.map((post, i) => {
+            const pos = getPos(i)
+            const isCenter = pos === 'center'
+            return (
+              <motion.div
+                key={post.url}
+                animate={posStyles[pos]}
+                transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+                drag={isCenter ? 'x' : false}
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.2}
+                onDragEnd={(_, info) => {
+                  if (info.offset.x < -60) next()
+                  else if (info.offset.x > 60) prev()
+                }}
+                onClick={() => { if (!isCenter) setActive(i) }}
+                onHoverStart={() => isCenter && setHovered(true)}
+                onHoverEnd={() => setHovered(false)}
+                style={{
+                  position: 'absolute',
+                  width: 'clamp(180px, 22vw, 280px)',
+                  aspectRatio: '9/16',
+                  borderRadius: 20,
+                  overflow: 'hidden',
+                  cursor: isCenter ? 'grab' : 'pointer',
+                  transformStyle: 'preserve-3d',
+                  boxShadow: isCenter && hovered
+                    ? '0 0 40px rgba(220,39,67,0.7), 0 0 80px rgba(188,24,136,0.4), 0 24px 60px rgba(220,39,67,0.5)'
+                    : isCenter
+                    ? '0 24px 60px rgba(220,39,67,0.35), 0 0 40px rgba(220,39,67,0.15)'
+                    : '0 8px 24px rgba(0,0,0,0.2)',
+                  transition: 'box-shadow 0.3s ease',
+                  background: 'linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)',
+                  '--ig-scale': isCenter ? '0.82' : '0.62',
+                }}
+              >
+                {/* Embed preview for all cards — pointer-events off, scaled to fit */}
+                {pos !== 'hidden' && (
+                  <div style={{ position: 'absolute', inset: 0, background: '#fff',
+                    overflow: 'hidden', pointerEvents: 'none' }}>
+                    {/* Instagram embeds render at ~328px wide; scale down to fit card */}
+                    <div style={{
+                      width: 328, transformOrigin: 'top left',
+                      transform: 'scale(var(--ig-scale, 0.76))',
+                    }}>
+                      <blockquote
+                        className="instagram-media"
+                        data-instgrm-permalink={post.url}
+                        data-instgrm-version="14"
+                        data-instgrm-captioned
+                        style={{ margin: 0, width: '328px', minWidth: 'unset', border: 0 }}
+                      />
+                    </div>
+                  </div>
+                )}
+                {/* Transparent overlay — captures drag/click, blocks IG navigation */}
+                <div style={{ position: 'absolute', inset: 0, zIndex: 2 }} />
+                {/* View Post button — only on center card */}
+                {isCenter && (
+                  <div style={{ position: 'absolute', bottom: 16, left: 0, right: 0,
+                    display: 'flex', justifyContent: 'center', zIndex: 3 }}>
+                    <motion.a
+                      href={post.url} target="_blank" rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.93 }}
+                      style={{ padding: '7px 18px', borderRadius: 999,
+                        background: 'linear-gradient(135deg,#f09433,#dc2743,#bc1888)',
+                        color: '#fff', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700,
+                        fontFamily: 'var(--sans)', textDecoration: 'none', display: 'inline-block',
+                        boxShadow: '0 4px 14px rgba(220,39,67,0.4)' }}>
+                      View Post ↗
+                    </motion.a>
+                  </div>
+                )}
+              </motion.div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Nav controls — same as ShortsCarousel */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+        <motion.button onClick={prev} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.92 }}
+          style={{ width: 40, height: 40, borderRadius: '50%', border: '1.5px solid #dc2743',
+            background: 'transparent', color: '#dc2743', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15,18 9,12 15,6"/></svg>
+        </motion.button>
+
+        <motion.div
+          key={active}
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25 }}
+          style={{ minWidth: 72, textAlign: 'center', fontFamily: 'var(--sans)', userSelect: 'none' }}
+        >
+          <span style={{ fontSize: '1.3rem', fontWeight: 700, color: '#dc2743' }}>{active + 1}</span>
+          <span style={{ fontSize: '1rem', color: 'var(--text)', margin: '0 4px' }}>/</span>
+          <span style={{ fontSize: '1rem', color: 'var(--text)' }}>{posts.length}</span>
+        </motion.div>
+
+        <motion.button onClick={next} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.92 }}
+          style={{ width: 40, height: 40, borderRadius: '50%', border: '1.5px solid #dc2743',
+            background: 'transparent', color: '#dc2743', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9,18 15,12 9,6"/></svg>
+        </motion.button>
+      </div>
+    </div>
+  )
+}
+
+/* ── Instagram Section ── */
+function InstagramSection() {
+  const posts = cfg.instagram || []
+  const categories = ['all', ...Array.from(new Set(posts.map(p => p.category).filter(Boolean)))]
+  const [activeCategory, setActiveCategory] = useState('all')
+
+  const filtered = activeCategory === 'all' ? posts : posts.filter(p => p.category === activeCategory)
+
+  if (!posts.length) return null
+
+  return (
+    <section style={{ padding: 'clamp(48px,6vw,80px) 0', background: 'var(--bg-secondary)', overflow: 'hidden' }}>
+      <div className="page-container">
+        {/* Header */}
+        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }} transition={{ duration: 0.5 }}
+          style={{ textAlign: 'center', marginBottom: 32 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10,
+              background: 'linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <IGIcon />
+            </div>
+            <h2 style={{ margin: 0 }}>Instagram</h2>
+          </div>
+          <p style={{ color: 'var(--text)', opacity: 0.65, fontSize: '0.88rem', margin: '4px 0 0' }}>
+            Posts from{' '}
+            <a href={cfg.social.instagram.href} target="_blank" rel="noopener noreferrer"
+              style={{ color: '#dc2743', textDecoration: 'none', fontWeight: 600 }}>
+              {cfg.social.instagram.handle}
+            </a>
+          </p>
+        </motion.div>
+
+        {/* Category pills */}
+        {categories.length > 1 && (
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.15 }}
+            style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 32 }}>
+            {categories.map((cat, i) => (
+              <motion.button key={cat} onClick={() => setActiveCategory(cat)}
+                whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}
+                style={{ padding: '8px 20px', borderRadius: 999, cursor: 'pointer',
+                  fontFamily: 'var(--sans)', fontSize: '0.85rem', fontWeight: 500,
+                  border: activeCategory === cat ? '1.5px solid var(--text-h)' : '1.5px solid var(--border)',
+                  background: activeCategory === cat ? 'var(--text-h)' : 'transparent',
+                  color: activeCategory === cat ? 'var(--bg)' : 'var(--text-h)',
+                  transition: 'all 0.2s' }}>
+                {cat.charAt(0).toUpperCase() + cat.slice(1)}
+              </motion.button>
+            ))}
+          </motion.div>
+        )}
+
+        {/* 3D Carousel */}
+        <InstagramCarousel posts={filtered} />
+
+        {/* Follow CTA */}
+        <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }} transition={{ duration: 0.5, delay: 0.2 }}
+          style={{ textAlign: 'center', marginTop: 40 }}>
+          <motion.a href={cfg.social.instagram.href} target="_blank" rel="noopener noreferrer"
+            whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.94 }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 10,
+              padding: '12px 28px', borderRadius: 999, textDecoration: 'none',
+              background: 'linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)',
+              color: '#fff', fontWeight: 700, fontSize: '0.95rem',
+              fontFamily: 'var(--sans)', boxShadow: '0 6px 24px rgba(220,39,67,0.35)' }}>
+            <IGIcon /> Follow on Instagram
+          </motion.a>
+        </motion.div>
+      </div>
+    </section>
+  )
+}
+
 /* ── Main Videos page ── */
 export default function Videos() {
   const regularVideos = (cfg.videos || []).filter(v => v.type === 'video')
@@ -626,6 +867,9 @@ export default function Videos() {
       {shorts.length > 0 && (
         <ShortsSection shorts={shorts} />
       )}
+
+      {/* Instagram */}
+      <InstagramSection />
 
       {/* CTA — Subscribe Button Design Picker */}
       <SubscribeDesignPicker />

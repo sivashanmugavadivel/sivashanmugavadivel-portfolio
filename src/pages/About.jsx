@@ -1,5 +1,25 @@
-import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion'
-import { useRef, useState } from 'react'
+import { motion, useMotionValue, useTransform, useSpring, useInView, useAnimation } from 'framer-motion'
+import { useRef, useState, useEffect } from 'react'
+
+function ScrollMotion({ children, initial, visible, style, margin = '-60px', delay = 0 }) {
+  const ref = useRef(null)
+  const isInView = useInView(ref, { once: false, margin })
+  const controls = useAnimation()
+
+  useEffect(() => {
+    if (isInView) {
+      controls.start({ ...visible, transition: { duration: 1.0, ease: [0.16, 1, 0.3, 1], delay } })
+    } else {
+      controls.start({ ...initial, transition: { duration: 0.6, ease: [0.25, 0.1, 0.25, 1] } })
+    }
+  }, [isInView, controls])
+
+  return (
+    <motion.div ref={ref} initial={initial} animate={controls} style={style}>
+      {children}
+    </motion.div>
+  )
+}
 import Button from '../components/ui/Button'
 import cfg from '../data/config.json'
 
@@ -396,7 +416,7 @@ function TimelineSection() {
           <motion.div
             initial={{ scaleY: 0 }}
             whileInView={{ scaleY: 1 }}
-            viewport={{ once: true }}
+            viewport={{ once: false, margin: '-40px' }}
             transition={{ duration: 1.2, ease: 'easeInOut' }}
             style={{
               position: 'absolute',
@@ -411,10 +431,11 @@ function TimelineSection() {
           {timeline.map((item, i) => {
             const isLeft = i % 2 === 0
             return (
-              <Reveal
+              <ScrollMotion
                 key={i}
-                delay={i * 0.1}
-                y={24}
+                initial={{ opacity: 0, y: 30 }}
+                visible={{ opacity: 1, y: 0 }}
+                delay={i * 0.15}
                 style={{ marginBottom: 48, position: 'relative' }}
               >
                 {/* Dot on the line */}
@@ -461,7 +482,7 @@ function TimelineSection() {
                     <p style={{ fontSize: '0.875rem', color: 'var(--text)', lineHeight: 1.65, margin: 0 }}>{item.desc}</p>
                   </motion.div>
                 </div>
-              </Reveal>
+              </ScrollMotion>
             )
           })}
         </div>
