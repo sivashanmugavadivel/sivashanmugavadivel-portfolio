@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import videosData from '../data/videos.json'
 import cfg from '../data/config.json'
 
 /* ── No-op wrapper — PageWrapper handles page entry animation ── */
@@ -8,10 +7,27 @@ function Reveal({ children, style }) {
   return <div style={style}>{children}</div>
 }
 
+/* ── Extract YouTube video ID from a full URL or a bare ID ── */
+function youtubeId(input) {
+  if (!input) return ''
+  // Already a bare ID (11 chars, no slash or dot)
+  if (/^[a-zA-Z0-9_-]{11}$/.test(input)) return input
+  try {
+    const url = new URL(input)
+    // youtu.be/ID
+    if (url.hostname === 'youtu.be') return url.pathname.slice(1)
+    // youtube.com/watch?v=ID or /shorts/ID or /embed/ID
+    return url.searchParams.get('v') || url.pathname.split('/').pop() || input
+  } catch {
+    return input
+  }
+}
+
 /* ── Video card — thumbnail that swaps to iframe on click ── */
 function VideoCardFull({ video, featured = false }) {
   const [playing, setPlaying] = useState(false)
-  const thumb = `https://img.youtube.com/vi/${video.id}/hqdefault.jpg`
+  const id = youtubeId(video.id)
+  const thumb = `https://img.youtube.com/vi/${id}/hqdefault.jpg`
 
   return (
     <motion.div
@@ -34,7 +50,7 @@ function VideoCardFull({ video, featured = false }) {
       }}>
         {playing ? (
           <iframe
-            src={`https://www.youtube.com/embed/${video.id}?autoplay=1&rel=0`}
+            src={`https://www.youtube.com/embed/${id}?autoplay=1&rel=0`}
             title={video.title}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
@@ -170,7 +186,8 @@ function ShortsCarousel({ shorts }) {
         {shorts.map((v, i) => {
           const pos = getPos(i)
           const isCenter = pos === 'center'
-          const vthumb = `https://img.youtube.com/vi/${v.id}/hqdefault.jpg`
+          const vid = youtubeId(v.id)
+          const vthumb = `https://img.youtube.com/vi/${vid}/hqdefault.jpg`
 
           return (
             <motion.div
@@ -253,7 +270,7 @@ function ShortsCarousel({ shorts }) {
               {/* Iframe when playing */}
               {isCenter && playing && (
                 <iframe
-                  src={`https://www.youtube.com/embed/${v.id}?autoplay=1&rel=0`}
+                  src={`https://www.youtube.com/embed/${vid}?autoplay=1&rel=0`}
                   title={v.title}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
@@ -399,8 +416,8 @@ function VideosHeader1() {
 
 /* ── Main Videos page ── */
 export default function Videos() {
-  const regularVideos = videosData.filter(v => v.type === 'video')
-  const shorts = videosData.filter(v => v.type === 'short')
+  const regularVideos = (cfg.videos || []).filter(v => v.type === 'video')
+  const shorts = (cfg.videos || []).filter(v => v.type === 'short')
   const [featured, ...rest] = regularVideos
 
   return (
@@ -409,7 +426,7 @@ export default function Videos() {
 
       {/* Featured Video */}
       {featured && (
-        <section style={{ paddingBottom: 'clamp(48px, 6vw, 80px)', background: 'var(--bg)' }}>
+        <section style={{ paddingTop: 'clamp(48px, 6vw, 80px)', paddingBottom: 'clamp(48px, 6vw, 80px)', background: 'var(--bg)', position: 'relative', zIndex: 1 }}>
           <div className="page-container">
             <span className="section-label" style={{ display: 'block', marginBottom: 16 }}>Featured</span>
             <VideoCardFull video={featured} featured />
