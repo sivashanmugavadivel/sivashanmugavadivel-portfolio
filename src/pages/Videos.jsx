@@ -275,7 +275,7 @@ function ShortsCarousel({ shorts }) {
                 cursor: isCenter ? 'grab' : 'pointer',
                 transformStyle: 'preserve-3d',
                 boxShadow: isCenter && hovered
-                  ? '0 0 40px var(--accent), 0 0 80px var(--accent), 0 24px 60px rgba(0,0,0,0.45)'
+                  ? '0 0 40px #ff0000, 0 0 80px rgba(255,0,0,0.5), 0 24px 60px rgba(0,0,0,0.45)'
                   : isCenter
                   ? '0 24px 60px rgba(0,0,0,0.45)'
                   : '0 8px 24px rgba(0,0,0,0.2)',
@@ -317,10 +317,10 @@ function ShortsCarousel({ shorts }) {
                     position: 'absolute', top: '50%', left: '50%',
                     marginTop: -28, marginLeft: -28,
                     width: 56, height: 56, borderRadius: '50%',
-                    background: 'var(--accent)',
+                    background: '#ff0000',
                     border: 'none', cursor: 'pointer',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    boxShadow: '0 0 28px var(--accent), 0 0 60px var(--accent)',
+                    boxShadow: '0 0 28px #ff0000, 0 0 60px rgba(255,0,0,0.5)',
                   }}
                 >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff" style={{ marginLeft: 3 }}>
@@ -373,8 +373,8 @@ function ShortsCarousel({ shorts }) {
         <motion.button
           onClick={prev} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.92 }}
           style={{
-            width: 40, height: 40, borderRadius: '50%', border: '1.5px solid var(--accent)',
-            background: 'transparent', color: 'var(--accent)', cursor: 'pointer',
+            width: 40, height: 40, borderRadius: '50%', border: '1.5px solid #ff0000',
+            background: 'transparent', color: '#ff0000', cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}
         >
@@ -388,7 +388,7 @@ function ShortsCarousel({ shorts }) {
           transition={{ duration: 0.25 }}
           style={{ minWidth: 72, textAlign: 'center', fontFamily: 'var(--sans)', userSelect: 'none' }}
         >
-          <span style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--accent)' }}>{active + 1}</span>
+          <span style={{ fontSize: '1.3rem', fontWeight: 700, color: '#ff0000' }}>{active + 1}</span>
           <span style={{ fontSize: '1rem', color: 'var(--text)', margin: '0 4px' }}>/</span>
           <span style={{ fontSize: '1rem', color: 'var(--text)' }}>{shorts.length}</span>
         </motion.div>
@@ -396,8 +396,8 @@ function ShortsCarousel({ shorts }) {
         <motion.button
           onClick={next} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.92 }}
           style={{
-            width: 40, height: 40, borderRadius: '50%', border: '1.5px solid var(--accent)',
-            background: 'transparent', color: 'var(--accent)', cursor: 'pointer',
+            width: 40, height: 40, borderRadius: '50%', border: '1.5px solid #ff0000',
+            background: 'transparent', color: '#ff0000', cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}
         >
@@ -536,17 +536,18 @@ function DesignG({ href }) {
         </motion.div>
       ))}
       <div className="page-container" style={{ textAlign:'center', position:'relative', zIndex:2 }}>
-        <motion.div animate={{ y:[0,-8,0], rotate:[-2,2,-2] }}
+        <motion.div animate={{ y:[0,-8,0] }}
           transition={{ duration:3, repeat:Infinity, ease:'easeInOut' }}
-          style={{ fontSize:'clamp(52px,8vw,80px)', marginBottom:16, display:'inline-block',
+          style={{ marginBottom:16, display:'inline-block',
             filter:'drop-shadow(0 0 20px rgba(0,200,255,0.6))' }}>
-          🐬
+          <img src="/sub-gif1.gif" alt="dolphin"
+            style={{ width:'clamp(80px,12vw,140px)', height:'auto', display:'block' }} />
         </motion.div>
         <motion.h2 animate={{ opacity:[0.8,1,0.8] }} transition={{ duration:2.5, repeat:Infinity }}
           style={{ color:'#7dd3fc', fontSize:'clamp(1.4rem,4vw,2.4rem)',
             fontFamily:'var(--display)', marginBottom:8,
             textShadow:'0 0 24px rgba(125,211,252,0.6)' }}>
-          🌊 Dive Into More Content
+          🐬Dive Into More Content
         </motion.h2>
         <p style={{ color:'rgba(186,230,253,0.6)', marginBottom:36, fontFamily:'var(--sans)', fontSize:'0.9rem' }}>
           Subscribe and explore a whole ocean of videos
