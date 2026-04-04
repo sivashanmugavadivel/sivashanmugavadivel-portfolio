@@ -192,19 +192,12 @@ function ShortsSection({ shorts }) {
         </motion.div>
 
         {/* Count */}
-        <motion.p
-          key={activeCategory}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--text)', opacity: 0.6, marginBottom: 32 }}
-        >
+        <p style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--text)', opacity: 0.6, marginBottom: 32 }}>
           {filtered.length} {filtered.length === 1 ? 'short' : 'shorts'}
           {activeCategory !== 'all' && ` in ${activeCategory}`}
-        </motion.p>
+        </p>
 
-        <motion.div key={activeCategory} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-          <ShortsCarousel shorts={filtered} />
-        </motion.div>
+        <ShortsCarousel shorts={filtered} />
       </div>
     </section>
   )
