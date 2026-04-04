@@ -409,7 +409,7 @@ function BioSection() {
 /* ── Timeline Section ── */
 function TimelineSection() {
   return (
-    <section className="section">
+    <section className="section" style={{ overflow: 'hidden' }}>
       <div className="page-container">
         <SectionHeading label="Journey" title="Experience & Education" />
 
@@ -436,8 +436,7 @@ function TimelineSection() {
               <Reveal
                 key={i}
                 delay={i * 0.1}
-                x={isLeft ? -40 : 40}
-                y={0}
+                y={24}
                 style={{ marginBottom: 48, position: 'relative' }}
               >
                 {/* Dot on the line */}
@@ -455,7 +454,7 @@ function TimelineSection() {
                 }} />
 
                 {/* Card */}
-                <div style={{
+                <div className="timeline-card" style={{
                   width: 'calc(50% - 32px)',
                   marginLeft: isLeft ? 0 : 'calc(50% + 32px)',
                 }}>
@@ -490,10 +489,10 @@ function TimelineSection() {
         </div>
       </div>
 
-      {/* Mobile: stack timeline */}
       <style>{`
         @media (max-width: 640px) {
           .timeline-line { display: none; }
+          .timeline-card { width: 100% !important; margin-left: 0 !important; }
         }
       `}</style>
     </section>
