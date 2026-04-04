@@ -308,7 +308,7 @@ export default function BlogPost() {
           .bp-desktop-layout { display: none; }
           .bp-mobile-layout {
             display: flex; flex-direction: column; gap: 16px;
-            padding: 0 0 60px; min-height: calc(100vh - 64px);
+            padding: 64px 0 60px; min-height: calc(100vh - 64px);
           }
           .bp-mobile-topbar {
             display: flex; align-items: center; justify-content: space-between;

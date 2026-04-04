@@ -136,6 +136,7 @@ function GalleryCarousel({ items, onOpen }) {
         height: 'clamp(300px, 50vw, 500px)',
         perspective: 1200,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
+        overflow: 'hidden',
       }}>
         {items.map((item, i) => {
           const pos = getPos(i)
