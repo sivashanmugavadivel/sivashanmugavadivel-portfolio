@@ -81,7 +81,7 @@ export default function App() {
         }}
       >
         <img
-          src={`${import.meta.env.BASE_URL}fed1.png`}
+          src={`${import.meta.env.BASE_URL}fed-gif1.gif`}
           alt="Feedback"
           style={{ width: '100%', height: 'auto', display: 'block' }}
         />
