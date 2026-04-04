@@ -126,41 +126,121 @@
 
   "videos": [
     {
-      "id": "dQw4w9WgXcQ",
+      "id": "https://youtu.be/frQfwiFEvhQ?si=RIA3bbiAO-_He3oS",
       "title": "Featured Video Title",
-      "description": "Replace this with your actual YouTube video ID and details.",
+      "description": "Samsung Galaxy S25 Ultra (Jet Black - 512GB) & Watch 7 (44mm) Unboxing || First Impression || தமிழ்.",
       "type": "video",
       "date": "2025-03-20",
       "tags": ["featured"]
     },
     {
-      "id": "jNQXAC9IVRw",
+      "id": "https://youtu.be/IkPYALPXvKU?si=suDU6XG4Q-ZroSPe",
       "title": "Second Video Title",
-      "description": "Another great video. Replace with your real content.",
+      "description": "Samsung galaxy S23 Ultra Unboxing | First Look | 256GB | Black.",
       "type": "video",
       "date": "2025-02-14",
-      "tags": ["tutorial"]
+      "tags": ["Unboxing"]
     },
     {
-      "id": "9bZkp7q19f0",
+      "id": "https://youtu.be/D2RHDnm8_IY?si=E-_pqQy2R-SWUUqm",
       "title": "Third Video Title",
-      "description": "Yet another video. Swap out the IDs for your real YouTube videos.",
+      "description": "KCBT || Kelambakkam Bus Terminal || Kalaignar Centenary Bus Terminat - KCBT || Chennai.",
       "type": "video",
       "date": "2025-01-10",
       "tags": ["vlog"]
     },
     {
-      "id": "uelHwf8o7_U",
+      "id": "https://youtube.com/shorts/1PVaLLKoGno?si=MkaWbNZadIJPrSn4",
+      "title": "Short #2",
+      "description": "#USA #travel #vlogs #snowfall.",
+      "type": "short",
+      "date": "2025-02-20",
+      "tags": ["short"]
+    },
+    {
+      "id": "https://youtube.com/shorts/CGXdtOeAOgU?si=QWrRrpSqKOCEAjwM",
       "title": "Short #1",
-      "description": "A YouTube Short. Replace with your Short's video ID.",
+      "description": "#Trip #Friends #2025 #tamilnadu #yarcaud.",
+      "type": "short",
+      "date": "2025-02-20",
+      "tags": ["short"]
+    },
+    {
+      "id": "https://youtube.com/shorts/WKe2f3h_LRs?si=TrZHEt9XWvoxX7jG",
+      "title": "Short #2",
+      "description": "Valentine’s Day😂 for Single boys be like | Tamil Shorts.",
+      "type": "short",
+      "date": "2025-02-20",
+      "tags": ["short"]
+    },
+    {
+      "id": "https://youtube.com/shorts/OLWjM8pfr-Y?si=aRflR_r-uCxhqYek",
+      "title": "Short #3",
+      "description": "USA #walmart #shopping #mountvernon #Illinois.",
+      "type": "short",
+      "date": "2025-02-20",
+      "tags": ["short"]
+    },
+    {
+      "id": "https://youtube.com/shorts/_NPbSD7dZBE?si=PYVwuZnvZgz67__S",
+      "title": "Short #4",
+      "description": "Arulmigu Shri Kariyakali Amman Kumbhabhishekam #maniyankulam.",
       "type": "short",
       "date": "2025-03-05",
       "tags": ["short"]
     },
     {
-      "id": "kffacxfA7G4",
-      "title": "Short #2",
-      "description": "Another Short. Replace with your real Short's video ID.",
+      "id": "https://youtube.com/shorts/V0LqZdyD-mI?si=QhzENjpb4JDvsm3D",
+      "title": "Short #4",
+      "description": "Valentine’s Day wish panren… yaarum illa .",
+      "type": "short",
+      "date": "2025-03-05",
+      "tags": ["short"]
+    },
+    {
+      "id": "https://youtube.com/shorts/cutlTW4B28Y?si=B7zJpqW3glkjmevq",
+      "title": "Short #5",
+      "description": "Easy Chicken Briyani in 1 minute 🍗🔥 | Tamil Shorts.",
+      "type": "short",
+      "date": "2025-02-20",
+      "tags": ["short"]
+    },
+    {
+      "id": "https://youtube.com/shorts/oBhpwi3CyEk?si=OVNkAHaTQZcn0Qk3",
+      "title": "Short #6",
+      "description": "Exploring Valentine’s Day bouquets at Walmart 💐 | Tamil Shorts.",
+      "type": "short",
+      "date": "2025-02-20",
+      "tags": ["short"]
+    },
+    {
+      "id": "https://youtube.com/shorts/g2ZtruzKL40?si=6_YGUyrso1CyZ96R",
+      "title": "Short #7",
+      "description": "Spicy Mushroom Omelet in 1 minute 🍳🔥 | Tamil Shorts.",
+      "type": "short",
+      "date": "2025-02-20",
+      "tags": ["short"]
+    },
+    {
+      "id": "https://youtube.com/shorts/2WuRRNqlgCM?si=KDFnHI-ZWcp6AiWQ",
+      "title": "Short #8",
+      "description": "Exploring Valentine’s Day flower bouquets at Walmart USA 💐 | #love | Tamil vlog.",
+      "type": "short",
+      "date": "2025-02-20",
+      "tags": ["short"]
+    },
+    {
+      "id": "https://youtube.com/shorts/M9m6vGQDdi0?si=5-HdJ1I93cCwbEG3",
+      "title": "Short #9",
+      "description": "Midnight hunger? Try this noodles 😍 | Tamil Cooking Short.",
+      "type": "short",
+      "date": "2025-02-20",
+      "tags": ["short"]
+    },
+    {
+      "id": "https://youtube.com/shorts/4qGtKCIt77Y?si=QvyqpvdbEHIRg6gp",
+      "title": "Short #10",
+      "description": "Valentine’s Day bouquet at Walmart… for myself 😅 | Tamil Shorts.",
       "type": "short",
       "date": "2025-02-20",
       "tags": ["short"]
