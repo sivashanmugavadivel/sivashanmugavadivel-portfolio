@@ -53,32 +53,7 @@ const skills = [
   { category: 'Other', items: ['Photography', 'Video Editing', 'Technical Writing', 'UI Design'] },
 ]
 
-const timeline = [
-  {
-    year: '2024 – Present',
-    role: 'Senior Frontend Developer',
-    org: 'Freelance / Open Source',
-    desc: 'Building modern web applications and contributing to open-source projects. Focused on React, animation systems, and performance.',
-  },
-  {
-    year: '2022 – 2024',
-    role: 'Frontend Developer',
-    org: 'Tech Startup',
-    desc: 'Led frontend architecture for a SaaS product. Built a design system from scratch, improved page performance by 40%.',
-  },
-  {
-    year: '2020 – 2022',
-    role: 'Junior Developer',
-    org: 'Digital Agency',
-    desc: 'Delivered responsive websites and interactive landing pages for clients across various industries.',
-  },
-  {
-    year: '2016 – 2020',
-    role: 'B.Sc. Computer Science',
-    org: 'University',
-    desc: 'Graduated with honours. Focused on algorithms, software engineering, and web technologies.',
-  },
-]
+const timeline = cfg.journey
 
 const socials = [
   { label: 'GitHub', href: cfg.social.github.href, icon: (
