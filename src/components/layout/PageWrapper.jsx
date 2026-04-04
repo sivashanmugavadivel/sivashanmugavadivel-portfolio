@@ -3,19 +3,19 @@ import { useLocation } from 'react-router-dom'
 
 const pageVariants = {
   '/': {
-    initial: { opacity: 0, scale: 0.97 },
-    animate: { opacity: 1, scale: 1 },
-    exit: { opacity: 0, scale: 1.02 },
+    initial: { opacity: 0, y: 16 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -8 },
   },
   '/about': {
-    initial: { opacity: 0, x: -40 },
-    animate: { opacity: 1, x: 0 },
-    exit: { opacity: 0, x: 40 },
+    initial: { opacity: 0, y: 24 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -12 },
   },
   '/contact': {
-    initial: { opacity: 0, x: 40 },
-    animate: { opacity: 1, x: 0 },
-    exit: { opacity: 0, x: -40 },
+    initial: { opacity: 0, y: 24 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -12 },
   },
   '/gallery': {
     initial: { opacity: 0, y: 32 },
