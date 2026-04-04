@@ -7,17 +7,21 @@ function formatDate(d) {
   return new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
+const isTouchDevice = () => window.matchMedia('(hover: none)').matches
+
 export default function PostCard({ slug, frontmatter }) {
   const { title, date, excerpt, tags = [] } = frontmatter
   const [flipped, setFlipped] = useState(false)
   const icon = tagIcon(tags)
   const color = tagColor(tags[0])
+  const touch = isTouchDevice()
 
   return (
     <div
       style={{ perspective: 1000, height: 280, cursor: 'pointer' }}
-      onMouseEnter={() => setFlipped(true)}
-      onMouseLeave={() => setFlipped(false)}
+      onMouseEnter={() => { if (!touch) setFlipped(true) }}
+      onMouseLeave={() => { if (!touch) setFlipped(false) }}
+      onClick={() => { if (touch) setFlipped(f => !f) }}
     >
       <motion.div
         animate={{ rotateY: flipped ? 180 : 0 }}
@@ -63,12 +67,15 @@ export default function PostCard({ slug, frontmatter }) {
             position: 'absolute', bottom: 14, right: 16,
             fontSize: '0.7rem', color, opacity: 0.6, fontWeight: 600,
           }}>
-            hover to flip ↻
+            {touch ? 'tap to flip ↻' : 'hover to flip ↻'}
           </div>
         </div>
 
         {/* BACK */}
-        <Link to={`/blog/${slug}`} style={{
+        <Link
+          to={`/blog/${slug}`}
+          onClick={e => { if (touch && !flipped) e.preventDefault() }}
+          style={{
           textDecoration: 'none',
           position: 'absolute', inset: 0,
           backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden',
