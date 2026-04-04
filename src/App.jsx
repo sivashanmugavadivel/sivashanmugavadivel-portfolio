@@ -64,26 +64,25 @@ export default function App() {
       <motion.button
         animate={{ y: [0, -10, 0] }}
         transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', scale: { duration: 0.35, ease: 'easeOut' }, x: { duration: 0.35, ease: 'easeOut' } }}
-        whileHover={{ x: -14, scale: 1.18, transition: { duration: 0.12, ease: 'easeOut' } }}
+        whileHover={{ x: -8, scale: 1.15, transition: { duration: 0.2, ease: 'easeOut' } }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setFeedbackOpen(true)}
         style={{
           position: 'fixed',
-          right: -10,
+          right: -5,
           top: '50%',
-          transform: 'translateY(-50%)',
+          transform: 'translateX(55%) translateY(-50%)',
           zIndex: 90,
           background: 'none',
           border: 'none',
           cursor: 'pointer',
           padding: 0,
-          width: 'clamp(90px, 12vw, 130px)',
         }}
       >
         <img
           src={`${import.meta.env.BASE_URL}fed-gif1.gif`}
           alt="Feedback"
-          style={{ width: '100%', height: 'auto', display: 'block' }}
+          style={{ width: 'auto', height: '120px', display: 'block' }}
         />
       </motion.button>
 
