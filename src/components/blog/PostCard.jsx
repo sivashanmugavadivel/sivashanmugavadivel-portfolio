@@ -10,13 +10,19 @@ function formatDate(d) {
 export default function PostCard({ slug, frontmatter }) {
   const { title, date, excerpt, tags = [] } = frontmatter
   const [flipped, setFlipped] = useState(false)
-  const [isTouch, setIsTouch] = useState(false)
+  const [isTouch, setIsTouch] = useState(null)
   const icon = tagIcon(tags)
   const color = tagColor(tags[0])
 
   useEffect(() => {
     setIsTouch(window.matchMedia('(hover: none)').matches)
+    setFlipped(false)
   }, [])
+
+  // Don't render until we know the device type — prevents wrong component flash
+  if (isTouch === null) return (
+    <div style={{ height: 280, borderRadius: 16, background: `linear-gradient(145deg, var(--card-bg) 0%, ${color}11 100%)`, border: `1px solid ${color}33` }} />
+  )
 
   /* ── Desktop: 3D flip on hover ── */
   if (!isTouch) {
