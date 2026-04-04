@@ -484,7 +484,7 @@ function VideosHeader1() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 1.0 }}
-          style={{ color: 'rgba(255,255,255,0.5)', maxWidth: 440, margin: '0 auto', lineHeight: 1.7 }}
+          style={{ color: 'var(--text)', maxWidth: 440, margin: '0 auto', lineHeight: 1.7 }}
         >
           YouTube videos, tutorials, vlogs, and short-form content.
         </motion.p>
