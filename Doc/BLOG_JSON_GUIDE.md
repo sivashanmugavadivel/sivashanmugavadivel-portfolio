@@ -14,6 +14,7 @@ Drop a `.json` file in `src/data/blog/` to create a new blog post. No code chang
 | `tags` | ✅ | Array of tags — controls icon and accent color |
 | `excerpt` | ✅ | Short summary shown on card back and detail page callout |
 | `author` | ✅ | Shown in footer of detail page |
+| `icon` | ⬜ | Override the sidebar emoji icon (e.g. `"🥚"`) — if omitted, auto-detected from tags |
 | `cookTime` | ⬜ | Recipe: shown as meta pill (e.g. `"15 min"`) |
 | `difficulty` | ⬜ | Recipe: shown as meta pill (e.g. `"Easy"`) |
 | `servings` | ⬜ | Recipe: shown as meta pill (e.g. `"2"`) |
@@ -42,6 +43,8 @@ Drop a `.json` file in `src/data/blog/` to create a new blog post. No code chang
 | `tech` | Indigo | 💻 |
 
 > To add a new tag, edit `src/data/tagMeta.js` and add one line each to `TAG_COLORS` and `TAG_ICONS`.
+
+> **To override the icon for a specific post**, add `"icon": "🥚"` at the top level of the JSON — this takes priority over the auto-detected tag icon.
 
 ---
 

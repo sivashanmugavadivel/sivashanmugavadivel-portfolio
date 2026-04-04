@@ -13,12 +13,26 @@
       "type": "image",
       "src": "/blog/photos/Spicy-Omelet-with-Mushrooms.jpg",
       "alt": "Spicy Mushroom Masala Omelet",
-      "float": "right",
-      "size": "small"
+      "align": "center",
+      "size": "full"
     },
     {
       "type": "text",
       "body": "If you're looking for a quick, flavorful, and protein-packed breakfast, this Mushroom Masala Omelet is a perfect choice. Bold spices, earthy mushrooms, and fluffy eggs come together in minutes — a simple yet satisfying way to start your day."
+    },
+    {
+      "type": "gallery",
+      "heading": "Ingredient Gallery",
+      "images": [
+        { "src": "/blog/photos/g1.jpg", "alt": "First photo" },
+        { "src": "/blog/photos/g8.jpg", "alt": "Second photo", "caption": "Caption" },
+        { "src": "/blog/photos/g7.jpg", "alt": "Third photo" },
+        { "src": "/blog/photos/g2.jpg", "alt": "Fourth photo" },
+        { "src": "/blog/photos/g3.jpg", "alt": "Fifth photo" },
+        { "src": "/blog/photos/g4.jpg", "alt": "Sixth photo" },
+        { "src": "/blog/photos/g5.jpg", "alt": "Seventh photo" },
+        { "src": "/blog/photos/g6.jpg", "alt": "Eighth photo" }
+      ]
     },
     {
       "type": "ingredient-group",
@@ -73,6 +87,12 @@
           "body": "Spread the mushroom mixture evenly in the pan. Pour the beaten eggs over the top. Cook on low-medium heat until the bottom sets. Flip or fold the omelet and cook for another 1–2 minutes until fully done."
         }
       ]
+    },
+    {
+      "type": "video",
+      "heading": "Youtube Video",
+      "youtubeId": "https://youtube.com/shorts/g2ZtruzKL40?si=cka_FdRye84GBvkX",
+      "caption": "Watch how to make it"
     },
     {
       "type": "callout",

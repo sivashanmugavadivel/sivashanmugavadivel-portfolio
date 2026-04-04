@@ -52,7 +52,7 @@ export default function BlogPost() {
   const { frontmatter } = post
   const { title, date, tags = [], excerpt } = frontmatter
   const color = tagColor(tags[0])
-  const icon = tagIcon(tags)
+  const icon = post.meta?.icon || tagIcon(tags)
   const readTime = calcReadTime(post)
 
   // Author: from JSON meta, or fallback
@@ -62,12 +62,10 @@ export default function BlogPost() {
     <>
       <ScrollProgress />
 
-      <div style={{
-        display: 'flex', minHeight: 'calc(100vh - 64px)',
-        maxWidth: 1100, margin: '0 auto', padding: '0 24px',
-      }}>
+      {/* ── Desktop layout (≥768px): sidebar + content side by side ── */}
+      <div className="bp-desktop-layout">
 
-        {/* ── Left Sidebar ── */}
+        {/* Left Sidebar */}
         <motion.aside
           initial={{ x: -40, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
@@ -145,7 +143,7 @@ export default function BlogPost() {
           </div>
         </motion.aside>
 
-        {/* ── Right Content ── */}
+        {/* Right Content */}
         <motion.main
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -180,7 +178,6 @@ export default function BlogPost() {
             </motion.p>
           )}
 
-          {/* Content — JSON sections or MD prose */}
           {post._source === 'json' ? (
             <JsonPostRenderer sections={post.sections} meta={post.meta} color={color} />
           ) : (
@@ -207,7 +204,147 @@ export default function BlogPost() {
         </motion.main>
       </div>
 
+      {/* ── Mobile layout (<768px): stacked ── */}
+      <motion.div
+        className="bp-mobile-layout"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
+        {/* Mobile top bar */}
+        <div className="bp-mobile-topbar">
+          <Link to="/blog" className="bp-mobile-back">← Blog</Link>
+          <div className="bp-mobile-meta-row">
+            <span className="bp-mobile-date">📅 {formatDate(date)}</span>
+            <span className="bp-mobile-readtime">⏱ {readTime}</span>
+          </div>
+        </div>
+
+        {/* Accent bar */}
+        <motion.div
+          initial={{ scaleX: 0 }}
+          animate={{ scaleX: 1 }}
+          transition={{ delay: 0.2, duration: 0.5, ease: 'easeOut' }}
+          style={{
+            height: 3, background: `linear-gradient(90deg, ${color}, ${color}44)`,
+            transformOrigin: 'left', borderRadius: 2, margin: '0 16px',
+          }}
+        />
+
+        {/* Mobile header: icon + title */}
+        <div className="bp-mobile-header">
+          <motion.div
+            animate={{ rotate: [0, 8, -8, 0] }}
+            transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+            style={{ fontSize: 40, filter: `drop-shadow(0 0 12px ${color}88)`, flexShrink: 0 }}
+          >
+            {icon}
+          </motion.div>
+          <h1 className="bp-mobile-title">{title}</h1>
+        </div>
+
+        {/* Tags row */}
+        <div className="bp-mobile-tags">
+          {tags.map(tag => (
+            <span key={tag} style={{
+              fontSize: '0.7rem', fontWeight: 700, padding: '4px 10px',
+              borderRadius: 6,
+              background: `${tagColor(tag)}18`,
+              color: tagColor(tag),
+              border: `1px solid ${tagColor(tag)}44`,
+            }}>
+              {tag}
+            </span>
+          ))}
+        </div>
+
+        {/* Excerpt */}
+        {excerpt && (
+          <p style={{
+            padding: '12px 16px', borderRadius: 10, margin: '0 16px',
+            background: `${color}12`, borderLeft: `3px solid ${color}`,
+            fontSize: '0.88rem', color: 'var(--text)', lineHeight: 1.7,
+            fontStyle: 'italic',
+          }}>
+            {excerpt}
+          </p>
+        )}
+
+        {/* Content */}
+        <div className="bp-mobile-content">
+          {post._source === 'json' ? (
+            <JsonPostRenderer sections={post.sections} meta={post.meta} color={color} />
+          ) : (
+            <div className="magazine-prose">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.content}</ReactMarkdown>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="bp-mobile-footer">
+          <span style={{ fontSize: '0.82rem', color: 'var(--text)', fontStyle: 'italic', opacity: 0.7 }}>
+            — {author}
+          </span>
+          <Link to="/blog" style={{
+            fontSize: '0.82rem', fontWeight: 600, color: 'var(--accent)',
+            textDecoration: 'none',
+          }}>
+            ← Back to Blog
+          </Link>
+        </div>
+      </motion.div>
+
       <style>{`
+        /* ── Desktop (≥768px): show sidebar layout, hide mobile ── */
+        .bp-desktop-layout {
+          display: flex; min-height: calc(100vh - 64px);
+          max-width: 1100px; margin: 0 auto; padding: 0 24px;
+        }
+        .bp-mobile-layout { display: none; }
+
+        /* ── Mobile (<768px): hide desktop, show mobile ── */
+        @media (max-width: 767px) {
+          .bp-desktop-layout { display: none; }
+          .bp-mobile-layout {
+            display: flex; flex-direction: column; gap: 16px;
+            padding: 0 0 60px; min-height: calc(100vh - 64px);
+          }
+          .bp-mobile-topbar {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 16px 0; flex-wrap: wrap; gap: 8px;
+          }
+          .bp-mobile-back {
+            font-size: 0.78rem; color: #666680; text-decoration: none;
+            font-weight: 600;
+          }
+          .bp-mobile-meta-row {
+            display: flex; gap: 14px; align-items: center;
+          }
+          .bp-mobile-date, .bp-mobile-readtime {
+            font-size: 0.7rem; color: #666680; font-family: monospace;
+          }
+          .bp-mobile-header {
+            display: flex; align-items: flex-start; gap: 14px;
+            padding: 12px 16px 0;
+          }
+          .bp-mobile-title {
+            font-size: 1.35rem; font-weight: 800; color: var(--text-h);
+            line-height: 1.3; margin: 0;
+          }
+          .bp-mobile-tags {
+            display: flex; flex-wrap: wrap; gap: 8px; padding: 0 16px;
+          }
+          .bp-mobile-content { padding: 0 16px; }
+          .bp-mobile-footer {
+            padding: 20px 16px 0;
+            border-top: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between; gap: 12px;
+          }
+          .magazine-prose { font-size: 0.9rem; }
+        }
+
+        /* ── Prose styles (shared) ── */
         .magazine-prose { line-height: 1.85; color: var(--text); font-size: 0.95rem; }
         .magazine-prose h1 { display: none; }
         .magazine-prose h2 {
@@ -254,11 +391,6 @@ export default function BlogPost() {
           margin: 0 0 1.2em; color: var(--text); font-style: italic;
         }
         .magazine-prose a { color: ${color}; }
-
-        @media (max-width: 640px) {
-          aside { display: none; }
-          .magazine-prose { font-size: 0.9rem; }
-        }
       `}</style>
     </>
   )
