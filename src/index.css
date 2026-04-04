@@ -92,6 +92,11 @@ body {
   margin: 0;
   background: var(--bg);
   transition: background var(--transition), color var(--transition);
+  overflow-x: hidden;
+}
+
+html {
+  overflow-x: hidden;
 }
 
 #root {
