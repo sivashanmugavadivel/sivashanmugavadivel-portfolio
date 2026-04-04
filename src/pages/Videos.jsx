@@ -232,6 +232,7 @@ function ShortsCarousel({ shorts }) {
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 32 }}>
 
       {/* Carousel stage */}
+      <div style={{ width: '100%', overflow: 'hidden' }}>
       <div style={{
         position: 'relative',
         width: '100%',
@@ -361,6 +362,7 @@ function ShortsCarousel({ shorts }) {
             </motion.div>
           )
         })}
+      </div>
       </div>
 
       {/* Nav controls */}
