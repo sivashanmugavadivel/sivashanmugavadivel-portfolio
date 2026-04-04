@@ -19,8 +19,7 @@
         if (redirect) {
           sessionStorage.removeItem('spa_redirect');
           sessionStorage.setItem('spa_redirected', '1');
-          var base = '/sivashanmugavadivel-portfolio';
-          window.history.replaceState(null, '', base + redirect);
+          window.history.replaceState(null, '', redirect);
         }
       })();
     </script>

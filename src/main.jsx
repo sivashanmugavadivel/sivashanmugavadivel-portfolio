@@ -12,7 +12,7 @@ window.scrollTo(0, 0)
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <BrowserRouter basename="/sivashanmugavadivel-portfolio">
+    <BrowserRouter basename="/">
       <App />
     </BrowserRouter>
   </StrictMode>,
