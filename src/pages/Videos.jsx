@@ -476,39 +476,28 @@ function VideosHeader1() {
 export default function Videos() {
   const regularVideos = (cfg.videos || []).filter(v => v.type === 'video')
   const shorts = (cfg.videos || []).filter(v => v.type === 'short')
-  const [featured, ...rest] = regularVideos
 
   return (
     <div>
       <VideosHeader1 />
 
-      {/* Featured Video */}
-      {featured && (
-        <section style={{ paddingTop: 'clamp(48px, 6vw, 80px)', paddingBottom: 'clamp(48px, 6vw, 80px)', background: 'var(--bg)', position: 'relative', zIndex: 1 }}>
-          <div className="page-container">
-            <span className="section-label" style={{ display: 'block', marginBottom: 16 }}>Featured</span>
-            <VideoCardFull video={featured} featured />
-          </div>
-        </section>
-      )}
-
-      {/* ── More Videos ── */}
-      {rest.length > 0 && (
-        <section className="section" style={{ paddingTop: 0, background: 'var(--bg)', overflow: 'hidden' }}>
+      {/* ── Videos ── */}
+      {regularVideos.length > 0 && (
+        <section className="section" style={{ paddingTop: 'clamp(48px, 6vw, 80px)', background: 'var(--bg)', overflow: 'hidden' }}>
           <div className="page-container">
             <Reveal delay={0}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 32 }}>
-                <h2 style={{ margin: 0 }}>More Videos</h2>
+                <h2 style={{ margin: 0 }}>Videos</h2>
                 <span style={{ fontSize: '0.8rem', color: 'var(--accent)' }}>← drag →</span>
               </div>
             </Reveal>
             <motion.div
               style={{ display: 'flex', gap: 20, overflowX: 'auto', paddingBottom: 16, scrollSnapType: 'x mandatory', scrollbarWidth: 'none', cursor: 'grab' }}
               drag="x"
-              dragConstraints={{ right: 0, left: -(rest.length * 420) }}
+              dragConstraints={{ right: 0, left: -(regularVideos.length * 420) }}
               whileTap={{ cursor: 'grabbing' }}
             >
-              {rest.map((video) => (
+              {regularVideos.map((video) => (
                 <div
                   key={video.id}
                   style={{ flex: '0 0 clamp(280px, 38vw, 440px)', scrollSnapAlign: 'start' }}
