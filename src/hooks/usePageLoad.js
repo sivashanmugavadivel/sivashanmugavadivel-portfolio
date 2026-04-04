@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 
 export function usePageLoad() {
   const [isLoading, setIsLoading] = useState(() => {
+    // Skip loading screen if this is a SPA redirect (direct URL navigation)
+    if (sessionStorage.getItem('spa_redirect')) return false
     return !sessionStorage.getItem('portfolio_loaded')
   })
 
