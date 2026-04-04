@@ -392,7 +392,7 @@ function FeaturedPostsSection() {
   if (posts.length === 0) return null
 
   return (
-    <section className="section" style={{ overflow: 'hidden' }}>
+    <section className="section" style={{ overflow: 'hidden', contain: 'paint' }}>
       <div className="page-container">
         <SectionHeading label="Writing" title="Latest Posts" />
 
@@ -692,7 +692,7 @@ function TickerRow({ items, direction = 'left', speed = 18, dim = false }) {
 
 function SocialSection() {
   return (
-    <section style={{ background: 'var(--bg)', padding: 'clamp(64px,8vw,96px) 0', overflow: 'hidden' }}>
+    <section style={{ background: 'var(--bg)', padding: 'clamp(64px,8vw,96px) 0', overflow: 'hidden', contain: 'paint' }}>
       <div className="page-container" style={{ marginBottom: 48, textAlign: 'center' }}>
         <Reveal delay={0}><span className="section-label">Follow Along</span></Reveal>
         <Reveal delay={0.1}><h2 style={{ marginTop: 8 }}>Find me on social</h2></Reveal>

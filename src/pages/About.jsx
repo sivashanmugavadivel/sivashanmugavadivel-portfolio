@@ -237,6 +237,7 @@ function AboutHero() {
       paddingBottom: 'clamp(40px, 6vw, 72px)',
       background: 'var(--bg)',
       overflow: 'hidden',
+      contain: 'paint',
     }}>
       <div className="page-container">
         <div className="about-hero-inner" style={{
