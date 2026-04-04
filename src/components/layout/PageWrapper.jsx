@@ -23,9 +23,9 @@ const pageVariants = {
     exit: { opacity: 0, y: -16 },
   },
   '/videos': {
-    initial: { opacity: 0, y: -32 },
+    initial: { opacity: 0, y: 24 },
     animate: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: 16 },
+    exit: { opacity: 0, y: -12 },
   },
   '/blog': {
     initial: { opacity: 0, y: 24 },
