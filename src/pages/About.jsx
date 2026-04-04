@@ -232,7 +232,7 @@ function ImageFrame({ name }) {
 function AboutHero() {
   const isMobile = window.innerWidth <= 768
   return (
-    <section style={{
+    <section className="about-hero-section" style={{
       paddingTop: isMobile ? 'clamp(100px, 16vw, 140px)' : 'clamp(20px, 3vw, 40px)',
       paddingBottom: 'clamp(40px, 6vw, 72px)',
       background: 'var(--bg)',
@@ -328,6 +328,9 @@ function AboutHero() {
       </div>
 
       <style>{`
+        @media (min-width: 769px) {
+          .about-hero-section .page-container { max-width: 100% !important; padding-left: clamp(24px, 5vw, 80px) !important; padding-right: clamp(24px, 5vw, 80px) !important; }
+        }
         @media (max-width: 768px) {
           .about-hero-section { padding-top: 90px !important; }
           .about-hero-inner { flex-direction: column-reverse !important; text-align: center; align-items: center !important; }
