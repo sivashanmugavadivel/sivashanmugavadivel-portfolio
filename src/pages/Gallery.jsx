@@ -140,6 +140,9 @@ function GalleryCarousel({ items, onOpen }) {
       }}>
         {items.map((item, i) => {
           const pos = getPos(i)
+          // Only render the 5 visible cards — skip hidden ones entirely
+          // This avoids mounting 50+ motion.divs and eliminates the lag
+          if (pos === 'hidden') return null
           const isCenter = pos === 'center'
           const src = `${BASE}gallery/${item.category}/${item.filename}`
 
@@ -368,6 +371,7 @@ export default function Gallery() {
                 transition={{ duration: 0.3 }}
               >
                 <GalleryCarousel
+                  key={activeCategory}
                   items={filtered}
                   onOpen={(i) => setLightboxIndex(i)}
                 />
