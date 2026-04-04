@@ -208,8 +208,6 @@ function ShortsCarousel({ shorts }) {
   const [active, setActive] = useState(0)
   const [playing, setPlaying] = useState(false)
   const [hovered, setHovered] = useState(false)
-  const isTouch = typeof window !== 'undefined' && window.matchMedia('(hover: none)').matches
-
   const prev = () => { setPlaying(false); setActive(i => (i - 1 + shorts.length) % shorts.length) }
   const next = () => { setPlaying(false); setActive(i => (i + 1) % shorts.length) }
 
@@ -304,10 +302,10 @@ function ShortsCarousel({ shorts }) {
                 SHORT
               </div>
 
-              {/* Play button — center card, reveal on hover with glow */}
+              {/* Play button — always visible on center card */}
               {isCenter && !playing && (
                 <motion.button
-                  animate={{ opacity: (isTouch || hovered) ? 1 : 0, scale: (isTouch || hovered) ? 1 : 0.75 }}
+                  animate={{ scale: hovered ? 1.1 : 1 }}
                   transition={{ duration: 0.25, ease: 'easeOut' }}
                   onClick={(e) => { e.stopPropagation(); setPlaying(true) }}
                   whileTap={{ scale: 0.92 }}
