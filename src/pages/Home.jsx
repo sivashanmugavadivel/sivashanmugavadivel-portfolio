@@ -392,7 +392,7 @@ function FeaturedPostsSection() {
   if (posts.length === 0) return null
 
   return (
-    <section className="section">
+    <section className="section" style={{ overflow: 'hidden' }}>
       <div className="page-container">
         <SectionHeading label="Writing" title="Latest Posts" />
 

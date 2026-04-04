@@ -94,9 +94,6 @@ body {
   transition: background var(--transition), color var(--transition);
 }
 
-html {
-  overflow-x: clip;
-}
 
 #root {
   width: 100%;

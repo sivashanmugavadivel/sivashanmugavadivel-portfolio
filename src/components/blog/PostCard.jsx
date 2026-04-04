@@ -18,7 +18,7 @@ export default function PostCard({ slug, frontmatter }) {
 
   return (
     <div
-      style={{ perspective: 1000, height: 280, cursor: 'pointer' }}
+      style={{ perspective: 1000, height: 280, cursor: 'pointer', overflow: 'hidden' }}
       onMouseEnter={() => { if (!touch) setFlipped(true) }}
       onMouseLeave={() => { if (!touch) setFlipped(false) }}
       onClick={() => { if (touch) setFlipped(f => !f) }}
