@@ -490,21 +490,18 @@ export default function Videos() {
                 <span style={{ fontSize: '0.8rem', color: 'var(--accent)' }}>← drag →</span>
               </div>
             </Reveal>
-            <motion.div
-              style={{ display: 'flex', gap: 20, overflowX: 'auto', paddingBottom: 16, scrollSnapType: 'x mandatory', scrollbarWidth: 'none', cursor: 'grab' }}
-              drag="x"
-              dragConstraints={{ right: 0, left: -(regularVideos.length * 420) }}
-              whileTap={{ cursor: 'grabbing' }}
-            >
-              {regularVideos.map((video) => (
-                <div
-                  key={video.id}
-                  style={{ flex: '0 0 clamp(280px, 38vw, 440px)', scrollSnapAlign: 'start' }}
-                >
-                  <VideoCardFull video={video} />
-                </div>
-              ))}
-            </motion.div>
+            <div style={{ overflowX: 'auto', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
+              <div style={{ display: 'flex', gap: 16, paddingBottom: 16, scrollSnapType: 'x mandatory', width: 'max-content' }}>
+                {regularVideos.map((video) => (
+                  <div
+                    key={video.id}
+                    style={{ width: 'clamp(260px, 75vw, 440px)', scrollSnapAlign: 'start', flexShrink: 0 }}
+                  >
+                    <VideoCardFull video={video} />
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </section>
       )}
