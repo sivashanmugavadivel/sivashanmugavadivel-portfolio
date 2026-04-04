@@ -3,13 +3,12 @@ import { motion } from 'framer-motion'
 import videosData from '../data/videos.json'
 import cfg from '../data/config.json'
 
-/* ── Scroll-reveal wrapper ── */
+/* ── Scroll-reveal wrapper — uses animate so above-fold content always shows ── */
 function Reveal({ children, delay = 0, y = 32, style }) {
   return (
     <motion.div
       initial={{ opacity: 0, y }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-60px' }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1], delay }}
       style={style}
     >
@@ -459,10 +458,9 @@ export default function Videos() {
               {rest.map((video, i) => (
                 <motion.div
                   key={video.id}
-                  initial={{ opacity: 0, x: 60 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: i * 0.1 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.3 + i * 0.1 }}
                   style={{ flex: '0 0 clamp(280px, 38vw, 440px)', scrollSnapAlign: 'start' }}
                 >
                   <VideoCardFull video={video} />
