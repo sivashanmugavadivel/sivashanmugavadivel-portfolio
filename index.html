@@ -16,10 +16,13 @@
       // Restore path from GitHub Pages SPA redirect
       (function () {
         var redirect = sessionStorage.getItem('spa_redirect');
+        console.log('[index.html] spa_redirect in sessionStorage:', redirect);
         if (redirect) {
           sessionStorage.removeItem('spa_redirect');
-            var base = '/sivashanmugavadivel-portfolio';
-          window.history.replaceState(null, '', base + redirect);
+          var base = '/sivashanmugavadivel-portfolio';
+          var target = base + redirect;
+          console.log('[index.html] restoring path to:', target);
+          window.history.replaceState(null, '', target);
         }
       })();
     </script>
