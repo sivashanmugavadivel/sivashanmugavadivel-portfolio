@@ -438,7 +438,7 @@ function VideosHeader1() {
     <section style={{
       paddingTop: 'clamp(100px, 14vw, 160px)',
       paddingBottom: 'clamp(40px, 5vw, 64px)',
-      background: '#0a0a0a',
+      background: 'var(--bg)',
       textAlign: 'center',
       position: 'relative',
       overflow: 'hidden',
@@ -465,9 +465,9 @@ function VideosHeader1() {
                 fontSize: 'clamp(3rem, 9vw, 8rem)',
                 fontFamily: "'Lilita One', cursive",
                 fontWeight: 400,
-                color: '#ffffff',
+                color: 'var(--text-h)',
                 lineHeight: 1,
-                textShadow: '0 0 40px rgba(124,58,237,0.5)',
+                textShadow: '0 0 40px rgba(124,58,237,0.4)',
               }}
             >
               {char}
@@ -493,6 +493,99 @@ function VideosHeader1() {
   )
 }
 
+
+/* ── YouTube SVG icon ── */
+const YTIcon = ({ size = 22 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
+    <path d="M23.5 6.19a3.02 3.02 0 0 0-2.12-2.14C19.56 3.5 12 3.5 12 3.5s-7.56 0-9.38.55A3.02 3.02 0 0 0 .5 6.19C0 8.01 0 12 0 12s0 3.99.5 5.81a3.02 3.02 0 0 0 2.12 2.14C4.44 20.5 12 20.5 12 20.5s7.56 0 9.38-.55a3.02 3.02 0 0 0 2.12-2.14C24 15.99 24 12 24 12s0-3.99-.5-5.81zM9.75 15.52V8.48L15.5 12l-5.75 3.52z"/>
+  </svg>
+)
+
+/* ──────────────────────────────────────────────
+   Design G — "Underwater World"
+   Fish swimming, bubbles rising, ocean wave
+   ────────────────────────────────────────────── */
+function DesignG({ href }) {
+  const fish = [
+    { emoji:'🐠', delay:0,   dur:6,  y:'30%', dir:-1 },
+    { emoji:'🐟', delay:1.2, dur:8,  y:'55%', dir:-1 },
+    { emoji:'🐡', delay:2.5, dur:7,  y:'72%', dir:-1 },
+    { emoji:'🦈', delay:0.8, dur:10, y:'20%', dir:-1 },
+    { emoji:'🐙', delay:3,   dur:5,  y:'65%', dir:-1 },
+  ]
+  const bubbles = Array.from({length:14}, (_,i) => ({
+    left: `${(i*7+5)%95}%`, delay: i*0.35, dur: 2.5+i*0.3, size: 6+i%4*4,
+  }))
+  return (
+    <section style={{ padding:'clamp(56px,7vw,100px) 0', position:'relative', overflow:'hidden',
+      background:'linear-gradient(180deg,#001220 0%,#003554 40%,#006494 100%)' }}>
+      {/* Bubbles */}
+      {bubbles.map((b,i) => (
+        <motion.div key={i} animate={{ y:['0%','-110%'], opacity:[0,0.7,0], scale:[0.6,1.2,0.8] }}
+          transition={{ duration:b.dur, repeat:Infinity, delay:b.delay, ease:'easeInOut' }}
+          style={{ position:'absolute', bottom:0, left:b.left, width:b.size, height:b.size,
+            borderRadius:'50%', border:'1.5px solid rgba(255,255,255,0.4)',
+            background:'rgba(255,255,255,0.05)', pointerEvents:'none' }} />
+      ))}
+      {/* Swimming fish — all move right → left */}
+      {fish.map((f,i) => (
+        <motion.div key={i}
+          initial={{ x: '105vw' }}
+          animate={{ x: '-120px' }}
+          transition={{ duration:f.dur, repeat:Infinity, ease:'linear', delay:f.delay, repeatDelay: 0 }}
+          style={{ position:'absolute', top:f.y, left:0, fontSize:'clamp(24px,3.5vw,36px)',
+            transform:'scaleX(-1)',
+            pointerEvents:'none', filter:'drop-shadow(0 2px 8px rgba(0,180,255,0.6))' }}>
+          <motion.span
+            animate={{ y:[0,-10,0] }}
+            transition={{ duration:1.5, repeat:Infinity, ease:'easeInOut', delay:f.delay }}
+            style={{ display:'inline-block' }}>
+            {f.emoji}
+          </motion.span>
+        </motion.div>
+      ))}
+      {/* Seaweed */}
+      {[8,25,72,88].map((left,i) => (
+        <motion.div key={i} animate={{ rotate:[-6,6,-6] }}
+          transition={{ duration:2.5+i*0.4, repeat:Infinity, ease:'easeInOut', delay:i*0.3 }}
+          style={{ position:'absolute', bottom:0, left:`${left}%`, fontSize:'clamp(24px,4vw,40px)',
+            transformOrigin:'bottom center', pointerEvents:'none', opacity:0.7 }}>
+          🌿
+        </motion.div>
+      ))}
+      <div className="page-container" style={{ textAlign:'center', position:'relative', zIndex:2 }}>
+        <motion.div animate={{ y:[0,-8,0], rotate:[-2,2,-2] }}
+          transition={{ duration:3, repeat:Infinity, ease:'easeInOut' }}
+          style={{ fontSize:'clamp(52px,8vw,80px)', marginBottom:16, display:'inline-block',
+            filter:'drop-shadow(0 0 20px rgba(0,200,255,0.6))' }}>
+          🐬
+        </motion.div>
+        <motion.h2 animate={{ opacity:[0.8,1,0.8] }} transition={{ duration:2.5, repeat:Infinity }}
+          style={{ color:'#7dd3fc', fontSize:'clamp(1.4rem,4vw,2.4rem)',
+            fontFamily:'var(--display)', marginBottom:8,
+            textShadow:'0 0 24px rgba(125,211,252,0.6)' }}>
+          🌊 Dive Into More Content
+        </motion.h2>
+        <p style={{ color:'rgba(186,230,253,0.6)', marginBottom:36, fontFamily:'var(--sans)', fontSize:'0.9rem' }}>
+          Subscribe and explore a whole ocean of videos
+        </p>
+        <motion.a href={href} target="_blank" rel="noopener noreferrer"
+          whileHover={{ scale:1.07, boxShadow:'0 8px 32px rgba(0,200,255,0.5)' }} whileTap={{ scale:0.94 }}
+          style={{ display:'inline-flex', alignItems:'center', gap:10, padding:'14px 32px',
+            borderRadius:999, background:'linear-gradient(135deg,#0284c7,#0ea5e9)',
+            color:'#fff', fontWeight:800, fontSize:'1.05rem', textDecoration:'none',
+            fontFamily:'var(--sans)', boxShadow:'0 6px 24px rgba(2,132,199,0.5)' }}>
+          <YTIcon /> Subscribe — Dive In!
+        </motion.a>
+      </div>
+    </section>
+  )
+}
+
+function SubscribeDesignPicker() {
+  const href = cfg.social.youtube.href
+  return <DesignG href={href} />
+}
 
 /* ── Main Videos page ── */
 export default function Videos() {
@@ -534,38 +627,8 @@ export default function Videos() {
         <ShortsSection shorts={shorts} />
       )}
 
-      {/* CTA */}
-      <section style={{ paddingBottom: 'clamp(64px, 8vw, 96px)', background: 'var(--bg-secondary)' }}>
-        <div className="page-container" style={{ textAlign: 'center' }}>
-          <Reveal y={20}>
-            <p style={{ color: 'var(--text)', marginBottom: 20, lineHeight: 1.7, maxWidth: 420, margin: '0 auto 24px' }}>
-              Replace the video IDs in <code>src/data/videos.json</code> with your real YouTube video IDs.
-            </p>
-            <a
-              href={cfg.social.youtube.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '10px 22px',
-                borderRadius: 999,
-                background: '#ff0000',
-                color: '#fff',
-                fontWeight: 600,
-                fontSize: '0.9rem',
-                textDecoration: 'none',
-              }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M23.5 6.19a3.02 3.02 0 0 0-2.12-2.14C19.56 3.5 12 3.5 12 3.5s-7.56 0-9.38.55A3.02 3.02 0 0 0 .5 6.19C0 8.01 0 12 0 12s0 3.99.5 5.81a3.02 3.02 0 0 0 2.12 2.14C4.44 20.5 12 20.5 12 20.5s7.56 0 9.38-.55a3.02 3.02 0 0 0 2.12-2.14C24 15.99 24 12 24 12s0-3.99-.5-5.81zM9.75 15.52V8.48L15.5 12l-5.75 3.52z"/>
-              </svg>
-              Subscribe on YouTube
-            </a>
-          </Reveal>
-        </div>
-      </section>
+      {/* CTA — Subscribe Button Design Picker */}
+      <SubscribeDesignPicker />
     </div>
   )
 }
