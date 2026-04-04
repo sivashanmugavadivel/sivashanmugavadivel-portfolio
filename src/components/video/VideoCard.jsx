@@ -55,7 +55,6 @@ export default function VideoCard({ video }) {
               border: 0,
               background: 'none',
               cursor: 'pointer',
-              overflow: 'hidden',
             }}
           >
             <img
