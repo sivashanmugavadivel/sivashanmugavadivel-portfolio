@@ -1,21 +1,26 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { loadAllPosts } from '../hooks/usePosts'
 import PostCard from '../components/blog/PostCard'
 
-const containerVariants = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.07 } },
-}
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 30 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
-}
+const CARD_WIDTH = 364 // card width + gap
 
 export default function Blog() {
   const [posts, setPosts] = useState(null)
   const [activeCategory, setActiveCategory] = useState('all')
+  const [scrollX, setScrollX] = useState(0)
+  const scrollRef = useRef(null)
+
+  function scrollBy(dir) {
+    const el = scrollRef.current
+    if (!el) return
+    const next = Math.max(0, Math.min(el.scrollWidth - el.clientWidth, el.scrollLeft + dir * CARD_WIDTH))
+    el.scrollTo({ left: next, behavior: 'smooth' })
+  }
+
+  function onScroll() {
+    if (scrollRef.current) setScrollX(scrollRef.current.scrollLeft)
+  }
 
   useEffect(() => {
     loadAllPosts().then(setPosts).catch(() => setPosts([]))
@@ -82,18 +87,62 @@ export default function Blog() {
       ) : filtered.length === 0 ? (
         <p style={{ textAlign: 'center', color: 'var(--text)' }}>No posts found.</p>
       ) : (
-        <motion.div
-          className="grid-3"
-          variants={containerVariants}
-          initial="hidden"
-          animate="show"
-        >
-          {filtered.map(({ slug, frontmatter }) => (
-            <motion.div key={slug} variants={itemVariants}>
-              <PostCard slug={slug} frontmatter={frontmatter} />
-            </motion.div>
-          ))}
-        </motion.div>
+        <>
+          {/* Scroll container */}
+          <div
+            ref={scrollRef}
+            onScroll={onScroll}
+            style={{
+              overflowX: 'auto', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch',
+              scrollSnapType: 'x mandatory', padding: '16px 4px 8px',
+            }}
+          >
+            <div style={{ display: 'flex', gap: 24, width: 'max-content' }}>
+              {filtered.map(({ slug, frontmatter }, i) => (
+                <motion.div
+                  key={slug}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.45, delay: i * 0.07 }}
+                  style={{ width: 'clamp(280px, 75vw, 340px)', flexShrink: 0, scrollSnapAlign: 'start' }}
+                >
+                  <PostCard slug={slug} frontmatter={frontmatter} />
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          {/* Arrow buttons */}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginTop: 24 }}>
+            <motion.button
+              onClick={() => scrollBy(-1)}
+              whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.92 }}
+              style={{
+                width: 44, height: 44, borderRadius: '50%',
+                background: 'var(--card-bg)', border: '1.5px solid var(--border)',
+                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: 'var(--text-h)', fontSize: '1.1rem',
+                opacity: scrollX <= 0 ? 0.3 : 1, transition: 'opacity 0.2s',
+              }}
+            >
+              ←
+            </motion.button>
+            <motion.button
+              onClick={() => scrollBy(1)}
+              whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.92 }}
+              style={{
+                width: 44, height: 44, borderRadius: '50%',
+                background: 'var(--card-bg)', border: '1.5px solid var(--border)',
+                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: 'var(--text-h)', fontSize: '1.1rem',
+                opacity: scrollRef.current && scrollX >= scrollRef.current.scrollWidth - scrollRef.current.clientWidth - 4 ? 0.3 : 1,
+                transition: 'opacity 0.2s',
+              }}
+            >
+              →
+            </motion.button>
+          </div>
+        </>
       )}
     </div>
   )
