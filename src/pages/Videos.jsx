@@ -579,8 +579,7 @@ const IGIcon = () => (
 function InstagramCarousel({ posts }) {
   const [active, setActive] = useState(0)
   const [hovered, setHovered] = useState(false) // eslint-disable-line
-  const [cardWidth, setCardWidth] = useState(260)
-  const centerCardRef = useRef(null)
+  const [vw, setVw] = useState(window.innerWidth)
 
   const prev = () => { setActive(i => (i - 1 + posts.length) % posts.length) }
   const next = () => { setActive(i => (i + 1) % posts.length) }
@@ -588,16 +587,15 @@ function InstagramCarousel({ posts }) {
   // Reset active index when posts list changes (category filter)
   useEffect(() => { setActive(0) }, [posts])
 
-  // Measure actual card width on mount, resize, and active change (for correct embed scale on mobile)
+  // Track viewport width for responsive embed scale
   useEffect(() => {
-    function measure() {
-      if (centerCardRef.current) setCardWidth(centerCardRef.current.offsetWidth)
-    }
-    // Delay slightly to let layout settle after active change
-    const t = setTimeout(measure, 50)
-    window.addEventListener('resize', measure)
-    return () => { clearTimeout(t); window.removeEventListener('resize', measure) }
-  }, [active])
+    function onResize() { setVw(window.innerWidth) }
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+
+  // Compute card pixel width from clamp(140px, 42vw, 280px)
+  const cardPx = Math.min(280, Math.max(140, vw * 0.42))
 
   // Load Instagram embed script once, then process
   useEffect(() => {
@@ -668,7 +666,6 @@ function InstagramCarousel({ posts }) {
                   if (info.offset.x < -60) next()
                   else if (info.offset.x > 60) prev()
                 }}
-                ref={isCenter ? centerCardRef : null}
                 onClick={() => { if (!isCenter) setActive(i) }}
                 onHoverStart={() => isCenter && setHovered(true)}
                 onHoverEnd={() => setHovered(false)}
@@ -693,10 +690,10 @@ function InstagramCarousel({ posts }) {
                 {pos !== 'hidden' && (
                   <div style={{ position: 'absolute', inset: 0, background: '#fff',
                     overflow: 'hidden', pointerEvents: 'none' }}>
-                    {/* Scale embed to fit actual card width — fixes mobile zoom */}
+                        {/* Scale embed to fit card — cardPx mirrors the CSS clamp */}
                     <div style={{
                       width: 328, transformOrigin: 'top left',
-                      transform: `scale(${isCenter ? (cardWidth / 328).toFixed(3) : ((cardWidth * 0.78) / 328).toFixed(3)})`,
+                      transform: `scale(${isCenter ? (cardPx / 328).toFixed(3) : ((cardPx * 0.75) / 328).toFixed(3)})`,
                     }}>
                       <blockquote
                         className="instagram-media"
