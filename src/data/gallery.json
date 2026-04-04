@@ -1,62 +1,326 @@
 [
   {
-    "filename": "avatar3 - Copy.png",
-    "category": "architecture",
-    "caption": "avatar3   Copy",
-    "date": "2026-04-02"
+    "filename": "20171201_100208.jpg",
+    "category": "camera",
+    "caption": "20171201 100208",
+    "date": "2026-04-04"
   },
   {
-    "filename": "avatar3.png",
-    "category": "architecture",
-    "caption": "avatar3",
-    "date": "2026-04-02"
+    "filename": "20171201_100512.jpg",
+    "category": "camera",
+    "caption": "20171201 100512",
+    "date": "2026-04-04"
   },
   {
-    "filename": "avatar11 - Copy.jpg",
-    "category": "landscape",
-    "caption": "avatar11   Copy",
-    "date": "2026-04-02"
+    "filename": "20171201_100813.jpg",
+    "category": "camera",
+    "caption": "20171201 100813",
+    "date": "2026-04-04"
   },
   {
-    "filename": "avatar11.jpg",
-    "category": "landscape",
-    "caption": "avatar11",
-    "date": "2026-04-02"
+    "filename": "20171201_161508.jpg",
+    "category": "camera",
+    "caption": "20171201 161508",
+    "date": "2026-04-04"
   },
   {
-    "filename": "avatar1 - Copy.jpg",
+    "filename": "20171201_162713.jpg",
+    "category": "camera",
+    "caption": "20171201 162713",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "20171201_162810.jpg",
+    "category": "camera",
+    "caption": "20171201 162810",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "20171202_093107.jpg",
+    "category": "camera",
+    "caption": "20171202 093107",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "20171202_134422.jpg",
+    "category": "camera",
+    "caption": "20171202 134422",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "20171208_095256.jpg",
+    "category": "camera",
+    "caption": "20171208 095256",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "20180217_125335.jpg",
+    "category": "camera",
+    "caption": "20180217 125335",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "20180227_135956.jpg",
+    "category": "camera",
+    "caption": "20180227 135956",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "20180227_140308.jpg",
+    "category": "camera",
+    "caption": "20180227 140308",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "20180228_140243.jpg",
+    "category": "camera",
+    "caption": "20180228 140243",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "20180228_140247.jpg",
+    "category": "camera",
+    "caption": "20180228 140247",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "20180228_140950.jpg",
+    "category": "camera",
+    "caption": "20180228 140950",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "20180228_141136.jpg",
+    "category": "camera",
+    "caption": "20180228 141136",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "Capture1.jpg",
+    "category": "capture",
+    "caption": "Capture1",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "Capture10.jpg",
+    "category": "capture",
+    "caption": "Capture10",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "Capture11.jpg",
+    "category": "capture",
+    "caption": "Capture11",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "Capture2.jpg",
+    "category": "capture",
+    "caption": "Capture2",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "Capture3.jpg",
+    "category": "capture",
+    "caption": "Capture3",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "Capture4.jpg",
+    "category": "capture",
+    "caption": "Capture4",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "Capture5.jpg",
+    "category": "capture",
+    "caption": "Capture5",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "Capture6.jpg",
+    "category": "capture",
+    "caption": "Capture6",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "Capture7.jpg",
+    "category": "capture",
+    "caption": "Capture7",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "Capture8.jpg",
+    "category": "capture",
+    "caption": "Capture8",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "Capture9.jpg",
+    "category": "capture",
+    "caption": "Capture9",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "Festival1.jpg",
+    "category": "festival",
+    "caption": "Festival1",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "Festival2.jpg",
+    "category": "festival",
+    "caption": "Festival2",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "Flower1.jpg",
+    "category": "flowers",
+    "caption": "Flower1",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "Flower2.jpg",
+    "category": "flowers",
+    "caption": "Flower2",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "Flower3.jpg",
+    "category": "flowers",
+    "caption": "Flower3",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "Nature2.jpg",
     "category": "nature",
-    "caption": "avatar1   Copy",
-    "date": "2026-04-02"
+    "caption": "Nature2",
+    "date": "2026-04-04"
   },
   {
-    "filename": "avatar1.jpg",
+    "filename": "Nature3.jpg",
     "category": "nature",
-    "caption": "avatar1",
-    "date": "2026-04-02"
+    "caption": "Nature3",
+    "date": "2026-04-04"
   },
   {
-    "filename": "avatar.jpg",
+    "filename": "Portrait Pic1.jpg",
+    "category": "Portrait",
+    "caption": "Portrait Pic1",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "Portrait Pic10.jpg",
+    "category": "Portrait",
+    "caption": "Portrait Pic10",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "Portrait Pic11.jpg",
+    "category": "Portrait",
+    "caption": "Portrait Pic11",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "Portrait Pic12.jpg",
+    "category": "Portrait",
+    "caption": "Portrait Pic12",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "Portrait Pic2.jpg",
+    "category": "Portrait",
+    "caption": "Portrait Pic2",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "Portrait Pic3.jpg",
+    "category": "Portrait",
+    "caption": "Portrait Pic3",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "Portrait Pic4.jpg",
+    "category": "Portrait",
+    "caption": "Portrait Pic4",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "Portrait Pic5.jpg",
+    "category": "Portrait",
+    "caption": "Portrait Pic5",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "Portrait Pic6.jpg",
+    "category": "Portrait",
+    "caption": "Portrait Pic6",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "Portrait Pic7.jpg",
+    "category": "Portrait",
+    "caption": "Portrait Pic7",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "Portrait Pic8.png",
+    "category": "Portrait",
+    "caption": "Portrait Pic8",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "Portrait Pic9.jpg",
+    "category": "Portrait",
+    "caption": "Portrait Pic9",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "Travel1.jpg",
     "category": "travel",
-    "caption": "avatar",
-    "date": "2026-04-02"
+    "caption": "Travel1",
+    "date": "2026-04-04"
   },
   {
-    "filename": "Avatar_nbc1.png",
+    "filename": "Travel2.jpg",
     "category": "travel",
-    "caption": "Avatar nbc1",
-    "date": "2026-04-02"
+    "caption": "Travel2",
+    "date": "2026-04-04"
   },
   {
-    "filename": "avatar2 - Copy.jpg",
-    "category": "urban",
-    "caption": "avatar2   Copy",
-    "date": "2026-04-02"
+    "filename": "Travel3.jpg",
+    "category": "travel",
+    "caption": "Travel3",
+    "date": "2026-04-04"
   },
   {
-    "filename": "avatar2.jpg",
-    "category": "urban",
-    "caption": "avatar2",
-    "date": "2026-04-02"
+    "filename": "Travel4.jpg",
+    "category": "travel",
+    "caption": "Travel4",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "Travel5.jpg",
+    "category": "travel",
+    "caption": "Travel5",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "Travel6.jpg",
+    "category": "travel",
+    "caption": "Travel6",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "Travel8.jpg",
+    "category": "travel",
+    "caption": "Travel8",
+    "date": "2026-04-04"
+  },
+  {
+    "filename": "Travel9.jpg",
+    "category": "travel",
+    "caption": "Travel9",
+    "date": "2026-04-04"
   }
 ]
