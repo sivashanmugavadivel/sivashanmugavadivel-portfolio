@@ -1,30 +1,17 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { loadAllPosts } from '../hooks/usePosts'
 import PostCard from '../components/blog/PostCard'
 
-const CARD_WIDTH = 364 // card width + gap
-
 export default function Blog() {
   const [posts, setPosts] = useState(null)
   const [activeCategory, setActiveCategory] = useState('all')
-  const [scrollX, setScrollX] = useState(0)
-  const scrollRef = useRef(null)
-
-  function scrollBy(dir) {
-    const el = scrollRef.current
-    if (!el) return
-    const next = Math.max(0, Math.min(el.scrollWidth - el.clientWidth, el.scrollLeft + dir * CARD_WIDTH))
-    el.scrollTo({ left: next, behavior: 'smooth' })
-  }
-
-  function onScroll() {
-    if (scrollRef.current) setScrollX(scrollRef.current.scrollLeft)
-  }
-
+  const [activeIndex, setActiveIndex] = useState(0)
   useEffect(() => {
     loadAllPosts().then(setPosts).catch(() => setPosts([]))
   }, [])
+
+  useEffect(() => { setActiveIndex(0) }, [activeCategory])
 
   const categories = posts
     ? ['all', ...Array.from(new Set(posts.map(p => p.frontmatter.category).filter(Boolean)))]
@@ -33,6 +20,34 @@ export default function Blog() {
   const filtered = posts
     ? (activeCategory === 'all' ? posts : posts.filter(p => p.frontmatter.category === activeCategory))
     : []
+
+  function go(dir) {
+    setActiveIndex(i => Math.max(0, Math.min(filtered.length - 1, i + dir)))
+  }
+
+  // Get card style based on its offset from active
+  function getCardStyle(offset) {
+    if (offset === 0) return { x: 0, rotate: 0, scale: 1, zIndex: 10, opacity: 1 }
+    const sign = offset > 0 ? 1 : -1
+    const abs = Math.abs(offset)
+    return {
+      x: sign * (abs === 1 ? 200 : 260),
+      rotate: sign * (abs === 1 ? 12 : 20),
+      scale: abs === 1 ? 0.82 : 0.68,
+      zIndex: 10 - abs,
+      opacity: abs === 1 ? 0.75 : 0.45,
+    }
+  }
+
+  // Which indices to render around active
+  function getVisibleIndices() {
+    const indices = []
+    for (let offset = -2; offset <= 2; offset++) {
+      const idx = activeIndex + offset
+      if (idx >= 0 && idx < filtered.length) indices.push({ idx, offset })
+    }
+    return indices
+  }
 
   return (
     <div className="page-container section">
@@ -88,60 +103,87 @@ export default function Blog() {
         <p style={{ textAlign: 'center', color: 'var(--text)' }}>No posts found.</p>
       ) : (
         <>
-          {/* Scroll container */}
-          <div
-            ref={scrollRef}
-            onScroll={onScroll}
-            style={{
-              overflowX: 'auto', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch',
-              scrollSnapType: 'x mandatory', padding: '16px 4px 8px',
-            }}
-          >
-            <div style={{ display: 'flex', gap: 24, width: 'max-content' }}>
-              {filtered.map(({ slug, frontmatter }, i) => (
+          {/* Card deck */}
+          <div style={{
+            position: 'relative',
+            height: 340,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: 52,
+          }}>
+            {getVisibleIndices().map(({ idx, offset }) => {
+              const style = getCardStyle(offset)
+              return (
                 <motion.div
-                  key={slug}
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.45, delay: i * 0.07 }}
-                  style={{ width: 'clamp(280px, 75vw, 340px)', flexShrink: 0, scrollSnapAlign: 'start' }}
+                  key={filtered[idx].slug}
+                  animate={{
+                    x: style.x,
+                    rotate: style.rotate,
+                    scale: style.scale,
+                    opacity: style.opacity,
+                    zIndex: style.zIndex,
+                  }}
+                  transition={{ duration: 0.45, ease: [0.23, 1, 0.32, 1] }}
+                  drag={offset === 0 ? 'x' : false}
+                  dragConstraints={{ left: 0, right: 0 }}
+                  dragElastic={0.2}
+                  onDragEnd={(_, info) => {
+                    if (info.offset.x < -60) go(1)
+                    else if (info.offset.x > 60) go(-1)
+                  }}
+                  onClick={() => {
+                    if (offset !== 0) setActiveIndex(idx)
+                  }}
+                  style={{
+                    position: 'absolute',
+                    width: 'clamp(280px, 40vw, 340px)',
+                    cursor: offset !== 0 ? 'pointer' : 'grab',
+                    transformOrigin: 'bottom center',
+                  }}
                 >
-                  <PostCard slug={slug} frontmatter={frontmatter} />
+                  {offset === 0 ? (
+                    <PostCard slug={filtered[idx].slug} frontmatter={filtered[idx].frontmatter} />
+                  ) : (
+                    /* Placeholder back card — no flip interaction */
+                    <div style={{
+                      height: 280,
+                      borderRadius: 16,
+                      background: 'var(--card-bg)',
+                      border: '1px solid var(--border)',
+                      display: 'flex', flexDirection: 'column',
+                      alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24,
+                    }}>
+                      <div style={{ fontSize: 48 }}>{filtered[idx].frontmatter.icon || '📝'}</div>
+                      <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-h)', textAlign: 'center', lineHeight: 1.35 }}>
+                        {filtered[idx].frontmatter.title}
+                      </p>
+                    </div>
+                  )}
                 </motion.div>
-              ))}
-            </div>
+              )
+            })}
           </div>
 
-          {/* Arrow buttons */}
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginTop: 24 }}>
-            <motion.button
-              onClick={() => scrollBy(-1)}
-              whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.92 }}
-              style={{
-                width: 44, height: 44, borderRadius: '50%',
-                background: 'var(--card-bg)', border: '1.5px solid var(--border)',
-                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: 'var(--text-h)', fontSize: '1.1rem',
-                opacity: scrollX <= 0 ? 0.3 : 1, transition: 'opacity 0.2s',
-              }}
-            >
-              ←
-            </motion.button>
-            <motion.button
-              onClick={() => scrollBy(1)}
-              whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.92 }}
-              style={{
-                width: 44, height: 44, borderRadius: '50%',
-                background: 'var(--card-bg)', border: '1.5px solid var(--border)',
-                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: 'var(--text-h)', fontSize: '1.1rem',
-                opacity: scrollRef.current && scrollX >= scrollRef.current.scrollWidth - scrollRef.current.clientWidth - 4 ? 0.3 : 1,
-                transition: 'opacity 0.2s',
-              }}
-            >
-              →
-            </motion.button>
+          {/* Counter with arrows */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+            <motion.span
+              onClick={() => go(-1)}
+              whileHover={{ scale: 1.2 }}
+              whileTap={{ scale: 0.9 }}
+              style={{ fontSize: '1.2rem', cursor: activeIndex === 0 ? 'default' : 'pointer', opacity: activeIndex === 0 ? 0.2 : 0.7, color: 'var(--text-h)', userSelect: 'none' }}
+            >‹</motion.span>
+            <span style={{ fontSize: '0.95rem', color: 'var(--text)', opacity: 0.5, fontVariantNumeric: 'tabular-nums', minWidth: 48, textAlign: 'center' }}>
+              {activeIndex + 1} / {filtered.length}
+            </span>
+            <motion.span
+              onClick={() => go(1)}
+              whileHover={{ scale: 1.2 }}
+              whileTap={{ scale: 0.9 }}
+              style={{ fontSize: '1.2rem', cursor: activeIndex === filtered.length - 1 ? 'default' : 'pointer', opacity: activeIndex === filtered.length - 1 ? 0.2 : 0.7, color: 'var(--text-h)', userSelect: 'none' }}
+            >›</motion.span>
           </div>
+
         </>
       )}
     </div>
