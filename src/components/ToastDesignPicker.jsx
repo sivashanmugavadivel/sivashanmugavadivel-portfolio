@@ -682,12 +682,14 @@ function Toast17({ message, onDone }) {
       onClick={onDone}
       style={{ display: 'inline-flex', alignItems: 'flex-end', gap: 12, cursor: 'pointer' }}
     >
-      {/* Floating 🧑‍💻 character */}
+      {/* Floating gif character */}
       <motion.div
         animate={{ y: [0, -8, 0] }}
         transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
-        style={{ fontSize: '3rem', lineHeight: 1, flexShrink: 0, userSelect: 'none' }}
-      >🧑‍💻</motion.div>
+        style={{ flexShrink: 0, userSelect: 'none' }}
+      >
+        <img src={`${import.meta.env.BASE_URL}toast-gif.gif`} alt="" style={{ width: 64, height: 64, objectFit: 'contain', display: 'block' }} />
+      </motion.div>
 
       {/* Bubble — swaps from dots to message */}
       <AnimatePresence mode="wait">
