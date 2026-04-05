@@ -14,6 +14,7 @@ export default function EasterEgg() {
 
   const trigger = useCallback((type) => {
     setToast({ msg: MESSAGES[type], id: Date.now() })
+    setTimeout(() => setToast(null), 4500)
   }, [])
 
   /* Name click via custom event from Home.jsx */
