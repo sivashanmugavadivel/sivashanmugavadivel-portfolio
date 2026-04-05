@@ -3,7 +3,6 @@ import { motion, useScroll, useTransform, useInView, useAnimation } from 'framer
 import { loadAllPosts } from '../hooks/usePosts'
 import cfg from '../data/config.json'
 import { getGreeting } from '../utils/timeGreeting'
-import ToastDesignPicker from '../components/ToastDesignPicker'
 import PostCard from '../components/blog/PostCard'
 import VideoCard from '../components/video/VideoCard'
 import Button from '../components/ui/Button'
@@ -822,7 +821,6 @@ export default function Home() {
       </section>
       <FeaturedPostsSection />
       <FeaturedVideosSection />
-      <ToastDesignPicker />
       <SocialSection />
       <CTASection />
     </div>
