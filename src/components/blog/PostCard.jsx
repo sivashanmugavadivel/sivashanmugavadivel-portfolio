@@ -11,7 +11,7 @@ export default function PostCard({ slug, frontmatter }) {
   const { title, date, excerpt, tags = [] } = frontmatter
   const [flipped, setFlipped] = useState(false)
   const cardRef = useRef(null)
-  const icon = tagIcon(tags)
+  const icon = frontmatter.icon || tagIcon(tags)
   const color = tagColor(tags[0])
 
   // Evaluated fresh inside the component on every mount — not at module load time

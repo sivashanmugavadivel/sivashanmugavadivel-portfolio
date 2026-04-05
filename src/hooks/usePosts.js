@@ -31,11 +31,11 @@ function parseFrontmatter(raw) {
 
 // Extract frontmatter fields from a JSON post object
 function jsonToFrontmatter(data) {
-  const { sections, coverImage, cookTime, difficulty, servings, location, duration, author, ...frontmatter } = data
+  const { sections, coverImage, cookTime, difficulty, servings, location, duration, author, icon, ...rest } = data
   return {
-    frontmatter,
+    frontmatter: { ...rest, icon },   // icon stays in frontmatter so PostCard can read it
     sections: sections || [],
-    meta: { coverImage, cookTime, difficulty, servings, location, duration, author },
+    meta: { coverImage, cookTime, difficulty, servings, location, duration, author, icon },
   }
 }
 
