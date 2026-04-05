@@ -149,21 +149,12 @@ export default function Blog() {
                   {offset === 0 ? (
                     <PostCard slug={filtered[idx].slug} frontmatter={filtered[idx].frontmatter} />
                   ) : (
-                    /* Placeholder back card — no flip interaction */
                     <div style={{
                       height: 280,
                       borderRadius: 16,
                       background: 'var(--card-bg)',
                       border: '1px solid var(--border)',
-                      display: 'flex', flexDirection: 'column',
-                      alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24,
-                      backdropFilter: 'blur(4px)',
-                    }}>
-                      <div style={{ fontSize: 48 }}>{filtered[idx].frontmatter.icon || '📝'}</div>
-                      <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-h)', textAlign: 'center', lineHeight: 1.35 }}>
-                        {filtered[idx].frontmatter.title}
-                      </p>
-                    </div>
+                    }} />
                   )}
                 </motion.div>
               )
