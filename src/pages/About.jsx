@@ -493,209 +493,107 @@ function TimelineSection() {
 
 /* ── Life Sections (Now / Principles / Fun Side) ── */
 const ACCENT_COLORS = ['#7c3aed', '#10b981', '#f59e0b']
-const LIFE_STORAGE_KEY = 'about_life_designs'
-
-function loadLifeSelections() {
-  try { return JSON.parse(localStorage.getItem(LIFE_STORAGE_KEY)) || {} } catch { return {} }
-}
 
 /* — 6 design variants — */
-function DesignA({ items, color }) {
+/* Now → Timeline */
+function NowSection() {
+  const { label, heading, items } = cfg.about.now
+  const color = ACCENT_COLORS[0]
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14 }}>
-      {items.map((item, i) => (
-        <motion.div key={i} whileHover={{ y: -5, boxShadow: `0 0 24px ${color}44` }}
-          initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.06 }}
-          style={{ background: 'var(--card-bg)', border: `1.5px solid ${color}44`, borderRadius: 14, padding: '16px 18px', transition: 'box-shadow 0.2s' }}>
-          <div style={{ width: 28, height: 28, borderRadius: 7, background: `${color}18`, border: `1.5px solid ${color}55`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10, fontSize: '0.8rem', color }}>✦</div>
-          <p style={{ margin: 0, fontSize: '0.87rem', color: 'var(--text)', lineHeight: 1.6 }}>{item}</p>
-        </motion.div>
-      ))}
-    </div>
-  )
-}
-
-function DesignB({ items, color }) {
-  return (
-    <div style={{ position: 'relative', paddingLeft: 28 }}>
-      <div style={{ position: 'absolute', left: 10, top: 6, bottom: 6, width: 2, background: `linear-gradient(to bottom, ${color}, transparent)`, borderRadius: 2 }} />
-      {items.map((item, i) => (
-        <motion.div key={i} initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}
-          style={{ display: 'flex', alignItems: 'flex-start', gap: 14, marginBottom: 14, position: 'relative' }}>
-          <div style={{ position: 'absolute', left: -24, top: 8, width: 10, height: 10, borderRadius: '50%',
-            background: color, border: '2px solid var(--bg)', boxShadow: `0 0 10px ${color}` }} />
-          <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: 10,
-            padding: '12px 16px', flex: 1, borderLeft: `3px solid ${color}` }}>
-            <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--text)', lineHeight: 1.6 }}>{item}</p>
-          </div>
-        </motion.div>
-      ))}
-    </div>
-  )
-}
-
-function DesignC({ items, color }) {
-  return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
-      {items.map((item, i) => (
-        <motion.div key={i} whileHover={{ scale: 1.06, background: color, color: '#fff' }}
-          initial={{ opacity: 0, scale: 0.8 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }}
-          transition={{ delay: i * 0.07, type: 'spring', stiffness: 300 }}
-          style={{ padding: '10px 20px', borderRadius: 999, background: 'var(--card-bg)',
-            border: `1.5px solid ${color}`, color: 'var(--text-h)', fontSize: '0.88rem',
-            fontWeight: 500, cursor: 'default', transition: 'background 0.2s, color 0.2s' }}>
-          {item}
-        </motion.div>
-      ))}
-    </div>
-  )
-}
-
-function DesignD({ items, color }) {
-  return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 }}>
-      {items.map((item, i) => (
-        <motion.div key={i} whileHover={{ x: 4 }}
-          initial={{ opacity: 0, x: -16 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.07 }}
-          style={{ display: 'flex', alignItems: 'stretch', background: 'var(--card-bg)', borderRadius: 10, overflow: 'hidden', border: '1px solid var(--border)' }}>
-          <div style={{ width: 4, background: color, flexShrink: 0 }} />
-          <div style={{ padding: '14px 18px', flex: 1 }}>
-            <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--text)', lineHeight: 1.6 }}>{item}</p>
-          </div>
-        </motion.div>
-      ))}
-    </div>
-  )
-}
-
-function DesignE({ items, color }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {items.map((item, i) => (
-        <motion.div key={i} whileHover={{ x: 6 }}
-          initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.07 }}
-          style={{ display: 'flex', alignItems: 'center', gap: 18, background: 'var(--card-bg)',
-            border: '1px solid var(--border)', borderRadius: 12, padding: '14px 20px' }}>
-          <div style={{ width: 36, height: 36, borderRadius: '50%', flexShrink: 0, background: `${color}18`,
-            border: `2px solid ${color}`, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontWeight: 700, fontSize: '0.85rem', color, fontFamily: 'var(--mono)' }}>
-            {String(i + 1).padStart(2, '0')}
-          </div>
-          <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--text)', lineHeight: 1.6 }}>{item}</p>
-        </motion.div>
-      ))}
-    </div>
-  )
-}
-
-function DesignF({ items, color }) {
-  return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16 }}>
-      {items.map((item, i) => (
-        <motion.div key={i} whileHover={{ y: -8, boxShadow: `0 20px 40px ${color}33` }}
-          initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-          transition={{ delay: i * 0.08, type: 'spring', stiffness: 200 }}
-          style={{ background: `linear-gradient(135deg, ${color}12, ${color}04)`, border: `1px solid ${color}33`,
-            borderRadius: 16, padding: '20px 18px', backdropFilter: 'blur(12px)',
-            boxShadow: `0 4px 20px ${color}18`, transition: 'box-shadow 0.25s' }}>
-          <div style={{ width: 6, height: 6, borderRadius: '50%', background: color,
-            boxShadow: `0 0 12px ${color}`, marginBottom: 12 }} />
-          <p style={{ margin: 0, fontSize: '0.87rem', color: 'var(--text)', lineHeight: 1.65 }}>{item}</p>
-        </motion.div>
-      ))}
-    </div>
-  )
-}
-
-const LIFE_DESIGNS = [
-  { id: 'A', name: 'Glowing Grid',  Component: DesignA },
-  { id: 'B', name: 'Timeline',      Component: DesignB },
-  { id: 'C', name: 'Pill Badges',   Component: DesignC },
-  { id: 'D', name: 'Accent Bar',    Component: DesignD },
-  { id: 'E', name: 'Numbered List', Component: DesignE },
-  { id: 'F', name: 'Glass Cards',   Component: DesignF },
-]
-
-function LifeSectionBlock({ section, sectionIdx, selectedDesignId, onSelect }) {
-  const color = ACCENT_COLORS[sectionIdx % ACCENT_COLORS.length]
-  const [previewId, setPreviewId] = useState(selectedDesignId || 'A')
-  const ActiveDesign = LIFE_DESIGNS.find(d => d.id === previewId)?.Component || DesignA
-
-  return (
-    <section className="section" style={{ background: sectionIdx % 2 === 0 ? 'var(--bg-secondary)' : 'var(--bg)' }}>
+    <section className="section" style={{ background: 'var(--bg-secondary)' }}>
       <div className="page-container">
-        <SectionHeading label={section.label} title={section.heading} />
-
-        {/* Design switcher tabs */}
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 28, justifyContent: 'center' }}>
-          {LIFE_DESIGNS.map(({ id, name }) => {
-            const isActive = previewId === id
-            const isSelected = selectedDesignId === id
-            return (
-              <motion.button key={id} onClick={() => setPreviewId(id)}
-                whileHover={{ y: -2 }} whileTap={{ scale: 0.95 }}
-                style={{
-                  padding: '7px 16px', borderRadius: 999, cursor: 'pointer',
-                  fontFamily: 'var(--sans)', fontSize: '0.78rem', fontWeight: 600,
-                  border: `1.5px solid ${isActive ? color : 'var(--border)'}`,
-                  background: isActive ? `${color}18` : 'var(--card-bg)',
-                  color: isActive ? color : 'var(--text)',
-                  transition: 'all 0.15s',
-                  outline: isSelected ? `2px solid ${color}` : 'none',
-                  outlineOffset: 2,
-                }}>
-                {name} {isSelected ? '✓' : ''}
-              </motion.button>
-            )
-          })}
-        </div>
-
-        {/* Live preview */}
-        <motion.div key={previewId} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
-          <ActiveDesign items={section.items} color={color} />
-        </motion.div>
-
-        {/* Select button */}
-        <div style={{ textAlign: 'center', marginTop: 28 }}>
-          <motion.button
-            onClick={() => onSelect(sectionIdx, previewId)}
-            whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
-            style={{
-              padding: '10px 32px', borderRadius: 999, cursor: 'pointer',
-              fontFamily: 'var(--sans)', fontSize: '0.88rem', fontWeight: 700,
-              background: selectedDesignId === previewId ? '#22c55e' : color,
-              border: 'none', color: '#fff', transition: 'background 0.2s',
-            }}>
-            {selectedDesignId === previewId ? `✓ Using "${LIFE_DESIGNS.find(d => d.id === previewId)?.name}"` : `Use "${LIFE_DESIGNS.find(d => d.id === previewId)?.name}" for this section`}
-          </motion.button>
+        <SectionHeading label={label} title={heading} />
+        <div style={{ position: 'relative', paddingLeft: 32, maxWidth: 680, margin: '0 auto' }}>
+          <motion.div initial={{ scaleY: 0 }} whileInView={{ scaleY: 1 }} viewport={{ once: true }}
+            transition={{ duration: 0.8, ease: 'easeInOut' }}
+            style={{ position: 'absolute', left: 10, top: 6, bottom: 6, width: 2,
+              background: `linear-gradient(to bottom, ${color}, transparent)`, borderRadius: 2, transformOrigin: 'top' }} />
+          {items.map((item, i) => (
+            <motion.div key={i} initial={{ opacity: 0, x: -24 }} whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }} transition={{ delay: i * 0.1, duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+              style={{ display: 'flex', alignItems: 'flex-start', gap: 14, marginBottom: 16, position: 'relative' }}>
+              <motion.div whileHover={{ scale: 1.4 }} style={{ position: 'absolute', left: -26, top: 10,
+                width: 10, height: 10, borderRadius: '50%', background: color,
+                border: '2px solid var(--bg)', boxShadow: `0 0 10px ${color}`, flexShrink: 0 }} />
+              <motion.div whileHover={{ x: 4, borderColor: color }} transition={{ duration: 0.2 }}
+                style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: 10,
+                  padding: '13px 18px', flex: 1, borderLeft: `3px solid ${color}`, transition: 'border-color 0.2s' }}>
+                <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text)', lineHeight: 1.65 }}>{item}</p>
+              </motion.div>
+            </motion.div>
+          ))}
         </div>
       </div>
     </section>
   )
 }
 
+/* Principles → Numbered List */
+function PrinciplesSection() {
+  const { label, heading, items } = cfg.about.principles
+  const color = ACCENT_COLORS[1]
+  return (
+    <section className="section" style={{ background: 'var(--bg)' }}>
+      <div className="page-container">
+        <SectionHeading label={label} title={heading} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 680, margin: '0 auto' }}>
+          {items.map((item, i) => (
+            <motion.div key={i} whileHover={{ x: 6 }}
+              initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }} transition={{ delay: i * 0.08, duration: 0.4 }}
+              style={{ display: 'flex', alignItems: 'center', gap: 18, background: 'var(--card-bg)',
+                border: '1px solid var(--border)', borderRadius: 12, padding: '14px 20px' }}>
+              <motion.div whileHover={{ scale: 1.1, boxShadow: `0 0 18px ${color}` }}
+                style={{ width: 38, height: 38, borderRadius: '50%', flexShrink: 0,
+                  background: `${color}18`, border: `2px solid ${color}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontWeight: 700, fontSize: '0.85rem', color, fontFamily: 'var(--mono)',
+                  transition: 'box-shadow 0.2s' }}>
+                {String(i + 1).padStart(2, '0')}
+              </motion.div>
+              <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text)', lineHeight: 1.65 }}>{item}</p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* Fun Side → Pill Badges */
+function FunSideSection() {
+  const { label, heading, items } = cfg.about.funSide
+  const color = ACCENT_COLORS[2]
+  return (
+    <section className="section" style={{ background: 'var(--bg-secondary)' }}>
+      <div className="page-container">
+        <SectionHeading label={label} title={heading} />
+        <motion.div
+          initial="hidden" whileInView="show" viewport={{ once: true }}
+          variants={{ hidden: {}, show: { transition: { staggerChildren: 0.08 } } }}
+          style={{ display: 'flex', flexWrap: 'wrap', gap: 14, justifyContent: 'center', maxWidth: 720, margin: '0 auto' }}>
+          {items.map((item, i) => (
+            <motion.div key={i}
+              variants={{ hidden: { opacity: 0, scale: 0.75 }, show: { opacity: 1, scale: 1, transition: { type: 'spring', stiffness: 300 } } }}
+              whileHover={{ scale: 1.08, background: color, color: '#fff', boxShadow: `0 0 20px ${color}66` }}
+              style={{ padding: '12px 24px', borderRadius: 999, background: 'var(--card-bg)',
+                border: `1.5px solid ${color}`, color: 'var(--text-h)', fontSize: '0.9rem',
+                fontWeight: 500, cursor: 'default', transition: 'background 0.2s, color 0.2s, box-shadow 0.2s' }}>
+              {item}
+            </motion.div>
+          ))}
+        </motion.div>
+      </div>
+    </section>
+  )
+}
+
 function LifeSection() {
-  const sections = [cfg.about.now, cfg.about.principles, cfg.about.funSide].filter(Boolean)
-  const [selections, setSelections] = useState(loadLifeSelections)
-
-  const handleSelect = (idx, designId) => {
-    const next = { ...selections, [idx]: designId }
-    setSelections(next)
-    localStorage.setItem(LIFE_STORAGE_KEY, JSON.stringify(next))
-  }
-
   return (
     <>
-      {sections.map((section, i) => (
-        <LifeSectionBlock
-          key={section.label}
-          section={section}
-          sectionIdx={i}
-          selectedDesignId={selections[i]}
-          onSelect={handleSelect}
-        />
-      ))}
+      <NowSection />
+      <PrinciplesSection />
+      <FunSideSection />
     </>
   )
 }
