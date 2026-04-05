@@ -290,7 +290,7 @@ export default function Gallery() {
               My Visual Diary
             </h1>
             <p style={{ color: 'var(--text)', maxWidth: 420, margin: '0 auto', lineHeight: 1.7 }}>
-              See the world through my lens:<br />adventures in photos and videos
+              See the world through my lens:<br />adventures in photos that capture moments and memories
             </p>
           </motion.div>
         </div>

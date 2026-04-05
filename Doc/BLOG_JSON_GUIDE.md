@@ -14,7 +14,7 @@ Drop a `.json` file in `src/data/blog/` to create a new blog post. No code chang
 | `tags` | ✅ | Array of tags — controls icon and accent color |
 | `excerpt` | ✅ | Short summary shown on card back and detail page callout |
 | `author` | ✅ | Shown in footer of detail page |
-| `icon` | ⬜ | Override the sidebar emoji icon (e.g. `"🥚"`) — if omitted, auto-detected from tags |
+| `icon` | ⬜ | Override the sidebar emoji icon (e.g. `"🥚, Food 🍳, Travel ✈️, Culture 🛕,Thoughts 💭"`) — if omitted, auto-detected from tags |
 | `cookTime` | ⬜ | Recipe: shown as meta pill (e.g. `"15 min"`) |
 | `difficulty` | ⬜ | Recipe: shown as meta pill (e.g. `"Easy"`) |
 | `servings` | ⬜ | Recipe: shown as meta pill (e.g. `"2"`) |

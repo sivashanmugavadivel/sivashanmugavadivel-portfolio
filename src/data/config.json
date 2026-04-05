@@ -136,24 +136,24 @@
   "videos": [
     {
       "id": "https://youtu.be/frQfwiFEvhQ?si=RIA3bbiAO-_He3oS",
-      "title": "Featured Video Title",
-      "description": "Samsung Galaxy S25 Ultra (Jet Black - 512GB) & Watch 7 (44mm) Unboxing || First Impression || தமிழ்.",
+      "title": "Samsung Galaxy S25 Ultra (Jet Black - 512GB) & Watch 7 (44mm) Unboxing || First Impression || தமிழ்",
+      "description": "🚀 The wait is over! Join me as I unbox the brand-new Samsung Galaxy S25 Ultra and Samsung Watch 7 (44mm).",
       "type": "video",
       "date": "2025-03-20",
       "tags": ["Unboxing"]
     },
     {
       "id": "https://youtu.be/IkPYALPXvKU?si=suDU6XG4Q-ZroSPe",
-      "title": "Second Video Title",
-      "description": "Samsung galaxy S23 Ultra Unboxing | First Look | 256GB | Black.",
+      "title": "Samsung galaxy S23 Ultra Unboxing | First Look | 256GB | Black | Tamil",
+      "description": "🚀 First look at the Samsung Galaxy S23 Ultra 256GB — sleek design, flagship features, and everything inside the box.",
       "type": "video",
       "date": "2025-02-14",
       "tags": ["Unboxing"]
     },
     {
       "id": "https://youtu.be/D2RHDnm8_IY?si=E-_pqQy2R-SWUUqm",
-      "title": "Third Video Title",
-      "description": "KCBT || Kelambakkam Bus Terminal || Kalaignar Centenary Bus Terminat - KCBT || Chennai.",
+      "title": "KCBT || Kelambakkam Bus Terminal || Kalaignar Centenary Bus Terminat - KCBT || Chennai",
+      "description": "Exploring the KCBT bus terminal in Chennai.",
       "type": "video",
       "date": "2025-01-10",
       "tags": ["vlog"]

@@ -45,7 +45,7 @@ export default function Blog() {
         <span className="section-label">Writing</span>
         <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)' }}>Blog</h1>
         <p style={{ maxWidth: 480, margin: '12px auto 0', color: 'var(--text)' }}>
-          Thoughts on web development, design, and technology.
+          Thoughts, experiences, food, travel, and things I notice along the way.
         </p>
       </motion.div>
 
