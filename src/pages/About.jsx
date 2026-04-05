@@ -238,15 +238,6 @@ function AboutHero() {
 
           {/* ── Left — text ── */}
           <div style={{ flex: '1 1 420px', minWidth: 0 }}>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-              style={{ fontSize: '1rem', color: 'var(--text)', marginBottom: 8 }}
-            >
-              {cfg.about.heroGreeting}
-            </motion.p>
-
             <motion.h1
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -318,13 +309,39 @@ function AboutHero() {
             </motion.div>
           </div>
 
-          {/* ── Right — image frame ── */}
-          <ImageFrame name={cfg.personal.name} />
+          {/* ── Right — image frame + handwritten overlay ── */}
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <ImageFrame name={cfg.personal.name} />
+            {/* Handwritten greeting — top-left corner, slanting up from bottom-left to top-right */}
+            <motion.div
+              initial={{ opacity: 0, x: -20, y: 10 }}
+              animate={{ opacity: 1, x: 0, y: 0 }}
+              transition={{ duration: 1.1, delay: 0.8, ease: [0.16, 1, 0.3, 1] }}
+              style={{
+                position: 'absolute',
+                top: isMobile ? '6%' : '10%',
+                left: isMobile ? '-8%' : '-12%',
+                transform: 'rotate(-18deg)',
+                zIndex: 10,
+                pointerEvents: 'none',
+                fontFamily: "'Kaushan Script', cursive",
+                fontSize: isMobile ? 'clamp(1.6rem, 7vw, 2.2rem)' : 'clamp(2.4rem, 3.5vw, 3.2rem)',
+                fontWeight: 400,
+                color: 'var(--text-h)',
+                textShadow: '0 2px 12px rgba(0,0,0,0.35)',
+                whiteSpace: 'nowrap',
+                lineHeight: 1,
+              }}
+            >
+              {cfg.about.heroGreeting}
+            </motion.div>
+          </div>
 
         </div>
       </div>
 
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Kaushan+Script&display=block');
         @media (min-width: 769px) {
           .about-hero-section .page-container { max-width: 100% !important; padding-left: clamp(24px, 5vw, 80px) !important; padding-right: clamp(24px, 5vw, 80px) !important; }
         }

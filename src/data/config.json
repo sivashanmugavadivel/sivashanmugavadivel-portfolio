@@ -62,7 +62,7 @@
 
   "about": {
     "heading": "Hey there! Nice to meet you",
-    "heroGreeting": "Hello, It's Me",
+    "heroGreeting": "Hey there!",
     "bioLabel": "My Story",
     "bioHeading": "Turning ideas into living interfaces",
     "paragraphs": [
@@ -70,9 +70,10 @@
       "When I'm not coding, you'll find me taking photos, watching tutorials, or exploring new places."
     ],
     "bioParagraphs": [
-      "I'm a frontend developer passionate about crafting web experiences that feel as good as they look. I started my journey in computer science and found myself drawn to the intersection of design and code — where logic meets creativity.",
-      "Over the years I've built everything from small marketing sites to complex SaaS applications. I love animation, typography, and the challenge of making something that's both beautiful and accessible.",
-      "Outside of work, I explore the world through a camera lens, write about what I'm learning, and share video content on YouTube."
+      "I started my journey in industrial automation, working closely with real-world systems, machines, and control logic. That experience shaped how I think — structured, practical, and problem-driven.",
+      "Over time, I found myself drawn toward building digital experiences — where logic meets creativity. What started as curiosity turned into a passion for crafting clean, interactive, and user-friendly interfaces.",
+      "Today, I enjoy working at the intersection of hardware and software — combining engineering thinking with modern web technologies to build solutions that are both functional and meaningful.",
+      "Outside of work, I spend my time exploring photography, creating content, and learning something new every day."
     ],
     "ctaLabel": "Let's Connect",
     "ctaHeading": "Interested in working together?",
