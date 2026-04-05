@@ -66,13 +66,6 @@ function SectionHeading({ label, title, align = 'center' }) {
 }
 
 /* ── Data ── */
-const skills = [
-  { category: 'Frontend', items: ['React', 'TypeScript', 'CSS / Sass', 'Framer Motion', 'Next.js'] },
-  { category: 'Backend', items: ['Node.js', 'Python', 'REST APIs', 'PostgreSQL', 'MongoDB'] },
-  { category: 'Tools', items: ['Git', 'Vite', 'Figma', 'VS Code', 'Linux'] },
-  { category: 'Other', items: ['Photography', 'Video Editing', 'Technical Writing', 'UI Design'] },
-]
-
 const timeline = cfg.journey
 
 const socials = [
@@ -498,67 +491,107 @@ function TimelineSection() {
   )
 }
 
-/* ── Skills Grid ── */
-const badgeVariants = {
-  hidden: { opacity: 0, scale: 0.7 },
-  show: { opacity: 1, scale: 1, transition: { duration: 0.3, ease: 'backOut' } },
+/* ── Life Sections (Now / Principles / Fun Side) ── */
+const ACCENT_COLORS = ['var(--accent)', '#10b981', '#f59e0b']
+
+function LifeCard({ section, colorIdx, delay }) {
+  const [hovered, setHovered] = useState(false)
+  const color = ACCENT_COLORS[colorIdx % ACCENT_COLORS.length]
+  return (
+    <Reveal delay={delay}>
+      <motion.div
+        onHoverStart={() => setHovered(true)}
+        onHoverEnd={() => setHovered(false)}
+        whileHover={{ y: -6 }}
+        transition={{ duration: 0.25 }}
+        style={{
+          background: 'var(--card-bg)',
+          border: `1.5px solid ${hovered ? color : 'var(--border)'}`,
+          borderRadius: 'var(--radius-lg, 16px)',
+          padding: '28px 28px 24px',
+          boxShadow: hovered ? `0 8px 32px rgba(0,0,0,0.12), 0 0 0 3px ${color}22` : 'var(--shadow)',
+          transition: 'border-color 0.25s, box-shadow 0.25s',
+          height: '100%',
+        }}
+      >
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+          <motion.div
+            animate={{ scale: hovered ? 1.15 : 1, rotate: hovered ? 8 : 0 }}
+            transition={{ duration: 0.3 }}
+            style={{
+              width: 36, height: 36, borderRadius: 10,
+              background: `${color}18`,
+              border: `1.5px solid ${color}44`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '1rem', flexShrink: 0,
+            }}
+          >
+            🔹
+          </motion.div>
+          <div>
+            <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color, marginBottom: 1 }}>
+              {section.label}
+            </div>
+            <div style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-h)' }}>
+              {section.heading}
+            </div>
+          </div>
+        </div>
+
+        {/* Divider */}
+        <motion.div
+          initial={{ scaleX: 0 }}
+          whileInView={{ scaleX: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: delay + 0.2, ease: 'easeOut' }}
+          style={{ height: 1.5, background: `linear-gradient(to right, ${color}, transparent)`, borderRadius: 1, margin: '14px 0 18px', transformOrigin: 'left' }}
+        />
+
+        {/* Items */}
+        <motion.ul
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true }}
+          variants={{ hidden: {}, show: { transition: { staggerChildren: 0.07, delayChildren: delay + 0.15 } } }}
+          style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}
+        >
+          {section.items.map((item, i) => (
+            <motion.li
+              key={i}
+              variants={{ hidden: { opacity: 0, x: -16 }, show: { opacity: 1, x: 0, transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] } } }}
+              style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}
+            >
+              <motion.span
+                whileHover={{ scale: 1.3 }}
+                style={{
+                  width: 6, height: 6, borderRadius: '50%',
+                  background: color, flexShrink: 0, marginTop: 7,
+                }}
+              />
+              <span style={{ fontSize: '0.875rem', color: 'var(--text)', lineHeight: 1.6 }}>{item}</span>
+            </motion.li>
+          ))}
+        </motion.ul>
+      </motion.div>
+    </Reveal>
+  )
 }
 
-const badgeGroupVariants = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.05 } },
-}
-
-function SkillsSection() {
+function LifeSection() {
+  const sections = [cfg.about.now, cfg.about.principles, cfg.about.funSide].filter(Boolean)
   return (
     <section className="section" style={{ background: 'var(--bg-secondary)' }}>
       <div className="page-container">
-        <SectionHeading label="Skills" title="What I Work With" />
-
-        <div className="grid-2" style={{ gap: 32 }}>
-          {skills.map(({ category, items }, ci) => (
-            <Reveal key={category} delay={ci * 0.08}>
-              <div style={{
-                background: 'var(--card-bg)',
-                border: '1px solid var(--border)',
-                borderRadius: 'var(--radius)',
-                padding: '28px 28px 24px',
-                boxShadow: 'var(--shadow)',
-              }}>
-                <h3 style={{ fontSize: '0.8rem', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 16 }}>
-                  {category}
-                </h3>
-                <motion.div
-                  variants={badgeGroupVariants}
-                  initial="hidden"
-                  whileInView="show"
-                  viewport={{ once: true }}
-                  style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}
-                >
-                  {items.map(skill => (
-                    <motion.span
-                      key={skill}
-                      variants={badgeVariants}
-                      whileHover={{ scale: 1.06, background: 'var(--accent-bg)', borderColor: 'var(--accent)' }}
-                      style={{
-                        display: 'inline-block',
-                        padding: '5px 14px',
-                        borderRadius: 999,
-                        fontSize: '0.825rem',
-                        fontWeight: 500,
-                        color: 'var(--text-h)',
-                        background: 'var(--bg-secondary)',
-                        border: '1px solid var(--border)',
-                        cursor: 'default',
-                        transition: 'background var(--transition), border-color var(--transition)',
-                      }}
-                    >
-                      {skill}
-                    </motion.span>
-                  ))}
-                </motion.div>
-              </div>
-            </Reveal>
+        <SectionHeading label="Life" title="Beyond the Resume" />
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+          gap: 24,
+          marginTop: 8,
+        }}>
+          {sections.map((section, i) => (
+            <LifeCard key={section.label} section={section} colorIdx={i} delay={i * 0.1} />
           ))}
         </div>
       </div>
@@ -604,7 +637,7 @@ export default function About() {
       <AboutHero />
       <BioSection />
       <TimelineSection />
-      <SkillsSection />
+      <LifeSection />
       <AboutCTA />
     </div>
   )

@@ -70,7 +70,39 @@
       { "icon": "💻", "label": "Web Development", "desc": "Modern React & CSS" },
       { "icon": "🎨", "label": "UI / UX Design",  "desc": "Clean, thoughtful interfaces" },
       { "icon": "✍️", "label": "Writing",          "desc": "Sharing what I learn" }
-    ]
+    ],
+    "now": {
+      "label": "Now",
+      "heading": "What I'm currently focused on",
+      "items": [
+        "🚀 Exploring deeper into web development & UI/UX",
+        "🏭 Working on real-world industrial automation projects",
+        "📷 Improving photography and visual storytelling",
+        "✍️ Writing and sharing experiences through my blog",
+        "🎥 Creating video content and short-form media"
+      ]
+    },
+    "principles": {
+      "label": "Principles",
+      "heading": "Things I strongly believe in",
+      "items": [
+        "Simplicity over complexity",
+        "Clarity in design and code",
+        "Continuous learning",
+        "Building with purpose",
+        "Attention to detail"
+      ]
+    },
+    "funSide": {
+      "label": "Fun Side",
+      "heading": "Beyond work",
+      "items": [
+        "📸 I enjoy capturing everyday moments",
+        "🌍 I like exploring new places and cultures",
+        "🎬 I watch and learn from creative content",
+        "☕ Sometimes, I just sit and think (with coffee 😄)"
+      ]
+    }
   },
 
   "journey": [
