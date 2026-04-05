@@ -37,7 +37,7 @@ export default function Blog() {
       rotate: sign * (abs === 1 ? 12 : 20),
       scale: abs === 1 ? 0.82 : 0.68,
       zIndex: 10 - abs,
-      opacity: abs === 1 ? 0.75 : 0.45,
+      opacity: abs === 1 ? 0.7 : 0.45,
     }
   }
 
@@ -157,6 +157,7 @@ export default function Blog() {
                       border: '1px solid var(--border)',
                       display: 'flex', flexDirection: 'column',
                       alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24,
+                      backdropFilter: 'blur(4px)',
                     }}>
                       <div style={{ fontSize: 48 }}>{filtered[idx].frontmatter.icon || '📝'}</div>
                       <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-h)', textAlign: 'center', lineHeight: 1.35 }}>
