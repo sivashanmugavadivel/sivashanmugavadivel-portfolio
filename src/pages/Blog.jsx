@@ -154,7 +154,17 @@ export default function Blog() {
                       borderRadius: 16,
                       background: 'var(--card-bg)',
                       border: '1px solid var(--border)',
-                    }} />
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      gap: 12,
+                      padding: 24,
+                    }}>
+                      <div style={{ width: '40%', height: 10, borderRadius: 6, background: 'var(--border)', opacity: 0.5 }} />
+                      <div style={{ width: '70%', height: 10, borderRadius: 6, background: 'var(--border)', opacity: 0.4 }} />
+                      <div style={{ width: '60%', height: 10, borderRadius: 6, background: 'var(--border)', opacity: 0.3 }} />
+                    </div>
                   )}
                 </motion.div>
               )
