@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import cfg from '../../data/config.json'
 
 
 
@@ -152,7 +153,7 @@ export default function Footer() {
               Privacy Policy
             </Link>
             <p style={{ fontSize: '0.72rem', color: 'var(--text)', opacity: 0.5, margin: 0 }}>
-              Built with Love & Care mixed in equal ratio
+              {cfg.footer?.builtWith ?? 'Built with Love & Care mixed in equal ratio'}
             </p>
           </div>
         </div>

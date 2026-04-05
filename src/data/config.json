@@ -119,9 +119,18 @@
     }
   ],
 
+  "gallery": {
+    "introImages": [
+      "slideshareImages/ss1.png",
+      "slideshareImages/ss2.jpg",
+      "slideshareImages/ss3.jpg",
+      "slideshareImages/ss4.jpg"
+    ]
+  },
+
   "footer": {
     "copyright": "Siva Shanmuga Vadivel",
-    "builtWith": "Built with React & Framer Motion"
+    "builtWith": "Built with Love & Care mixed in equal ratio"
   },
 
   "videos": [

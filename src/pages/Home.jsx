@@ -808,7 +808,6 @@ export default function Home() {
       </section>
       <FeaturedPostsSection />
       <FeaturedVideosSection />
-      <JourneySection />
       <SocialSection />
       <CTASection />
     </div>

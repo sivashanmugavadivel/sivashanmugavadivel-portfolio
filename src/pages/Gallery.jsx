@@ -3,16 +3,14 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Lightbox from 'yet-another-react-lightbox'
 import 'yet-another-react-lightbox/styles.css'
 import galleryData from '../data/gallery.json'
+import cfg from '../data/config.json'
 
 const BASE = import.meta.env.BASE_URL
 
-/* ── Polaroid intro (kept from original) ── */
-const SLIDESHOW_IMAGES = [
-  `${BASE}slideshareImages/ss1.jpg`,
-  `${BASE}slideshareImages/ss2.jpg`,
-  `${BASE}slideshareImages/ss3.png`,
-  `${BASE}slideshareImages/ss4.jpg`,
-]
+/* ── Polaroid intro — images from config.gallery.introImages ── */
+const SLIDESHOW_IMAGES = (cfg.gallery?.introImages ?? []).map(p =>
+  p.startsWith('http') ? p : `${BASE}${p}`
+)
 
 const isMobileGallery = window.innerWidth <= 768
 
