@@ -401,6 +401,11 @@ function FeaturedPostsSection() {
     <section className="section" style={{ overflow: 'hidden', contain: 'paint' }}>
       <div className="page-container">
         <SectionHeading label="Writing" title="Latest Posts" />
+        <Reveal delay={0.15}>
+          <p style={{ textAlign: 'center', color: 'var(--text)', opacity: 0.65, fontSize: '0.95rem', marginTop: -8, marginBottom: 32 }}>
+            Food, travel, and moments I like to capture and share.
+          </p>
+        </Reveal>
 
         <motion.div
           className="grid-3"
@@ -417,8 +422,9 @@ function FeaturedPostsSection() {
         </motion.div>
 
         <Reveal delay={0.3}>
-          <div style={{ textAlign: 'center', marginTop: 40 }}>
-            <Button to="/blog" variant="outline">View All Posts →</Button>
+          <div style={{ textAlign: 'center', marginTop: 40, display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Button to="/blog">Read Blog →</Button>
+            <Button to="/gallery" variant="outline">View My Gallery →</Button>
           </div>
         </Reveal>
       </div>
