@@ -244,7 +244,7 @@ function AboutHero() {
               transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
               style={{ fontSize: '1rem', color: 'var(--text)', marginBottom: 8 }}
             >
-              Hello, It's Me
+              {cfg.about.heroGreeting}
             </motion.p>
 
             <motion.h1
@@ -266,6 +266,15 @@ function AboutHero() {
               <span style={{ color: 'var(--accent)', fontWeight: 600 }}>
                 {cfg.personal.tagline}
               </span>
+            </motion.p>
+
+            <motion.p
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              style={{ fontSize: '0.95rem', color: 'var(--text)', opacity: 0.75, marginBottom: 28, lineHeight: 1.7, maxWidth: 480 }}
+            >
+              {cfg.personal.bio}
             </motion.p>
 
             {/* Social icons */}
@@ -363,30 +372,17 @@ function BioSection() {
 
           {/* Text */}
           <div>
-            <Reveal delay={0}><span className="section-label">My Story</span></Reveal>
+            <Reveal delay={0}><span className="section-label">{cfg.about.bioLabel}</span></Reveal>
             <Reveal delay={0.1}>
-              <h2 style={{ marginBottom: 20 }}>Turning ideas into<br />living interfaces</h2>
+              <h2 style={{ marginBottom: 20 }}>{cfg.about.bioHeading}</h2>
             </Reveal>
-            <Reveal delay={0.2}>
-              <p style={{ color: 'var(--text)', lineHeight: 1.8, marginBottom: 16 }}>
-                I'm a frontend developer passionate about crafting web experiences that feel
-                as good as they look. I started my journey in computer science and found
-                myself drawn to the intersection of design and code — where logic meets creativity.
-              </p>
-            </Reveal>
-            <Reveal delay={0.3}>
-              <p style={{ color: 'var(--text)', lineHeight: 1.8, marginBottom: 16 }}>
-                Over the years I've built everything from small marketing sites to complex
-                SaaS applications. I love animation, typography, and the challenge of making
-                something that's both beautiful and accessible.
-              </p>
-            </Reveal>
-            <Reveal delay={0.4}>
-              <p style={{ color: 'var(--text)', lineHeight: 1.8, marginBottom: 32 }}>
-                Outside of work, I explore the world through a camera lens, write about what
-                I'm learning, and share video content on YouTube.
-              </p>
-            </Reveal>
+            {(cfg.about.bioParagraphs || []).map((para, i) => (
+              <Reveal key={i} delay={0.2 + i * 0.1}>
+                <p style={{ color: 'var(--text)', lineHeight: 1.8, marginBottom: i < cfg.about.bioParagraphs.length - 1 ? 16 : 32 }}>
+                  {para}
+                </p>
+              </Reveal>
+            ))}
             <Reveal delay={0.5}>
               <Button to="/contact">Work Together →</Button>
             </Reveal>
@@ -611,12 +607,12 @@ function AboutCTA() {
             alignItems: 'center',
             gap: 20,
           }}>
-            <span className="section-label">Let's Connect</span>
+            <span className="section-label">{cfg.about.ctaLabel}</span>
             <h2 style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)', maxWidth: 480, margin: 0 }}>
-              Interested in working together?
+              {cfg.about.ctaHeading}
             </h2>
             <p style={{ color: 'var(--text)', maxWidth: 380, lineHeight: 1.7 }}>
-              I'm always open to new opportunities and collaborations.
+              {cfg.about.ctaSubtext}
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
               <Button to="/contact">Get in Touch</Button>

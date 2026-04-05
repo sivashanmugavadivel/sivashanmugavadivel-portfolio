@@ -62,10 +62,21 @@
 
   "about": {
     "heading": "Hey there! Nice to meet you",
+    "heroGreeting": "Hello, It's Me",
+    "bioLabel": "My Story",
+    "bioHeading": "Turning ideas into living interfaces",
     "paragraphs": [
       "I'm a passionate developer who loves building beautiful, performant web experiences. I care deeply about the details — from pixel-perfect layouts to smooth animations that make interfaces feel alive.",
       "When I'm not coding, you'll find me taking photos, watching tutorials, or exploring new places."
     ],
+    "bioParagraphs": [
+      "I'm a frontend developer passionate about crafting web experiences that feel as good as they look. I started my journey in computer science and found myself drawn to the intersection of design and code — where logic meets creativity.",
+      "Over the years I've built everything from small marketing sites to complex SaaS applications. I love animation, typography, and the challenge of making something that's both beautiful and accessible.",
+      "Outside of work, I explore the world through a camera lens, write about what I'm learning, and share video content on YouTube."
+    ],
+    "ctaLabel": "Let's Connect",
+    "ctaHeading": "Interested in working together?",
+    "ctaSubtext": "I'm always open to new opportunities and collaborations.",
     "highlights": [
       { "icon": "💻", "label": "Web Development", "desc": "Modern React & CSS" },
       { "icon": "🎨", "label": "UI / UX Design",  "desc": "Clean, thoughtful interfaces" },
