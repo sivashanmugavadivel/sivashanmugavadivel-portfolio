@@ -782,7 +782,7 @@ export const STORAGE_KEY = 'selected_toast_design'
 /* ═══════════════════════════════════════════════════════════════
    Full-screen toast overlay — fires on the real page
 ═══════════════════════════════════════════════════════════════ */
-function getPositionStyle(pos) {
+export function getPositionStyle(pos) {
   const base = { position: 'fixed', zIndex: 9999 }
   if (pos === 'top-center')    return { ...base, top: 80,    left: '50%', transform: 'translateX(-50%)' }
   if (pos === 'bottom-right')  return { ...base, bottom: 32, right: 28 }
