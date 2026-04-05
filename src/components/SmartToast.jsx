@@ -10,13 +10,13 @@ export default function SmartToast() {
   const [visible, setVisible] = useState(false)
   const [designId, setDesignId] = useState(() => {
     const saved = localStorage.getItem(STORAGE_KEY)
-    return saved ? parseInt(saved) : 1
+    return saved ? parseInt(saved) : 17
   })
 
   useEffect(() => {
     if (sessionStorage.getItem(SESSION_KEY)) return
     const t = setTimeout(() => {
-      setDesignId(parseInt(localStorage.getItem(STORAGE_KEY) || '1'))
+      setDesignId(parseInt(localStorage.getItem(STORAGE_KEY) || '17'))
       setVisible(true)
       sessionStorage.setItem(SESSION_KEY, '1')
     }, LOADING_DELAY)

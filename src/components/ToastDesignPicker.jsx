@@ -653,81 +653,87 @@ function Toast16({ message, onDone }) {
   )
 }
 
-/* 17 ─ Character + Glass Bubble (combined) */
+/* 17 ─ Dev Bubble (Character + Glass Pill combined) */
 function Toast17({ message, onDone }) {
-  const [phase, setPhase] = useState('typing') // 'typing' | 'message'
+  const [phase, setPhase] = useState('typing')
+
   useEffect(() => {
-    const t = setTimeout(() => setPhase('message'), 1600)
+    const t = setTimeout(() => setPhase('message'), 1800)
     return () => clearTimeout(t)
   }, [])
 
+  const bubbleBase = {
+    display: 'inline-flex', alignItems: 'center',
+    borderRadius: 999,
+    background: 'rgba(255,255,255,0.1)',
+    backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+    border: '1px solid rgba(255,255,255,0.22)',
+    boxShadow: '0 8px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.18)',
+    // flat bottom-left corner = tail toward character
+    borderBottomLeftRadius: 6,
+  }
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 50, scale: 0.85 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 30, scale: 0.8 }}
-      transition={{ type: 'spring', stiffness: 260, damping: 22 }}
+      initial={{ opacity: 0, y: 48 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 32 }}
+      transition={{ type: 'spring', stiffness: 240, damping: 22 }}
       onClick={onDone}
-      style={{ display: 'inline-flex', alignItems: 'flex-end', gap: 10, cursor: 'pointer' }}
+      style={{ display: 'inline-flex', alignItems: 'flex-end', gap: 12, cursor: 'pointer' }}
     >
-      {/* Floating character */}
+      {/* Floating 🧑‍💻 character */}
       <motion.div
         animate={{ y: [0, -8, 0] }}
-        transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
-        style={{ fontSize: '2.8rem', lineHeight: 1, flexShrink: 0 }}
+        transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+        style={{ fontSize: '3rem', lineHeight: 1, flexShrink: 0, userSelect: 'none' }}
       >🧑‍💻</motion.div>
 
-      {/* Glass pill bubble */}
+      {/* Bubble — swaps from dots to message */}
       <AnimatePresence mode="wait">
         {phase === 'typing' ? (
-          /* Loading dots phase */
           <motion.div
             key="dots"
-            initial={{ opacity: 0, scale: 0.7, x: -10 }}
-            animate={{ opacity: 1, scale: 1, x: 0 }}
-            exit={{ opacity: 0, scale: 0.7, x: -10 }}
-            transition={{ type: 'spring', stiffness: 320, damping: 22 }}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              padding: '12px 20px', borderRadius: 999,
-              background: 'rgba(255,255,255,0.08)',
-              backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-              border: '1px solid rgba(255,255,255,0.18)',
-              boxShadow: '0 8px 40px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15)',
-              /* Tail pointing left toward character */
-              borderBottomLeftRadius: 4,
-            }}
+            initial={{ opacity: 0, scale: 0.75 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.75 }}
+            transition={{ type: 'spring', stiffness: 360, damping: 24 }}
+            style={{ ...bubbleBase, padding: '14px 20px', gap: 7 }}
           >
             {[0, 1, 2].map(i => (
-              <motion.span key={i}
-                animate={{ y: [0, -5, 0], opacity: [0.4, 1, 0.4] }}
-                transition={{ duration: 0.7, repeat: Infinity, delay: i * 0.18 }}
-                style={{ width: 8, height: 8, borderRadius: '50%', background: 'rgba(255,255,255,0.8)', display: 'inline-block' }}
+              <motion.span
+                key={i}
+                animate={{ y: [0, -6, 0], opacity: [0.35, 1, 0.35] }}
+                transition={{ duration: 0.65, repeat: Infinity, delay: i * 0.16, ease: 'easeInOut' }}
+                style={{
+                  width: 9, height: 9, borderRadius: '50%',
+                  background: 'rgba(255,255,255,0.85)',
+                  display: 'inline-block', flexShrink: 0,
+                }}
               />
             ))}
           </motion.div>
         ) : (
-          /* Glass pill message phase */
           <motion.div
             key="msg"
-            initial={{ opacity: 0, scale: 0.8, x: -10 }}
-            animate={{ opacity: 1, scale: 1, x: 0 }}
+            initial={{ opacity: 0, scale: 0.75 }}
+            animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 320, damping: 22 }}
+            transition={{ type: 'spring', stiffness: 360, damping: 24 }}
             style={{
-              display: 'inline-flex', alignItems: 'center', gap: 10,
-              padding: '13px 22px', borderRadius: 999,
-              background: 'rgba(255,255,255,0.08)',
-              backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-              border: '1px solid rgba(255,255,255,0.18)',
-              boxShadow: '0 8px 40px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15)',
+              ...bubbleBase,
+              padding: '13px 22px', gap: 10,
               color: '#fff', fontFamily: 'var(--sans)',
-              fontSize: '0.95rem', fontWeight: 500, whiteSpace: 'nowrap',
-              borderBottomLeftRadius: 4,
+              fontSize: '0.95rem', fontWeight: 500,
+              whiteSpace: 'nowrap',
             }}
           >
+            <motion.span
+              animate={{ rotate: [0, 18, -10, 14, 0] }}
+              transition={{ delay: 0.15, duration: 0.6 }}
+            >👋</motion.span>
             {message}
-            <span style={{ opacity: 0.4, fontSize: '0.72rem' }}>· tap</span>
+            <span style={{ opacity: 0.4, fontSize: '0.7rem', marginLeft: 2 }}>· tap</span>
           </motion.div>
         )}
       </AnimatePresence>
