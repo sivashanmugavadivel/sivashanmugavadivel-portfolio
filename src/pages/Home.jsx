@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, useScroll, useTransform, useInView, useAnimation } from 'framer-motion'
 import { loadAllPosts } from '../hooks/usePosts'
 import cfg from '../data/config.json'
+import { getGreeting } from '../utils/timeGreeting'
 import PostCard from '../components/blog/PostCard'
 import VideoCard from '../components/video/VideoCard'
 import Button from '../components/ui/Button'
@@ -122,6 +123,7 @@ function TypingName() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3, delay: 0.3 }}
+      onClick={() => window.dispatchEvent(new CustomEvent('easter-egg', { detail: 'name' }))}
       style={{
         fontFamily: "'Lilita One', cursive",
         fontWeight: 400,
@@ -133,6 +135,7 @@ function TypingName() {
         whiteSpace: 'nowrap',
         userSelect: 'none',
         textAlign: 'center',
+        cursor: 'pointer',
       }}
     >
       {displayed}
@@ -297,6 +300,14 @@ function HeroSection() {
           display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between',
         }}
       >
+        <motion.p
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.2, duration: 0.6 }}
+          style={{ fontFamily: 'var(--sans)', fontSize: '0.85rem', color: 'var(--accent)', margin: '0 0 6px', fontStyle: 'italic', opacity: 0.9 }}
+        >
+          {getGreeting()}
+        </motion.p>
         <p style={{
           fontFamily: 'var(--sans)', fontSize: 'clamp(0.78rem, 1.4vw, 0.95rem)',
           color: 'rgba(255,255,255,0.65)', maxWidth: 340, lineHeight: 1.6, margin: 0,

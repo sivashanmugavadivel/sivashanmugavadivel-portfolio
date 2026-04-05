@@ -4,6 +4,8 @@ import { useTheme } from './hooks/useTheme'
 import { usePageLoad } from './hooks/usePageLoad'
 import { motion } from 'framer-motion'
 import FeedbackPanel from './components/FeedbackPanel'
+import SmartToast from './components/SmartToast'
+import EasterEgg from './components/EasterEgg'
 
 import LoadingScreen from './components/LoadingScreen'
 import Navbar from './components/layout/Navbar'
@@ -91,6 +93,8 @@ export default function App() {
       )}
 
       <FeedbackPanel open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
+      <SmartToast />
+      <EasterEgg />
     </>
   )
 }
