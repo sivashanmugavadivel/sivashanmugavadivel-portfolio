@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import cfg from '../data/config.json'
 
 /* ── No-op wrapper — PageWrapper handles page entry animation ── */
@@ -23,32 +23,52 @@ function youtubeId(input) {
   }
 }
 
-/* ── Video card — thumbnail that swaps to iframe on click ── */
-function VideoCardFull({ video, featured = false }) {
-  const [playing, setPlaying] = useState(false)
+/* ── Video modal popup ── */
+function VideoModal({ video, onClose }) {
   const id = youtubeId(video.id)
-  const thumb = `https://img.youtube.com/vi/${id}/hqdefault.jpg`
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
 
   return (
     <motion.div
-      whileHover={!playing ? { y: -4, boxShadow: 'var(--shadow-hover)' } : {}}
-      transition={{ duration: 0.25 }}
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      onClick={onClose}
       style={{
-        background: 'var(--card-bg)',
-        border: '1px solid var(--border)',
-        borderRadius: 'var(--radius)',
-        overflow: 'hidden',
-        boxShadow: 'var(--shadow)',
+        position: 'fixed', inset: 0, zIndex: 1000,
+        background: 'rgba(0,0,0,0.85)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '20px',
       }}
     >
-      {/* Embed area */}
-      <div style={{
-        position: 'relative',
-        aspectRatio: '16/9',
-        background: '#000',
-        cursor: playing ? 'default' : 'pointer',
-      }}>
-        {playing ? (
+      <motion.div
+        initial={{ scale: 0.88, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.88, opacity: 0 }}
+        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: '100%', maxWidth: 860,
+          borderRadius: 16, overflow: 'hidden',
+          boxShadow: '0 32px 80px rgba(0,0,0,0.6)',
+          background: '#000',
+          position: 'relative',
+        }}
+      >
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute', top: 12, right: 12, zIndex: 10,
+            width: 36, height: 36, borderRadius: '50%',
+            background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.2)',
+            color: '#fff', cursor: 'pointer', fontSize: '1.1rem',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+        >✕</button>
+        {/* 16:9 iframe */}
+        <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0 }}>
           <iframe
             src={`https://www.youtube.com/embed/${id}?autoplay=1&rel=0`}
             title={video.title}
@@ -56,87 +76,78 @@ function VideoCardFull({ video, featured = false }) {
             allowFullScreen
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none' }}
           />
-        ) : (
-          <>
-            <img
-              src={thumb}
-              alt={video.title}
-              loading="lazy"
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-            />
-            {/* Dark overlay */}
-            <div style={{
-              position: 'absolute', inset: 0,
-              background: 'linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.5))',
-            }} />
-            {/* Play button */}
-            <motion.button
-              onClick={() => setPlaying(true)}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              aria-label={`Play ${video.title}`}
-              style={{
-                position: 'absolute',
-                top: '50%', left: '50%',
-                transform: 'translate(-50%, -50%)',
-                width: featured ? 72 : 56,
-                height: featured ? 72 : 56,
-                borderRadius: '50%',
-                background: 'rgba(255,255,255,0.95)',
-                border: 'none',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
-              }}
-            >
-              <svg
-                width={featured ? 28 : 22}
-                height={featured ? 28 : 22}
-                viewBox="0 0 24 24"
-                fill="var(--accent)"
-                style={{ marginLeft: 3 }}
-              >
-                <polygon points="5,3 19,12 5,21"/>
-              </svg>
-            </motion.button>
-          </>
-        )}
+        </div>
+        {/* Title below */}
+        <div style={{ padding: '14px 20px', background: 'var(--card-bg)' }}>
+          <p style={{ margin: 0, fontWeight: 600, fontSize: '0.95rem', color: 'var(--text-h)' }}>{video.title}</p>
+        </div>
+      </motion.div>
+    </motion.div>
+  )
+}
+
+/* ── Video card — thumbnail only, click opens modal ── */
+function VideoCardFull({ video, featured = false, onPlay }) {
+  const id = youtubeId(video.id)
+  const thumb = `https://img.youtube.com/vi/${id}/hqdefault.jpg`
+
+  return (
+    <motion.div
+      whileHover={{ y: -4, boxShadow: 'var(--shadow-hover)' }}
+      transition={{ duration: 0.25 }}
+      style={{
+        background: 'var(--card-bg)',
+        border: '1px solid var(--border)',
+        borderRadius: 'var(--radius)',
+        overflow: 'hidden',
+        boxShadow: 'var(--shadow)',
+        display: 'flex', flexDirection: 'column', height: '100%',
+      }}
+    >
+      {/* Thumbnail */}
+      <div style={{ position: 'relative', aspectRatio: '16/9', background: '#000', cursor: 'pointer' }}
+        onClick={onPlay}>
+        <img
+          src={thumb} alt={video.title} loading="lazy"
+          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+        />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.5))' }} />
+        <motion.div
+          whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}
+          style={{
+            position: 'absolute', top: '50%', left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: featured ? 72 : 56, height: featured ? 72 : 56,
+            borderRadius: '50%', background: 'rgba(255,255,255,0.95)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
+          }}
+        >
+          <svg width={featured ? 28 : 22} height={featured ? 28 : 22} viewBox="0 0 24 24" fill="var(--accent)" style={{ marginLeft: 3 }}>
+            <polygon points="5,3 19,12 5,21"/>
+          </svg>
+        </motion.div>
       </div>
 
       {/* Info */}
-      <div style={{ padding: featured ? '20px 24px' : '14px 18px' }}>
+      <div style={{ padding: featured ? '20px 24px' : '14px 18px', flex: 1, display: 'flex', flexDirection: 'column' }}>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
           {video.tags.map(tag => (
-            <span
-              key={tag}
-              style={{
-                padding: '2px 10px',
-                borderRadius: 999,
-                fontSize: '0.7rem',
-                fontWeight: 600,
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
-                background: 'var(--accent-bg)',
-                color: 'var(--accent)',
-                border: '1px solid var(--accent-border)',
-              }}
-            >
-              {tag}
-            </span>
+            <span key={tag} style={{
+              padding: '2px 10px', borderRadius: 999, fontSize: '0.7rem', fontWeight: 600,
+              textTransform: 'uppercase', letterSpacing: '0.06em',
+              background: 'var(--accent-bg)', color: 'var(--accent)', border: '1px solid var(--accent-border)',
+            }}>{tag}</span>
           ))}
         </div>
         <h3 style={{
-          fontSize: featured ? '1.2rem' : '0.95rem',
-          margin: '0 0 6px',
-          color: 'var(--text-h)',
-        }}>
-          {video.title}
-        </h3>
-        <p style={{ fontSize: '0.83rem', color: 'var(--text)', margin: 0, lineHeight: 1.5 }}>
-          {video.description}
-        </p>
+          fontSize: featured ? '1.2rem' : '0.95rem', margin: '0 0 6px', color: 'var(--text-h)',
+          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+        }}>{video.title}</h3>
+        <p style={{
+          fontSize: '0.83rem', color: 'var(--text)', margin: 0, lineHeight: 1.5,
+          display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+        }}>{video.description}</p>
         <p style={{ fontSize: '0.72rem', color: 'var(--text)', marginTop: 8, opacity: 0.7 }}>
           {new Date(video.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
         </p>
@@ -468,7 +479,7 @@ function VideosHeader1() {
           transition={{ duration: 0.6, delay: 1.0 }}
           style={{ color: 'var(--text)', maxWidth: 440, margin: '0 auto', lineHeight: 1.7 }}
         >
-          YouTube videos, tutorials, vlogs, and short-form content.
+          Movements I've captured along the way with my journey 👣.
         </motion.p>
       </div>
     </section>
@@ -839,6 +850,56 @@ function InstagramSection() {
   )
 }
 
+/* ── Video strip with arrows below ── */
+function VideoStrip({ videos }) {
+  const scrollRef = useRef(null)
+  const [activeVideo, setActiveVideo] = useState(null)
+  const CARD_W = 420
+  const SCROLL_BY = CARD_W + 16
+
+  const scroll = (dir) => {
+    scrollRef.current?.scrollBy({ left: dir * SCROLL_BY, behavior: 'smooth' })
+  }
+
+  return (
+    <section className="section" style={{ paddingTop: 'clamp(48px, 6vw, 80px)', background: 'var(--bg)', overflow: 'hidden' }}>
+      <div className="page-container">
+        <div style={{ marginBottom: 32 }}>
+          <h2 style={{ margin: 0 }}>Videos</h2>
+        </div>
+
+        {/* Scrollable strip */}
+        <div ref={scrollRef} style={{ overflowX: 'auto', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
+          <div style={{ display: 'flex', gap: 16, paddingBottom: 8, scrollSnapType: 'x mandatory', width: 'max-content' }}>
+            {videos.map((video) => (
+              <div key={video.id} style={{ width: CARD_W, height: 420, scrollSnapAlign: 'start', flexShrink: 0 }}>
+                <VideoCardFull video={video} onPlay={() => setActiveVideo(video)} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Arrows below */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginTop: 24 }}>
+          <motion.button onClick={() => scroll(-1)} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.92 }}
+            style={{ width: 44, height: 44, borderRadius: '50%', border: '1.5px solid var(--accent)', background: 'var(--card-bg)', color: 'var(--accent)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 16px rgba(0,0,0,0.2)' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15,18 9,12 15,6"/></svg>
+          </motion.button>
+          <motion.button onClick={() => scroll(1)} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.92 }}
+            style={{ width: 44, height: 44, borderRadius: '50%', border: '1.5px solid var(--accent)', background: 'var(--card-bg)', color: 'var(--accent)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 16px rgba(0,0,0,0.2)' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9,18 15,12 9,6"/></svg>
+          </motion.button>
+        </div>
+      </div>
+
+      {/* Video modal */}
+      <AnimatePresence>
+        {activeVideo && <VideoModal video={activeVideo} onClose={() => setActiveVideo(null)} />}
+      </AnimatePresence>
+    </section>
+  )
+}
+
 /* ── Main Videos page ── */
 export default function Videos() {
   const regularVideos = (cfg.videos || []).filter(v => v.type === 'video')
@@ -849,28 +910,7 @@ export default function Videos() {
 
       {/* ── Videos ── */}
       {regularVideos.length > 0 && (
-        <section className="section" style={{ paddingTop: 'clamp(48px, 6vw, 80px)', background: 'var(--bg)', overflow: 'hidden' }}>
-          <div className="page-container">
-            <Reveal delay={0}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 32 }}>
-                <h2 style={{ margin: 0 }}>Videos</h2>
-                <span style={{ fontSize: '0.8rem', color: 'var(--accent)' }}>← drag →</span>
-              </div>
-            </Reveal>
-            <div style={{ overflowX: 'auto', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
-              <div style={{ display: 'flex', gap: 16, paddingBottom: 16, scrollSnapType: 'x mandatory', width: 'max-content' }}>
-                {regularVideos.map((video) => (
-                  <div
-                    key={video.id}
-                    style={{ width: 'clamp(260px, 75vw, 440px)', scrollSnapAlign: 'start', flexShrink: 0 }}
-                  >
-                    <VideoCardFull video={video} />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
+        <VideoStrip videos={regularVideos} />
       )}
 
 

@@ -242,7 +242,7 @@ export default function Contact() {
             Let's<br />talk
           </h1>
           <p style={{ fontStyle: 'italic', color: 'rgba(255,255,255,0.55)', fontSize: '1.05rem', lineHeight: 1.7, margin: '0 0 40px', maxWidth: 340 }}>
-            "Great things are built through great conversations."
+            "Let's build something interesting together 🙏."
           </p>
         </motion.div>
 
@@ -308,29 +308,31 @@ export default function Contact() {
           viewport={{ once: true }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         >
-          <h2 style={{ fontSize: '1.6rem', marginTop: 0, marginBottom: 28 }}>Send a message</h2>
+          <h2 style={{ fontSize: '1.6rem', marginTop: 0, marginBottom: 28 }}>Start a conversation</h2>
           <ContactForm />
 
           <div style={{ marginTop: 40, display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {/* Email button */}
-            <motion.a
-              href={`mailto:${cfg.contact.email}`}
-              whileHover={{ scale: 1.03, boxShadow: '0 0 24px rgba(124,58,237,0.3)' }}
-              whileTap={{ scale: 0.97 }}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 10,
-                padding: '11px 22px', borderRadius: 999,
-                background: 'var(--accent)', color: '#fff',
-                fontWeight: 600, fontSize: '0.9rem',
-                textDecoration: 'none', alignSelf: 'flex-start',
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                <polyline points="22,6 12,13 2,6"/>
-              </svg>
-              Email Me
-            </motion.a>
+            {/* Email */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.9rem', color: 'var(--text)', opacity: 0.75 }}>Prefer email?</span>
+              <motion.a
+                href={`mailto:${cfg.contact.email}`}
+                whileHover={{ scale: 1.03, boxShadow: '0 0 24px rgba(124,58,237,0.3)' }}
+                whileTap={{ scale: 0.97 }}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 8,
+                  padding: '9px 18px', borderRadius: 999,
+                  background: 'var(--accent)', color: '#fff',
+                  fontWeight: 600, fontSize: '0.9rem', textDecoration: 'none',
+                }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+                Click here
+              </motion.a>
+            </div>
 
             {infoRows.map(({ label, value }) => (
               <div key={label} style={{ display: 'flex', gap: 10, alignItems: 'baseline' }}>

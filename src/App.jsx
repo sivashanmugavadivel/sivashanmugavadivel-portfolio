@@ -49,6 +49,8 @@ export default function App() {
   const { theme, toggle } = useTheme()
   const isLoading = usePageLoad()
   const [feedbackOpen, setFeedbackOpen] = useState(false)
+  const location = useLocation()
+  const showFeedback = location.pathname !== '/contact'
 
   return (
     <>
@@ -61,30 +63,32 @@ export default function App() {
       <Footer />
 
       {/* ── Floating Feedback Button ── */}
-      <motion.button
-        animate={{ y: [0, -10, 0] }}
-        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', scale: { duration: 0.35, ease: 'easeOut' }, x: { duration: 0.35, ease: 'easeOut' } }}
-        whileHover={{ x: -8, scale: 1.15, transition: { duration: 0.2, ease: 'easeOut' } }}
-        whileTap={{ scale: 0.95 }}
-        onClick={() => setFeedbackOpen(true)}
-        style={{
-          position: 'fixed',
-          right: -5,
-          top: '50%',
-          transform: 'translateX(55%) translateY(-50%)',
-          zIndex: 90,
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          padding: 0,
-        }}
-      >
-        <img
-          src={`${import.meta.env.BASE_URL}fed-gif1.gif`}
-          alt="Feedback"
-          style={{ width: 'auto', height: '120px', display: 'block' }}
-        />
-      </motion.button>
+      {showFeedback && (
+        <motion.button
+          animate={{ y: [0, -10, 0] }}
+          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', scale: { duration: 0.35, ease: 'easeOut' }, x: { duration: 0.35, ease: 'easeOut' } }}
+          whileHover={{ x: -8, scale: 1.15, transition: { duration: 0.2, ease: 'easeOut' } }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setFeedbackOpen(true)}
+          style={{
+            position: 'fixed',
+            right: -5,
+            top: '50%',
+            transform: 'translateX(55%) translateY(-50%)',
+            zIndex: 90,
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: 0,
+          }}
+        >
+          <img
+            src={`${import.meta.env.BASE_URL}fed-gif1.gif`}
+            alt="Feedback"
+            style={{ width: 'auto', height: '120px', display: 'block' }}
+          />
+        </motion.button>
+      )}
 
       <FeedbackPanel open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
     </>
