@@ -676,10 +676,10 @@ function Toast17({ message, onDone }) {
   const bubbleBase = {
     display: 'inline-flex', alignItems: 'center',
     borderRadius: 999,
-    background: 'rgba(255,255,255,0.1)',
+    background: 'var(--card-bg, rgba(30,30,40,0.92))',
     backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-    border: '1px solid rgba(255,255,255,0.22)',
-    boxShadow: '0 8px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.18)',
+    border: '1.5px solid var(--accent, #7c3aed)',
+    boxShadow: '0 0 18px var(--accent, #7c3aed), 0 8px 32px rgba(0,0,0,0.35)',
     borderBottomLeftRadius: 6,
   }
 
@@ -720,7 +720,7 @@ function Toast17({ message, onDone }) {
                 transition={{ duration: 0.65, repeat: Infinity, delay: i * 0.16, ease: 'easeInOut' }}
                 style={{
                   width: dotSize, height: dotSize, borderRadius: '50%',
-                  background: 'rgba(255,255,255,0.85)',
+                  background: 'var(--accent, #7c3aed)',
                   display: 'inline-block', flexShrink: 0,
                 }}
               />
@@ -736,7 +736,7 @@ function Toast17({ message, onDone }) {
             style={{
               ...bubbleBase,
               padding: msgPad, gap: msgGap,
-              color: '#fff', fontFamily: 'var(--sans)',
+              color: 'var(--text-h, #fff)', fontFamily: 'var(--sans)',
               fontSize: msgSize, fontWeight: 500,
               whiteSpace: 'nowrap',
             }}
