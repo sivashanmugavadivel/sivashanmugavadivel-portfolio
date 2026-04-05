@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, useScroll, useTransform, useInView, useAnimation } from 'framer-motion'
 import { loadAllPosts } from '../hooks/usePosts'
 import cfg from '../data/config.json'
-import PostCard from '../components/blog/PostCard'
 import VideoCard from '../components/video/VideoCard'
 import Button from '../components/ui/Button'
 
@@ -407,21 +406,7 @@ function FeaturedPostsSection() {
           </p>
         </Reveal>
 
-        <motion.div
-          className="grid-3"
-          variants={cardContainerVariants}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: false, margin: '-60px' }}
-        >
-          {posts.map(({ slug, frontmatter }) => (
-            <motion.div key={slug} variants={cardVariants}>
-              <PostCard slug={slug} frontmatter={frontmatter} />
-            </motion.div>
-          ))}
-        </motion.div>
-
-        <Reveal delay={0.3}>
+        <Reveal delay={0.2}>
           <div style={{ textAlign: 'center', marginTop: 40, display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Button to="/blog">Read Blog →</Button>
             <Button to="/gallery" variant="outline">View My Gallery →</Button>
