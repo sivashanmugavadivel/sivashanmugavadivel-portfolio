@@ -3,6 +3,8 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { motion } from 'framer-motion'
 import { tagColor } from '../../data/tagMeta'
+import Lightbox from 'yet-another-react-lightbox'
+import 'yet-another-react-lightbox/styles.css'
 
 const BASE = import.meta.env.BASE_URL
 
@@ -38,45 +40,47 @@ const SectionHeading = ({ heading, color }) => heading ? (
 ) : null
 
 function SectionImage({ section, color }) {
-  const align = section.align || 'center' // 'left' | 'center' | 'right'
-  const float = section.float // 'left' | 'right' — wraps text around image
+  const [open, setOpen] = useState(false)
+  const align = section.align || 'center'
+  const float = section.float
   const size = section.size || 'full'
   const sizeMap = { small: '30%', medium: '50%', large: '75%', full: '100%' }
   const resolvedWidth = sizeMap[size] || size
 
-  // Float mode — image sits inside text flow, text wraps around it
+  const imgEl = (maxH) => (
+    <img
+      src={imgSrc(section.src)}
+      alt={section.alt || ''}
+      onClick={() => setOpen(true)}
+      style={{ width: '100%', display: 'block', objectFit: 'cover', maxHeight: maxH, cursor: 'zoom-in' }}
+    />
+  )
+
+  // Float mode
   if (float) {
     return (
       <>
         <SectionHeading heading={section.heading} color={color} />
-      <motion.figure
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.5 }}
-        style={{
-          float,
-          width: resolvedWidth,
-          margin: float === 'right' ? '8px 0 16px 24px' : '8px 24px 16px 0',
-          borderRadius: 12, overflow: 'hidden',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
-        }}
-      >
-        <img
-          src={imgSrc(section.src)}
-          alt={section.alt || ''}
-          style={{ width: '100%', display: 'block', objectFit: 'cover', maxHeight: section.maxHeight || 300 }}
-        />
-        {section.caption && (
-          <figcaption style={{
-            textAlign: 'center', fontSize: '0.72rem', color: 'var(--text)',
-            opacity: 0.6, padding: '6px 8px', fontStyle: 'italic',
-            background: 'var(--card-bg)',
-          }}>
-            {section.caption}
-          </figcaption>
-        )}
-      </motion.figure>
+        <motion.figure
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          style={{
+            float, width: resolvedWidth,
+            margin: float === 'right' ? '8px 0 16px 24px' : '8px 24px 16px 0',
+            borderRadius: 12, overflow: 'hidden',
+            boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
+          }}
+        >
+          {imgEl(300)}
+          {section.caption && (
+            <figcaption style={{ textAlign: 'center', fontSize: '0.72rem', color: 'var(--text)', opacity: 0.6, padding: '6px 8px', fontStyle: 'italic', background: 'var(--card-bg)' }}>
+              {section.caption}
+            </figcaption>
+          )}
+        </motion.figure>
+        <Lightbox open={open} close={() => setOpen(false)} slides={[{ src: imgSrc(section.src) }]} />
       </>
     )
   }
@@ -90,33 +94,22 @@ function SectionImage({ section, color }) {
 
   return (
     <>
-    <SectionHeading heading={section.heading} color={color} />
-    <motion.figure
-      initial={{ opacity: 0, y: 12 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5 }}
-      style={{ margin: '4px 0 24px', width: resolvedWidth, ...alignStyles[align] }}
-    >
-      <img
-        src={imgSrc(section.src)}
-        alt={section.alt || ''}
-        style={{
-          width: '100%', borderRadius: 12, display: 'block',
-          objectFit: 'cover', maxHeight: section.maxHeight || 420,
-          boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
-        }}
-      />
-      {section.caption && (
-        <figcaption style={{
-          textAlign: align === 'center' ? 'center' : align,
-          fontSize: '0.78rem', color: 'var(--text)',
-          opacity: 0.6, marginTop: 8, fontStyle: 'italic',
-        }}>
-          {section.caption}
-        </figcaption>
-      )}
-    </motion.figure>
+      <SectionHeading heading={section.heading} color={color} />
+      <motion.figure
+        initial={{ opacity: 0, y: 12 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5 }}
+        style={{ margin: '4px 0 24px', width: resolvedWidth, borderRadius: 12, overflow: 'hidden', boxShadow: '0 4px 24px rgba(0,0,0,0.12)', ...alignStyles[align] }}
+      >
+        {imgEl(420)}
+        {section.caption && (
+          <figcaption style={{ textAlign: align === 'center' ? 'center' : align, fontSize: '0.78rem', color: 'var(--text)', opacity: 0.6, padding: '6px 8px', fontStyle: 'italic' }}>
+            {section.caption}
+          </figcaption>
+        )}
+      </motion.figure>
+      <Lightbox open={open} close={() => setOpen(false)} slides={[{ src: imgSrc(section.src) }]} />
     </>
   )
 }
@@ -124,9 +117,19 @@ function SectionImage({ section, color }) {
 function SectionGallery({ section, color }) {
   const images = section.images || []
   const [active, setActive] = useState(0)
+  const [lightboxIndex, setLightboxIndex] = useState(-1)
+  const touchX = { current: null }
 
   const prev = () => setActive(i => (i - 1 + images.length) % images.length)
   const next = () => setActive(i => (i + 1) % images.length)
+
+  const handleTouchStart = (e) => { touchX.current = e.touches[0].clientX }
+  const handleTouchEnd = (e) => {
+    if (touchX.current === null) return
+    const dx = e.changedTouches[0].clientX - touchX.current
+    if (Math.abs(dx) > 40) dx < 0 ? next() : prev()
+    touchX.current = null
+  }
 
   // Position config relative to active index
   function getPos(i) {
@@ -153,13 +156,17 @@ function SectionGallery({ section, color }) {
       )}
 
       {/* Carousel */}
-      <div style={{ position: 'relative', height: 320, perspective: 1200, overflow: 'hidden' }}>
+      <div
+        style={{ position: 'relative', height: 320, perspective: 1200, overflow: 'hidden' }}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         {images.map((img, i) => {
           const pos = getPos(i)
           return (
             <motion.div
               key={i}
-              onClick={() => setActive(i)}
+              onClick={() => i === active ? setLightboxIndex(i) : setActive(i)}
               animate={{
                 x: pos.x, scale: pos.scale, rotateY: pos.rotateY,
                 opacity: pos.opacity, filter: `blur(${pos.blur}px)`,
@@ -172,7 +179,7 @@ function SectionGallery({ section, color }) {
                 marginTop: -130, marginLeft: -140,
                 width: 280, height: 260,
                 borderRadius: 16, overflow: 'hidden',
-                cursor: i === active ? 'default' : 'pointer',
+                cursor: 'pointer',
                 boxShadow: i === active
                   ? '0 20px 60px rgba(0,0,0,0.35)'
                   : '0 8px 24px rgba(0,0,0,0.2)',
@@ -197,6 +204,21 @@ function SectionGallery({ section, color }) {
                   }}
                 >
                   {img.caption}
+                </motion.div>
+              )}
+              {/* Expand icon on active card */}
+              {i === active && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  style={{
+                    position: 'absolute', top: 8, right: 8,
+                    background: 'rgba(0,0,0,0.45)', borderRadius: 6,
+                    padding: '4px 6px', color: '#fff', fontSize: '0.7rem',
+                    pointerEvents: 'none',
+                  }}
+                >
+                  ⛶
                 </motion.div>
               )}
             </motion.div>
@@ -234,6 +256,14 @@ function SectionGallery({ section, color }) {
           }}
         >→</motion.button>
       </div>
+
+      <Lightbox
+        open={lightboxIndex >= 0}
+        index={lightboxIndex}
+        close={() => setLightboxIndex(-1)}
+        slides={images.map(img => ({ src: imgSrc(img.src), alt: img.alt || '' }))}
+        on={{ view: ({ index }) => setLightboxIndex(index) }}
+      />
     </div>
   )
 }
@@ -288,8 +318,18 @@ function SingleVideo({ youtubeId, src, caption, color }) {
 /* Video carousel — same 3D drag style as SectionGallery */
 function VideoCarousel({ videos, color }) {
   const [active, setActive] = useState(0)
+  const touchX = { current: null }
+
   const prev = () => setActive(i => (i - 1 + videos.length) % videos.length)
   const next = () => setActive(i => (i + 1) % videos.length)
+
+  const handleTouchStart = (e) => { touchX.current = e.touches[0].clientX }
+  const handleTouchEnd = (e) => {
+    if (touchX.current === null) return
+    const dx = e.changedTouches[0].clientX - touchX.current
+    if (Math.abs(dx) > 40) dx < 0 ? next() : prev()
+    touchX.current = null
+  }
 
   function getPos(i) {
     const total = videos.length
@@ -307,13 +347,17 @@ function VideoCarousel({ videos, color }) {
   return (
     <div>
       {/* Stage */}
-      <div style={{ position: 'relative', height: 260, perspective: 1200, overflow: 'hidden' }}>
+      <div
+        style={{ position: 'relative', height: 260, perspective: 1200, overflow: 'hidden' }}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         {videos.map((v, i) => {
           const pos = getPos(i)
           const vid = extractYouTubeId(v.youtubeId)
           const thumb = vid ? `https://img.youtube.com/vi/${vid}/hqdefault.jpg` : null
           const isCenter = i === active
-          if (!isCenter && Math.abs(pos.x === '120%' ? 99 : 0) === 99) return null
+          if (pos.opacity === 0) return null
           return (
             <motion.div
               key={i}
