@@ -214,7 +214,7 @@ function HeroSection() {
           zIndex: 2,
           display: 'flex',
           justifyContent: 'center',
-          pointerEvents: 'none',
+          pointerEvents: 'auto',
           padding: '0 24px',
           opacity: nameOpacity,
         }}
@@ -234,11 +234,13 @@ function HeroSection() {
           x: '-50%',
           y: isMobileHero ? '22%' : '-5%',
           zIndex: 3,
-          pointerEvents: 'none',
+          pointerEvents: 'auto',
           display: 'flex',
           alignItems: 'flex-start',
           justifyContent: 'center',
+          cursor: 'pointer',
         }}
+        onClick={() => window.dispatchEvent(new CustomEvent('easter-egg', { detail: 'name' }))}
       >
         <motion.img
           src={`${import.meta.env.BASE_URL}Avatar_nbc1.png`}
