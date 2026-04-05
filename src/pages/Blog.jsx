@@ -25,16 +25,15 @@ export default function Blog() {
     setActiveIndex(i => Math.max(0, Math.min(filtered.length - 1, i + dir)))
   }
 
-  // Get card style based on its offset from active
   const isMobile = window.innerWidth <= 768
+
+  // Desktop: fan cards left/right. Mobile: only show active card.
   function getCardStyle(offset) {
     if (offset === 0) return { x: 0, rotate: 0, scale: 1, zIndex: 10, opacity: 1 }
     const sign = offset > 0 ? 1 : -1
     const abs = Math.abs(offset)
-    const xBase = isMobile ? 120 : 200
-    const xFar  = isMobile ? 160 : 260
     return {
-      x: sign * (abs === 1 ? xBase : xFar),
+      x: sign * (abs === 1 ? 200 : 260),
       rotate: sign * (abs === 1 ? 12 : 20),
       scale: abs === 1 ? 0.82 : 0.68,
       zIndex: 10 - abs,
@@ -42,10 +41,11 @@ export default function Blog() {
     }
   }
 
-  // Which indices to render around active
+  // On mobile only render active card; on desktop render ±2
   function getVisibleIndices() {
     const indices = []
-    for (let offset = -2; offset <= 2; offset++) {
+    const range = isMobile ? [0] : [-2, -1, 0, 1, 2]
+    for (const offset of range) {
       const idx = activeIndex + offset
       if (idx >= 0 && idx < filtered.length) indices.push({ idx, offset })
     }
@@ -53,7 +53,7 @@ export default function Blog() {
   }
 
   return (
-    <div className="page-container section">
+    <div className="page-container section" style={{ overflowX: 'hidden' }}>
       <motion.div
         className="section-header"
         initial={{ opacity: 0, y: 24 }}
@@ -141,7 +141,7 @@ export default function Blog() {
                   }}
                   style={{
                     position: 'absolute',
-                    width: 'clamp(280px, 40vw, 340px)',
+                    width: isMobile ? 'min(85vw, 340px)' : 'clamp(280px, 40vw, 340px)',
                     cursor: offset !== 0 ? 'pointer' : 'grab',
                     transformOrigin: 'bottom center',
                   }}
