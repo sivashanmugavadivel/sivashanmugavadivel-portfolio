@@ -1,0 +1,79 @@
+{
+  "slug": "maha-kumbhabhishekam-kariyakali-amman-kovil",
+  "title": "Maha Kumbhabhishekam at Maniyan Kulam Shri Kariyakali Amman Kovil",
+  "date": "2025-08-28",
+  "category": "culture",
+  "tags": ["culture", "temple", "festival", "tradition", "spirituality", "Tamil Nadu"],
+  "excerpt": "A divine and historic Maha Kumbhabhishekam was performed at Maniyan Kulam Shri Kariyakali Amman Temple, Nathakadaiyur — a sacred moment filled with Vedic chants, homams, and the blessings of thousands of devotees.",
+  "author": "Siva Shanmuga Vadivel",
+  "location": "Nathakadaiyur, Tamil Nadu",
+  "sections": [
+    {
+      "type": "image",
+      "src": "/blog/mahakumb/f1.png",
+      "alt": "Maha Kumbhabhishekam at Kariyakali Amman Temple",
+      "align": "center",
+      "size": "full"
+    },
+    {
+      "type": "text",
+      "body": "Today, a divine and historic event took place at **Maniyan Kulam Shri Kariyakali Amman Temple**, Nathakadaiyur. The long-awaited **Maha Kumbhabhishekam** was performed with great devotion and traditional rituals at the auspicious time of **8:25 AM**."
+    },
+    {
+      "type": "image",
+      "src": "/blog/mahakumb/f22.jpg",
+      "alt": "Maha Kumbhabhishekam at Kariyakali Amman Temple",
+      "float": "right",
+      "size": "medium"
+    },
+    {
+      "type": "text",
+      "body": "The temple atmosphere was filled with divine energy as priests performed the sacred yagas and rituals, followed by the holy consecration of the temple towers (gopuram) and deities. Devotees from nearby villages and towns gathered in large numbers to witness this sacred moment and receive the blessings of Shri Kariyakali Amman."
+    },
+    {
+      "type": "callout",
+      "variant": "info",
+      "body": "Maha Kumbhabhishekam is the grand consecration ceremony of a Hindu temple — a deeply sacred ritual that renews the spiritual energy of the temple and its deities, performed once every several years."
+    },
+    {
+      "type": "gallery",
+      "heading": "Maha Kumbhabhishekam Gallery",
+      "images": [
+        { "src": "/blog/mahakumb/p21.jpg", "alt": "First photo" },
+        { "src": "/blog/mahakumb/p22.jpg", "alt": "Second photo" },
+        { "src": "/blog/mahakumb/p23.jpg", "alt": "Third photo" },
+        { "src": "/blog/mahakumb/p24.jpg", "alt": "Fourth photo" },
+        { "src": "/blog/mahakumb/p25.jpg", "alt": "Fifth photo" },
+        { "src": "/blog/mahakumb/p26.jpg", "alt": "Sixth photo" },
+        { "src": "/blog/mahakumb/p27.jpg", "alt": "Seventh photo" },
+        { "src": "/blog/mahakumb/p28.jpg", "alt": "Eighth photo" },
+        { "src": "/blog/mahakumb/p29.jpg", "alt": "Ninth photo" },
+        { "src": "/blog/mahakumb/p30.jpg", "alt": "Tenth photo" }
+      ]
+    },
+    {
+      "type": "text",
+      "body": "The day was marked with **Vedic chants**, **homams**, **abhishekams**, and cultural programs, creating a spiritually uplifting environment. With the successful completion of the Maha Kumbhabhishekam, the temple now radiates renewed spiritual power, ensuring peace, prosperity, and protection for all devotees."
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "video",
+      "heading": "Youtube Video",
+      "videos": [
+        { "youtubeId": "https://youtu.be/_NPbSD7dZBE?si=AW9sogUB-wqTdR2u", "caption": "Video 1" },
+        { "youtubeId": "https://youtu.be/j7_kruTb8p8?si=6PtOEdLz7witRcPH", "caption": "Video 2" },
+        { "youtubeId": "https://youtu.be/kjKS0egEA10?si=KTg2McBMWwTgu8K3", "caption": "Video 3" }
+      ],
+      "caption": "Watch Now!"
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "text",
+      "body": "This grand occasion will be remembered as a significant milestone in the history of the temple and the community of Nathakadaiyur.\n\n*— Siva Shanmuga Vadivel*"
+    }
+  ]
+}

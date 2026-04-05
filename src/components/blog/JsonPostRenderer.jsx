@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { motion } from 'framer-motion'
@@ -24,7 +24,7 @@ const CALLOUT_ICONS = { tip: '💡', warning: '⚠️', info: 'ℹ️', note: '�
 // ─── Section renderers ────────────────────────────────────────────────────────
 function SectionText({ section }) {
   return (
-    <div className="magazine-prose jp-text">
+    <div className="magazine-prose jp-text" style={{ overflow: 'hidden' }}>
       <ReactMarkdown remarkPlugins={[remarkGfm]}>{section.body}</ReactMarkdown>
     </div>
   )
@@ -214,18 +214,17 @@ function SectionGallery({ section, color }) {
             display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem',
           }}
         >←</motion.button>
-        {/* Dots */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {images.map((_, i) => (
-            <motion.div
-              key={i}
-              onClick={() => setActive(i)}
-              animate={{ width: i === active ? 20 : 6, background: i === active ? 'var(--accent)' : 'var(--border)' }}
-              style={{ height: 6, borderRadius: 999, cursor: 'pointer' }}
-              transition={{ duration: 0.25 }}
-            />
-          ))}
-        </div>
+        <motion.div
+          key={active}
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25 }}
+          style={{ minWidth: 64, textAlign: 'center', fontFamily: 'var(--sans)', userSelect: 'none' }}
+        >
+          <span style={{ fontSize: '1.2rem', fontWeight: 700, color: color || 'var(--accent)' }}>{active + 1}</span>
+          <span style={{ fontSize: '0.95rem', color: 'var(--text)', margin: '0 4px' }}>/</span>
+          <span style={{ fontSize: '0.95rem', color: 'var(--text)' }}>{images.length}</span>
+        </motion.div>
         <motion.button
           onClick={next} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
           style={{
@@ -253,7 +252,142 @@ function extractYouTubeId(input) {
   return null
 }
 
+/* Single video embed */
+function SingleVideo({ youtubeId, src, caption, color }) {
+  return (
+    <div>
+      <div style={{
+        position: 'relative', paddingBottom: '56.25%', height: 0,
+        borderRadius: 12, overflow: 'hidden',
+        boxShadow: `0 4px 24px ${color}22`,
+        border: `1px solid ${color}33`,
+      }}>
+        {youtubeId ? (
+          <iframe
+            src={`https://www.youtube.com/embed/${youtubeId}`}
+            title={caption || 'Video'}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none' }}
+          />
+        ) : src ? (
+          <video controls style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
+            <source src={imgSrc(src)} />
+          </video>
+        ) : null}
+      </div>
+      {caption && (
+        <p style={{ textAlign: 'center', fontSize: '0.78rem', color: 'var(--text)', opacity: 0.6, marginTop: 8, fontStyle: 'italic' }}>
+          {caption}
+        </p>
+      )}
+    </div>
+  )
+}
+
+/* Video carousel — same 3D drag style as SectionGallery */
+function VideoCarousel({ videos, color }) {
+  const [active, setActive] = useState(0)
+  const prev = () => setActive(i => (i - 1 + videos.length) % videos.length)
+  const next = () => setActive(i => (i + 1) % videos.length)
+
+  function getPos(i) {
+    const total = videos.length
+    let diff = i - active
+    if (diff > total / 2) diff -= total
+    if (diff < -total / 2) diff += total
+    if (diff === 0)  return { x: '0%',   scale: 1,    zIndex: 10, rotateY: 0,   opacity: 1,    blur: 0 }
+    if (diff === 1)  return { x: '52%',  scale: 0.78, zIndex: 7,  rotateY: -28, opacity: 0.85, blur: 0 }
+    if (diff === -1) return { x: '-52%', scale: 0.78, zIndex: 7,  rotateY: 28,  opacity: 0.85, blur: 0 }
+    if (diff === 2)  return { x: '88%',  scale: 0.58, zIndex: 4,  rotateY: -42, opacity: 0.55, blur: 2 }
+    if (diff === -2) return { x: '-88%', scale: 0.58, zIndex: 4,  rotateY: 42,  opacity: 0.55, blur: 2 }
+    return                 { x: '120%', scale: 0.4,  zIndex: 1,  rotateY: -55, opacity: 0,    blur: 4 }
+  }
+
+  return (
+    <div>
+      {/* Stage */}
+      <div style={{ position: 'relative', height: 260, perspective: 1200, overflow: 'hidden' }}>
+        {videos.map((v, i) => {
+          const pos = getPos(i)
+          const vid = extractYouTubeId(v.youtubeId)
+          const thumb = vid ? `https://img.youtube.com/vi/${vid}/hqdefault.jpg` : null
+          const isCenter = i === active
+          if (!isCenter && Math.abs(pos.x === '120%' ? 99 : 0) === 99) return null
+          return (
+            <motion.div
+              key={i}
+              onClick={() => !isCenter && setActive(i)}
+              animate={{ x: pos.x, scale: pos.scale, rotateY: pos.rotateY, opacity: pos.opacity, filter: `blur(${pos.blur}px)`, zIndex: pos.zIndex }}
+              transition={{ type: 'spring', stiffness: 260, damping: 28 }}
+              drag={isCenter ? 'x' : false}
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.15}
+              onDragEnd={(_, info) => { if (info.offset.x < -60) next(); else if (info.offset.x > 60) prev() }}
+              style={{
+                position: 'absolute', top: '50%', left: '50%',
+                marginTop: -110, marginLeft: -160,
+                width: 320, height: 220,
+                borderRadius: 12, overflow: 'hidden',
+                cursor: isCenter ? 'grab' : 'pointer',
+                boxShadow: isCenter ? `0 20px 60px ${color}44` : '0 8px 24px rgba(0,0,0,0.2)',
+                transformStyle: 'preserve-3d',
+                background: '#000',
+              }}
+            >
+              {isCenter ? (
+                /* Center — show actual iframe */
+                <iframe
+                  src={vid ? `https://www.youtube.com/embed/${vid}` : undefined}
+                  title={v.caption || 'Video'}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  style={{ width: '100%', height: '100%', border: 'none' }}
+                />
+              ) : (
+                /* Side cards — show thumbnail */
+                <>
+                  {thumb && <img src={thumb} alt={v.caption || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                  <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,255,255,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="#000"><polygon points="5,3 19,12 5,21"/></svg>
+                    </div>
+                  </div>
+                </>
+              )}
+              {/* Caption on center */}
+              {isCenter && v.caption && (
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '6px 12px', background: 'linear-gradient(transparent, rgba(0,0,0,0.7))', color: '#fff', fontSize: '0.72rem', fontStyle: 'italic' }}>
+                  {v.caption}
+                </div>
+              )}
+            </motion.div>
+          )
+        })}
+      </div>
+      {/* Nav */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginTop: 16, alignItems: 'center' }}>
+        <motion.button onClick={prev} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+          style={{ width: 40, height: 40, borderRadius: '50%', border: `1.5px solid ${color}`, background: 'transparent', cursor: 'pointer', color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15,18 9,12 15,6"/></svg>
+        </motion.button>
+        <motion.div key={active} initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}
+          style={{ minWidth: 56, textAlign: 'center', fontFamily: 'var(--sans)', userSelect: 'none' }}>
+          <span style={{ fontSize: '1.1rem', fontWeight: 700, color }}>{active + 1}</span>
+          <span style={{ fontSize: '0.9rem', color: 'var(--text)', margin: '0 3px' }}>/</span>
+          <span style={{ fontSize: '0.9rem', color: 'var(--text)' }}>{videos.length}</span>
+        </motion.div>
+        <motion.button onClick={next} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+          style={{ width: 40, height: 40, borderRadius: '50%', border: `1.5px solid ${color}`, background: 'transparent', cursor: 'pointer', color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9,18 15,12 9,6"/></svg>
+        </motion.button>
+      </div>
+    </div>
+  )
+}
+
 function SectionVideo({ section, color }) {
+  const videos = section.videos  // array mode
   const youtubeId = extractYouTubeId(section.youtubeId)
 
   return (
@@ -265,37 +399,280 @@ function SectionVideo({ section, color }) {
       style={{ margin: '24px 0' }}
     >
       <SectionHeading heading={section.heading} color={color} />
-      <div style={{
-        position: 'relative', paddingBottom: '56.25%', height: 0,
-        borderRadius: 12, overflow: 'hidden',
-        boxShadow: `0 4px 24px ${color}22`,
-        border: `1px solid ${color}33`,
-      }}>
-        {youtubeId ? (
-          <iframe
-            src={`https://www.youtube.com/embed/${youtubeId}`}
-            title={section.caption || 'Video'}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none' }}
-          />
-        ) : section.src ? (
-          <video
-            controls
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
-          >
-            <source src={imgSrc(section.src)} />
-          </video>
-        ) : null}
+      {videos && videos.length > 0
+        ? <VideoCarousel videos={videos} color={color} />
+        : <SingleVideo youtubeId={youtubeId} src={section.src} caption={section.caption} color={color} />
+      }
+    </motion.div>
+  )
+}
+
+/* ── YouTube Shorts carousel — same design as Videos page ── */
+function SectionShorts({ section }) {
+  const shorts = section.items || []
+  const [active, setActive] = useState(0)
+  const [playing, setPlaying] = useState(false)
+  const [hovered, setHovered] = useState(false)
+
+  const prev = () => { setPlaying(false); setActive(i => (i - 1 + shorts.length) % shorts.length) }
+  const next = () => { setPlaying(false); setActive(i => (i + 1) % shorts.length) }
+
+  const getPos = (i) => {
+    const diff = i - active
+    const wrapped = ((diff + shorts.length) % shorts.length)
+    if (wrapped === 0) return 'center'
+    if (wrapped === 1 || wrapped === -(shorts.length - 1)) return 'right1'
+    if (wrapped === shorts.length - 1 || wrapped === -1) return 'left1'
+    if (wrapped === 2 || wrapped === -(shorts.length - 2)) return 'right2'
+    if (wrapped === shorts.length - 2 || wrapped === -2) return 'left2'
+    return 'hidden'
+  }
+
+  const posStyles = {
+    center: { x: '0%',   scale: 1,    opacity: 1,    zIndex: 5, rotateY:   0 },
+    left1:  { x: '-52%', scale: 0.80, opacity: 0.85, zIndex: 4, rotateY:  12 },
+    right1: { x:  '52%', scale: 0.80, opacity: 0.85, zIndex: 4, rotateY: -12 },
+    left2:  { x: '-95%', scale: 0.62, opacity: 0.55, zIndex: 3, rotateY:  20 },
+    right2: { x:  '95%', scale: 0.62, opacity: 0.55, zIndex: 3, rotateY: -20 },
+    hidden: { x:   '0%', scale: 0.4,  opacity: 0,    zIndex: 1, rotateY:   0 },
+  }
+
+  if (!shorts.length) return null
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }} transition={{ duration: 0.5 }} style={{ margin: '24px 0' }}>
+      <SectionHeading heading={section.heading} color="#ff0000" />
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>
+        <div style={{ width: '100%', overflow: 'hidden' }}>
+          <div style={{ position: 'relative', width: '100%', height: 'clamp(340px, 55vw, 500px)',
+            perspective: 1200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {shorts.map((v, i) => {
+              const pos = getPos(i)
+              if (pos === 'hidden') return null
+              const isCenter = pos === 'center'
+              const vid = extractYouTubeId(v.youtubeId || v.id)
+              const thumb = `https://img.youtube.com/vi/${vid}/hqdefault.jpg`
+              return (
+                <motion.div key={i}
+                  animate={posStyles[pos]}
+                  transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+                  drag={isCenter ? 'x' : false}
+                  dragConstraints={{ left: 0, right: 0 }} dragElastic={0.2}
+                  onDragEnd={(_, info) => { if (info.offset.x < -60) next(); else if (info.offset.x > 60) prev() }}
+                  onClick={() => { if (!isCenter) { setPlaying(false); setActive(i) } }}
+                  onHoverStart={() => isCenter && setHovered(true)}
+                  onHoverEnd={() => setHovered(false)}
+                  style={{
+                    position: 'absolute', width: 'clamp(140px, 22vw, 240px)', aspectRatio: '9/16',
+                    borderRadius: 20, overflow: 'hidden', cursor: isCenter ? 'grab' : 'pointer',
+                    transformStyle: 'preserve-3d',
+                    boxShadow: isCenter && hovered
+                      ? '0 0 40px #ff0000, 0 0 80px rgba(255,0,0,0.5), 0 24px 60px rgba(0,0,0,0.45)'
+                      : isCenter ? '0 24px 60px rgba(0,0,0,0.45)' : '0 8px 24px rgba(0,0,0,0.2)',
+                    transition: 'box-shadow 0.3s ease',
+                  }}>
+                  <img src={thumb} alt={v.title || ''} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  <div style={{ position: 'absolute', inset: 0, background: isCenter ? 'rgba(0,0,0,0.15)' : 'rgba(0,0,0,0.45)', transition: 'background 0.3s' }} />
+                  <div style={{ position: 'absolute', top: 10, left: 10, padding: '3px 10px', borderRadius: 999, background: '#ff0000', color: '#fff', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.08em' }}>SHORT</div>
+                  {isCenter && !playing && (
+                    <motion.button animate={{ scale: hovered ? 1.1 : 1 }} transition={{ duration: 0.25 }}
+                      onClick={(e) => { e.stopPropagation(); setPlaying(true) }} whileTap={{ scale: 0.92 }}
+                      style={{ position: 'absolute', top: '50%', left: '50%', marginTop: -28, marginLeft: -28,
+                        width: 56, height: 56, borderRadius: '50%', background: '#ff0000', border: 'none',
+                        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        boxShadow: '0 0 28px #ff0000, 0 0 60px rgba(255,0,0,0.5)' }}>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff" style={{ marginLeft: 3 }}><polygon points="5,3 19,12 5,21"/></svg>
+                    </motion.button>
+                  )}
+                  {isCenter && playing && (
+                    <iframe src={`https://www.youtube.com/embed/${vid}?autoplay=1&rel=0`} title={v.title || 'Short'}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none' }} />
+                  )}
+                  {isCenter && !playing && v.title && (
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+                      style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '32px 14px 14px',
+                        background: 'linear-gradient(to top, rgba(0,0,0,0.85), transparent)' }}>
+                      <p style={{ color: '#fff', fontSize: '0.78rem', fontWeight: 600, margin: 0, lineHeight: 1.4,
+                        display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                        {v.title}
+                      </p>
+                    </motion.div>
+                  )}
+                </motion.div>
+              )
+            })}
+          </div>
+        </div>
+        {/* Nav */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+          <motion.button onClick={prev} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.92 }}
+            style={{ width: 40, height: 40, borderRadius: '50%', border: '1.5px solid #ff0000',
+              background: 'transparent', color: '#ff0000', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15,18 9,12 15,6"/></svg>
+          </motion.button>
+          <motion.div key={active} initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}
+            style={{ minWidth: 64, textAlign: 'center', fontFamily: 'var(--sans)', userSelect: 'none' }}>
+            <span style={{ fontSize: '1.2rem', fontWeight: 700, color: '#ff0000' }}>{active + 1}</span>
+            <span style={{ fontSize: '0.9rem', color: 'var(--text)', margin: '0 4px' }}>/</span>
+            <span style={{ fontSize: '0.9rem', color: 'var(--text)' }}>{shorts.length}</span>
+          </motion.div>
+          <motion.button onClick={next} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.92 }}
+            style={{ width: 40, height: 40, borderRadius: '50%', border: '1.5px solid #ff0000',
+              background: 'transparent', color: '#ff0000', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9,18 15,12 9,6"/></svg>
+          </motion.button>
+        </div>
       </div>
-      {section.caption && (
-        <p style={{
-          textAlign: 'center', fontSize: '0.78rem', color: 'var(--text)',
-          opacity: 0.6, marginTop: 8, fontStyle: 'italic',
-        }}>
-          {section.caption}
-        </p>
-      )}
+    </motion.div>
+  )
+}
+
+/* ── Instagram carousel — same design as Videos page ── */
+function SectionInstagram({ section }) {
+  const posts = section.items || []
+  const [active, setActive] = useState(0)
+  const [hovered, setHovered] = useState(false)
+  const [vw, setVw] = useState(window.innerWidth)
+
+  const prev = () => setActive(i => (i - 1 + posts.length) % posts.length)
+  const next = () => setActive(i => (i + 1) % posts.length)
+
+  useEffect(() => { setActive(0) }, [posts])
+
+  useEffect(() => {
+    const onResize = () => setVw(window.innerWidth)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+
+  useEffect(() => {
+    const process = () => { if (window.instgrm) window.instgrm.Embeds.process() }
+    if (!window.instgrm) {
+      const s = document.createElement('script')
+      s.src = 'https://www.instagram.com/embed.js'
+      s.async = true; s.onload = process
+      document.body.appendChild(s)
+    } else { process() }
+  }, [])
+
+  useEffect(() => {
+    const t = setTimeout(() => { if (window.instgrm) window.instgrm.Embeds.process() }, 80)
+    return () => clearTimeout(t)
+  }, [active, posts])
+
+  const cardPx = Math.min(280, Math.max(140, vw * 0.42))
+
+  const getPos = (i) => {
+    const diff = i - active
+    const wrapped = ((diff + posts.length) % posts.length)
+    if (wrapped === 0) return 'center'
+    if (wrapped === 1 || wrapped === -(posts.length - 1)) return 'right1'
+    if (wrapped === posts.length - 1 || wrapped === -1) return 'left1'
+    if (wrapped === 2 || wrapped === -(posts.length - 2)) return 'right2'
+    if (wrapped === posts.length - 2 || wrapped === -2) return 'left2'
+    return 'hidden'
+  }
+
+  const posStyles = {
+    center: { x: '0%',   scale: 1,    opacity: 1,    zIndex: 5, rotateY:   0 },
+    left1:  { x: '-52%', scale: 0.80, opacity: 0.85, zIndex: 4, rotateY:  12 },
+    right1: { x:  '52%', scale: 0.80, opacity: 0.85, zIndex: 4, rotateY: -12 },
+    left2:  { x: '-95%', scale: 0.62, opacity: 0.55, zIndex: 3, rotateY:  20 },
+    right2: { x:  '95%', scale: 0.62, opacity: 0.55, zIndex: 3, rotateY: -20 },
+    hidden: { x:   '0%', scale: 0.4,  opacity: 0,    zIndex: 1, rotateY:   0 },
+  }
+
+  if (!posts.length) return null
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }} transition={{ duration: 0.5 }} style={{ margin: '24px 0' }}>
+      <SectionHeading heading={section.heading} color="#dc2743" />
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>
+        <div style={{ width: '100%', overflow: 'hidden' }}>
+          <div style={{ position: 'relative', width: '100%', height: 'clamp(380px, 80vw, 560px)',
+            perspective: 1200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {posts.map((post, i) => {
+              const pos = getPos(i)
+              if (pos === 'hidden') return null
+              const isCenter = pos === 'center'
+              return (
+                <motion.div key={post.url || i}
+                  animate={posStyles[pos]}
+                  transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+                  drag={isCenter ? 'x' : false}
+                  dragConstraints={{ left: 0, right: 0 }} dragElastic={0.2}
+                  onDragEnd={(_, info) => { if (info.offset.x < -60) next(); else if (info.offset.x > 60) prev() }}
+                  onClick={() => { if (!isCenter) setActive(i) }}
+                  onHoverStart={() => isCenter && setHovered(true)}
+                  onHoverEnd={() => setHovered(false)}
+                  style={{
+                    position: 'absolute', width: 'clamp(140px, 42vw, 280px)', aspectRatio: '9/16',
+                    borderRadius: 20, overflow: 'hidden', cursor: isCenter ? 'grab' : 'pointer',
+                    transformStyle: 'preserve-3d',
+                    boxShadow: isCenter && hovered
+                      ? '0 0 40px rgba(220,39,67,0.7), 0 0 80px rgba(188,24,136,0.4), 0 24px 60px rgba(220,39,67,0.5)'
+                      : isCenter ? '0 24px 60px rgba(220,39,67,0.35), 0 0 40px rgba(220,39,67,0.15)' : '0 8px 24px rgba(0,0,0,0.2)',
+                    transition: 'box-shadow 0.3s ease',
+                    background: 'linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)',
+                  }}>
+                  {/* Embed preview — pointer-events off */}
+                  <div style={{ position: 'absolute', inset: 0, background: '#fff', overflow: 'hidden', pointerEvents: 'none' }}>
+                    <div style={{ width: 328, transformOrigin: 'top left',
+                      transform: `scale(${isCenter ? (cardPx / 328).toFixed(3) : ((cardPx * 0.75) / 328).toFixed(3)})` }}>
+                      <blockquote className="instagram-media" data-instgrm-permalink={post.url}
+                        data-instgrm-version="14" data-instgrm-captioned
+                        style={{ margin: 0, width: '328px', minWidth: 'unset', border: 0 }} />
+                    </div>
+                  </div>
+                  {/* Overlay blocks IG clicks */}
+                  <div style={{ position: 'absolute', inset: 0, zIndex: 2 }} />
+                  {/* View Post button on center */}
+                  {isCenter && (
+                    <div style={{ position: 'absolute', bottom: 16, left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 3 }}>
+                      <motion.a href={post.url} target="_blank" rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.93 }}
+                        style={{ padding: '7px 18px', borderRadius: 999,
+                          background: 'linear-gradient(135deg,#f09433,#dc2743,#bc1888)',
+                          color: '#fff', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700,
+                          fontFamily: 'var(--sans)', textDecoration: 'none', display: 'inline-block',
+                          boxShadow: '0 4px 14px rgba(220,39,67,0.4)' }}>
+                        View Post ↗
+                      </motion.a>
+                    </div>
+                  )}
+                </motion.div>
+              )
+            })}
+          </div>
+        </div>
+        {/* Nav */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+          <motion.button onClick={prev} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.92 }}
+            style={{ width: 40, height: 40, borderRadius: '50%', border: '1.5px solid #dc2743',
+              background: 'transparent', color: '#dc2743', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15,18 9,12 15,6"/></svg>
+          </motion.button>
+          <motion.div key={active} initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}
+            style={{ minWidth: 64, textAlign: 'center', fontFamily: 'var(--sans)', userSelect: 'none' }}>
+            <span style={{ fontSize: '1.2rem', fontWeight: 700, color: '#dc2743' }}>{active + 1}</span>
+            <span style={{ fontSize: '0.9rem', color: 'var(--text)', margin: '0 4px' }}>/</span>
+            <span style={{ fontSize: '0.9rem', color: 'var(--text)' }}>{posts.length}</span>
+          </motion.div>
+          <motion.button onClick={next} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.92 }}
+            style={{ width: 40, height: 40, borderRadius: '50%', border: '1.5px solid #dc2743',
+              background: 'transparent', color: '#dc2743', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9,18 15,12 9,6"/></svg>
+          </motion.button>
+        </div>
+      </div>
     </motion.div>
   )
 }
@@ -508,11 +885,13 @@ function SectionPlaces({ section, color }) {
 
 function SectionDivider({ color }) {
   return (
-    <hr style={{
-      border: 'none', height: 1,
-      background: `linear-gradient(90deg, ${color}, transparent)`,
-      margin: '24px 0',
-    }} />
+    <div style={{ clear: 'both' }}>
+      <hr style={{
+        border: 'none', height: 1,
+        background: `linear-gradient(90deg, ${color}, transparent)`,
+        margin: '24px 0',
+      }} />
+    </div>
   )
 }
 
@@ -558,6 +937,8 @@ export default function JsonPostRenderer({ sections = [], meta, color }) {
       case 'image':            return <SectionImage key={i} section={section} color={c} />
       case 'gallery':          return <SectionGallery key={i} section={section} color={c} />
       case 'video':            return <SectionVideo key={i} section={section} color={c} />
+      case 'shorts':           return <SectionShorts key={i} section={section} />
+      case 'instagram':        return <SectionInstagram key={i} section={section} />
       case 'ingredient-group': return <SectionIngredientGroup key={i} section={section} color={c} />
       case 'steps':            return <SectionSteps key={i} section={section} color={c} />
       case 'nutrition':        return <SectionNutrition key={i} section={section} color={c} />

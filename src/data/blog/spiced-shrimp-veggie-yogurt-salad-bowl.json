@@ -1,6 +1,6 @@
 {
   "slug": "spiced-shrimp-veggie-yogurt-salad-bowl",
-  "title": "Spiced Shrimp & Veggie Yogurt Salad Bowl – High Protein Breakfast",
+  "title": "🦐Spiced Shrimp & Veggie Yogurt Salad Bowl – High Protein Breakfast",
   "date": "2026-03-18",
   "category": "recipe",
   "tags": ["recipe", "breakfast", "high-protein", "healthy", "shrimp"],
@@ -11,8 +11,38 @@
   "servings": "1",
   "sections": [
     {
+      "type": "image",
+      "src": "/blog/photos/Shrimp-Salad.jpg",
+      "alt": "Spiced Shrimp & Veggie Yogurt Salad Bowl",
+      "align": "center",
+      "size": "full"
+    },
+    {
       "type": "text",
       "body": "A fresh, protein-rich breakfast bowl made with juicy shrimp, lightly cooked vegetables, and a creamy yogurt finish. This dish brings together bold spices, crunch, and a refreshing tang — perfect for starting your day on a flavorful note."
+    },
+    {
+      "type": "ingredient-group",
+      "heading": "Ingredients"
+    },
+    {
+      "type": "gallery",
+      "heading": "Ingredient Gallery",
+      "images": [
+        { "src": "/blog/photos/shrimp.jpg", "alt": "First photo", "caption": "Shrimp" },
+        { "src": "/blog/photos/broccoli.jpg", "alt": "Second photo", "caption": "Broccoli" },
+        { "src": "/blog/photos/cauliflower.jpg", "alt": "Third photo", "caption": "Cauliflower" },
+        { "src": "/blog/photos/greenbeans.jpg", "alt": "Fourth photo", "caption": "Green Beans" },
+        { "src": "/blog/photos/greenpeas.jpg", "alt": "Fifth photo", "caption": "Green Peas" },
+        { "src": "/blog/photos/lemon.jpg", "alt": "Sixth photo", "caption": "Lemon" },
+        { "src": "/blog/photos/bellpepper.jpg", "alt": "Seventh photo", "caption": "Bell Pepper" },
+        { "src": "/blog/photos/oliveoil.jpg", "alt": "Eighth photo", "caption": "Olive Oil" },
+        { "src": "/blog/photos/masala.jpg", "alt": "Ninth photo", "caption": "Garam Masala, Red Chili Powder, Kashmiri Chili Powder, Coriander Powder" },
+        { "src": "/blog/photos/redonion.jpg", "alt": "Tenth photo", "caption": "Red Onion" },
+        { "src": "/blog/photos/curryleave.jpg", "alt": "Eleventh photo", "caption": "Curry Leaves" },
+        { "src": "/blog/photos/gingergarlicpaste.jpg", "alt": "Twelfth photo", "caption": "Ginger-Garlic Paste" },
+        { "src": "/blog/photos/garlic.jpg", "alt": "Thirteenth photo", "caption": "Garlic" }
+      ]
     },
     {
       "type": "ingredient-group",

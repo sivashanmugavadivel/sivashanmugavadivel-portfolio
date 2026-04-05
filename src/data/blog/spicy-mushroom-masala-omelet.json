@@ -1,6 +1,6 @@
 {
   "slug": "spicy-mushroom-masala-omelet",
-  "title": "Spicy Mushroom Masala Omelet – Easy High-Protein Breakfast",
+  "title": "🍄Spicy Mushroom Masala Omelet – Easy High-Protein Breakfast",
   "date": "2026-02-10",
   "category": "recipe",
   "tags": ["recipe", "breakfast", "high-protein", "healthy"],
@@ -25,14 +25,15 @@
       "type": "gallery",
       "heading": "Ingredient Gallery",
       "images": [
-        { "src": "/blog/photos/g1.jpg", "alt": "First photo" },
-        { "src": "/blog/photos/g8.jpg", "alt": "Second photo", "caption": "Caption" },
-        { "src": "/blog/photos/g7.jpg", "alt": "Third photo" },
-        { "src": "/blog/photos/g2.jpg", "alt": "Fourth photo" },
-        { "src": "/blog/photos/g3.jpg", "alt": "Fifth photo" },
-        { "src": "/blog/photos/g4.jpg", "alt": "Sixth photo" },
-        { "src": "/blog/photos/g5.jpg", "alt": "Seventh photo" },
-        { "src": "/blog/photos/g6.jpg", "alt": "Eighth photo" }
+        { "src": "/blog/photos/whitebuttonmushroom.jpg", "alt": "First photo", "caption": "White Button Mushroom" },
+        { "src": "/blog/photos/redonion.jpg", "alt": "Second photo", "caption": "Red Onion" },
+        { "src": "/blog/photos/curryleave.jpg", "alt": "Third photo", "caption": "Curry Leaves" },
+        { "src": "/blog/photos/egg.jpg", "alt": "Fourth photo", "caption": "Egg" },
+        { "src": "/blog/photos/garlic.jpg", "alt": "Fifth photo", "caption": "Garlic" },
+        { "src": "/blog/photos/lemon.jpg", "alt": "Sixth photo", "caption": "Lemon" },
+        { "src": "/blog/photos/bellpepper.jpg", "alt": "Seventh photo", "caption": "Bell Pepper" },
+        { "src": "/blog/photos/oliveoil.jpg", "alt": "Eighth photo", "caption": "Olive Oil" },
+        { "src": "/blog/photos/masala.jpg", "alt": "Ninth photo", "caption": "Garam Masala, Red Chili Powder, Kashmiri Chili Powder, Coriander Powder" }
       ]
     },
     {
