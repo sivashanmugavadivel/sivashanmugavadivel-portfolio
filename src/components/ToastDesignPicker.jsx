@@ -656,11 +656,22 @@ function Toast16({ message, onDone }) {
 /* 17 ─ Dev Bubble (Character + Glass Pill combined) */
 function Toast17({ message, onDone }) {
   const [phase, setPhase] = useState('typing')
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
 
   useEffect(() => {
     const t = setTimeout(() => setPhase('message'), 1800)
     return () => clearTimeout(t)
   }, [])
+
+  // Responsive size tokens
+  const gifSize    = isMobile ? 42  : 64
+  const dotSize    = isMobile ? 7   : 9
+  const dotPad     = isMobile ? '10px 14px' : '14px 20px'
+  const dotGap     = isMobile ? 5   : 7
+  const msgPad     = isMobile ? '10px 16px' : '13px 22px'
+  const msgGap     = isMobile ? 7   : 10
+  const msgSize    = isMobile ? '0.78rem' : '0.95rem'
+  const wrapperGap = isMobile ? 8   : 12
 
   const bubbleBase = {
     display: 'inline-flex', alignItems: 'center',
@@ -669,7 +680,6 @@ function Toast17({ message, onDone }) {
     backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
     border: '1px solid rgba(255,255,255,0.22)',
     boxShadow: '0 8px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.18)',
-    // flat bottom-left corner = tail toward character
     borderBottomLeftRadius: 6,
   }
 
@@ -680,7 +690,7 @@ function Toast17({ message, onDone }) {
       exit={{ opacity: 0, y: 32 }}
       transition={{ type: 'spring', stiffness: 240, damping: 22 }}
       onClick={onDone}
-      style={{ display: 'inline-flex', alignItems: 'flex-end', gap: 12, cursor: 'pointer' }}
+      style={{ display: 'inline-flex', alignItems: 'flex-end', gap: wrapperGap, cursor: 'pointer' }}
     >
       {/* Floating gif character */}
       <motion.div
@@ -688,7 +698,8 @@ function Toast17({ message, onDone }) {
         transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
         style={{ flexShrink: 0, userSelect: 'none' }}
       >
-        <img src={`${import.meta.env.BASE_URL}toast-gif.gif`} alt="" style={{ width: 64, height: 64, objectFit: 'contain', display: 'block' }} />
+        <img src={`${import.meta.env.BASE_URL}toast-gif.gif`} alt=""
+          style={{ width: gifSize, height: gifSize, objectFit: 'contain', display: 'block' }} />
       </motion.div>
 
       {/* Bubble — swaps from dots to message */}
@@ -700,7 +711,7 @@ function Toast17({ message, onDone }) {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.75 }}
             transition={{ type: 'spring', stiffness: 360, damping: 24 }}
-            style={{ ...bubbleBase, padding: '14px 20px', gap: 7 }}
+            style={{ ...bubbleBase, padding: dotPad, gap: dotGap }}
           >
             {[0, 1, 2].map(i => (
               <motion.span
@@ -708,7 +719,7 @@ function Toast17({ message, onDone }) {
                 animate={{ y: [0, -6, 0], opacity: [0.35, 1, 0.35] }}
                 transition={{ duration: 0.65, repeat: Infinity, delay: i * 0.16, ease: 'easeInOut' }}
                 style={{
-                  width: 9, height: 9, borderRadius: '50%',
+                  width: dotSize, height: dotSize, borderRadius: '50%',
                   background: 'rgba(255,255,255,0.85)',
                   display: 'inline-block', flexShrink: 0,
                 }}
@@ -724,9 +735,9 @@ function Toast17({ message, onDone }) {
             transition={{ type: 'spring', stiffness: 360, damping: 24 }}
             style={{
               ...bubbleBase,
-              padding: '13px 22px', gap: 10,
+              padding: msgPad, gap: msgGap,
               color: '#fff', fontFamily: 'var(--sans)',
-              fontSize: '0.95rem', fontWeight: 500,
+              fontSize: msgSize, fontWeight: 500,
               whiteSpace: 'nowrap',
             }}
           >
