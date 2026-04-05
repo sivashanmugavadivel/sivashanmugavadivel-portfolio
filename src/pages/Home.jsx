@@ -304,7 +304,7 @@ function HeroSection() {
 
         <p style={{
           fontFamily: 'var(--sans)', fontSize: 'clamp(0.78rem, 1.4vw, 0.95rem)',
-          color: 'rgba(255,255,255,0.65)', maxWidth: 340, lineHeight: 1.6, margin: 0,
+          color: 'rgba(255,255,255,0.65)', maxWidth: 520, lineHeight: 1.6, margin: 0,
         }}>
           {(cfg.hero?.subtext || cfg.personal.bio).split('\n').map((line, i, arr) => (
             <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
