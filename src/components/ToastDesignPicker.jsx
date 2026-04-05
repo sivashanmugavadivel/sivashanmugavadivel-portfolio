@@ -653,6 +653,88 @@ function Toast16({ message, onDone }) {
   )
 }
 
+/* 17 ─ Character + Glass Bubble (combined) */
+function Toast17({ message, onDone }) {
+  const [phase, setPhase] = useState('typing') // 'typing' | 'message'
+  useEffect(() => {
+    const t = setTimeout(() => setPhase('message'), 1600)
+    return () => clearTimeout(t)
+  }, [])
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 50, scale: 0.85 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 30, scale: 0.8 }}
+      transition={{ type: 'spring', stiffness: 260, damping: 22 }}
+      onClick={onDone}
+      style={{ display: 'inline-flex', alignItems: 'flex-end', gap: 10, cursor: 'pointer' }}
+    >
+      {/* Floating character */}
+      <motion.div
+        animate={{ y: [0, -8, 0] }}
+        transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+        style={{ fontSize: '2.8rem', lineHeight: 1, flexShrink: 0 }}
+      >🧑‍💻</motion.div>
+
+      {/* Glass pill bubble */}
+      <AnimatePresence mode="wait">
+        {phase === 'typing' ? (
+          /* Loading dots phase */
+          <motion.div
+            key="dots"
+            initial={{ opacity: 0, scale: 0.7, x: -10 }}
+            animate={{ opacity: 1, scale: 1, x: 0 }}
+            exit={{ opacity: 0, scale: 0.7, x: -10 }}
+            transition={{ type: 'spring', stiffness: 320, damping: 22 }}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '12px 20px', borderRadius: 999,
+              background: 'rgba(255,255,255,0.08)',
+              backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255,255,255,0.18)',
+              boxShadow: '0 8px 40px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15)',
+              /* Tail pointing left toward character */
+              borderBottomLeftRadius: 4,
+            }}
+          >
+            {[0, 1, 2].map(i => (
+              <motion.span key={i}
+                animate={{ y: [0, -5, 0], opacity: [0.4, 1, 0.4] }}
+                transition={{ duration: 0.7, repeat: Infinity, delay: i * 0.18 }}
+                style={{ width: 8, height: 8, borderRadius: '50%', background: 'rgba(255,255,255,0.8)', display: 'inline-block' }}
+              />
+            ))}
+          </motion.div>
+        ) : (
+          /* Glass pill message phase */
+          <motion.div
+            key="msg"
+            initial={{ opacity: 0, scale: 0.8, x: -10 }}
+            animate={{ opacity: 1, scale: 1, x: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 320, damping: 22 }}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 10,
+              padding: '13px 22px', borderRadius: 999,
+              background: 'rgba(255,255,255,0.08)',
+              backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255,255,255,0.18)',
+              boxShadow: '0 8px 40px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15)',
+              color: '#fff', fontFamily: 'var(--sans)',
+              fontSize: '0.95rem', fontWeight: 500, whiteSpace: 'nowrap',
+              borderBottomLeftRadius: 4,
+            }}
+          >
+            {message}
+            <span style={{ opacity: 0.4, fontSize: '0.72rem' }}>· tap</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  )
+}
+
 /* ═══════════════════════════════════════════════════════════════
    Design registry
 ═══════════════════════════════════════════════════════════════ */
@@ -673,6 +755,7 @@ const DESIGNS = [
   { id: 14, name: 'Weather Widget',     desc: 'Time-aware sky · drifting clouds',       Component: Toast14, pos: 'bottom-center' },
   { id: 15, name: 'VHS Rewind',         desc: 'Glitch effect · scanlines · REC dot',   Component: Toast15, pos: 'bottom-center' },
   { id: 16, name: 'Kawaii Bounce',      desc: 'Bouncy faces · pink gradient · hearts', Component: Toast16, pos: 'bottom-center' },
+  { id: 17, name: 'Dev Bubble',         desc: 'Floating dev · typing dots → glass pill', Component: Toast17, pos: 'bottom-left'   },
 ]
 
 export const STORAGE_KEY = 'selected_toast_design'
