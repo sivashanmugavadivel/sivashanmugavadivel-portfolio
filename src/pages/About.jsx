@@ -86,8 +86,40 @@ const socials = [
   )},
 ]
 
+function HandwritingGreeting({ greeting, isMobile }) {
+  return (
+    <div style={{
+      position: 'absolute',
+      top: isMobile ? '2%' : '5%',
+      left: isMobile ? '-4%' : '-6%',
+      transform: 'rotate(-15deg)',
+      zIndex: 10,
+      pointerEvents: 'none',
+      display: 'flex',
+      fontFamily: "'Kaushan Script', cursive",
+      fontSize: isMobile ? 'clamp(1.6rem, 7vw, 2.2rem)' : 'clamp(2.2rem, 3vw, 3rem)',
+      fontWeight: 400,
+      color: 'var(--text-h)',
+      textShadow: '0 2px 10px rgba(0,0,0,0.4)',
+      whiteSpace: 'pre',
+    }}>
+      {greeting.split('').map((char, i) => (
+        <motion.span
+          key={i}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.01, delay: 0.8 + i * 0.09 }}
+          style={{ display: 'inline-block' }}
+        >
+          {char}
+        </motion.span>
+      ))}
+    </div>
+  )
+}
+
 /* ── Animated image frame ── */
-function ImageFrame({ name }) {
+function ImageFrame({ name, greeting }) {
   const ref = useRef(null)
   const [hovered, setHovered] = useState(false)
   const isMobile = window.innerWidth <= 768
@@ -173,6 +205,9 @@ function ImageFrame({ name }) {
           pointerEvents: 'none',
         }}
       />
+
+      {/* Handwritten greeting — stroke-dashoffset writing animation with measured path length */}
+      {greeting && <HandwritingGreeting greeting={greeting} isMobile={isMobile} />}
 
       {/* 3D-tilting image container */}
       <motion.div
@@ -311,30 +346,7 @@ function AboutHero() {
 
           {/* ── Right — image frame + handwritten overlay ── */}
           <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <ImageFrame name={cfg.personal.name} />
-            {/* Handwritten greeting — top-left corner, slanting up from bottom-left to top-right */}
-            <motion.div
-              initial={{ opacity: 0, x: -20, y: 10 }}
-              animate={{ opacity: 1, x: 0, y: 0 }}
-              transition={{ duration: 1.1, delay: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              style={{
-                position: 'absolute',
-                top: isMobile ? '6%' : '10%',
-                left: isMobile ? '-8%' : '-12%',
-                transform: 'rotate(-18deg)',
-                zIndex: 10,
-                pointerEvents: 'none',
-                fontFamily: "'Kaushan Script', cursive",
-                fontSize: isMobile ? 'clamp(1.6rem, 7vw, 2.2rem)' : 'clamp(2.4rem, 3.5vw, 3.2rem)',
-                fontWeight: 400,
-                color: 'var(--text-h)',
-                textShadow: '0 2px 12px rgba(0,0,0,0.35)',
-                whiteSpace: 'nowrap',
-                lineHeight: 1,
-              }}
-            >
-              {cfg.about.heroGreeting}
-            </motion.div>
+            <ImageFrame name={cfg.personal.name} greeting={cfg.about.heroGreeting} />
           </div>
 
         </div>
