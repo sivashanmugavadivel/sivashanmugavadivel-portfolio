@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { NavLink, Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import ThemeToggle from '../ui/ThemeToggle'
+import cfg from '../../data/config.json'
 
 const links = [
   { to: '/', label: 'Home' },
@@ -58,7 +59,7 @@ export default function Navbar({ theme, onToggleTheme }) {
 
           {/* Logo */}
           <Link to="/" style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center' }}>
-            <img src={`${import.meta.env.BASE_URL}Logo.png`} alt="Siva Shanmuga Vadivel" style={{ height: 55, width: 55, display: 'block', borderRadius: '50%', objectFit: 'cover' }} />
+            <img src={`${import.meta.env.BASE_URL}${cfg.personal.logo}`} alt={cfg.personal.name} style={{ height: 55, width: 55, display: 'block', borderRadius: '50%', objectFit: 'cover' }} />
           </Link>
 
           {/* Desktop links */}

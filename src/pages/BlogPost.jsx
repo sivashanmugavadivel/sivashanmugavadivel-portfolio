@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { loadPost } from '../hooks/usePosts'
+import cfg from '../data/config.json'
 import ScrollProgress from '../components/ui/ScrollProgress'
 import JsonPostRenderer from '../components/blog/JsonPostRenderer'
 import { tagColor, tagIcon } from '../data/tagMeta'
@@ -56,7 +57,7 @@ export default function BlogPost() {
   const readTime = calcReadTime(post)
 
   // Author: from JSON meta, or fallback
-  const author = (post.meta?.author) || 'Siva Shanmuga Vadivel'
+  const author = (post.meta?.author) || cfg.personal.name
 
   return (
     <>
@@ -139,7 +140,7 @@ export default function BlogPost() {
             letterSpacing: '0.2em', textTransform: 'uppercase',
             fontWeight: 700, marginTop: 'auto', userSelect: 'none',
           }}>
-            SIVA SHANMUGA VADIVEL
+            {cfg.personal.name.toUpperCase()}
           </div>
         </motion.aside>
 

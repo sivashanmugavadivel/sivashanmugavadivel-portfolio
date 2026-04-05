@@ -97,7 +97,7 @@ export default function PrivacyPolicy() {
               borderRadius: '0 var(--radius) var(--radius) 0',
             }}
           >
-            This Privacy Policy describes how <strong style={{ color: 'var(--text-h)' }}>Siva Shanmuga Vadivel</strong> ({cfg.seo.siteUrl}) collects, uses, and protects any information you provide when using this website. Your privacy matters and this site is built with minimal data collection in mind.
+            This Privacy Policy describes how <strong style={{ color: 'var(--text-h)' }}>{cfg.personal.name}</strong> ({cfg.seo.siteUrl}) collects, uses, and protects any information you provide when using this website. Your privacy matters and this site is built with minimal data collection in mind.
           </motion.p>
 
           {/* Sections */}

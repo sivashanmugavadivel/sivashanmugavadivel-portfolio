@@ -93,7 +93,7 @@ function SectionHeading({ label, title }) {
 }
 
 /* ── Typing name animation ── */
-const FULL_NAME = 'SIVA SHANMUGA VADIVEL'
+const FULL_NAME = cfg.hero?.headline || cfg.personal.name.toUpperCase()
 
 function TypingName() {
   const [displayed, setDisplayed] = useState('')
@@ -189,7 +189,7 @@ function HeroSection() {
         style={{ position: 'absolute', inset: '-15% 0', y: bgY, zIndex: 1 }}
       >
         <img
-          src={`${import.meta.env.BASE_URL}avatar.jpg`}
+          src={`${import.meta.env.BASE_URL}${cfg.personal.avatar}`}
           alt=""
           aria-hidden="true"
           style={{
@@ -243,8 +243,8 @@ function HeroSection() {
         onClick={() => window.dispatchEvent(new CustomEvent('easter-egg', { detail: 'name' }))}
       >
         <motion.img
-          src={`${import.meta.env.BASE_URL}Avatar_nbc1.png`}
-          alt="Siva Shanmuga Vadivel"
+          src={`${import.meta.env.BASE_URL}${cfg.personal.avatarCutout}`}
+          alt={cfg.personal.name}
           initial={{ opacity: 0, scale: 1.1 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1.2, delay: avatarDelay, ease: [0.25, 0.1, 0.25, 1] }}
@@ -314,7 +314,9 @@ function HeroSection() {
           fontFamily: 'var(--sans)', fontSize: 'clamp(0.78rem, 1.4vw, 0.95rem)',
           color: 'rgba(255,255,255,0.65)', maxWidth: 340, lineHeight: 1.6, margin: 0,
         }}>
-          Building modern &amp; interactive<br />web experiences.
+          {(cfg.hero?.subtext || cfg.personal.bio).split('\n').map((line, i, arr) => (
+            <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
+          ))}
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
           <span style={{ fontSize: '0.6rem', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)' }}>
@@ -340,7 +342,7 @@ function HeroSection() {
 
 
 /* ── About accent card (cleaner version) ── */
-const aboutItems = [
+const aboutItems = cfg.about?.highlights || [
   { icon: '💻', label: 'Web Development', desc: 'Modern React & CSS' },
   { icon: '🎨', label: 'UI / UX Design', desc: 'Clean, thoughtful interfaces' },
   { icon: '✍️', label: 'Writing', desc: 'Sharing what I learn' },
@@ -797,22 +799,16 @@ export default function Home() {
               <Reveal delay={0}><span className="section-label">About</span></Reveal>
               <Reveal delay={0.1}>
                 <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', marginBottom: 20 }}>
-                  Nice to meet you
+                  {cfg.about?.heading || 'Nice to meet you'}
                 </h2>
               </Reveal>
-              <Reveal delay={0.2}>
-                <p style={{ color: 'var(--text)', lineHeight: 1.8, marginBottom: 16 }}>
-                  I'm a passionate developer who loves building beautiful, performant web experiences.
-                  I care deeply about the details — from pixel-perfect layouts to smooth animations
-                  that make interfaces feel alive.
-                </p>
-              </Reveal>
-              <Reveal delay={0.3}>
-                <p style={{ color: 'var(--text)', lineHeight: 1.8, marginBottom: 32 }}>
-                  When I'm not coding, you'll find me taking photos, watching tutorials, or exploring
-                  new places.
-                </p>
-              </Reveal>
+              {(cfg.about?.paragraphs || []).map((para, i) => (
+                <Reveal key={i} delay={0.2 + i * 0.1}>
+                  <p style={{ color: 'var(--text)', lineHeight: 1.8, marginBottom: i < (cfg.about.paragraphs.length - 1) ? 16 : 32 }}>
+                    {para}
+                  </p>
+                </Reveal>
+              ))}
               <Reveal delay={0.4}><Button to="/about" variant="outline">Read More →</Button></Reveal>
             </div>
             <AboutAccentCard />
