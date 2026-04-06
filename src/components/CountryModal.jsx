@@ -178,9 +178,9 @@ export default function CountryModal({ countryId, onClose, zIndex = 1000 }) {
                         /* ── Home icon marker ── */
                         <g
                           style={{ cursor: 'pointer' }}
-                          onMouseEnter={isMobile ? undefined : e => { const rect = e.currentTarget.getBoundingClientRect(); setPinTooltip({ label: `🏠 ${label}`, x: rect.left + rect.width / 2, y: rect.top }); setActivePin(label) }}
+                          onMouseEnter={isMobile ? undefined : e => { setPinTooltip({ label: `🏠 ${label}`, x: e.clientX, y: e.clientY }); setActivePin(label) }}
                           onMouseLeave={isMobile ? undefined : () => { setPinTooltip(null); setActivePin(null) }}
-                          onClick={isMobile ? e => { const rect = e.currentTarget.getBoundingClientRect(); const next = isActive ? null : label; setActivePin(next); setPinTooltip(next ? { label: `🏠 ${label}`, x: rect.left + rect.width / 2, y: rect.top } : null) } : undefined}
+                          onClick={isMobile ? e => { const next = isActive ? null : label; setActivePin(next); setPinTooltip(next ? { label: `🏠 ${label}`, x: e.clientX, y: e.clientY } : null) } : undefined}
                           transform={`translate(${-r * 2}, ${-r * 4.5}) scale(${r * 0.28})`}
                         >
                           {/* Glow */}
@@ -202,9 +202,9 @@ export default function CountryModal({ countryId, onClose, zIndex = 1000 }) {
                           {/* Pin shape */}
                           <g
                             style={{ cursor: 'pointer' }}
-                            onMouseEnter={isMobile ? undefined : e => { const rect = e.currentTarget.getBoundingClientRect(); setPinTooltip({ label, x: rect.left + rect.width / 2, y: rect.top }); setActivePin(label) }}
+                            onMouseEnter={isMobile ? undefined : e => { setPinTooltip({ label, x: e.clientX, y: e.clientY }); setActivePin(label) }}
                             onMouseLeave={isMobile ? undefined : () => { setPinTooltip(null); setActivePin(null) }}
-                            onClick={isMobile ? e => { const rect = e.currentTarget.getBoundingClientRect(); const next = isActive ? null : label; setActivePin(next); setPinTooltip(next ? { label, x: rect.left + rect.width / 2, y: rect.top } : null) } : undefined}
+                            onClick={isMobile ? e => { const next = isActive ? null : label; setActivePin(next); setPinTooltip(next ? { label, x: e.clientX, y: e.clientY } : null) } : undefined}
                           >
                             <circle cx={0} cy={-r * 1.4} r={r * 1.2} fill="#e53935" stroke="#fff" strokeWidth={r * 0.25} />
                             <polygon points={`${-r * 0.5},${-r * 0.5} ${r * 0.5},${-r * 0.5} 0,${r * 0.8}`} fill="#e53935" />
