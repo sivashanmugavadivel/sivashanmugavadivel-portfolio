@@ -4,6 +4,7 @@
  * map fills the right. Neon glow on visited countries. Cinematic entrance.
  */
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, useInView, AnimatePresence } from 'framer-motion'
 import { ComposableMap, Geographies, Geography, Marker } from 'react-simple-maps'
 import cfg from '../data/config.json'
@@ -217,34 +218,36 @@ export default function PlacesMapV1() {
         </button>
       </div>
 
-      {/* Fullscreen expanded overlay — map only, no header */}
+      {/* Fullscreen expanded overlay — portalled above navbar */}
       <AnimatePresence>
-        {expanded && (
+        {expanded && createPortal(
           <motion.div
             key="expanded"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
+            onClick={() => setExpanded(false)}
             style={{
-              position: 'fixed', inset: 0, zIndex: 900,
+              position: 'fixed', inset: 0, zIndex: 9999,
               background: 'linear-gradient(135deg, rgba(10,10,20,0.98) 0%, rgba(20,20,40,0.96) 100%)',
               overflow: 'hidden',
             }}
           >
-            {/* Map fills entire screen */}
+            {/* Map fills entire screen — stop propagation so map clicks don't close */}
             <motion.div
               initial={{ scale: 0.97, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
               style={{ position: 'absolute', inset: 0 }}
+              onClick={e => e.stopPropagation()}
             >
               <MapContent onCountryClick={setSelectedCountry} onTooltip={setTooltip} />
             </motion.div>
 
-            {/* Floating collapse button — top right */}
+            {/* Floating collapse button — top right, above map */}
             <button
-              onClick={() => setExpanded(false)}
+              onClick={e => { e.stopPropagation(); setExpanded(false) }}
               style={{
                 position: 'absolute', top: 16, right: 16, zIndex: 10,
                 background: 'rgba(0,0,0,0.55)', border: '1px solid rgba(255,255,255,0.18)',
@@ -256,7 +259,8 @@ export default function PlacesMapV1() {
             >
               <CollapseIcon /> Collapse
             </button>
-          </motion.div>
+          </motion.div>,
+          document.body
         )}
       </AnimatePresence>
 
