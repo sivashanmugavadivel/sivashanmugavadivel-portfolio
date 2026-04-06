@@ -335,6 +335,37 @@ function HeroSection() {
 }
 
 
+/* ── Handwriting greeting — same as About page avatar overlay ── */
+function HandwritingGreeting({ text, inView }) {
+  return (
+    <div style={{
+      display: 'inline-block',
+      transform: 'rotate(-15deg)',
+      transformOrigin: 'left center',
+      fontFamily: "'Kaushan Script', cursive",
+      fontSize: 'clamp(2rem, 3vw, 2.8rem)',
+      fontWeight: 400,
+      color: 'var(--text-h)',
+      textShadow: '0 2px 10px rgba(0,0,0,0.15)',
+      whiteSpace: 'pre',
+      marginBottom: 8,
+      marginLeft: 4,
+    }}>
+      {text.split('').map((char, i) => (
+        <motion.span
+          key={i}
+          initial={{ opacity: 0 }}
+          animate={inView ? { opacity: 1 } : { opacity: 0 }}
+          transition={{ duration: 0.01, delay: 0.3 + i * 0.09 }}
+          style={{ display: 'inline-block' }}
+        >
+          {char}
+        </motion.span>
+      ))}
+    </div>
+  )
+}
+
 /* ── About accent card (cleaner version) ── */
 const aboutItems = cfg.about?.highlights || [
   { icon: '💻', label: 'Web Development', desc: 'Modern React & CSS' },
@@ -809,35 +840,49 @@ function CTASection() {
   )
 }
 
+/* ── About section ── */
+function AboutSection() {
+  const ref = useRef(null)
+  const inView = useInView(ref, { once: true, margin: '-80px' })
+  const greeting = cfg.about?.heroGreeting || 'Hey there!'
+  const heading = (cfg.about?.heading || 'Nice to meet you').replace(greeting, '').trim()
+
+  return (
+    <section ref={ref} className="section" style={{ background: 'var(--bg-secondary)' }}>
+      <div className="page-container">
+        <div className="grid-2" style={{ alignItems: 'center', gap: 64 }}>
+          <div style={{ textAlign: 'left' }}>
+            <Reveal delay={0}><span className="section-label">About</span></Reveal>
+            <div style={{ marginBottom: 8 }}>
+              <HandwritingGreeting text={greeting} inView={inView} />
+            </div>
+            <Reveal delay={0.1}>
+              <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', marginBottom: 20, marginTop: 0 }}>
+                {heading}
+              </h2>
+            </Reveal>
+            {(cfg.about?.paragraphs || []).map((para, i) => (
+              <Reveal key={i} delay={0.2 + i * 0.1}>
+                <p style={{ color: 'var(--text)', lineHeight: 1.8, marginBottom: i < (cfg.about.paragraphs.length - 1) ? 16 : 32 }}>
+                  {para}
+                </p>
+              </Reveal>
+            ))}
+            <Reveal delay={0.4}><Button to="/about" variant="outline">Read More →</Button></Reveal>
+          </div>
+          <AboutAccentCard />
+        </div>
+      </div>
+    </section>
+  )
+}
+
 /* ── Main Home page ── */
 export default function Home() {
   return (
     <div>
       <HeroSection />
-      {/* About section with cleaned-up card */}
-      <section className="section" style={{ background: 'var(--bg-secondary)' }}>
-        <div className="page-container">
-          <div className="grid-2" style={{ alignItems: 'center', gap: 64 }}>
-            <div style={{ textAlign: 'left' }}>
-              <Reveal delay={0}><span className="section-label">About</span></Reveal>
-              <Reveal delay={0.1}>
-                <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', marginBottom: 20 }}>
-                  {cfg.about?.heading || 'Nice to meet you'}
-                </h2>
-              </Reveal>
-              {(cfg.about?.paragraphs || []).map((para, i) => (
-                <Reveal key={i} delay={0.2 + i * 0.1}>
-                  <p style={{ color: 'var(--text)', lineHeight: 1.8, marginBottom: i < (cfg.about.paragraphs.length - 1) ? 16 : 32 }}>
-                    {para}
-                  </p>
-                </Reveal>
-              ))}
-              <Reveal delay={0.4}><Button to="/about" variant="outline">Read More →</Button></Reveal>
-            </div>
-            <AboutAccentCard />
-          </div>
-        </div>
-      </section>
+      <AboutSection />
       <FeaturedPostsSection />
       <FeaturedVideosSection />
       <NowPlayingSection />
