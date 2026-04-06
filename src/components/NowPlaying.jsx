@@ -2,6 +2,7 @@ import { useRef, useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, useInView, AnimatePresence } from 'framer-motion'
 import cfg from '../data/config.json'
+import { DESIGNS, STORAGE_KEY, getPositionStyle } from './ToastDesignPicker'
 
 function extractVideoId(url) {
   try {
@@ -60,6 +61,40 @@ function formatTime(sec) {
   const m = Math.floor(sec / 60)
   const s = Math.floor(sec % 60)
   return `${m}:${s.toString().padStart(2, '0')}`
+}
+
+// ── Music hint toast — uses the user's selected toast design ──
+function MusicHintToast({ onDone }) {
+  const designId = parseInt(localStorage.getItem(STORAGE_KEY) || '17')
+  const design = DESIGNS.find(d => d.id === designId) || DESIGNS[16]
+  const { Component, pos } = design
+
+  const message = (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+      <motion.span
+        animate={{ rotate: [0, -15, 15, -10, 0] }}
+        transition={{ duration: 1.4, repeat: Infinity, repeatDelay: 1.5 }}
+        style={{ display: 'inline-block' }}
+      >🎵</motion.span>
+      Hit play &amp; wait for the surprise
+      <motion.span
+        animate={{ scale: [1, 1.4, 1], rotate: [0, 20, 0] }}
+        transition={{ duration: 1, repeat: Infinity, repeatDelay: 0.8 }}
+        style={{ display: 'inline-block' }}
+      >✨</motion.span>
+      <motion.span
+        animate={{ y: [0, -4, 0] }}
+        transition={{ duration: 0.7, repeat: Infinity, repeatDelay: 0.4 }}
+        style={{ display: 'inline-block' }}
+      >🎧</motion.span>
+    </span>
+  )
+
+  return (
+    <div style={getPositionStyle(pos)}>
+      <Component message={message} onDone={onDone} />
+    </div>
+  )
 }
 
 const HEART_EMOJIS = ['❤️', '🩷', '💜', '🤍', '💖', '💗', '💓', '💝']
@@ -189,6 +224,17 @@ export default function NowPlaying() {
   const [duration, setDuration] = useState(0)
   const [dragging, setDragging] = useState(false)
   const [dragValue, setDragValue] = useState(0)
+  const [showHint, setShowHint] = useState(false)
+  const hintShownRef = useRef(false)
+
+  // Show hint toast once when section scrolls into view
+  useEffect(() => {
+    if (inView && !hintShownRef.current) {
+      hintShownRef.current = true
+      setShowHint(true)
+      setTimeout(() => setShowHint(false), 6500)
+    }
+  }, [inView])
 
   // Init YT Player
   useEffect(() => {
@@ -296,6 +342,10 @@ export default function NowPlaying() {
     : null
 
   return (
+    <>
+    <AnimatePresence>
+      {showHint && <MusicHintToast onDone={() => setShowHint(false)} />}
+    </AnimatePresence>
     <motion.div
       ref={ref}
       initial={{ opacity: 0, y: 24 }}
@@ -463,5 +513,53 @@ export default function NowPlaying() {
 
       <PlaylistRow />
     </motion.div>
+
+    {/* Fav-line GIF — fixed bottom-right, portalled above everything */}
+    {createPortal(
+      <AnimatePresence>
+        {activeHighlight && playing && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.7, y: 30 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.7, y: 30 }}
+            transition={{ type: 'spring', stiffness: 280, damping: 22 }}
+            style={{
+              position: 'fixed',
+              bottom: 24,
+              right: 24,
+              zIndex: 99998,
+              width: 150,
+              height: 150,
+              pointerEvents: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {/* Purple glow behind the gif */}
+            <motion.div
+              animate={{ opacity: [0.5, 1, 0.5], scale: [1, 1.15, 1] }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+              style={{
+                position: 'absolute',
+                width: '100%', height: '100%',
+                borderRadius: '50%',
+                background: 'radial-gradient(circle, rgba(167,139,250,0.55) 0%, rgba(124,58,237,0.25) 50%, transparent 75%)',
+                filter: 'blur(14px)',
+                pointerEvents: 'none',
+              }}
+            />
+            {/* GIF — no border, no overflow clip */}
+            <img
+              src={`${import.meta.env.BASE_URL}now-play-gif.gif`}
+              alt="now playing"
+              style={{ position: 'relative', width: 130, height: 130, objectFit: 'contain', display: 'block' }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>,
+      document.body
+    )}
+    </>
   )
 }

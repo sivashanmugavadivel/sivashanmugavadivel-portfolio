@@ -41,8 +41,8 @@ export default function SmartToast() {
 
   useEffect(() => {
     if (phase === 'welcome') {
-      // After 10s switch to thought
-      const t = setTimeout(() => setPhase('thought'), 10000)
+      // After 6s switch to thought
+      const t = setTimeout(() => setPhase('thought'), 6000)
       return () => clearTimeout(t)
     }
     if (phase === 'thought') {
