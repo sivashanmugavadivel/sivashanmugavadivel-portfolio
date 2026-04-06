@@ -240,14 +240,52 @@ export default function PlacesMapV2() {
               overflow: 'hidden',
             }}
           >
-            {/* Map fills entire rotated space */}
+            {/* Map fills entire rotated space — 20% zoom vs normal */}
             <motion.div
               initial={{ opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
               style={{ position: 'absolute', inset: 0 }}
             >
-              <MapContent onCountryClick={setSelectedCountry} onTooltip={setTooltip} />
+              <ComposableMap
+                projectionConfig={{ scale: 176, center: [20, 10] }}
+                style={{ width: '100%', height: '100%', display: 'block' }}
+              >
+                <Geographies geography={GEO_URL}>
+                  {({ geographies }) =>
+                    geographies.map(geo => {
+                      const visited = cfg.visitedCountries.includes(String(geo.id))
+                      return (
+                        <Geography
+                          key={geo.rsmKey}
+                          geography={geo}
+                          fill={visited ? 'var(--accent)' : 'var(--bg)'}
+                          stroke="var(--border)"
+                          strokeWidth={0.4}
+                          onClick={visited ? () => setSelectedCountry(String(geo.id)) : undefined}
+                          style={{
+                            default: { outline: 'none', opacity: visited ? 0.9 : 1, cursor: visited ? 'pointer' : 'default' },
+                            hover:   { outline: 'none', opacity: 1, cursor: visited ? 'pointer' : 'default' },
+                            pressed: { outline: 'none' },
+                          }}
+                        />
+                      )
+                    })
+                  }
+                </Geographies>
+                {cfg.places.map(({ label, coords }, i) => (
+                  <Marker key={label} coordinates={coords}
+                    onMouseEnter={e => setTooltip({ label, x: e.clientX, y: e.clientY })}
+                    onMouseLeave={() => setTooltip(null)}
+                  >
+                    <circle r={5} fill="#e53935" opacity={0.3}>
+                      <animate attributeName="r" from="5" to="18" dur="2s" begin={`${i * 0.4}s`} repeatCount="indefinite" />
+                      <animate attributeName="opacity" from="0.3" to="0" dur="2s" begin={`${i * 0.4}s`} repeatCount="indefinite" />
+                    </circle>
+                    <circle r={5} fill="#fff" stroke="#e53935" strokeWidth={2} style={{ cursor: 'pointer' }} />
+                  </Marker>
+                ))}
+              </ComposableMap>
             </motion.div>
 
             {/* Close button — bottom-left in rotated frame = top-left in landscape */}
