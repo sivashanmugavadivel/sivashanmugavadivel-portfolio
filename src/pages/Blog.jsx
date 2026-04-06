@@ -37,7 +37,8 @@ export default function Blog() {
       rotate: sign * (abs === 1 ? 12 : 20),
       scale: abs === 1 ? 0.82 : 0.68,
       zIndex: 10 - abs,
-      opacity: abs === 1 ? 0.7 : 0.45,
+      opacity: 1,
+      filter: abs === 0 ? 'none' : 'blur(2px)',
     }
   }
 
@@ -147,23 +148,33 @@ export default function Blog() {
                   }}
                 >
                   {offset === 0 ? (
-                    <PostCard slug={filtered[idx].slug} frontmatter={filtered[idx].frontmatter} />
+                    <PostCard
+                      slug={filtered[idx].slug}
+                      frontmatter={filtered[idx].frontmatter}
+                      isActive={offset === 0}
+                    />
                   ) : (
                     <div style={{
                       height: 280,
                       borderRadius: 16,
-                      background: 'var(--card-bg)',
+                      background: 'rgba(255, 255, 255, 0.08)', // adjust 0.08 → 0.2
+                      backdropFilter: 'blur(10px)',
+                      WebkitBackdropFilter: 'blur(10px)',
                       border: '1px solid var(--border)',
                       display: 'flex',
                       flexDirection: 'column',
-                      justifyContent: 'center',
                       alignItems: 'center',
-                      gap: 12,
+                      justifyContent: 'center',
+                      gap: 14,
                       padding: 24,
                     }}>
-                      <div style={{ width: '40%', height: 10, borderRadius: 6, background: 'var(--border)', opacity: 0.5 }} />
-                      <div style={{ width: '70%', height: 10, borderRadius: 6, background: 'var(--border)', opacity: 0.4 }} />
-                      <div style={{ width: '60%', height: 10, borderRadius: 6, background: 'var(--border)', opacity: 0.3 }} />
+                      <div style={{ fontSize: 48 }}>{filtered[idx].frontmatter.icon || '📝'}</div>
+                      <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-h)', textAlign: 'center', lineHeight: 1.35 }}>
+                        {filtered[idx].frontmatter.title}
+                      </p>
+                      <time style={{ fontSize: '0.75rem', color: 'var(--text)', opacity: 0.6 }}>
+                        {new Date(filtered[idx].frontmatter.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                      </time>
                     </div>
                   )}
                 </motion.div>

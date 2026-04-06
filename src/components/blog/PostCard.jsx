@@ -7,7 +7,7 @@ function formatDate(d) {
   return new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
-export default function PostCard({ slug, frontmatter }) {
+export default function PostCard({ slug, frontmatter, isActive }) {
   const { title, date, excerpt, tags = [] } = frontmatter
   const [flipped, setFlipped] = useState(false)
   const cardRef = useRef(null)
@@ -47,9 +47,18 @@ export default function PostCard({ slug, frontmatter }) {
           position: 'absolute', inset: 0,
           backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden',
           borderRadius: 16, overflow: 'hidden',
-          background: `linear-gradient(145deg, var(--card-bg) 0%, ${color}11 100%)`,
-          border: `1px solid ${color}33`,
-          boxShadow: `0 4px 24px ${color}18`,
+          background: isActive
+            ? `linear-gradient(145deg, var(--card-bg) 60%, ${color}22 100%)`
+            : `rgba(255,255,255,0.08)`,                                  // 🔥 glass effect
+          backdropFilter: isActive ? 'none' : 'blur(10px)',
+          WebkitBackdropFilter: isActive ? 'none' : 'blur(10px)',
+          border: isActive
+            ? `1px solid ${color}55`
+            : '1px solid rgba(255,255,255,0.15)',
+
+          boxShadow: isActive
+            ? `0 10px 40px ${color}40`
+            : '0 4px 20px rgba(0,0,0,0.2)',
           display: 'flex', flexDirection: 'column',
           alignItems: 'center', justifyContent: 'center', gap: 14, padding: 24,
         }}>
