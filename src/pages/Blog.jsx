@@ -116,7 +116,6 @@ export default function Blog() {
             alignItems: 'center',
             justifyContent: 'center',
             marginBottom: 52,
-            overflow: 'hidden',
           }}>
             {getVisibleIndices().map(({ idx, offset }) => {
               const style = getCardStyle(offset)
