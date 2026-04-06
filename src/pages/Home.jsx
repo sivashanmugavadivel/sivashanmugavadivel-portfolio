@@ -4,6 +4,7 @@ import { loadAllPosts } from '../hooks/usePosts'
 import cfg from '../data/config.json'
 import VideoCard from '../components/video/VideoCard'
 import Button from '../components/ui/Button'
+import PlacesMap from '../components/PlacesMap'
 
 /* ── Reusable scroll-reveal wrapper ── */
 function Reveal({ children, delay = 0, y = 40, x = 0, style }) {
@@ -687,6 +688,24 @@ function TickerRow({ items, direction = 'left', speed = 18, dim = false }) {
   )
 }
 
+function PlacesMapSection() {
+  return (
+    <section className="section">
+      <div className="page-container">
+        <SectionHeading label="Travel" title="Where I've Been" />
+        <Reveal delay={0.15}>
+          <p style={{ textAlign: 'center', color: 'var(--text)', opacity: 0.65, fontSize: '0.95rem', marginTop: -8, marginBottom: 32 }}>
+            A few places I've visited and experienced along the way.
+          </p>
+        </Reveal>
+        <Reveal delay={0.25}>
+          <PlacesMap />
+        </Reveal>
+      </div>
+    </section>
+  )
+}
+
 function SocialSection() {
   return (
     <section style={{ background: 'var(--bg)', padding: 'clamp(64px,8vw,96px) 0', overflow: 'hidden', contain: 'paint' }}>
@@ -800,6 +819,7 @@ export default function Home() {
       </section>
       <FeaturedPostsSection />
       <FeaturedVideosSection />
+      <PlacesMapSection />
       <SocialSection />
       <CTASection />
     </div>

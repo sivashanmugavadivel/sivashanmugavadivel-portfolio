@@ -172,6 +172,15 @@
     ]
   },
 
+  "visitedCountries": ["356", "784", "840"],
+  "places": [
+    { "label": "Chennai, India",    "coords": [80.2707, 13.0827] },
+    { "label": "Coimbatore, India", "coords": [76.9558, 11.0168] },
+    { "label": "Yercaud, India",    "coords": [78.2120, 11.7750] },
+    { "label": "Dubai, UAE",        "coords": [55.2708, 25.2048] },
+    { "label": "Chicago, USA",      "coords": [-87.6298, 41.8781] }
+  ],
+
   "footer": {
     "copyright": "Siva Shanmuga Vadivel",
     "builtWith": "Built with Love & Care mixed in equal ratio"
