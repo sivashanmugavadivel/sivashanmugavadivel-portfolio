@@ -121,10 +121,7 @@ export default function PlacesMapV1() {
   const ref = useRef(null)
   const inView = useInView(ref, { once: false, margin: '-100px' })
 
-  useEffect(() => {
-    document.body.style.overflow = expanded ? 'hidden' : ''
-    return () => { document.body.style.overflow = '' }
-  }, [expanded])
+  // No body overflow lock — portal sits above everything via z-index
 
   useEffect(() => {
     function onKey(e) { if (e.key === 'Escape') setExpanded(false) }
@@ -218,51 +215,42 @@ export default function PlacesMapV1() {
         </button>
       </div>
 
-      {/* Fullscreen expanded overlay — portalled above navbar */}
-      <AnimatePresence>
-        {expanded && createPortal(
-          <motion.div
-            key="expanded"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            onClick={() => setExpanded(false)}
+      {/* Fullscreen expanded overlay — portalled above navbar, no AnimatePresence */}
+      {expanded && createPortal(
+        <div
+          onClick={() => setExpanded(false)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 9999,
+            background: 'linear-gradient(135deg, rgba(10,10,20,0.98) 0%, rgba(20,20,40,0.96) 100%)',
+            overflow: 'hidden',
+            animation: 'fadeIn 0.2s ease',
+          }}
+        >
+          {/* Map fills entire screen */}
+          <div
+            style={{ position: 'absolute', inset: 0 }}
+            onClick={e => e.stopPropagation()}
+          >
+            <MapContent onCountryClick={setSelectedCountry} onTooltip={setTooltip} />
+          </div>
+
+          {/* Floating collapse button */}
+          <button
+            onClick={e => { e.stopPropagation(); setExpanded(false) }}
             style={{
-              position: 'fixed', inset: 0, zIndex: 9999,
-              background: 'linear-gradient(135deg, rgba(10,10,20,0.98) 0%, rgba(20,20,40,0.96) 100%)',
-              overflow: 'hidden',
+              position: 'absolute', top: 16, right: 16, zIndex: 10,
+              background: 'rgba(0,0,0,0.55)', border: '1px solid rgba(255,255,255,0.18)',
+              borderRadius: 8, padding: '7px 14px', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 7,
+              color: 'rgba(255,255,255,0.9)', fontSize: '0.75rem', fontWeight: 500,
+              backdropFilter: 'blur(10px)',
             }}
           >
-            {/* Map fills entire screen — stop propagation so map clicks don't close */}
-            <motion.div
-              initial={{ scale: 0.97, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
-              style={{ position: 'absolute', inset: 0 }}
-              onClick={e => e.stopPropagation()}
-            >
-              <MapContent onCountryClick={setSelectedCountry} onTooltip={setTooltip} />
-            </motion.div>
-
-            {/* Floating collapse button — top right, above map */}
-            <button
-              onClick={e => { e.stopPropagation(); setExpanded(false) }}
-              style={{
-                position: 'absolute', top: 16, right: 16, zIndex: 10,
-                background: 'rgba(0,0,0,0.55)', border: '1px solid rgba(255,255,255,0.18)',
-                borderRadius: 8, padding: '7px 14px', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', gap: 7,
-                color: 'rgba(255,255,255,0.9)', fontSize: '0.75rem', fontWeight: 500,
-                backdropFilter: 'blur(10px)',
-              }}
-            >
-              <CollapseIcon /> Collapse
-            </button>
-          </motion.div>,
-          document.body
-        )}
-      </AnimatePresence>
+            <CollapseIcon /> Collapse
+          </button>
+        </div>,
+        document.body
+      )}
 
       {tooltip && (
         <div style={{

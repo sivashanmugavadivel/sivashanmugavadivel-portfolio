@@ -6,6 +6,7 @@ import VideoCard from '../components/video/VideoCard'
 import Button from '../components/ui/Button'
 import PlacesMapV1 from '../components/PlacesMapV1'
 import PlacesMapV2 from '../components/PlacesMapV2'
+import NowPlaying from '../components/NowPlaying'
 
 /* ── Reusable scroll-reveal wrapper ── */
 function Reveal({ children, delay = 0, y = 40, x = 0, style }) {
@@ -419,6 +420,20 @@ function FeaturedPostsSection() {
   )
 }
 
+/* ── Now Playing Section ── */
+function NowPlayingSection() {
+  return (
+    <section className="section" style={{ background: 'var(--bg)' }}>
+      <div className="page-container" style={{ maxWidth: 600 }}>
+        <SectionHeading label="Music" title="Now Playing 🎧" />
+        <Reveal delay={0.15}>
+          <NowPlaying />
+        </Reveal>
+      </div>
+    </section>
+  )
+}
+
 /* ── Featured Videos Section ── */
 function FeaturedVideosSection() {
   const featured = (cfg.videos || []).filter(v => v.type === 'video').slice(0, 1)
@@ -825,6 +840,7 @@ export default function Home() {
       </section>
       <FeaturedPostsSection />
       <FeaturedVideosSection />
+      <NowPlayingSection />
       <PlacesMapSection />
       <SocialSection />
       <CTASection />

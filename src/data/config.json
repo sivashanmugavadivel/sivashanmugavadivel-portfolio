@@ -204,6 +204,17 @@
     }
   },
 
+  "music": {
+    "nowPlaying": {
+      "title": "Chiri Thottu",
+      "artist": "Chinmayi Sripada and Justin Prabhakaran",
+      "movie": "Sarvam Maya (2025)",
+      "listenUrl": "https://music.youtube.com/watch?v=b2TEuMX7VY8&si=7RCEFchceWZwDTHu"
+    },
+    "playlistLabel": "Music I enjoy",
+    "playlistUrl": "https://music.youtube.com/playlist?list=PLd1Cz4iwYWGEDyN8oYXWcpX5zB2Sk47BP&si=AA7ROIC8b8Z74JUl"
+  },
+
   "footer": {
     "copyright": "Siva Shanmuga Vadivel",
     "builtWith": "Built with Love & Care mixed in equal ratio"
