@@ -232,7 +232,7 @@ function ImageFrame({ name, greeting }) {
             width: isMobile ? '220px' : 'clamp(310px, 38vw, 490px)',
             height: isMobile ? '280px' : 'clamp(400px, 50vw, 580px)',
             overflow: 'hidden',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.35)',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.08)',
           }}
         >
           {/* Image with subtle scale on hover */}

@@ -189,10 +189,7 @@ function GalleryCarousel({ items, onOpen }) {
                     padding: '16px',
                   }}
                 >
-                  <div style={{ flex: 1 }}>
-                    <p style={{ color: '#fff', fontWeight: 600, fontSize: '0.9rem', margin: 0 }}>{item.caption}</p>
-                    <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.75rem', margin: '2px 0 0', textTransform: 'capitalize' }}>{item.category}</p>
-                  </div>
+                  <div style={{ flex: 1 }} />
                   <div style={{
                     width: 36, height: 36, borderRadius: '50%',
                     background: 'rgba(255,255,255,0.9)',

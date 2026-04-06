@@ -328,3 +328,8 @@ code {
   .travel-desktop { display: none;  }
   .travel-mobile  { display: block; }
 }
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}

@@ -868,7 +868,7 @@ function AboutSection() {
                 </p>
               </Reveal>
             ))}
-            <Reveal delay={0.4}><Button to="/about" variant="outline">Read More →</Button></Reveal>
+            <Reveal delay={0.4}><Button to="/about" variant="outline">Know My Journey →</Button></Reveal>
           </div>
           <AboutAccentCard />
         </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Fragment } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ComposableMap, Geographies, Geography, Marker } from 'react-simple-maps'
@@ -37,6 +37,7 @@ export default function CountryModal({ countryId, onClose, zIndex = 1000 }) {
   if (!info) return null
 
   return (
+    <Fragment>
     <AnimatePresence>
       <motion.div
         key="backdrop"
@@ -233,24 +234,26 @@ export default function CountryModal({ countryId, onClose, zIndex = 1000 }) {
         </motion.div>
       </motion.div>
 
-      {/* Pin tooltip — portalled above everything */}
-      {pinTooltip && createPortal(
-        <div style={{
-          position: 'fixed',
-          top: pinTooltip.y - 44,
-          left: pinTooltip.x,
-          transform: 'translateX(-50%)',
-          background: 'rgba(0,0,0,0.85)',
-          border: '1px solid var(--accent)',
-          borderRadius: 8, padding: '5px 14px',
-          fontSize: '0.8rem', color: '#fff', fontWeight: 600,
-          pointerEvents: 'none', whiteSpace: 'nowrap',
-          zIndex: 99999,
-        }}>
-          {pinTooltip.label}
-        </div>,
-        document.body
-      )}
     </AnimatePresence>
+
+    {/* Pin tooltip — portalled outside AnimatePresence so it's never unmounted by it */}
+    {pinTooltip && createPortal(
+      <div style={{
+        position: 'fixed',
+        top: pinTooltip.y - 44,
+        left: pinTooltip.x,
+        transform: 'translateX(-50%)',
+        background: 'rgba(0,0,0,0.85)',
+        border: '1px solid var(--accent)',
+        borderRadius: 8, padding: '5px 14px',
+        fontSize: '0.8rem', color: '#fff', fontWeight: 600,
+        pointerEvents: 'none', whiteSpace: 'nowrap',
+        zIndex: 999999,
+      }}>
+        {pinTooltip.label}
+      </div>,
+      document.body
+    )}
+    </Fragment>
   )
 }
