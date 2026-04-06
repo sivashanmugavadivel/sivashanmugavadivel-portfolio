@@ -101,7 +101,7 @@ export default function CountryModal({ countryId, onClose }) {
               transform: 'translateX(-50%)',
               zIndex: 20,
               background: 'rgba(0,0,0,0.75)',
-              border: '1px solid var(--accent)',
+              border: '1px solid #e53935',
               borderRadius: 8, padding: '5px 14px',
               fontSize: '0.8rem', color: '#fff', fontWeight: 600,
               pointerEvents: 'none', whiteSpace: 'nowrap',
@@ -173,7 +173,7 @@ export default function CountryModal({ countryId, onClose }) {
                   return (
                     <Marker key={label} coordinates={coords}>
                       {/* Pulse ring */}
-                      <circle r={r} fill="var(--accent)" opacity={0.25}>
+                      <circle r={r} fill="#e53935" opacity={0.25}>
                         <animate attributeName="r" from={r} to={r * 3} dur="1.8s" repeatCount="indefinite" />
                         <animate attributeName="opacity" from="0.25" to="0" dur="1.8s" repeatCount="indefinite" />
                       </circle>
@@ -185,11 +185,11 @@ export default function CountryModal({ countryId, onClose }) {
                         onClick={isMobile ? () => setActivePin(isActive ? null : label) : undefined}
                       >
                         {/* Pin body (teardrop) */}
-                        <circle cx={0} cy={-r * 1.4} r={r * 1.2} fill="var(--accent)" stroke="#fff" strokeWidth={r * 0.25} />
+                        <circle cx={0} cy={-r * 1.4} r={r * 1.2} fill="#e53935" stroke="#fff" strokeWidth={r * 0.25} />
                         {/* Pin tail */}
                         <polygon
                           points={`${-r * 0.5},${-r * 0.5} ${r * 0.5},${-r * 0.5} 0,${r * 0.8}`}
-                          fill="var(--accent)"
+                          fill="#e53935"
                         />
                         {/* Inner dot */}
                         <circle cx={0} cy={-r * 1.4} r={r * 0.45} fill="#fff" opacity={0.9} />
@@ -200,7 +200,7 @@ export default function CountryModal({ countryId, onClose }) {
                           <rect
                             x={-50} y={-12} width={100} height={22}
                             rx={6} fill="rgba(0,0,0,0.82)"
-                            stroke="var(--accent)" strokeWidth={0.8}
+                            stroke="#e53935" strokeWidth={0.8}
                           />
                           <text
                             textAnchor="middle" y={4}
@@ -221,11 +221,11 @@ export default function CountryModal({ countryId, onClose }) {
           {/* Stats bar */}
           <div style={{ display: 'flex', borderTop: '1px solid var(--border)' }}>
             <div style={{ flex: 1, padding: '14px 0', textAlign: 'center', borderRight: '1px solid var(--border)' }}>
-              <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--accent)', lineHeight: 1 }}>{cities.length}</div>
+              <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#e53935', lineHeight: 1 }}>{cities.length}</div>
               <div style={{ fontSize: '0.68rem', color: 'var(--text)', opacity: 0.55, marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Cities Visited</div>
             </div>
             <div style={{ flex: 1, padding: '14px 0', textAlign: 'center' }}>
-              <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--accent)', lineHeight: 1 }}>{cities.length}</div>
+              <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#e53935', lineHeight: 1 }}>{cities.length}</div>
               <div style={{ fontSize: '0.68rem', color: 'var(--text)', opacity: 0.55, marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Places</div>
             </div>
           </div>

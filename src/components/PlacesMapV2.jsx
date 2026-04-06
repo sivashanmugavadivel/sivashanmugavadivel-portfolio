@@ -78,11 +78,11 @@ function MapContent({ onCountryClick, onTooltip }) {
           onMouseEnter={e => onTooltip({ label, x: e.clientX, y: e.clientY })}
           onMouseLeave={() => onTooltip(null)}
         >
-          <circle r={5} fill="var(--accent)" opacity={0.3}>
+          <circle r={5} fill="#e53935" opacity={0.3}>
             <animate attributeName="r" from="5" to="18" dur="2s" begin={`${i * 0.4}s`} repeatCount="indefinite" />
             <animate attributeName="opacity" from="0.3" to="0" dur="2s" begin={`${i * 0.4}s`} repeatCount="indefinite" />
           </circle>
-          <circle r={5} fill="#fff" stroke="var(--accent)" strokeWidth={2} style={{ cursor: 'pointer' }} />
+          <circle r={5} fill="#fff" stroke="#e53935" strokeWidth={2} style={{ cursor: 'pointer' }} />
         </Marker>
       ))}
     </ComposableMap>
