@@ -167,47 +167,64 @@ export default function CountryModal({ countryId, onClose, zIndex = 1000 }) {
                   </Geographies>
                 )}
 
-                {cities.map(({ label, coords }) => {
+                {cities.map(({ label, coords, home }) => {
                   const r = info.pinR ?? 7
                   const isActive = activePin === label
                   return (
                     <Marker key={label} coordinates={coords}>
-                      {/* Pulse ring */}
-                      <circle r={r} fill="#e53935" opacity={0.25}>
-                        <animate attributeName="r" from={r} to={r * 3} dur="1.8s" repeatCount="indefinite" />
-                        <animate attributeName="opacity" from="0.25" to="0" dur="1.8s" repeatCount="indefinite" />
-                      </circle>
-                      {/* Pin shape: circle head + triangle tail */}
-                      <g
-                        style={{ cursor: 'pointer' }}
-                        onMouseEnter={isMobile ? undefined : () => setActivePin(label)}
-                        onMouseLeave={isMobile ? undefined : () => setActivePin(null)}
-                        onClick={isMobile ? () => setActivePin(isActive ? null : label) : undefined}
-                      >
-                        {/* Pin body (teardrop) */}
-                        <circle cx={0} cy={-r * 1.4} r={r * 1.2} fill="#e53935" stroke="#fff" strokeWidth={r * 0.25} />
-                        {/* Pin tail */}
-                        <polygon
-                          points={`${-r * 0.5},${-r * 0.5} ${r * 0.5},${-r * 0.5} 0,${r * 0.8}`}
-                          fill="#e53935"
-                        />
-                        {/* Inner dot */}
-                        <circle cx={0} cy={-r * 1.4} r={r * 0.45} fill="#fff" opacity={0.9} />
-                      </g>
+                      {home ? (
+                        /* ── Home icon marker ── */
+                        <g
+                          style={{ cursor: 'pointer' }}
+                          onMouseEnter={isMobile ? undefined : () => setActivePin(label)}
+                          onMouseLeave={isMobile ? undefined : () => setActivePin(null)}
+                          onClick={isMobile ? () => setActivePin(isActive ? null : label) : undefined}
+                          transform={`translate(${-r * 1.4}, ${-r * 2.8})`}
+                        >
+                          {/* Glow behind */}
+                          <circle cx={r * 1.4} cy={r * 1.6} r={r * 2} fill="var(--accent)" opacity={0.2} />
+                          {/* House roof */}
+                          <polygon
+                            points={`${r * 1.4},0 0,${r * 1.4} ${r * 2.8},${r * 1.4}`}
+                            fill="var(--accent)" stroke="#fff" strokeWidth={r * 0.2}
+                          />
+                          {/* House body */}
+                          <rect
+                            x={r * 0.4} y={r * 1.4} width={r * 2} height={r * 1.6}
+                            fill="var(--accent)" stroke="#fff" strokeWidth={r * 0.2}
+                          />
+                          {/* Door */}
+                          <rect
+                            x={r * 1.05} y={r * 2.2} width={r * 0.7} height={r * 0.8}
+                            fill="#fff" opacity={0.9}
+                          />
+                        </g>
+                      ) : (
+                        <>
+                          {/* Pulse ring */}
+                          <circle r={r} fill="#e53935" opacity={0.25}>
+                            <animate attributeName="r" from={r} to={r * 3} dur="1.8s" repeatCount="indefinite" />
+                            <animate attributeName="opacity" from="0.25" to="0" dur="1.8s" repeatCount="indefinite" />
+                          </circle>
+                          {/* Pin shape */}
+                          <g
+                            style={{ cursor: 'pointer' }}
+                            onMouseEnter={isMobile ? undefined : () => setActivePin(label)}
+                            onMouseLeave={isMobile ? undefined : () => setActivePin(null)}
+                            onClick={isMobile ? () => setActivePin(isActive ? null : label) : undefined}
+                          >
+                            <circle cx={0} cy={-r * 1.4} r={r * 1.2} fill="#e53935" stroke="#fff" strokeWidth={r * 0.25} />
+                            <polygon points={`${-r * 0.5},${-r * 0.5} ${r * 0.5},${-r * 0.5} 0,${r * 0.8}`} fill="#e53935" />
+                            <circle cx={0} cy={-r * 1.4} r={r * 0.45} fill="#fff" opacity={0.9} />
+                          </g>
+                        </>
+                      )}
                       {/* Label tooltip */}
                       {isActive && (
                         <g transform={`translate(0, ${-r * 4.2})`}>
-                          <rect
-                            x={-50} y={-12} width={100} height={22}
-                            rx={6} fill="rgba(0,0,0,0.82)"
-                            stroke="#e53935" strokeWidth={0.8}
-                          />
-                          <text
-                            textAnchor="middle" y={4}
-                            fill="#fff" fontSize={r * 1.6}
-                            fontFamily="var(--sans)" fontWeight="600"
-                          >
-                            {label}
+                          <rect x={-50} y={-12} width={100} height={22} rx={6} fill="rgba(0,0,0,0.82)" stroke={home ? 'var(--accent)' : '#e53935'} strokeWidth={0.8} />
+                          <text textAnchor="middle" y={4} fill="#fff" fontSize={r * 1.6} fontFamily="var(--sans)" fontWeight="600">
+                            {home ? `🏠 ${label}` : label}
                           </text>
                         </g>
                       )}

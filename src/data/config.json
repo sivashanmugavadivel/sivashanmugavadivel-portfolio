@@ -192,6 +192,7 @@
 
   "visitedCountries": ["356", "840"],
   "places": [
+    { "label": "Kangayam",          "coords": [77.5590, 10.9388],  "country": "356", "home": true },
     { "label": "Chennai",           "coords": [80.2707, 13.0827],  "country": "356" },
     { "label": "Rameswaram",        "coords": [79.3129, 9.2876],   "country": "356" },
     { "label": "Kanniyakumari",     "coords": [77.5385, 8.0883],   "country": "356" },

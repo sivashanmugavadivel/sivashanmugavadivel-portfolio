@@ -98,19 +98,30 @@ function MapContent({ onCountryClick, onTooltip }) {
           })
         }
       </Geographies>
-      {cfg.places.map(({ label, coords }, i) => (
+      {cfg.places.map(({ label, coords, home }, i) => (
         <Marker key={label} coordinates={coords}
           onMouseEnter={e => {
             const rect = e.currentTarget.getBoundingClientRect()
-            onTooltip({ label, x: rect.left + rect.width / 2, y: rect.top })
+            onTooltip({ label: home ? `🏠 ${label}` : label, x: rect.left + rect.width / 2, y: rect.top })
           }}
           onMouseLeave={() => onTooltip(null)}
         >
-          <circle r={5} fill="#e53935" opacity={0.3}>
-            <animate attributeName="r" from="5" to="16" dur="1.8s" begin={`${i * 0.3}s`} repeatCount="indefinite" />
-            <animate attributeName="opacity" from="0.3" to="0" dur="1.8s" begin={`${i * 0.3}s`} repeatCount="indefinite" />
-          </circle>
-          <circle r={5} fill="#fff" stroke="#e53935" strokeWidth={2} style={{ cursor: 'pointer' }} />
+          {home ? (
+            /* Home icon on world map */
+            <g style={{ cursor: 'pointer' }} transform="translate(-6, -12)">
+              <polygon points="6,0 0,6 12,6" fill="var(--accent)" stroke="#fff" strokeWidth={1} />
+              <rect x={2} y={6} width={8} height={6} fill="var(--accent)" stroke="#fff" strokeWidth={1} />
+              <rect x={4.5} y={8.5} width={3} height={3.5} fill="#fff" opacity={0.9} />
+            </g>
+          ) : (
+            <>
+              <circle r={5} fill="#e53935" opacity={0.3}>
+                <animate attributeName="r" from="5" to="16" dur="1.8s" begin={`${i * 0.3}s`} repeatCount="indefinite" />
+                <animate attributeName="opacity" from="0.3" to="0" dur="1.8s" begin={`${i * 0.3}s`} repeatCount="indefinite" />
+              </circle>
+              <circle r={5} fill="#fff" stroke="#e53935" strokeWidth={2} style={{ cursor: 'pointer' }} />
+            </>
+          )}
         </Marker>
       ))}
     </ComposableMap>
@@ -295,9 +306,10 @@ export default function PlacesMapV1() {
         document.body
       )}
 
-      {/* CountryModal in normal (non-expanded) mode */}
-      {!expanded && selectedCountry && (
-        <CountryModal countryId={selectedCountry} onClose={() => setSelectedCountry(null)} />
+      {/* CountryModal in normal (non-expanded) mode — portalled to escape overflow:hidden */}
+      {!expanded && selectedCountry && createPortal(
+        <CountryModal countryId={selectedCountry} onClose={() => setSelectedCountry(null)} zIndex={10000} />,
+        document.body
       )}
     </motion.div>
   )

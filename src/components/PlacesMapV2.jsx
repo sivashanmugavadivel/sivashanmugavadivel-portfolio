@@ -155,16 +155,26 @@ export default function PlacesMapV2() {
                   })
                 }
               </Geographies>
-              {cfg.places.map(({ label, coords }, i) => (
+              {cfg.places.map(({ label, coords, home }, i) => (
                 <Marker key={label} coordinates={coords}
-                  onMouseEnter={e => setTooltip({ label, x: e.clientX, y: e.clientY })}
+                  onMouseEnter={e => setTooltip({ label: home ? `🏠 ${label}` : label, x: e.clientX, y: e.clientY })}
                   onMouseLeave={() => setTooltip(null)}
                 >
-                  <circle r={5} fill="#e53935" opacity={0.3}>
-                    <animate attributeName="r" from="5" to="18" dur="2s" begin={`${i * 0.4}s`} repeatCount="indefinite" />
-                    <animate attributeName="opacity" from="0.3" to="0" dur="2s" begin={`${i * 0.4}s`} repeatCount="indefinite" />
-                  </circle>
-                  <circle r={5} fill="#fff" stroke="#e53935" strokeWidth={2} style={{ cursor: 'pointer' }} />
+                  {home ? (
+                    <g style={{ cursor: 'pointer' }} transform="translate(-6, -12)">
+                      <polygon points="6,0 0,6 12,6" fill="var(--accent)" stroke="#fff" strokeWidth={1} />
+                      <rect x={2} y={6} width={8} height={6} fill="var(--accent)" stroke="#fff" strokeWidth={1} />
+                      <rect x={4.5} y={8.5} width={3} height={3.5} fill="#fff" opacity={0.9} />
+                    </g>
+                  ) : (
+                    <>
+                      <circle r={5} fill="#e53935" opacity={0.3}>
+                        <animate attributeName="r" from="5" to="18" dur="2s" begin={`${i * 0.4}s`} repeatCount="indefinite" />
+                        <animate attributeName="opacity" from="0.3" to="0" dur="2s" begin={`${i * 0.4}s`} repeatCount="indefinite" />
+                      </circle>
+                      <circle r={5} fill="#fff" stroke="#e53935" strokeWidth={2} style={{ cursor: 'pointer' }} />
+                    </>
+                  )}
                 </Marker>
               ))}
             </ComposableMap>
