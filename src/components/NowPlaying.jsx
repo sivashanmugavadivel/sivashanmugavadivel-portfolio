@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
-import { motion, useInView } from 'framer-motion'
+import { createPortal } from 'react-dom'
+import { motion, useInView, AnimatePresence } from 'framer-motion'
 import cfg from '../data/config.json'
 
 function extractVideoId(url) {
@@ -52,12 +53,85 @@ function ArrowIcon() {
 const { nowPlaying, playlistLabel, playlistUrl } = cfg.music
 const videoId = extractVideoId(nowPlaying.listenUrl)
 const thumb = videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : null
+const highlights = nowPlaying.highlights || []
 
 function formatTime(sec) {
   if (!sec || isNaN(sec) || sec < 0) return '0:00'
   const m = Math.floor(sec / 60)
   const s = Math.floor(sec % 60)
   return `${m}:${s.toString().padStart(2, '0')}`
+}
+
+const HEART_EMOJIS = ['❤️', '🩷', '💜', '🤍', '💖', '💗', '💓', '💝']
+
+function spawnHeart(id) {
+  return {
+    id,
+    left:  5 + Math.random() * 90,
+    size:  18 + Math.random() * 22,
+    dur:   3.2 + Math.random() * 1.6,
+    sway:  (Math.random() - 0.5) * 130,
+    rot:   (Math.random() - 0.5) * 40,
+    emoji: HEART_EMOJIS[Math.floor(Math.random() * HEART_EMOJIS.length)],
+  }
+}
+
+// Props are stable — computed once at spawn time, never recalculated
+function FloatingHeart({ heart, onDone }) {
+  const { left, size, dur, sway, rot, emoji } = heart
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 0, x: 0, scale: 0.4, rotate: rot }}
+      animate={{ opacity: [0, 1, 1, 0], y: -(window.innerHeight * 0.80), x: sway, scale: [0.4, 1.1, 0.95, 0.7] }}
+      transition={{ duration: dur, ease: 'easeOut' }}
+      onAnimationComplete={onDone}
+      style={{
+        position: 'fixed',
+        bottom: 30,
+        left: `${left}%`,
+        fontSize: size,
+        pointerEvents: 'none',
+        zIndex: 999998,
+        lineHeight: 1,
+        userSelect: 'none',
+        willChange: 'transform, opacity',
+      }}
+    >
+      {emoji}
+    </motion.div>
+  )
+}
+
+function HeartShower({ active }) {
+  const [hearts, setHearts] = useState([])
+  const intervalRef = useRef(null)
+  const idRef = useRef(0)
+
+  useEffect(() => {
+    if (active) {
+      intervalRef.current = setInterval(() => {
+        setHearts(prev => [...prev, spawnHeart(++idRef.current)])
+      }, 500)
+    } else {
+      clearInterval(intervalRef.current)
+    }
+    return () => clearInterval(intervalRef.current)
+  }, [active])
+
+  function remove(id) {
+    setHearts(prev => prev.filter(h => h.id !== id))
+  }
+
+  if (hearts.length === 0) return null
+
+  return createPortal(
+    <>
+      {hearts.map(heart => (
+        <FloatingHeart key={heart.id} heart={heart} onDone={() => remove(heart.id)} />
+      ))}
+    </>,
+    document.body
+  )
 }
 
 function PlaylistRow() {
@@ -216,6 +290,11 @@ export default function NowPlaying() {
   const displayTime = dragging ? dragValue : currentTime
   const progress = duration > 0 ? displayTime / duration : 0
 
+  // Find if current time is inside a highlight
+  const activeHighlight = duration > 0
+    ? highlights.find(h => displayTime >= h.start && displayTime <= h.end)
+    : null
+
   return (
     <motion.div
       ref={ref}
@@ -223,6 +302,7 @@ export default function NowPlaying() {
       animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
       transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
     >
+      <HeartShower active={!!activeHighlight && playing} />
       {/* Hidden YT player div — YT.Player mounts here */}
       <div
         ref={containerRef}
@@ -269,6 +349,27 @@ export default function NowPlaying() {
 
         {/* Controls */}
         <div style={{ padding: '14px 20px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {/* Active highlight label */}
+          {activeHighlight && (
+            <motion.div
+              key={activeHighlight.label}
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 4 }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                fontSize: '0.72rem', color: 'var(--accent)', fontWeight: 600,
+                marginBottom: -4,
+              }}
+            >
+              <motion.span
+                animate={{ scale: [1, 1.3, 1] }}
+                transition={{ duration: 0.8, repeat: Infinity, ease: 'easeInOut' }}
+              >❤️</motion.span>
+              {activeHighlight.label}
+            </motion.div>
+          )}
+
           {/* Progress bar + times */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontSize: '0.7rem', color: 'var(--text)', opacity: 0.5, minWidth: 32, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
@@ -287,20 +388,48 @@ export default function NowPlaying() {
                 touchAction: 'none',
               }}
             >
+              {/* Highlight segments — rendered behind the playhead */}
+              {duration > 0 && highlights.map((h, i) => {
+                const left = (h.start / duration) * 100
+                const width = ((h.end - h.start) / duration) * 100
+                return (
+                  <div
+                    key={i}
+                    title={h.label}
+                    style={{
+                      position: 'absolute',
+                      left: `${left}%`,
+                      width: `${width}%`,
+                      height: '100%',
+                      borderRadius: 6,
+                      background: 'color-mix(in srgb, var(--accent) 55%, #ff6b6b)',
+                      boxShadow: '0 0 6px color-mix(in srgb, var(--accent) 60%, transparent)',
+                      opacity: 0.55,
+                      pointerEvents: 'none',
+                    }}
+                  />
+                )
+              })}
+
+              {/* Played fill */}
               <div style={{
                 height: '100%', borderRadius: 6,
                 background: 'var(--accent)',
                 width: `${progress * 100}%`,
                 pointerEvents: 'none',
               }} />
+
+              {/* Playhead thumb */}
               <div style={{
                 position: 'absolute', top: '50%',
                 left: `${progress * 100}%`,
                 transform: 'translate(-50%, -50%)',
                 width: 14, height: 14, borderRadius: '50%',
-                background: 'var(--accent)',
+                background: activeHighlight ? 'color-mix(in srgb, var(--accent) 55%, #ff6b6b)' : 'var(--accent)',
                 border: '2px solid var(--card-bg)',
-                boxShadow: '0 1px 6px rgba(0,0,0,0.3)',
+                boxShadow: activeHighlight
+                  ? '0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent)'
+                  : '0 1px 6px rgba(0,0,0,0.3)',
                 pointerEvents: 'none',
                 transition: dragging ? 'none' : 'left 0.1s linear',
               }} />
