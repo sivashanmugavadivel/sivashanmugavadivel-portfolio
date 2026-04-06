@@ -8,7 +8,9 @@ const MESSAGES = {
   secret:      "You know the password 🔐 Welcome, insider!",
 }
 
+// Temporarily disabled — re-enable by removing the early return
 export default function EasterEgg() {
+  return null
   const [toast, setToast] = useState(null)
   const keyBuffer = { current: '' }
 
