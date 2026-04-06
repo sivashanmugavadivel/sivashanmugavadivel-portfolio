@@ -69,7 +69,7 @@ function StatItem({ value, label, delay, inView }) {
 
 function MapContent({ onCountryClick, onTooltip }) {
   return (
-    <ComposableMap projectionConfig={{ scale: 147, center: [20, 10] }} style={{ width: '100%', height: '100%' }}>
+    <ComposableMap projectionConfig={{ scale: 147, center: [20, 10] }} style={{ width: '100%', height: '100%', display: 'block' }}>
       <Geographies geography="https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json">
         {({ geographies }) =>
           geographies.map(geo => {
@@ -217,7 +217,7 @@ export default function PlacesMapV1() {
         </button>
       </div>
 
-      {/* Fullscreen expanded overlay */}
+      {/* Fullscreen expanded overlay — map only, no header */}
       <AnimatePresence>
         {expanded && (
           <motion.div
@@ -229,41 +229,33 @@ export default function PlacesMapV1() {
             style={{
               position: 'fixed', inset: 0, zIndex: 900,
               background: 'linear-gradient(135deg, rgba(10,10,20,0.98) 0%, rgba(20,20,40,0.96) 100%)',
-              display: 'flex', flexDirection: 'column',
+              overflow: 'hidden',
             }}
           >
-            {/* Top bar */}
-            <div style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '16px 24px', borderBottom: '1px solid rgba(255,255,255,0.07)',
-              flexShrink: 0,
-            }}>
-              <div>
-                <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--accent)', opacity: 0.8 }}>Travel Log</div>
-                <div style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', marginTop: 2 }}>Where I've Been</div>
-              </div>
-              <button
-                onClick={() => setExpanded(false)}
-                style={{
-                  background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)',
-                  borderRadius: 8, padding: '6px 12px', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  color: 'rgba(255,255,255,0.8)', fontSize: '0.72rem', fontWeight: 500,
-                }}
-              >
-                <CollapseIcon /> Collapse
-              </button>
-            </div>
-
-            {/* Map fills remaining height */}
+            {/* Map fills entire screen */}
             <motion.div
               initial={{ scale: 0.97, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
-              style={{ flex: 1, overflow: 'hidden' }}
+              style={{ position: 'absolute', inset: 0 }}
             >
               <MapContent onCountryClick={setSelectedCountry} onTooltip={setTooltip} />
             </motion.div>
+
+            {/* Floating collapse button — top right */}
+            <button
+              onClick={() => setExpanded(false)}
+              style={{
+                position: 'absolute', top: 16, right: 16, zIndex: 10,
+                background: 'rgba(0,0,0,0.55)', border: '1px solid rgba(255,255,255,0.18)',
+                borderRadius: 8, padding: '7px 14px', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: 7,
+                color: 'rgba(255,255,255,0.9)', fontSize: '0.75rem', fontWeight: 500,
+                backdropFilter: 'blur(10px)',
+              }}
+            >
+              <CollapseIcon /> Collapse
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
