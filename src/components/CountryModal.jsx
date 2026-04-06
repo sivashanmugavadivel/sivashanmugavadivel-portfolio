@@ -22,7 +22,9 @@ export default function CountryModal({ countryId, onClose }) {
   const info = cfg.countryInfo[countryId]
   const cities = cfg.places.filter(p => p.country === countryId)
   const [hoveredState, setHoveredState] = useState(null)
+  const [activePin, setActivePin] = useState(null)
   const statesUrl = STATE_GEO[countryId]
+  const isMobile = window.matchMedia('(hover: none)').matches
 
   useEffect(() => {
     function onKey(e) { if (e.key === 'Escape') onClose() }
@@ -165,15 +167,53 @@ export default function CountryModal({ countryId, onClose }) {
                   </Geographies>
                 )}
 
-                {cities.map(({ label, coords }) => (
-                  <Marker key={label} coordinates={coords}>
-                    <circle r={info.pinR ?? 8} fill="var(--accent)" opacity={0.3}>
-                      <animate attributeName="r" from={info.pinR ?? 8} to={(info.pinR ?? 8) * 2.5} dur="1.8s" repeatCount="indefinite" />
-                      <animate attributeName="opacity" from="0.3" to="0" dur="1.8s" repeatCount="indefinite" />
-                    </circle>
-                    <circle r={info.pinR ?? 8} fill="#fff" stroke="var(--accent)" strokeWidth={Math.max(2, (info.pinR ?? 8) * 0.4)} />
-                  </Marker>
-                ))}
+                {cities.map(({ label, coords }) => {
+                  const r = info.pinR ?? 7
+                  const isActive = activePin === label
+                  return (
+                    <Marker key={label} coordinates={coords}>
+                      {/* Pulse ring */}
+                      <circle r={r} fill="var(--accent)" opacity={0.25}>
+                        <animate attributeName="r" from={r} to={r * 3} dur="1.8s" repeatCount="indefinite" />
+                        <animate attributeName="opacity" from="0.25" to="0" dur="1.8s" repeatCount="indefinite" />
+                      </circle>
+                      {/* Pin shape: circle head + triangle tail */}
+                      <g
+                        style={{ cursor: 'pointer' }}
+                        onMouseEnter={isMobile ? undefined : () => setActivePin(label)}
+                        onMouseLeave={isMobile ? undefined : () => setActivePin(null)}
+                        onClick={isMobile ? () => setActivePin(isActive ? null : label) : undefined}
+                      >
+                        {/* Pin body (teardrop) */}
+                        <circle cx={0} cy={-r * 1.4} r={r * 1.2} fill="var(--accent)" stroke="#fff" strokeWidth={r * 0.25} />
+                        {/* Pin tail */}
+                        <polygon
+                          points={`${-r * 0.5},${-r * 0.5} ${r * 0.5},${-r * 0.5} 0,${r * 0.8}`}
+                          fill="var(--accent)"
+                        />
+                        {/* Inner dot */}
+                        <circle cx={0} cy={-r * 1.4} r={r * 0.45} fill="#fff" opacity={0.9} />
+                      </g>
+                      {/* Label tooltip */}
+                      {isActive && (
+                        <g transform={`translate(0, ${-r * 4.2})`}>
+                          <rect
+                            x={-50} y={-12} width={100} height={22}
+                            rx={6} fill="rgba(0,0,0,0.82)"
+                            stroke="var(--accent)" strokeWidth={0.8}
+                          />
+                          <text
+                            textAnchor="middle" y={4}
+                            fill="#fff" fontSize={r * 1.6}
+                            fontFamily="var(--sans)" fontWeight="600"
+                          >
+                            {label}
+                          </text>
+                        </g>
+                      )}
+                    </Marker>
+                  )
+                })}
               </ComposableMap>
             </div>
           </div>
