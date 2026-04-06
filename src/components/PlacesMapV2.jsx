@@ -1,6 +1,6 @@
 /**
  * DESIGN V2 — "Passport Card" (Mobile)
- * Map on top, stats below. Expand button to go fullscreen.
+ * Map on top, stats below. Expand button to go fullscreen landscape.
  */
 import { useState, useRef, useEffect } from 'react'
 import { motion, useInView, AnimatePresence } from 'framer-motion'
@@ -47,7 +47,7 @@ function MapContent({ onCountryClick, onTooltip }) {
   return (
     <ComposableMap
       projectionConfig={{ scale: 147, center: [20, 10] }}
-      style={{ width: '100%', height: 'auto', display: 'block' }}
+      style={{ width: '100%', height: '100%', display: 'block' }}
     >
       <Geographies geography={GEO_URL}>
         {({ geographies }) =>
@@ -100,13 +100,11 @@ export default function PlacesMapV2() {
   const placesCount = useCountUp(cfg.places.length, inView)
   const continentsCount = useCountUp(3, inView)
 
-  // Lock body scroll when expanded
   useEffect(() => {
     document.body.style.overflow = expanded ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
   }, [expanded])
 
-  // ESC to collapse
   useEffect(() => {
     function onKey(e) { if (e.key === 'Escape') setExpanded(false) }
     window.addEventListener('keydown', onKey)
@@ -119,22 +117,6 @@ export default function PlacesMapV2() {
     { value: continentsCount, label: 'Continents', icon: '✈️' },
   ]
 
-  const expandBtn = (
-    <button
-      onClick={() => setExpanded(e => !e)}
-      style={{
-        position: 'absolute', top: 12, right: 12, zIndex: 30,
-        background: 'var(--card-bg)', border: '1px solid var(--border)',
-        borderRadius: 8, width: 34, height: 34, cursor: 'pointer',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        color: 'var(--text-h)', backdropFilter: 'blur(8px)',
-      }}
-      title={expanded ? 'Collapse map' : 'Expand map'}
-    >
-      {expanded ? <CollapseIcon /> : <ExpandIcon />}
-    </button>
-  )
-
   return (
     <motion.div
       ref={ref}
@@ -144,13 +126,67 @@ export default function PlacesMapV2() {
     >
       {/* Normal (collapsed) view */}
       <div style={{ borderRadius: 20, overflow: 'hidden', border: '1px solid var(--border)', background: 'var(--bg-secondary)' }}>
-        {/* Map */}
         <div style={{ position: 'relative' }}>
-          <MapContent onCountryClick={setSelectedCountry} onTooltip={setTooltip} />
-          {expandBtn}
-          {/* Click hint */}
+          {/* MapContent needs fixed height in collapsed view for auto height */}
+          <div style={{ width: '100%' }}>
+            <ComposableMap
+              projectionConfig={{ scale: 147, center: [20, 10] }}
+              style={{ width: '100%', height: 'auto', display: 'block' }}
+            >
+              <Geographies geography={GEO_URL}>
+                {({ geographies }) =>
+                  geographies.map(geo => {
+                    const visited = cfg.visitedCountries.includes(String(geo.id))
+                    return (
+                      <Geography
+                        key={geo.rsmKey}
+                        geography={geo}
+                        fill={visited ? 'var(--accent)' : 'var(--bg)'}
+                        stroke="var(--border)"
+                        strokeWidth={0.4}
+                        onClick={visited ? () => setSelectedCountry(String(geo.id)) : undefined}
+                        style={{
+                          default: { outline: 'none', opacity: visited ? 0.9 : 1, cursor: visited ? 'pointer' : 'default' },
+                          hover:   { outline: 'none', opacity: 1, cursor: visited ? 'pointer' : 'default' },
+                          pressed: { outline: 'none' },
+                        }}
+                      />
+                    )
+                  })
+                }
+              </Geographies>
+              {cfg.places.map(({ label, coords }, i) => (
+                <Marker key={label} coordinates={coords}
+                  onMouseEnter={e => setTooltip({ label, x: e.clientX, y: e.clientY })}
+                  onMouseLeave={() => setTooltip(null)}
+                >
+                  <circle r={5} fill="#e53935" opacity={0.3}>
+                    <animate attributeName="r" from="5" to="18" dur="2s" begin={`${i * 0.4}s`} repeatCount="indefinite" />
+                    <animate attributeName="opacity" from="0.3" to="0" dur="2s" begin={`${i * 0.4}s`} repeatCount="indefinite" />
+                  </circle>
+                  <circle r={5} fill="#fff" stroke="#e53935" strokeWidth={2} style={{ cursor: 'pointer' }} />
+                </Marker>
+              ))}
+            </ComposableMap>
+          </div>
+
+          {/* Expand button */}
+          <button
+            onClick={() => setExpanded(true)}
+            style={{
+              position: 'absolute', top: 10, right: 10, zIndex: 30,
+              background: 'var(--card-bg)', border: '1px solid var(--border)',
+              borderRadius: 8, width: 34, height: 34, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: 'var(--text-h)', backdropFilter: 'blur(8px)',
+            }}
+          >
+            <ExpandIcon />
+          </button>
+
+          {/* Tap hint */}
           <div style={{
-            position: 'absolute', top: 12, left: 12,
+            position: 'absolute', top: 10, left: 10,
             background: 'var(--card-bg)', border: '1px solid var(--border)',
             borderRadius: 999, padding: '4px 10px',
             fontSize: '0.68rem', color: 'var(--text)', opacity: 0.75,
@@ -161,11 +197,7 @@ export default function PlacesMapV2() {
         </div>
 
         {/* Stats — BELOW map */}
-        <div style={{
-          display: 'flex',
-          borderTop: '1px solid var(--border)',
-          background: 'var(--card-bg)',
-        }}>
+        <div style={{ display: 'flex', borderTop: '1px solid var(--border)', background: 'var(--card-bg)' }}>
           {stats.map(({ value, label, icon }, i) => (
             <motion.div
               key={label}
@@ -173,9 +205,7 @@ export default function PlacesMapV2() {
               animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
               transition={{ duration: 0.5, delay: 0.3 + i * 0.1 }}
               style={{
-                flex: 1,
-                padding: '14px 8px',
-                textAlign: 'center',
+                flex: 1, padding: '14px 8px', textAlign: 'center',
                 borderRight: i < stats.length - 1 ? '1px solid var(--border)' : 'none',
               }}
             >
@@ -187,7 +217,7 @@ export default function PlacesMapV2() {
         </div>
       </div>
 
-      {/* Fullscreen expanded overlay — rotated to landscape on mobile */}
+      {/* Fullscreen landscape overlay */}
       <AnimatePresence>
         {expanded && (
           <motion.div
@@ -197,80 +227,47 @@ export default function PlacesMapV2() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
             style={{
-              // Rotate the entire overlay 90° so portrait phone becomes landscape map
               position: 'fixed',
-              top: 0, left: 0,
-              width: '100vh',   // swapped: use viewport height as width
-              height: '100vw',  // swapped: use viewport width as height
+              // Swap width/height and rotate to fake landscape
+              top: 0,
+              left: 0,
+              width: '100vh',
+              height: '100vw',
               transform: 'rotate(90deg) translateY(-100%)',
               transformOrigin: 'top left',
               zIndex: 900,
               background: 'var(--bg)',
-              display: 'flex',
-              flexDirection: 'column',
+              overflow: 'hidden',
             }}
           >
-            {/* Close button — counter-rotated so it reads normally */}
-            <button
-              onClick={() => setExpanded(false)}
-              style={{
-                position: 'absolute', top: 12, right: 12, zIndex: 20,
-                background: 'var(--card-bg)', border: '1px solid var(--border)',
-                borderRadius: 8, width: 36, height: 36, cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: 'var(--text-h)', backdropFilter: 'blur(8px)',
-                transform: 'rotate(-90deg)',
-              }}
-              title="Collapse"
-            >
-              <CollapseIcon />
-            </button>
-
-            {/* Tap hint */}
-            <div style={{
-              position: 'absolute', top: 12, left: 12, zIndex: 20,
-              background: 'var(--card-bg)', border: '1px solid var(--border)',
-              borderRadius: 999, padding: '4px 10px',
-              fontSize: '0.68rem', color: 'var(--text)', opacity: 0.75,
-              backdropFilter: 'blur(8px)',
-              transform: 'rotate(-90deg)',
-              transformOrigin: 'top left',
-              whiteSpace: 'nowrap',
-            }}>
-              Tap a country
-            </div>
-
-            {/* Map — fills the landscape area */}
+            {/* Map fills entire rotated space */}
             <motion.div
-              initial={{ scale: 0.97, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
+              initial={{ opacity: 0, scale: 0.97 }}
+              animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
-              style={{ flex: 1, overflow: 'hidden', display: 'flex', alignItems: 'center' }}
+              style={{ position: 'absolute', inset: 0 }}
             >
               <MapContent onCountryClick={setSelectedCountry} onTooltip={setTooltip} />
             </motion.div>
 
-            {/* Stats row at bottom (visually right side in landscape) */}
-            <div style={{
-              display: 'flex',
-              borderTop: '1px solid var(--border)',
-              background: 'var(--card-bg)',
-              flexShrink: 0,
-            }}>
-              {stats.map(({ value, label, icon }, i) => (
-                <div
-                  key={label}
-                  style={{
-                    flex: 1, padding: '10px 8px', textAlign: 'center',
-                    borderRight: i < stats.length - 1 ? '1px solid var(--border)' : 'none',
-                  }}
-                >
-                  <div style={{ fontSize: '0.9rem', marginBottom: 2 }}>{icon}</div>
-                  <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--accent)', lineHeight: 1 }}>{value}</div>
-                  <div style={{ fontSize: '0.6rem', color: 'var(--text)', opacity: 0.6, marginTop: 2, textTransform: 'uppercase', letterSpacing: '0.07em' }}>{label}</div>
-                </div>
-              ))}
-            </div>
+            {/* Close button — bottom-left in rotated frame = top-left in landscape */}
+            <button
+              onClick={() => setExpanded(false)}
+              style={{
+                position: 'absolute',
+                top: 12, left: 12,
+                zIndex: 20,
+                background: 'rgba(0,0,0,0.6)',
+                border: '1px solid rgba(255,255,255,0.2)',
+                borderRadius: 8, width: 38, height: 38, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: '#fff',
+                // Counter-rotate so icon reads upright in landscape
+                transform: 'rotate(-90deg)',
+              }}
+            >
+              <CollapseIcon />
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
