@@ -178,9 +178,9 @@ export default function CountryModal({ countryId, onClose, zIndex = 1000 }) {
                         /* ── Home icon marker ── */
                         <g
                           style={{ cursor: 'pointer' }}
-                          onMouseEnter={isMobile ? undefined : e => { setPinTooltip({ label: `🏠 ${label}`, x: e.clientX, y: e.clientY }); setActivePin(label) }}
-                          onMouseLeave={isMobile ? undefined : () => { setPinTooltip(null); setActivePin(null) }}
-                          onClick={isMobile ? e => { const next = isActive ? null : label; setActivePin(next); setPinTooltip(next ? { label: `🏠 ${label}`, x: e.clientX, y: e.clientY } : null) } : undefined}
+                          onMouseEnter={e => { setPinTooltip({ label: `🏠 ${label}`, x: e.clientX, y: e.clientY }); setActivePin(label) }}
+                          onMouseLeave={() => { setPinTooltip(null); setActivePin(null) }}
+                          onClick={e => { const next = isActive ? null : label; setActivePin(next); setPinTooltip(next ? { label: `🏠 ${label}`, x: e.clientX, y: e.clientY } : null) }}
                           transform={`translate(${-r * 2}, ${-r * 4.5}) scale(${r * 0.28})`}
                         >
                           {/* Glow */}
@@ -194,17 +194,17 @@ export default function CountryModal({ countryId, onClose, zIndex = 1000 }) {
                         </g>
                       ) : (
                         <>
-                          {/* Pulse ring */}
-                          <circle r={r} fill="#e53935" opacity={0.25}>
+                          {/* Pulse ring — no pointer events so it doesn't block hover */}
+                          <circle r={r} fill="#e53935" opacity={0.25} style={{ pointerEvents: 'none' }}>
                             <animate attributeName="r" from={r} to={r * 3} dur="1.8s" repeatCount="indefinite" />
                             <animate attributeName="opacity" from="0.25" to="0" dur="1.8s" repeatCount="indefinite" />
                           </circle>
                           {/* Pin shape */}
                           <g
                             style={{ cursor: 'pointer' }}
-                            onMouseEnter={isMobile ? undefined : e => { setPinTooltip({ label, x: e.clientX, y: e.clientY }); setActivePin(label) }}
-                            onMouseLeave={isMobile ? undefined : () => { setPinTooltip(null); setActivePin(null) }}
-                            onClick={isMobile ? e => { const next = isActive ? null : label; setActivePin(next); setPinTooltip(next ? { label, x: e.clientX, y: e.clientY } : null) } : undefined}
+                            onMouseEnter={e => { setPinTooltip({ label, x: e.clientX, y: e.clientY }); setActivePin(label) }}
+                            onMouseLeave={() => { setPinTooltip(null); setActivePin(null) }}
+                            onClick={e => { const next = isActive ? null : label; setActivePin(next); setPinTooltip(next ? { label, x: e.clientX, y: e.clientY } : null) }}
                           >
                             <circle cx={0} cy={-r * 1.4} r={r * 1.2} fill="#e53935" stroke="#fff" strokeWidth={r * 0.25} />
                             <polygon points={`${-r * 0.5},${-r * 0.5} ${r * 0.5},${-r * 0.5} 0,${r * 0.8}`} fill="#e53935" />
