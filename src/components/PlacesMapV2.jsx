@@ -187,7 +187,7 @@ export default function PlacesMapV2() {
         </div>
       </div>
 
-      {/* Fullscreen expanded overlay */}
+      {/* Fullscreen expanded overlay — rotated to landscape on mobile */}
       <AnimatePresence>
         {expanded && (
           <motion.div
@@ -197,48 +197,77 @@ export default function PlacesMapV2() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
             style={{
-              position: 'fixed', inset: 0, zIndex: 900,
+              // Rotate the entire overlay 90° so portrait phone becomes landscape map
+              position: 'fixed',
+              top: 0, left: 0,
+              width: '100vh',   // swapped: use viewport height as width
+              height: '100vw',  // swapped: use viewport width as height
+              transform: 'rotate(90deg) translateY(-100%)',
+              transformOrigin: 'top left',
+              zIndex: 900,
               background: 'var(--bg)',
-              display: 'flex', flexDirection: 'column',
+              display: 'flex',
+              flexDirection: 'column',
             }}
           >
+            {/* Close button — counter-rotated so it reads normally */}
+            <button
+              onClick={() => setExpanded(false)}
+              style={{
+                position: 'absolute', top: 12, right: 12, zIndex: 20,
+                background: 'var(--card-bg)', border: '1px solid var(--border)',
+                borderRadius: 8, width: 36, height: 36, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: 'var(--text-h)', backdropFilter: 'blur(8px)',
+                transform: 'rotate(-90deg)',
+              }}
+              title="Collapse"
+            >
+              <CollapseIcon />
+            </button>
+
+            {/* Tap hint */}
+            <div style={{
+              position: 'absolute', top: 12, left: 12, zIndex: 20,
+              background: 'var(--card-bg)', border: '1px solid var(--border)',
+              borderRadius: 999, padding: '4px 10px',
+              fontSize: '0.68rem', color: 'var(--text)', opacity: 0.75,
+              backdropFilter: 'blur(8px)',
+              transform: 'rotate(-90deg)',
+              transformOrigin: 'top left',
+              whiteSpace: 'nowrap',
+            }}>
+              Tap a country
+            </div>
+
+            {/* Map — fills the landscape area */}
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
+              initial={{ scale: 0.97, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
               transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
-              style={{ flex: 1, position: 'relative', overflow: 'hidden' }}
+              style={{ flex: 1, overflow: 'hidden', display: 'flex', alignItems: 'center' }}
             >
               <MapContent onCountryClick={setSelectedCountry} onTooltip={setTooltip} />
-              {expandBtn}
-              <div style={{
-                position: 'absolute', top: 12, left: 12,
-                background: 'var(--card-bg)', border: '1px solid var(--border)',
-                borderRadius: 999, padding: '4px 10px',
-                fontSize: '0.68rem', color: 'var(--text)', opacity: 0.75,
-                backdropFilter: 'blur(8px)',
-              }}>
-                Tap a country
-              </div>
             </motion.div>
 
-            {/* Stats row at bottom in expanded view */}
+            {/* Stats row at bottom (visually right side in landscape) */}
             <div style={{
               display: 'flex',
               borderTop: '1px solid var(--border)',
               background: 'var(--card-bg)',
+              flexShrink: 0,
             }}>
               {stats.map(({ value, label, icon }, i) => (
                 <div
                   key={label}
                   style={{
-                    flex: 1, padding: '12px 8px', textAlign: 'center',
+                    flex: 1, padding: '10px 8px', textAlign: 'center',
                     borderRight: i < stats.length - 1 ? '1px solid var(--border)' : 'none',
                   }}
                 >
-                  <div style={{ fontSize: '1rem', marginBottom: 2 }}>{icon}</div>
-                  <div style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--accent)', lineHeight: 1 }}>{value}</div>
-                  <div style={{ fontSize: '0.62rem', color: 'var(--text)', opacity: 0.6, marginTop: 3, textTransform: 'uppercase', letterSpacing: '0.07em' }}>{label}</div>
+                  <div style={{ fontSize: '0.9rem', marginBottom: 2 }}>{icon}</div>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--accent)', lineHeight: 1 }}>{value}</div>
+                  <div style={{ fontSize: '0.6rem', color: 'var(--text)', opacity: 0.6, marginTop: 2, textTransform: 'uppercase', letterSpacing: '0.07em' }}>{label}</div>
                 </div>
               ))}
             </div>
