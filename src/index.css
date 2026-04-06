@@ -319,3 +319,12 @@ code {
   border-radius: 2px;
   transform-origin: left;
 }
+
+/* Travel section responsive layout */
+.travel-desktop { display: block; }
+.travel-mobile  { display: none;  }
+
+@media (max-width: 768px) {
+  .travel-desktop { display: none;  }
+  .travel-mobile  { display: block; }
+}
