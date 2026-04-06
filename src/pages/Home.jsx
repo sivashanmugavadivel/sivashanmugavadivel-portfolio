@@ -746,7 +746,7 @@ function PlacesMapSection() {
             </p>
           </Reveal>
         {/* Desktop: Command Center (V1) */}
-        <div style={{ width: '90vw', marginLeft: 'calc(50% - 45vw)' }}>
+        <div className="travel-desktop">
           <PlacesMapV1 />
         </div>
         {/* Mobile: Passport Card (V2) */}
