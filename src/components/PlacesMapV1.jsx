@@ -4,9 +4,10 @@
  * map fills the right. Neon glow on visited countries. Cinematic entrance.
  */
 import { useState, useEffect, useRef } from 'react'
-import { motion, useInView, AnimatePresence } from 'framer-motion'
+import { motion, useInView } from 'framer-motion'
 import { ComposableMap, Geographies, Geography, Marker } from 'react-simple-maps'
 import cfg from '../data/config.json'
+import CountryModal from './CountryModal'
 
 const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'
 
@@ -186,6 +187,10 @@ export default function PlacesMapV1() {
         }}>
           📍 {tooltip.label}
         </div>
+      )}
+
+      {selectedCountry && (
+        <CountryModal countryId={selectedCountry} onClose={() => setSelectedCountry(null)} />
       )}
     </motion.div>
   )

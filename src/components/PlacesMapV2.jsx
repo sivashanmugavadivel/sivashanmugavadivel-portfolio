@@ -8,6 +8,7 @@ import { useState, useRef, useEffect } from 'react'
 import { motion, useInView } from 'framer-motion'
 import { ComposableMap, Geographies, Geography, Marker } from 'react-simple-maps'
 import cfg from '../data/config.json'
+import CountryModal from './CountryModal'
 
 const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'
 
@@ -30,6 +31,7 @@ function useCountUp(target, inView) {
 
 export default function PlacesMapV2() {
   const [tooltip, setTooltip] = useState(null)
+  const [selectedCountry, setSelectedCountry] = useState(null)
   const ref = useRef(null)
   const inView = useInView(ref, { once: false, margin: '-80px' })
 
@@ -68,6 +70,7 @@ export default function PlacesMapV2() {
                     fill={visited ? 'var(--accent)' : 'var(--bg)'}
                     stroke="var(--border)"
                     strokeWidth={0.4}
+                    onClick={visited ? () => setSelectedCountry(String(geo.id)) : undefined}
                     style={{
                       default: { outline: 'none', opacity: visited ? 0.9 : 1, cursor: visited ? 'pointer' : 'default' },
                       hover:   { outline: 'none', opacity: 1, cursor: visited ? 'pointer' : 'default' },
@@ -156,6 +159,10 @@ export default function PlacesMapV2() {
         }}>
           📍 {tooltip.label}
         </div>
+      )}
+
+      {selectedCountry && (
+        <CountryModal countryId={selectedCountry} onClose={() => setSelectedCountry(null)} />
       )}
     </motion.div>
   )
