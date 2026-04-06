@@ -27,13 +27,14 @@ export default function Blog() {
 
   const isMobile = window.innerWidth <= 768
 
-  // Desktop: fan cards left/right. Mobile: only show active card.
   function getCardStyle(offset) {
     if (offset === 0) return { x: 0, rotate: 0, scale: 1, zIndex: 10, opacity: 1 }
     const sign = offset > 0 ? 1 : -1
     const abs = Math.abs(offset)
+    const x1 = isMobile ? 105 : 200
+    const x2 = isMobile ? 140 : 260
     return {
-      x: sign * (abs === 1 ? 200 : 260),
+      x: sign * (abs === 1 ? x1 : x2),
       rotate: sign * (abs === 1 ? 12 : 20),
       scale: abs === 1 ? 0.82 : 0.68,
       zIndex: 10 - abs,
@@ -42,10 +43,10 @@ export default function Blog() {
     }
   }
 
-  // On mobile only render active card; on desktop render ±2
+  // Show ±1 on mobile, ±2 on desktop
   function getVisibleIndices() {
     const indices = []
-    const range = isMobile ? [0] : [-2, -1, 0, 1, 2]
+    const range = isMobile ? [-1, 0, 1] : [-2, -1, 0, 1, 2]
     for (const offset of range) {
       const idx = activeIndex + offset
       if (idx >= 0 && idx < filtered.length) indices.push({ idx, offset })
