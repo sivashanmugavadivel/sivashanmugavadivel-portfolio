@@ -5,6 +5,9 @@ import cfg from '../data/config.json'
 import VideoCard from '../components/video/VideoCard'
 import Button from '../components/ui/Button'
 import PlacesMap from '../components/PlacesMap'
+import PlacesMapV1 from '../components/PlacesMapV1'
+import PlacesMapV2 from '../components/PlacesMapV2'
+import PlacesMapV3 from '../components/PlacesMapV3'
 
 /* ── Reusable scroll-reveal wrapper ── */
 function Reveal({ children, delay = 0, y = 40, x = 0, style }) {
@@ -688,19 +691,42 @@ function TickerRow({ items, direction = 'left', speed = 18, dim = false }) {
   )
 }
 
+function DesignLabel({ number, title, desc }) {
+  return (
+    <div style={{ marginBottom: 20, marginTop: 56, display: 'flex', alignItems: 'center', gap: 14 }}>
+      <span style={{
+        width: 32, height: 32, borderRadius: '50%',
+        background: 'var(--accent)', color: '#fff',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: '0.85rem', fontWeight: 700, flexShrink: 0,
+      }}>{number}</span>
+      <div>
+        <div style={{ fontWeight: 700, color: 'var(--text-h)', fontSize: '1rem' }}>{title}</div>
+        <div style={{ fontSize: '0.78rem', color: 'var(--text)', opacity: 0.6 }}>{desc}</div>
+      </div>
+    </div>
+  )
+}
+
 function PlacesMapSection() {
   return (
     <section className="section">
       <div className="page-container">
         <SectionHeading label="Travel" title="Where I've Been" />
-        <Reveal delay={0.15}>
-          <p style={{ textAlign: 'center', color: 'var(--text)', opacity: 0.65, fontSize: '0.95rem', marginTop: -8, marginBottom: 32 }}>
-            A few places I've visited and experienced along the way.
+        <Reveal delay={0.1}>
+          <p style={{ textAlign: 'center', color: 'var(--text)', opacity: 0.65, fontSize: '0.95rem', marginTop: -8, marginBottom: 48 }}>
+            Pick your favourite design — tell me which one you prefer.
           </p>
         </Reveal>
-        <Reveal delay={0.25}>
-          <PlacesMap />
-        </Reveal>
+
+        <DesignLabel number="1" title="Command Center" desc="Dark glass panel · stats left · neon glow on countries" />
+        <PlacesMapV1 />
+
+        <DesignLabel number="2" title="Passport Card" desc="Full-width map hero · floating stat pills over bottom edge" />
+        <PlacesMapV2 />
+
+        <DesignLabel number="3" title="Explorer Board" desc="Map top · staggered country reveal · stat cards below" />
+        <PlacesMapV3 />
       </div>
     </section>
   )

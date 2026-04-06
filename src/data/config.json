@@ -174,12 +174,35 @@
 
   "visitedCountries": ["356", "784", "840"],
   "places": [
-    { "label": "Chennai, India",    "coords": [80.2707, 13.0827] },
-    { "label": "Coimbatore, India", "coords": [76.9558, 11.0168] },
-    { "label": "Yercaud, India",    "coords": [78.2120, 11.7750] },
-    { "label": "Dubai, UAE",        "coords": [55.2708, 25.2048] },
-    { "label": "Chicago, USA",      "coords": [-87.6298, 41.8781] }
+    { "label": "Chennai, India",    "coords": [80.2707, 13.0827],  "country": "356" },
+    { "label": "Coimbatore, India", "coords": [76.9558, 11.0168],  "country": "356" },
+    { "label": "Yercaud, India",    "coords": [78.2120, 11.7750],  "country": "356" },
+    { "label": "Dubai, UAE",        "coords": [55.2708, 25.2048],  "country": "784" },
+    { "label": "Chicago, USA",      "coords": [-87.6298, 41.8781], "country": "840" }
   ],
+  "countryInfo": {
+    "356": {
+      "name": "India",
+      "note": "Home country — where it all began. Coimbatore, Chennai, and the hills of Yercaud are close to my heart.",
+      "mapCenter": [82, 22],
+      "mapScale": 900,
+      "pinR": 6
+    },
+    "784": {
+      "name": "United Arab Emirates",
+      "note": "A transit stop that turned into a memory. Dubai's skyline at dusk is something else.",
+      "mapCenter": [54, 24],
+      "mapScale": 5500,
+      "pinR": 3
+    },
+    "840": {
+      "name": "United States",
+      "note": "Lived and worked in Chicago. Snowfall, deep-dish pizza, and the endless midwest sky.",
+      "mapCenter": [-96, 38],
+      "mapScale": 700,
+      "pinR": 5
+    }
+  },
 
   "footer": {
     "copyright": "Siva Shanmuga Vadivel",
