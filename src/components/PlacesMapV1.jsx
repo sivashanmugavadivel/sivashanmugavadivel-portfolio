@@ -100,7 +100,10 @@ function MapContent({ onCountryClick, onTooltip }) {
       </Geographies>
       {cfg.places.map(({ label, coords }, i) => (
         <Marker key={label} coordinates={coords}
-          onMouseEnter={e => onTooltip({ label, x: e.clientX, y: e.clientY })}
+          onMouseEnter={e => {
+            const rect = e.currentTarget.getBoundingClientRect()
+            onTooltip({ label, x: rect.left + rect.width / 2, y: rect.top })
+          }}
           onMouseLeave={() => onTooltip(null)}
         >
           <circle r={5} fill="#e53935" opacity={0.3}>
@@ -277,18 +280,19 @@ export default function PlacesMapV1() {
         document.body
       )}
 
-      {/* Tooltip */}
-      {tooltip && (
+      {/* Tooltip — portalled to body so it always floats above everything */}
+      {tooltip && createPortal(
         <div style={{
           position: 'fixed', top: tooltip.y - 44, left: tooltip.x,
           transform: 'translateX(-50%)',
           background: 'rgba(0,0,0,0.85)', border: '1px solid var(--accent)',
           borderRadius: 8, padding: '5px 14px', fontSize: '0.8rem',
           color: '#fff', fontWeight: 600, pointerEvents: 'none',
-          zIndex: 9999, whiteSpace: 'nowrap',
+          zIndex: 10001, whiteSpace: 'nowrap',
         }}>
           📍 {tooltip.label}
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* CountryModal in normal (non-expanded) mode */}
