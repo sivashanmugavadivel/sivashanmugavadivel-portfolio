@@ -5,7 +5,7 @@
  */
 import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { motion, useInView, AnimatePresence } from 'framer-motion'
+import { motion, useInView } from 'framer-motion'
 import { ComposableMap, Geographies, Geography, Marker } from 'react-simple-maps'
 import cfg from '../data/config.json'
 import CountryModal from './CountryModal'
@@ -71,7 +71,7 @@ function StatItem({ value, label, delay, inView }) {
 function MapContent({ onCountryClick, onTooltip }) {
   return (
     <ComposableMap projectionConfig={{ scale: 147, center: [20, 10] }} style={{ width: '100%', height: '100%', display: 'block' }}>
-      <Geographies geography="https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json">
+      <Geographies geography={GEO_URL}>
         {({ geographies }) =>
           geographies.map(geo => {
             const visited = cfg.visitedCountries.includes(String(geo.id))
@@ -120,8 +120,6 @@ export default function PlacesMapV1() {
   const [expanded, setExpanded] = useState(false)
   const ref = useRef(null)
   const inView = useInView(ref, { once: false, margin: '-100px' })
-
-  // No body overflow lock — portal sits above everything via z-index
 
   useEffect(() => {
     function onKey(e) { if (e.key === 'Escape') setExpanded(false) }
@@ -215,28 +213,26 @@ export default function PlacesMapV1() {
         </button>
       </div>
 
-      {/* Fullscreen expanded overlay — portalled above navbar, no AnimatePresence */}
+      {/* Fullscreen expanded overlay — portalled above navbar */}
       {expanded && createPortal(
         <div
-          onClick={() => setExpanded(false)}
           style={{
             position: 'fixed', inset: 0, zIndex: 9999,
             background: 'linear-gradient(135deg, rgba(10,10,20,0.98) 0%, rgba(20,20,40,0.96) 100%)',
             overflow: 'hidden',
-            animation: 'fadeIn 0.2s ease',
           }}
         >
           {/* Map fills entire screen */}
-          <div
-            style={{ position: 'absolute', inset: 0 }}
-            onClick={e => e.stopPropagation()}
-          >
-            <MapContent onCountryClick={setSelectedCountry} onTooltip={setTooltip} />
+          <div style={{ position: 'absolute', inset: 0 }}>
+            <MapContent
+              onCountryClick={id => setSelectedCountry(id)}
+              onTooltip={setTooltip}
+            />
           </div>
 
           {/* Floating collapse button */}
           <button
-            onClick={e => { e.stopPropagation(); setExpanded(false) }}
+            onClick={() => setExpanded(false)}
             style={{
               position: 'absolute', top: 16, right: 16, zIndex: 10,
               background: 'rgba(0,0,0,0.55)', border: '1px solid rgba(255,255,255,0.18)',
@@ -248,10 +244,20 @@ export default function PlacesMapV1() {
           >
             <CollapseIcon /> Collapse
           </button>
+
+          {/* CountryModal rendered INSIDE the portal so it sits above the overlay */}
+          {selectedCountry && (
+            <CountryModal
+              countryId={selectedCountry}
+              onClose={() => setSelectedCountry(null)}
+              zIndex={10000}
+            />
+          )}
         </div>,
         document.body
       )}
 
+      {/* Tooltip */}
       {tooltip && (
         <div style={{
           position: 'fixed', top: tooltip.y - 44, left: tooltip.x,
@@ -265,7 +271,8 @@ export default function PlacesMapV1() {
         </div>
       )}
 
-      {selectedCountry && (
+      {/* CountryModal in normal (non-expanded) mode */}
+      {!expanded && selectedCountry && (
         <CountryModal countryId={selectedCountry} onClose={() => setSelectedCountry(null)} />
       )}
     </motion.div>

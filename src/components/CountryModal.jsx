@@ -18,7 +18,7 @@ function getStateName(geo, countryId) {
   return null
 }
 
-export default function CountryModal({ countryId, onClose }) {
+export default function CountryModal({ countryId, onClose, zIndex = 1000 }) {
   const info = cfg.countryInfo[countryId]
   const cities = cfg.places.filter(p => p.country === countryId)
   const [hoveredState, setHoveredState] = useState(null)
@@ -48,7 +48,7 @@ export default function CountryModal({ countryId, onClose }) {
           background: 'rgba(0,0,0,0.72)',
           backdropFilter: 'blur(8px)',
           WebkitBackdropFilter: 'blur(8px)',
-          zIndex: 1000,
+          zIndex: zIndex,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           padding: '20px',
         }}
@@ -74,7 +74,7 @@ export default function CountryModal({ countryId, onClose }) {
         >
           {/* Close button */}
           <button
-            onClick={onClose}
+            onClick={e => { e.stopPropagation(); onClose() }}
             style={{
               position: 'absolute', top: 14, right: 14, zIndex: 20,
               background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.15)',

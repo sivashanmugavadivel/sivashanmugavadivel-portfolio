@@ -28,6 +28,8 @@ export default function EasterEgg() {
   useEffect(() => {
     const handler = (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
+      // Ignore double-clicks on SVG/map elements (country clicks on the map)
+      if (e.target.closest('svg')) return
       trigger('doubleClick')
     }
     window.addEventListener('dblclick', handler)
