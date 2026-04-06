@@ -172,7 +172,7 @@ export default function PlacesMapV1() {
 
         <StatItem value={countriesVisited} label="Countries" delay={0.2} inView={inView} />
         <StatItem value={placesVisited} label="Cities & Places" delay={0.3} inView={inView} />
-        <StatItem value={3} label="Continents" delay={0.4} inView={inView} />
+        <StatItem value={2} label="Continents" delay={0.4} inView={inView} />
 
         <motion.p
           initial={{ opacity: 0 }}

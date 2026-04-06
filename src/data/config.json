@@ -66,8 +66,9 @@
     "bioLabel": "My Story",
     "bioHeading": "Turning ideas into living interfaces",
     "paragraphs": [
-      "I'm a passionate developer who loves building beautiful, performant web experiences. I care deeply about the details — from pixel-perfect layouts to smooth animations that make interfaces feel alive.",
-      "When I'm not coding, you'll find me taking photos, watching tutorials, or exploring new places."
+      "I enjoy building things that people can actually use and feel.From industrial systems to modern web experiences, my journey has always been about connecting ideas with real-world impact.",
+      "I like keeping things simple, solving meaningful problems, and constantly learning along the way.",
+      "Outside of work, I capture moments, explore new places, and occasionally get lost in thoughts that turn into ideas."
     ],
     "bioParagraphs": [
       "I started my journey in industrial automation, working closely with real-world systems, machines, and control logic. That experience shaped how I think — structured, practical, and problem-driven.",
@@ -79,9 +80,26 @@
     "ctaHeading": "Interested in working together?",
     "ctaSubtext": "I'm always open to new opportunities and collaborations.",
     "highlights": [
-      { "icon": "💻", "label": "Web Development", "desc": "Modern React & CSS" },
-      { "icon": "🎨", "label": "UI / UX Design",  "desc": "Clean, thoughtful interfaces" },
-      { "icon": "✍️", "label": "Writing",          "desc": "Sharing what I learn" }
+      {
+        "icon": "🎯",
+        "label": "Clarity First",
+        "desc": "I prefer simple and clear solutions over complexity"
+      },
+      {
+        "icon": "🌱",
+        "label": "Always Learning",
+        "desc": "Continuously exploring new ideas and improving myself"
+      },
+      {
+        "icon": "🧠",
+        "label": "Thoughtful Approach",
+        "desc": "I focus on building things that are meaningful and useful"
+      },
+      {
+        "icon": "🌍",
+        "label": "Explore More",
+        "desc": "I enjoy discovering new places, ideas, and perspectives"
+      }
     ],
     "now": {
       "label": "Now",
@@ -172,32 +190,35 @@
     ]
   },
 
-  "visitedCountries": ["356", "784", "840"],
+  "visitedCountries": ["356", "840"],
   "places": [
-    { "label": "Chennai, India",    "coords": [80.2707, 13.0827],  "country": "356" },
-    { "label": "Coimbatore, India", "coords": [76.9558, 11.0168],  "country": "356" },
-    { "label": "Yercaud, India",    "coords": [78.2120, 11.7750],  "country": "356" },
-    { "label": "Dubai, UAE",        "coords": [55.2708, 25.2048],  "country": "784" },
-    { "label": "Chicago, USA",      "coords": [-87.6298, 41.8781], "country": "840" }
+    { "label": "Chennai",           "coords": [80.2707, 13.0827],  "country": "356" },
+    { "label": "Rameswaram",        "coords": [79.3129, 9.2876],   "country": "356" },
+    { "label": "Kanniyakumari",     "coords": [77.5385, 8.0883],   "country": "356" },
+    { "label": "Kodaikanal",        "coords": [77.4892, 10.2381],  "country": "356" },
+    { "label": "Munnar",            "coords": [77.0595, 10.0889],  "country": "356" },
+    { "label": "Ooty",              "coords": [76.6950, 11.4102],  "country": "356" },
+    { "label": "Thiruvananthapuram","coords": [76.9366, 8.5241],   "country": "356" },
+    { "label": "Kolkata",           "coords": [88.3639, 22.5726],  "country": "356" },
+    { "label": "New Delhi",         "coords": [77.2090, 28.6139],  "country": "356" },
+    { "label": "Bengaluru",         "coords": [77.5946, 12.9716],  "country": "356" },
+    { "label": "Secunderabad",      "coords": [78.4983, 17.4399],  "country": "356" },
+    { "label": "Punjab",            "coords": [75.8573, 31.1471],  "country": "356" },
+    { "label": "Pune",              "coords": [73.8567, 18.5204],  "country": "356" },
+    { "label": "Mount Vernon, IL",  "coords": [-88.9031, 38.3173], "country": "840" },
+    { "label": "Naperville, IL",    "coords": [-88.1535, 41.7508], "country": "840" }
   ],
   "countryInfo": {
     "356": {
       "name": "India",
-      "note": "Home country — where it all began. Coimbatore, Chennai, and the hills of Yercaud are close to my heart.",
+      "note": "Home country — explored from the southern tip to the northern plains.",
       "mapCenter": [82, 22],
       "mapScale": 900,
       "pinR": 6
     },
-    "784": {
-      "name": "United Arab Emirates",
-      "note": "A transit stop that turned into a memory. Dubai's skyline at dusk is something else.",
-      "mapCenter": [54, 24],
-      "mapScale": 5500,
-      "pinR": 3
-    },
     "840": {
       "name": "United States",
-      "note": "Lived and worked in Chicago. Snowfall, deep-dish pizza, and the endless midwest sky.",
+      "note": "Lived and worked in Illinois. Snowfall, open highways, and the endless midwest sky.",
       "mapCenter": [-96, 38],
       "mapScale": 700,
       "pinR": 5

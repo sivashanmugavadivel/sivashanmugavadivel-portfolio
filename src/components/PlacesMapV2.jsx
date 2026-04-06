@@ -98,7 +98,7 @@ export default function PlacesMapV2() {
 
   const countriesCount = useCountUp(cfg.visitedCountries.length, inView)
   const placesCount = useCountUp(cfg.places.length, inView)
-  const continentsCount = useCountUp(3, inView)
+  const continentsCount = useCountUp(2, inView)
 
   useEffect(() => {
     document.body.style.overflow = expanded ? 'hidden' : ''
