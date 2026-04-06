@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ComposableMap, Geographies, Geography, Marker } from 'react-simple-maps'
 import cfg from '../data/config.json'
@@ -23,6 +24,7 @@ export default function CountryModal({ countryId, onClose, zIndex = 1000 }) {
   const cities = cfg.places.filter(p => p.country === countryId)
   const [hoveredState, setHoveredState] = useState(null)
   const [activePin, setActivePin] = useState(null)
+  const [pinTooltip, setPinTooltip] = useState(null) // { label, x, y }
   const statesUrl = STATE_GEO[countryId]
   const isMobile = window.matchMedia('(hover: none)').matches
 
@@ -176,28 +178,19 @@ export default function CountryModal({ countryId, onClose, zIndex = 1000 }) {
                         /* ── Home icon marker ── */
                         <g
                           style={{ cursor: 'pointer' }}
-                          onMouseEnter={isMobile ? undefined : () => setActivePin(label)}
-                          onMouseLeave={isMobile ? undefined : () => setActivePin(null)}
-                          onClick={isMobile ? () => setActivePin(isActive ? null : label) : undefined}
-                          transform={`translate(${-r * 1.4}, ${-r * 2.8})`}
+                          onMouseEnter={isMobile ? undefined : e => { const rect = e.currentTarget.getBoundingClientRect(); setPinTooltip({ label: `🏠 ${label}`, x: rect.left + rect.width / 2, y: rect.top }); setActivePin(label) }}
+                          onMouseLeave={isMobile ? undefined : () => { setPinTooltip(null); setActivePin(null) }}
+                          onClick={isMobile ? e => { const rect = e.currentTarget.getBoundingClientRect(); const next = isActive ? null : label; setActivePin(next); setPinTooltip(next ? { label: `🏠 ${label}`, x: rect.left + rect.width / 2, y: rect.top } : null) } : undefined}
+                          transform={`translate(${-r * 2}, ${-r * 4.5}) scale(${r * 0.28})`}
                         >
-                          {/* Glow behind */}
-                          <circle cx={r * 1.4} cy={r * 1.6} r={r * 2} fill="var(--accent)" opacity={0.2} />
-                          {/* House roof */}
-                          <polygon
-                            points={`${r * 1.4},0 0,${r * 1.4} ${r * 2.8},${r * 1.4}`}
-                            fill="var(--accent)" stroke="#fff" strokeWidth={r * 0.2}
-                          />
-                          {/* House body */}
-                          <rect
-                            x={r * 0.4} y={r * 1.4} width={r * 2} height={r * 1.6}
-                            fill="var(--accent)" stroke="#fff" strokeWidth={r * 0.2}
-                          />
+                          {/* Glow */}
+                          <circle cx={7} cy={9} r={9} fill="var(--accent)" opacity={0.25} />
+                          {/* Roof */}
+                          <polygon points="7,0 0,7 14,7" fill="var(--accent)" stroke="#fff" strokeWidth={1} />
+                          {/* Body */}
+                          <rect x={2} y={7} width={10} height={8} fill="var(--accent)" stroke="#fff" strokeWidth={1} />
                           {/* Door */}
-                          <rect
-                            x={r * 1.05} y={r * 2.2} width={r * 0.7} height={r * 0.8}
-                            fill="#fff" opacity={0.9}
-                          />
+                          <rect x={5} y={10} width={4} height={5} fill="#fff" opacity={0.95} rx={0.5} />
                         </g>
                       ) : (
                         <>
@@ -209,24 +202,15 @@ export default function CountryModal({ countryId, onClose, zIndex = 1000 }) {
                           {/* Pin shape */}
                           <g
                             style={{ cursor: 'pointer' }}
-                            onMouseEnter={isMobile ? undefined : () => setActivePin(label)}
-                            onMouseLeave={isMobile ? undefined : () => setActivePin(null)}
-                            onClick={isMobile ? () => setActivePin(isActive ? null : label) : undefined}
+                            onMouseEnter={isMobile ? undefined : e => { const rect = e.currentTarget.getBoundingClientRect(); setPinTooltip({ label, x: rect.left + rect.width / 2, y: rect.top }); setActivePin(label) }}
+                            onMouseLeave={isMobile ? undefined : () => { setPinTooltip(null); setActivePin(null) }}
+                            onClick={isMobile ? e => { const rect = e.currentTarget.getBoundingClientRect(); const next = isActive ? null : label; setActivePin(next); setPinTooltip(next ? { label, x: rect.left + rect.width / 2, y: rect.top } : null) } : undefined}
                           >
                             <circle cx={0} cy={-r * 1.4} r={r * 1.2} fill="#e53935" stroke="#fff" strokeWidth={r * 0.25} />
                             <polygon points={`${-r * 0.5},${-r * 0.5} ${r * 0.5},${-r * 0.5} 0,${r * 0.8}`} fill="#e53935" />
                             <circle cx={0} cy={-r * 1.4} r={r * 0.45} fill="#fff" opacity={0.9} />
                           </g>
                         </>
-                      )}
-                      {/* Label tooltip */}
-                      {isActive && (
-                        <g transform={`translate(0, ${-r * 4.2})`}>
-                          <rect x={-50} y={-12} width={100} height={22} rx={6} fill="rgba(0,0,0,0.82)" stroke={home ? 'var(--accent)' : '#e53935'} strokeWidth={0.8} />
-                          <text textAnchor="middle" y={4} fill="#fff" fontSize={r * 1.6} fontFamily="var(--sans)" fontWeight="600">
-                            {home ? `🏠 ${label}` : label}
-                          </text>
-                        </g>
                       )}
                     </Marker>
                   )
@@ -248,6 +232,25 @@ export default function CountryModal({ countryId, onClose, zIndex = 1000 }) {
           </div>
         </motion.div>
       </motion.div>
+
+      {/* Pin tooltip — portalled above everything */}
+      {pinTooltip && createPortal(
+        <div style={{
+          position: 'fixed',
+          top: pinTooltip.y - 44,
+          left: pinTooltip.x,
+          transform: 'translateX(-50%)',
+          background: 'rgba(0,0,0,0.85)',
+          border: '1px solid var(--accent)',
+          borderRadius: 8, padding: '5px 14px',
+          fontSize: '0.8rem', color: '#fff', fontWeight: 600,
+          pointerEvents: 'none', whiteSpace: 'nowrap',
+          zIndex: 99999,
+        }}>
+          {pinTooltip.label}
+        </div>,
+        document.body
+      )}
     </AnimatePresence>
   )
 }
