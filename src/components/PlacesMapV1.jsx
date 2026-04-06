@@ -4,10 +4,25 @@
  * map fills the right. Neon glow on visited countries. Cinematic entrance.
  */
 import { useState, useEffect, useRef } from 'react'
-import { motion, useInView } from 'framer-motion'
+import { motion, useInView, AnimatePresence } from 'framer-motion'
 import { ComposableMap, Geographies, Geography, Marker } from 'react-simple-maps'
 import cfg from '../data/config.json'
 import CountryModal from './CountryModal'
+
+function ExpandIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+      <path d="M1 6V1h5M10 1h5v5M15 10v5h-5M6 15H1v-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+function CollapseIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+      <path d="M6 1v5H1M15 6h-5V1M10 15v-5h5M1 10h5v5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
 
 const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'
 
@@ -52,11 +67,69 @@ function StatItem({ value, label, delay, inView }) {
   )
 }
 
+function MapContent({ onCountryClick, onTooltip }) {
+  return (
+    <ComposableMap projectionConfig={{ scale: 147, center: [20, 10] }} style={{ width: '100%', height: '100%' }}>
+      <Geographies geography="https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json">
+        {({ geographies }) =>
+          geographies.map(geo => {
+            const visited = cfg.visitedCountries.includes(String(geo.id))
+            return (
+              <Geography
+                key={geo.rsmKey}
+                geography={geo}
+                fill={visited ? 'var(--accent)' : 'rgba(255,255,255,0.05)'}
+                stroke="rgba(255,255,255,0.07)"
+                strokeWidth={0.4}
+                onClick={visited ? () => onCountryClick(String(geo.id)) : undefined}
+                style={{
+                  default: { outline: 'none', opacity: visited ? 0.85 : 1, cursor: visited ? 'pointer' : 'default',
+                    filter: visited ? 'drop-shadow(0 0 6px color-mix(in srgb, var(--accent) 60%, transparent))' : 'none',
+                  },
+                  hover: { outline: 'none', opacity: visited ? 1 : 1,
+                    filter: visited ? 'drop-shadow(0 0 12px var(--accent))' : 'none',
+                    cursor: visited ? 'pointer' : 'default',
+                  },
+                  pressed: { outline: 'none' },
+                }}
+              />
+            )
+          })
+        }
+      </Geographies>
+      {cfg.places.map(({ label, coords }, i) => (
+        <Marker key={label} coordinates={coords}
+          onMouseEnter={e => onTooltip({ label, x: e.clientX, y: e.clientY })}
+          onMouseLeave={() => onTooltip(null)}
+        >
+          <circle r={5} fill="var(--accent)" opacity={0.3}>
+            <animate attributeName="r" from="5" to="16" dur="1.8s" begin={`${i * 0.3}s`} repeatCount="indefinite" />
+            <animate attributeName="opacity" from="0.3" to="0" dur="1.8s" begin={`${i * 0.3}s`} repeatCount="indefinite" />
+          </circle>
+          <circle r={5} fill="#fff" stroke="var(--accent)" strokeWidth={2} style={{ cursor: 'pointer' }} />
+        </Marker>
+      ))}
+    </ComposableMap>
+  )
+}
+
 export default function PlacesMapV1() {
   const [tooltip, setTooltip] = useState(null)
   const [selectedCountry, setSelectedCountry] = useState(null)
+  const [expanded, setExpanded] = useState(false)
   const ref = useRef(null)
   const inView = useInView(ref, { once: false, margin: '-100px' })
+
+  useEffect(() => {
+    document.body.style.overflow = expanded ? 'hidden' : ''
+    return () => { document.body.style.overflow = '' }
+  }, [expanded])
+
+  useEffect(() => {
+    function onKey(e) { if (e.key === 'Escape') setExpanded(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   const countriesVisited = cfg.visitedCountries.length
   const placesVisited = cfg.places.length
@@ -114,67 +187,86 @@ export default function PlacesMapV1() {
 
       {/* Right — map */}
       <div style={{ position: 'relative', overflow: 'hidden' }}>
-        {/* Glow overlay on visited countries */}
         <div style={{
           position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none',
           background: 'radial-gradient(ellipse at 60% 50%, rgba(var(--accent-rgb,130,80,255),0.08) 0%, transparent 70%)',
         }} />
-
         <motion.div
           initial={{ opacity: 0, scale: 1.04 }}
           animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 1.04 }}
           transition={{ duration: 1.1, delay: 0.2, ease: [0.23, 1, 0.32, 1] }}
           style={{ width: '100%', height: '100%' }}
         >
-          <ComposableMap
-            projectionConfig={{ scale: 147, center: [20, 10] }}
-            style={{ width: '100%', height: '100%' }}
-          >
-            <Geographies geography={GEO_URL}>
-              {({ geographies }) =>
-                geographies.map(geo => {
-                  const visited = cfg.visitedCountries.includes(String(geo.id))
-                  return (
-                    <Geography
-                      key={geo.rsmKey}
-                      geography={geo}
-                      fill={visited ? 'var(--accent)' : 'rgba(255,255,255,0.05)'}
-                      stroke="rgba(255,255,255,0.07)"
-                      strokeWidth={0.4}
-                      onClick={visited ? () => setSelectedCountry(String(geo.id)) : undefined}
-                      style={{
-                        default: { outline: 'none', opacity: visited ? 0.85 : 1, cursor: visited ? 'pointer' : 'default',
-                          filter: visited ? 'drop-shadow(0 0 6px color-mix(in srgb, var(--accent) 60%, transparent))' : 'none',
-                        },
-                        hover: { outline: 'none', opacity: visited ? 1 : 1,
-                          filter: visited ? 'drop-shadow(0 0 12px var(--accent))' : 'none',
-                          cursor: visited ? 'pointer' : 'default',
-                        },
-                        pressed: { outline: 'none' },
-                      }}
-                    />
-                  )
-                })
-              }
-            </Geographies>
-
-            {cfg.places.map(({ label, coords }, i) => (
-              <Marker
-                key={label}
-                coordinates={coords}
-                onMouseEnter={e => setTooltip({ label, x: e.clientX, y: e.clientY })}
-                onMouseLeave={() => setTooltip(null)}
-              >
-                <circle r={5} fill="var(--accent)" opacity={0.3}>
-                  <animate attributeName="r" from="5" to="16" dur="1.8s" begin={`${i * 0.3}s`} repeatCount="indefinite" />
-                  <animate attributeName="opacity" from="0.3" to="0" dur="1.8s" begin={`${i * 0.3}s`} repeatCount="indefinite" />
-                </circle>
-                <circle r={5} fill="#fff" stroke="var(--accent)" strokeWidth={2} style={{ cursor: 'pointer' }} />
-              </Marker>
-            ))}
-          </ComposableMap>
+          <MapContent onCountryClick={setSelectedCountry} onTooltip={setTooltip} />
         </motion.div>
+
+        {/* Expand button */}
+        <button
+          onClick={() => setExpanded(true)}
+          style={{
+            position: 'absolute', bottom: 14, right: 14, zIndex: 10,
+            background: 'rgba(0,0,0,0.45)', border: '1px solid rgba(255,255,255,0.15)',
+            borderRadius: 8, padding: '6px 10px', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: 6,
+            color: 'rgba(255,255,255,0.8)', fontSize: '0.72rem', fontWeight: 500,
+            backdropFilter: 'blur(8px)',
+          }}
+          title="Expand map"
+        >
+          <ExpandIcon /> Expand
+        </button>
       </div>
+
+      {/* Fullscreen expanded overlay */}
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            key="expanded"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 900,
+              background: 'linear-gradient(135deg, rgba(10,10,20,0.98) 0%, rgba(20,20,40,0.96) 100%)',
+              display: 'flex', flexDirection: 'column',
+            }}
+          >
+            {/* Top bar */}
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '16px 24px', borderBottom: '1px solid rgba(255,255,255,0.07)',
+              flexShrink: 0,
+            }}>
+              <div>
+                <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--accent)', opacity: 0.8 }}>Travel Log</div>
+                <div style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', marginTop: 2 }}>Where I've Been</div>
+              </div>
+              <button
+                onClick={() => setExpanded(false)}
+                style={{
+                  background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)',
+                  borderRadius: 8, padding: '6px 12px', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  color: 'rgba(255,255,255,0.8)', fontSize: '0.72rem', fontWeight: 500,
+                }}
+              >
+                <CollapseIcon /> Collapse
+              </button>
+            </div>
+
+            {/* Map fills remaining height */}
+            <motion.div
+              initial={{ scale: 0.97, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
+              style={{ flex: 1, overflow: 'hidden' }}
+            >
+              <MapContent onCountryClick={setSelectedCountry} onTooltip={setTooltip} />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {tooltip && (
         <div style={{

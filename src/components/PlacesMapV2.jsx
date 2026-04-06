@@ -1,11 +1,9 @@
 /**
- * DESIGN V2 — "Passport Card"
- * Full-width map as hero, floating stat pills scroll up from bottom.
- * Stats overlay bottom of map. Visited countries pulse with glow.
- * Clean minimal aesthetic — map IS the design.
+ * DESIGN V2 — "Passport Card" (Mobile)
+ * Map on top, stats below. Expand button to go fullscreen.
  */
 import { useState, useRef, useEffect } from 'react'
-import { motion, useInView } from 'framer-motion'
+import { motion, useInView, AnimatePresence } from 'framer-motion'
 import { ComposableMap, Geographies, Geography, Marker } from 'react-simple-maps'
 import cfg from '../data/config.json'
 import CountryModal from './CountryModal'
@@ -29,9 +27,72 @@ function useCountUp(target, inView) {
   return val
 }
 
+function ExpandIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path d="M1 6V1h5M10 1h5v5M15 10v5h-5M6 15H1v-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+
+function CollapseIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path d="M6 1v5H1M15 6h-5V1M10 15v-5h5M1 10h5v5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+
+function MapContent({ onCountryClick, onTooltip }) {
+  return (
+    <ComposableMap
+      projectionConfig={{ scale: 147, center: [20, 10] }}
+      style={{ width: '100%', height: 'auto', display: 'block' }}
+    >
+      <Geographies geography={GEO_URL}>
+        {({ geographies }) =>
+          geographies.map(geo => {
+            const visited = cfg.visitedCountries.includes(String(geo.id))
+            return (
+              <Geography
+                key={geo.rsmKey}
+                geography={geo}
+                fill={visited ? 'var(--accent)' : 'var(--bg)'}
+                stroke="var(--border)"
+                strokeWidth={0.4}
+                onClick={visited ? () => onCountryClick(String(geo.id)) : undefined}
+                style={{
+                  default: { outline: 'none', opacity: visited ? 0.9 : 1, cursor: visited ? 'pointer' : 'default' },
+                  hover:   { outline: 'none', opacity: 1, cursor: visited ? 'pointer' : 'default' },
+                  pressed: { outline: 'none' },
+                }}
+              />
+            )
+          })
+        }
+      </Geographies>
+      {cfg.places.map(({ label, coords }, i) => (
+        <Marker
+          key={label}
+          coordinates={coords}
+          onMouseEnter={e => onTooltip({ label, x: e.clientX, y: e.clientY })}
+          onMouseLeave={() => onTooltip(null)}
+        >
+          <circle r={5} fill="var(--accent)" opacity={0.3}>
+            <animate attributeName="r" from="5" to="18" dur="2s" begin={`${i * 0.4}s`} repeatCount="indefinite" />
+            <animate attributeName="opacity" from="0.3" to="0" dur="2s" begin={`${i * 0.4}s`} repeatCount="indefinite" />
+          </circle>
+          <circle r={5} fill="#fff" stroke="var(--accent)" strokeWidth={2} style={{ cursor: 'pointer' }} />
+        </Marker>
+      ))}
+    </ComposableMap>
+  )
+}
+
 export default function PlacesMapV2() {
   const [tooltip, setTooltip] = useState(null)
   const [selectedCountry, setSelectedCountry] = useState(null)
+  const [expanded, setExpanded] = useState(false)
   const ref = useRef(null)
   const inView = useInView(ref, { once: false, margin: '-80px' })
 
@@ -39,11 +100,40 @@ export default function PlacesMapV2() {
   const placesCount = useCountUp(cfg.places.length, inView)
   const continentsCount = useCountUp(3, inView)
 
+  // Lock body scroll when expanded
+  useEffect(() => {
+    document.body.style.overflow = expanded ? 'hidden' : ''
+    return () => { document.body.style.overflow = '' }
+  }, [expanded])
+
+  // ESC to collapse
+  useEffect(() => {
+    function onKey(e) { if (e.key === 'Escape') setExpanded(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
   const stats = [
     { value: countriesCount, label: 'Countries', icon: '🌍' },
     { value: placesCount,    label: 'Places',    icon: '📍' },
     { value: continentsCount, label: 'Continents', icon: '✈️' },
   ]
+
+  const expandBtn = (
+    <button
+      onClick={() => setExpanded(e => !e)}
+      style={{
+        position: 'absolute', top: 12, right: 12, zIndex: 30,
+        background: 'var(--card-bg)', border: '1px solid var(--border)',
+        borderRadius: 8, width: 34, height: 34, cursor: 'pointer',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        color: 'var(--text-h)', backdropFilter: 'blur(8px)',
+      }}
+      title={expanded ? 'Collapse map' : 'Expand map'}
+    >
+      {expanded ? <CollapseIcon /> : <ExpandIcon />}
+    </button>
+  )
 
   return (
     <motion.div
@@ -51,102 +141,110 @@ export default function PlacesMapV2() {
       initial={{ opacity: 0, y: 50 }}
       animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
       transition={{ duration: 0.7, ease: [0.23, 1, 0.32, 1] }}
-      style={{ position: 'relative', borderRadius: 20, overflow: 'hidden', border: '1px solid var(--border)' }}
     >
-      {/* Map fills entire card */}
-      <div style={{ background: 'var(--bg-secondary)' }}>
-        <ComposableMap
-          projectionConfig={{ scale: 147, center: [20, 10] }}
-          style={{ width: '100%', height: 'auto', display: 'block' }}
-        >
-          <Geographies geography={GEO_URL}>
-            {({ geographies }) =>
-              geographies.map(geo => {
-                const visited = cfg.visitedCountries.includes(String(geo.id))
-                return (
-                  <Geography
-                    key={geo.rsmKey}
-                    geography={geo}
-                    fill={visited ? 'var(--accent)' : 'var(--bg)'}
-                    stroke="var(--border)"
-                    strokeWidth={0.4}
-                    onClick={visited ? () => setSelectedCountry(String(geo.id)) : undefined}
-                    style={{
-                      default: { outline: 'none', opacity: visited ? 0.9 : 1, cursor: visited ? 'pointer' : 'default' },
-                      hover:   { outline: 'none', opacity: 1, cursor: visited ? 'pointer' : 'default' },
-                      pressed: { outline: 'none' },
-                    }}
-                  />
-                )
-              })
-            }
-          </Geographies>
+      {/* Normal (collapsed) view */}
+      <div style={{ borderRadius: 20, overflow: 'hidden', border: '1px solid var(--border)', background: 'var(--bg-secondary)' }}>
+        {/* Map */}
+        <div style={{ position: 'relative' }}>
+          <MapContent onCountryClick={setSelectedCountry} onTooltip={setTooltip} />
+          {expandBtn}
+          {/* Click hint */}
+          <div style={{
+            position: 'absolute', top: 12, left: 12,
+            background: 'var(--card-bg)', border: '1px solid var(--border)',
+            borderRadius: 999, padding: '4px 10px',
+            fontSize: '0.68rem', color: 'var(--text)', opacity: 0.75,
+            backdropFilter: 'blur(8px)',
+          }}>
+            Tap a country
+          </div>
+        </div>
 
-          {cfg.places.map(({ label, coords }, i) => (
-            <Marker
+        {/* Stats — BELOW map */}
+        <div style={{
+          display: 'flex',
+          borderTop: '1px solid var(--border)',
+          background: 'var(--card-bg)',
+        }}>
+          {stats.map(({ value, label, icon }, i) => (
+            <motion.div
               key={label}
-              coordinates={coords}
-              onMouseEnter={e => setTooltip({ label, x: e.clientX, y: e.clientY })}
-              onMouseLeave={() => setTooltip(null)}
+              initial={{ opacity: 0, y: 16 }}
+              animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
+              transition={{ duration: 0.5, delay: 0.3 + i * 0.1 }}
+              style={{
+                flex: 1,
+                padding: '14px 8px',
+                textAlign: 'center',
+                borderRight: i < stats.length - 1 ? '1px solid var(--border)' : 'none',
+              }}
             >
-              <circle r={5} fill="var(--accent)" opacity={0.3}>
-                <animate attributeName="r" from="5" to="18" dur="2s" begin={`${i * 0.4}s`} repeatCount="indefinite" />
-                <animate attributeName="opacity" from="0.3" to="0" dur="2s" begin={`${i * 0.4}s`} repeatCount="indefinite" />
-              </circle>
-              <circle r={5} fill="#fff" stroke="var(--accent)" strokeWidth={2} style={{ cursor: 'pointer' }} />
-            </Marker>
+              <div style={{ fontSize: '1rem', marginBottom: 3 }}>{icon}</div>
+              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--accent)', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{value}</div>
+              <div style={{ fontSize: '0.62rem', color: 'var(--text)', opacity: 0.6, marginTop: 3, textTransform: 'uppercase', letterSpacing: '0.07em' }}>{label}</div>
+            </motion.div>
           ))}
-        </ComposableMap>
+        </div>
       </div>
 
-      {/* Bottom gradient fade into stats */}
-      <div style={{
-        position: 'absolute', bottom: 0, left: 0, right: 0,
-        height: 120,
-        background: 'linear-gradient(to top, var(--bg) 0%, transparent 100%)',
-        pointerEvents: 'none',
-      }} />
-
-      {/* Stats row floating over bottom of map */}
-      <div style={{
-        position: 'absolute', bottom: 0, left: 0, right: 0,
-        display: 'flex', justifyContent: 'center', gap: 12,
-        padding: '0 24px 20px',
-      }}>
-        {stats.map(({ value, label, icon }, i) => (
+      {/* Fullscreen expanded overlay */}
+      <AnimatePresence>
+        {expanded && (
           <motion.div
-            key={label}
-            initial={{ opacity: 0, y: 24 }}
-            animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
-            transition={{ duration: 0.55, delay: 0.3 + i * 0.1, ease: [0.23, 1, 0.32, 1] }}
+            key="expanded"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
             style={{
-              flex: 1, maxWidth: 130,
-              background: 'var(--card-bg)',
-              border: '1px solid var(--border)',
-              borderRadius: 14,
-              padding: '12px 8px',
-              textAlign: 'center',
-              backdropFilter: 'blur(16px)',
-              WebkitBackdropFilter: 'blur(16px)',
+              position: 'fixed', inset: 0, zIndex: 900,
+              background: 'var(--bg)',
+              display: 'flex', flexDirection: 'column',
             }}
           >
-            <div style={{ fontSize: '1.1rem', marginBottom: 2 }}>{icon}</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--accent)', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{value}</div>
-            <div style={{ fontSize: '0.65rem', color: 'var(--text)', opacity: 0.6, marginTop: 3, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</div>
-          </motion.div>
-        ))}
-      </div>
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
+              style={{ flex: 1, position: 'relative', overflow: 'hidden' }}
+            >
+              <MapContent onCountryClick={setSelectedCountry} onTooltip={setTooltip} />
+              {expandBtn}
+              <div style={{
+                position: 'absolute', top: 12, left: 12,
+                background: 'var(--card-bg)', border: '1px solid var(--border)',
+                borderRadius: 999, padding: '4px 10px',
+                fontSize: '0.68rem', color: 'var(--text)', opacity: 0.75,
+                backdropFilter: 'blur(8px)',
+              }}>
+                Tap a country
+              </div>
+            </motion.div>
 
-      {/* Click hint */}
-      <div style={{
-        position: 'absolute', top: 16, right: 16,
-        background: 'var(--card-bg)', border: '1px solid var(--border)',
-        borderRadius: 999, padding: '5px 12px',
-        fontSize: '0.7rem', color: 'var(--text)', opacity: 0.7,
-        backdropFilter: 'blur(8px)',
-      }}>
-        Click a country to explore
-      </div>
+            {/* Stats row at bottom in expanded view */}
+            <div style={{
+              display: 'flex',
+              borderTop: '1px solid var(--border)',
+              background: 'var(--card-bg)',
+            }}>
+              {stats.map(({ value, label, icon }, i) => (
+                <div
+                  key={label}
+                  style={{
+                    flex: 1, padding: '12px 8px', textAlign: 'center',
+                    borderRight: i < stats.length - 1 ? '1px solid var(--border)' : 'none',
+                  }}
+                >
+                  <div style={{ fontSize: '1rem', marginBottom: 2 }}>{icon}</div>
+                  <div style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--accent)', lineHeight: 1 }}>{value}</div>
+                  <div style={{ fontSize: '0.62rem', color: 'var(--text)', opacity: 0.6, marginTop: 3, textTransform: 'uppercase', letterSpacing: '0.07em' }}>{label}</div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {tooltip && (
         <div style={{
