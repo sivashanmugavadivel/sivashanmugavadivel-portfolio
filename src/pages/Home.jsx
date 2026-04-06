@@ -709,13 +709,13 @@ function PlacesMapSection() {
     <section className="section">
       <div className="page-container">
         <SectionHeading label="Travel" title="Where I've Been" />
-        <Reveal delay={0.15}>
-          <p style={{ textAlign: 'center', color: 'var(--text)', opacity: 0.65, fontSize: '0.95rem', marginTop: -8, marginBottom: 32 }}>
-            A few places I've visited and experienced along the way.
-          </p>
-        </Reveal>
+          <Reveal delay={0.15}>
+            <p style={{ textAlign: 'center', color: 'var(--text)', opacity: 0.65, fontSize: '0.95rem', marginTop: -8, marginBottom: 32 }}>
+              A few places I've visited and experienced along the way.
+            </p>
+          </Reveal>
         {/* Desktop: Command Center (V1) */}
-        <div className="travel-desktop">
+        <div style={{ width: '90vw', marginLeft: 'calc(50% - 45vw)' }}>
           <PlacesMapV1 />
         </div>
         {/* Mobile: Passport Card (V2) */}

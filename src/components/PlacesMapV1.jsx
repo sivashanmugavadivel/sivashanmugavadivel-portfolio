@@ -70,7 +70,7 @@ function StatItem({ value, label, delay, inView }) {
 
 function MapContent({ onCountryClick, onTooltip }) {
   return (
-    <ComposableMap projectionConfig={{ scale: 147, center: [20, 10] }} style={{ width: '100%', height: '100%', display: 'block' }}>
+    <ComposableMap projectionConfig={{ scale: 147, center: [20, 10] }} width={800} height={500} style={{ width: '100%', height: '100%', display: 'block' }}>
       <Geographies geography={GEO_URL}>
         {({ geographies }) =>
           geographies.map(geo => {
@@ -119,7 +119,7 @@ export default function PlacesMapV1() {
   const [selectedCountry, setSelectedCountry] = useState(null)
   const [expanded, setExpanded] = useState(false)
   const ref = useRef(null)
-  const inView = useInView(ref, { once: false, margin: '-100px' })
+  const inView = useInView(ref, { once: true, margin: '0px' })
 
   useEffect(() => {
     function onKey(e) { if (e.key === 'Escape') setExpanded(false) }
@@ -137,6 +137,7 @@ export default function PlacesMapV1() {
       animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 60 }}
       transition={{ duration: 0.8, ease: [0.23, 1, 0.32, 1] }}
       style={{
+        width: '100%',
         borderRadius: 24,
         overflow: 'hidden',
         border: '1px solid rgba(255,255,255,0.08)',
@@ -144,7 +145,6 @@ export default function PlacesMapV1() {
         backdropFilter: 'blur(20px)',
         display: 'grid',
         gridTemplateColumns: '220px 1fr',
-        minHeight: 380,
         position: 'relative',
       }}
     >
@@ -183,18 +183,38 @@ export default function PlacesMapV1() {
 
       {/* Right — map */}
       <div style={{ position: 'relative', overflow: 'hidden' }}>
-        <div style={{
-          position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none',
-          background: 'radial-gradient(ellipse at 60% 50%, rgba(var(--accent-rgb,130,80,255),0.08) 0%, transparent 70%)',
-        }} />
-        <motion.div
-          initial={{ opacity: 0, scale: 1.04 }}
-          animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 1.04 }}
-          transition={{ duration: 1.1, delay: 0.2, ease: [0.23, 1, 0.32, 1] }}
-          style={{ width: '100%', height: '100%' }}
-        >
-          <MapContent onCountryClick={setSelectedCountry} onTooltip={setTooltip} />
-        </motion.div>
+        {/* Aspect ratio box: 800×500 = 62.5% — drives the card height naturally */}
+        <div style={{ paddingTop: '62.5%', position: 'relative' }}>
+          {/* Radial glow overlay */}
+          <div style={{
+            position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none',
+            background: 'radial-gradient(ellipse at 60% 50%, rgba(var(--accent-rgb,130,80,255),0.08) 0%, transparent 70%)',
+          }} />
+          {/* Map fills the aspect-ratio box */}
+          <motion.div
+            initial={{ opacity: 0, scale: 1.04 }}
+            animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 1.04 }}
+            transition={{ duration: 1.1, delay: 0.2, ease: [0.23, 1, 0.32, 1] }}
+            style={{ position: 'absolute', inset: 0 }}
+          >
+            <MapContent onCountryClick={setSelectedCountry} onTooltip={setTooltip} />
+          </motion.div>
+          {/* Name overlaid on top of map */}
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.8, ease: [0.23, 1, 0.32, 1] }}
+            style={{
+              position: 'absolute', top: 16, left: 0, right: 0, zIndex: 2,
+              textAlign: 'center',
+              fontSize: '1.8rem', fontWeight: 800, color: '#fff',
+              letterSpacing: '0.04em', textTransform: 'uppercase', opacity: 0.9,
+              pointerEvents: 'none',
+            }}
+          >
+            {cfg.personal.name}
+          </motion.div>
+        </div>
 
         {/* Expand button */}
         <button
