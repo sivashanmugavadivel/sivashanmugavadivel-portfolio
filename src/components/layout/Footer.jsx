@@ -89,7 +89,7 @@ export default function Footer() {
                 </motion.div>
               </div>
               {/* Social icons — below name */}
-              <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+              <div className="footer-socials-row" style={{ display: 'flex', gap: 6, marginTop: 6 }}>
                 {socialLinks.map(({ label, href, icon }) => (
                   <motion.a
                     key={label}
