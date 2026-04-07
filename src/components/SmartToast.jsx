@@ -59,8 +59,15 @@ export default function SmartToast() {
     ? getGreeting() + ' Welcome!'
     : thought
 
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 480
+  const posStyle = getPositionStyle(pos)
+
   return (
-    <div style={getPositionStyle(pos)}>
+    <div style={{
+      ...posStyle,
+      // On mobile: constrain width so text wraps instead of overflowing screen
+      ...(isMobile ? { maxWidth: 'calc(100vw - 32px)', left: 16, right: 16, transform: 'none' } : {}),
+    }}>
       <AnimatePresence mode="wait">
         {(phase === 'welcome' || phase === 'thought') && (
           <Component

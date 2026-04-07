@@ -70,18 +70,45 @@ export default function Footer() {
           gap: 16,
           flexWrap: 'wrap',
         }}>
-          {/* Left — logo + name */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+          {/* Left — logo + name + social icons (desktop: stacked; mobile: row) */}
+          <div className="footer-left" style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
             <Link to="/">
-              <img src={`${import.meta.env.BASE_URL}${cfg.personal.logo}`} alt={cfg.personal.shortName} style={{ height: 34, width: 34, borderRadius: '50%', objectFit: 'cover' }} />
+              <img src={`${import.meta.env.BASE_URL}${cfg.personal.logo}`} alt={cfg.personal.shortName} style={{ height: 34, width: 34, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
             </Link>
-            <span style={{ fontSize: '0.78rem', color: 'var(--text)', fontWeight: 500 }}>
-              {cfg.personal.name}
-            </span>
+            <div>
+              <span style={{ fontSize: '0.78rem', color: 'var(--text)', fontWeight: 500 }}>
+                {cfg.personal.name}
+              </span>
+            {/* Social icons — desktop: below name; mobile: hidden here (shown in center) */}
+            <div className="footer-socials-desktop" style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+              {socialLinks.map(({ label, href, icon }) => (
+                <motion.a
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  whileHover={{ y: -2 }}
+                  title={label}
+                  style={{
+                    width: 28, height: 28, borderRadius: '50%',
+                    border: '1px solid var(--border)',
+                    background: 'var(--card-bg)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: 'var(--text)',
+                    transition: 'color var(--transition), border-color var(--transition)',
+                  }}
+                >
+                  <svg width="13" height="13" viewBox={icon.props.viewBox} fill="currentColor">
+                    {icon.props.children}
+                  </svg>
+                </motion.a>
+              ))}
+            </div>
+            </div>
           </div>
 
-          {/* Center — social icons */}
-          <div style={{ display: 'flex', gap: 6 }}>
+          {/* Center — social icons on mobile only */}
+          <div className="footer-socials-mobile" style={{ display: 'flex', gap: 6 }}>
             {socialLinks.map(({ label, href, icon }) => (
               <motion.a
                 key={label}
@@ -107,7 +134,9 @@ export default function Footer() {
           </div>
 
           {/* Right — contact */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}
+            className="footer-contact"
+          >
             {/* <a
               href="mailto:hello@sivashanmuga.dev"
               style={{ fontSize: '0.78rem', color: 'var(--text)', textDecoration: 'none', transition: 'color var(--transition)' }}

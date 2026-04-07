@@ -333,3 +333,14 @@ code {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
+
+/* Footer layout */
+.footer-left { display: flex; flex-direction: row; align-items: flex-start; flex-shrink: 0; }
+.footer-socials-desktop { display: flex; }
+.footer-socials-mobile  { display: none !important; }
+
+@media (max-width: 600px) {
+  .footer-socials-desktop { display: none !important; }
+  .footer-socials-mobile  { display: flex !important; }
+  .footer-contact { margin-bottom: 32px !important; }
+}
