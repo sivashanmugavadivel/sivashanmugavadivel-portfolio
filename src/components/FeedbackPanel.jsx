@@ -225,9 +225,9 @@ export default function FeedbackPanel({ open, onClose }) {
                         transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
                         style={{ display: 'inline-block', width: 13, height: 13, border: `2px solid rgba(254,240,138,0.3)`, borderTopColor: yellow, borderRadius: '50%' }}
                       />
-                      Pinning…
+                      Dropping…
                     </>
-                  ) : 'Pin it! 📌'}
+                  ) : 'Drop it! 📌'}
                 </motion.button>
 
                 {status === 'error' && (
