@@ -1,5 +1,11 @@
 [
   {
+    "filename": "Portrait Pic10.png",
+    "category": "Portrait",
+    "caption": "Portrait Pic10",
+    "date": "2026-04-07"
+  },
+  {
     "filename": "20171201_100208.jpg",
     "category": "camera",
     "caption": "20171201 100208",
@@ -210,12 +216,6 @@
     "date": "2026-04-04"
   },
   {
-    "filename": "Portrait Pic10.jpg",
-    "category": "Portrait",
-    "caption": "Portrait Pic10",
-    "date": "2026-04-04"
-  },
-  {
     "filename": "Portrait Pic11.jpg",
     "category": "Portrait",
     "caption": "Portrait Pic11",
@@ -264,7 +264,7 @@
     "date": "2026-04-04"
   },
   {
-    "filename": "Portrait Pic8.png",
+    "filename": "Portrait Pic8.jpg",
     "category": "Portrait",
     "caption": "Portrait Pic8",
     "date": "2026-04-04"

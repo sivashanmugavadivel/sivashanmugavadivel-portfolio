@@ -99,19 +99,19 @@ function PolaroidIntro({ onDone }) {
 }
 
 /* ── 3D Carousel ── */
-function GalleryCarousel({ items, onOpen }) {
+function GalleryCarousel({ items, onOpen, lightboxOpen }) {
   const [active, setActive] = useState(0)
   const [paused, setPaused] = useState(false)
 
   const prev = () => setActive(i => (i - 1 + items.length) % items.length)
   const next = () => setActive(i => (i + 1) % items.length)
 
-  // Auto-scroll every 3s, pauses on hover
+  // Auto-scroll every 3s — pauses on hover or when lightbox is open
   useEffect(() => {
-    if (paused || items.length <= 1) return
-    const id = setInterval(() => setActive(i => (i + 1) % items.length), 3000)
+    if (paused || lightboxOpen || items.length <= 1) return
+    const id = setInterval(() => setActive(i => (i + 1) % items.length), 5000)
     return () => clearInterval(id)
-  }, [paused, items.length])
+  }, [paused, lightboxOpen, items.length])
 
   const getPos = (i) => {
     const diff = ((i - active) + items.length) % items.length
@@ -266,8 +266,15 @@ export default function Gallery() {
   const [lightboxIndex, setLightboxIndex] = useState(-1)
 
   const filtered = activeCategory === 'all'
-    ? galleryData
+    ? galleryData.slice().sort((a, b) => {
+        // Portrait first, then other categories alphabetically, then by filename within each
+        const catA = a.category === 'Portrait' ? '' : a.category
+        const catB = b.category === 'Portrait' ? '' : b.category
+        if (catA !== catB) return catA.localeCompare(catB)
+        return a.filename.localeCompare(b.filename)
+      })
     : galleryData.filter(p => p.category === activeCategory)
+        .slice().sort((a, b) => a.filename.localeCompare(b.filename))
 
   const slides = filtered.map(item => ({
     src: `${BASE}gallery/${item.category}/${item.filename}`,
@@ -379,6 +386,7 @@ export default function Gallery() {
                   key={activeCategory}
                   items={filtered}
                   onOpen={(i) => setLightboxIndex(i)}
+                  lightboxOpen={lightboxIndex >= 0}
                 />
               </motion.div>
             )}
