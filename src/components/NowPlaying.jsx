@@ -217,6 +217,7 @@ export default function NowPlaying() {
   const playerRef = useRef(null)      // YT.Player instance
   const pollRef = useRef(null)
   const progressRef = useRef(null)
+  const durationRef = useRef(0)
 
   const [ready, setReady] = useState(false)
   const [playing, setPlaying] = useState(false)
@@ -274,7 +275,7 @@ export default function NowPlaying() {
         if (!p || typeof p.getCurrentTime !== 'function') return
         setCurrentTime(p.getCurrentTime())
         const d = p.getDuration()
-        if (d > 0) setDuration(d)
+        if (d > 0) { setDuration(d); durationRef.current = d }
       }, 500)
     }
     return () => clearInterval(pollRef.current)
@@ -287,13 +288,18 @@ export default function NowPlaying() {
     else p.playVideo()
   }
 
-  // Progress bar drag
+  // Progress bar drag — uses refs so callbacks always see latest values
   function getTimeFromEvent(e) {
     const bar = progressRef.current
-    if (!bar || !duration) return 0
+    if (!bar) return 0
+    // Always read duration fresh from player so mobile seek never uses stale value
+    const p = playerRef.current
+    const dur = (p && typeof p.getDuration === 'function' ? p.getDuration() : 0) || durationRef.current
+    if (!dur) return 0
     const rect = bar.getBoundingClientRect()
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX
-    return Math.max(0, Math.min(duration, ((clientX - rect.left) / rect.width) * duration))
+    const touch = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0])
+    const clientX = touch ? touch.clientX : e.clientX
+    return Math.max(0, Math.min(dur, ((clientX - rect.left) / rect.width) * dur))
   }
 
   function onBarPointerDown(e) {
@@ -309,7 +315,7 @@ export default function NowPlaying() {
     const t = getTimeFromEvent(e)
     setDragValue(t)
     setCurrentTime(t)
-  }, [dragging, duration])
+  }, [dragging])
 
   const onBarPointerUp = useCallback((e) => {
     if (!dragging) return
@@ -317,7 +323,7 @@ export default function NowPlaying() {
     setDragging(false)
     setCurrentTime(t)
     playerRef.current?.seekTo(t, true)
-  }, [dragging, duration])
+  }, [dragging])
 
   useEffect(() => {
     if (!dragging) return
@@ -331,7 +337,7 @@ export default function NowPlaying() {
       window.removeEventListener('touchmove', onBarPointerMove)
       window.removeEventListener('touchend', onBarPointerUp)
     }
-  }, [dragging, onBarPointerMove, onBarPointerUp])
+  }, [dragging, onBarPointerMove, onBarPointerUp])  // eslint-disable-line
 
   const displayTime = dragging ? dragValue : currentTime
   const progress = duration > 0 ? displayTime / duration : 0
