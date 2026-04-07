@@ -63,11 +63,12 @@ export default function SmartToast() {
   const posStyle = getPositionStyle(pos)
 
   return (
-    <div style={{
-      ...posStyle,
-      // On mobile: constrain width so text wraps instead of overflowing screen
-      ...(isMobile ? { maxWidth: 'calc(100vw - 32px)', left: 16, right: 16, transform: 'none' } : {}),
-    }}>
+    <div
+      className={isMobile ? 'smart-toast-mobile' : ''}
+      style={{
+        ...posStyle,
+        ...(isMobile ? { maxWidth: 'calc(100vw - 32px)', left: 16, right: 16, transform: 'none' } : {}),
+      }}>
       <AnimatePresence mode="wait">
         {(phase === 'welcome' || phase === 'thought') && (
           <Component

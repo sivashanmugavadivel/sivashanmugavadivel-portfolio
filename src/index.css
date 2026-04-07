@@ -334,6 +334,15 @@ code {
   to   { opacity: 1; }
 }
 
+/* SmartToast mobile: force text wrap on all toast designs */
+.smart-toast-mobile * {
+  white-space: normal !important;
+}
+.smart-toast-mobile > * {
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
 /* Footer layout */
 .footer-left { display: flex; flex-direction: row; align-items: flex-start; flex-shrink: 0; }
 .footer-socials-desktop { display: flex; }
