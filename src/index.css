@@ -351,5 +351,6 @@ code {
 @media (max-width: 600px) {
   .footer-socials-desktop { display: none !important; }
   .footer-socials-mobile  { display: flex !important; }
-  .footer-row1 { padding: 12px 0 8px !important; gap: 8px !important; }
+  .footer-row1 { padding: 12px 0 8px !important; gap: 4px !important; }
+  .footer-contact { align-self: flex-start !important; margin-top: 0 !important; }
 }
