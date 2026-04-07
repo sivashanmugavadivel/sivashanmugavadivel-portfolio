@@ -70,16 +70,25 @@ export default function Footer() {
           gap: 16,
           flexWrap: 'wrap',
         }}>
-          {/* Left — logo + name + social icons (desktop: stacked; mobile: row) */}
-          <div className="footer-left" style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+          {/* Left — logo + name + social icons */}
+          <div className="footer-left" style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flex: 1 }}>
             <Link to="/">
               <img src={`${import.meta.env.BASE_URL}${cfg.personal.logo}`} alt={cfg.personal.shortName} style={{ height: 34, width: 34, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
             </Link>
-            <div>
-              <span style={{ fontSize: '0.78rem', color: 'var(--text)', fontWeight: 500 }}>
-                {cfg.personal.name}
-              </span>
-              {/* Social icons — always below name on both desktop and mobile */}
+            <div style={{ flex: 1 }}>
+              {/* Name row — with contact button on the right on mobile */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text)', fontWeight: 500 }}>
+                  {cfg.personal.name}
+                </span>
+                {/* Start a conversation — mobile only, same row as name */}
+                <motion.div className="footer-contact-mobile" whileHover={{ x: 3 }} transition={{ duration: 0.15 }}>
+                  <Link to="/contact" style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--accent)', textDecoration: 'none' }}>
+                    Start a conversation →
+                  </Link>
+                </motion.div>
+              </div>
+              {/* Social icons — below name */}
               <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
                 {socialLinks.map(({ label, href, icon }) => (
                   <motion.a
@@ -104,12 +113,6 @@ export default function Footer() {
                   </motion.a>
                 ))}
               </div>
-              {/* Start a conversation — mobile only, below social icons */}
-              <motion.div className="footer-contact-mobile" whileHover={{ x: 3 }} transition={{ duration: 0.15 }} style={{ marginTop: 8 }}>
-                <Link to="/contact" style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--accent)', textDecoration: 'none' }}>
-                  Start a conversation →
-                </Link>
-              </motion.div>
             </div>
           </div>
 
