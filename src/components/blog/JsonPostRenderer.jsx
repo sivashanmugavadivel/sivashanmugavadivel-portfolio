@@ -118,10 +118,18 @@ function SectionGallery({ section, color }) {
   const images = section.images || []
   const [active, setActive] = useState(0)
   const [lightboxIndex, setLightboxIndex] = useState(-1)
+  const [paused, setPaused] = useState(false)
   const touchX = { current: null }
 
   const prev = () => setActive(i => (i - 1 + images.length) % images.length)
   const next = () => setActive(i => (i + 1) % images.length)
+
+  // Auto-scroll every 2s, pauses on hover
+  useEffect(() => {
+    if (paused || images.length <= 1) return
+    const id = setInterval(() => setActive(i => (i + 1) % images.length), 2000)
+    return () => clearInterval(id)
+  }, [paused, images.length])
 
   const handleTouchStart = (e) => { touchX.current = e.touches[0].clientX }
   const handleTouchEnd = (e) => {
@@ -160,6 +168,8 @@ function SectionGallery({ section, color }) {
         style={{ position: 'relative', height: 320, perspective: 1200, overflow: 'hidden' }}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
       >
         {images.map((img, i) => {
           const pos = getPos(i)

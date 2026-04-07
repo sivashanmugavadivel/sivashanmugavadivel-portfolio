@@ -101,9 +101,17 @@ function PolaroidIntro({ onDone }) {
 /* ── 3D Carousel ── */
 function GalleryCarousel({ items, onOpen }) {
   const [active, setActive] = useState(0)
+  const [paused, setPaused] = useState(false)
 
   const prev = () => setActive(i => (i - 1 + items.length) % items.length)
   const next = () => setActive(i => (i + 1) % items.length)
+
+  // Auto-scroll every 3s, pauses on hover
+  useEffect(() => {
+    if (paused || items.length <= 1) return
+    const id = setInterval(() => setActive(i => (i + 1) % items.length), 3000)
+    return () => clearInterval(id)
+  }, [paused, items.length])
 
   const getPos = (i) => {
     const diff = ((i - active) + items.length) % items.length
@@ -135,7 +143,9 @@ function GalleryCarousel({ items, onOpen }) {
         perspective: 1200,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         overflow: 'hidden',
-      }}>
+      }}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}>
         {items.map((item, i) => {
           const pos = getPos(i)
           // Only render the 5 visible cards — skip hidden ones entirely
