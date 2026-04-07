@@ -351,5 +351,5 @@ code {
   .footer-row1 { padding: 12px 0 8px !important; gap: 4px !important; }
   .footer-contact { display: none !important; }
   .footer-contact-mobile { display: block !important; }
-  .footer-socials-row { margin-bottom: 8px !important; }
+  .footer-socials-row { margin-bottom: 16px !important; }
 }
