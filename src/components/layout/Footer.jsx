@@ -79,8 +79,8 @@ export default function Footer() {
               <span style={{ fontSize: '0.78rem', color: 'var(--text)', fontWeight: 500 }}>
                 {cfg.personal.name}
               </span>
-              {/* Social icons — desktop: below name; mobile: hidden here (shown in center) */}
-              <div className="footer-socials-desktop" style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+              {/* Social icons — always below name on both desktop and mobile */}
+              <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
                 {socialLinks.map(({ label, href, icon }) => (
                   <motion.a
                     key={label}
@@ -104,7 +104,7 @@ export default function Footer() {
                   </motion.a>
                 ))}
               </div>
-              {/* Start a conversation — mobile only, below name */}
+              {/* Start a conversation — mobile only, below social icons */}
               <motion.div className="footer-contact-mobile" whileHover={{ x: 3 }} transition={{ duration: 0.15 }} style={{ marginTop: 8 }}>
                 <Link to="/contact" style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--accent)', textDecoration: 'none' }}>
                   Start a conversation →
@@ -113,33 +113,7 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Center — social icons on mobile only */}
-          <div className="footer-socials-mobile" style={{ display: 'flex', gap: 6 }}>
-            {socialLinks.map(({ label, href, icon }) => (
-              <motion.a
-                key={label}
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                whileHover={{ y: -2 }}
-                title={label}
-                style={{
-                  width: 28, height: 28, borderRadius: '50%',
-                  border: '1px solid var(--border)',
-                  background: 'var(--card-bg)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: 'var(--text)',
-                  transition: 'color var(--transition), border-color var(--transition)',
-                }}
-              >
-                <svg width="13" height="13" viewBox={icon.props.viewBox} fill="currentColor">
-                  {icon.props.children}
-                </svg>
-              </motion.a>
-            ))}
-          </div>
-
-          {/* Right — contact */}
+          {/* Right — contact (desktop only) */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}
             className="footer-contact"
           >

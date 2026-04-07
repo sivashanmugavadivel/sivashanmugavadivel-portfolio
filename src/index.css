@@ -345,15 +345,9 @@ code {
 
 /* Footer layout */
 .footer-left { display: flex; flex-direction: row; align-items: flex-start; flex-shrink: 0; }
-.footer-socials-desktop { display: flex; }
-.footer-socials-mobile  { display: none !important; }
-
-/* Footer layout mobile */
 .footer-contact-mobile { display: none; }
 
 @media (max-width: 600px) {
-  .footer-socials-desktop { display: none !important; }
-  .footer-socials-mobile  { display: flex !important; }
   .footer-row1 { padding: 12px 0 8px !important; gap: 4px !important; }
   .footer-contact { display: none !important; }
   .footer-contact-mobile { display: block !important; }
