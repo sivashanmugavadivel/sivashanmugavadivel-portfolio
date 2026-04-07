@@ -62,7 +62,7 @@ export default function Footer() {
       <div style={{ width: '100%', padding: '0 clamp(24px, 5vw, 80px)', boxSizing: 'border-box', position: 'relative', zIndex: 1 }}>
 
         {/* Row 1 — main content */}
-        <div style={{
+        <div className="footer-row1" style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
