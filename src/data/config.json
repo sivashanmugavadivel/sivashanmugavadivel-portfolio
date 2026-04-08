@@ -598,5 +598,45 @@
       "category": "Travel",
       "thumbnail": ""
     }
-  ]
+  ],
+
+  "development": {
+    "label": "What I'm Building",
+    "heading": "Development Projects",
+    "subtext": "A showcase of apps and projects at various stages — from early ideas to live products.",
+    "phases": ["Idea", "Development", "Testing", "Beta", "Play Store", "Released"],
+    "items": [
+      {
+        "title": "My Cheetu",
+        "tagline": "Simple. Transparent. Reliable.",
+        "desc": "Cheetu focuses on providing clarity and simplicity, ensuring users always know their financial status within the chit group. The app is designed for users who want a hassle-free way to manage their chit fund involvement without confusion. Whether you are a member or participant, Cheetu helps you stay on track with all your chit-related activities.",
+        "status": "beta",
+        "currentPhase": 4,
+        "iconBg": "#16a34a",
+        "icon": "app/mycheetu-app.png",
+        "iconEmoji": "📱",
+        "platform": "Android",
+        "tags": ["React Native", "Firebase", "Formspree", "Postgres SQL", ".Net Core"],
+        "link": "",
+        "buttons": [
+          { "note": "Join Tester?", "label": "Click here", "url": "https://play.google.com/apps/internaltest/4701024442794426144", "variant": "primary" },
+          { "note": "", "label": "View on GitHub", "url": "", "variant": "outline" }
+        ]
+      },
+      {
+        "title": "Financial IQ",
+        "tagline": "Your AI-powered personal finance assistant",
+        "desc": "An AI-powered personal finance app that tracks expenses, analyzes spending, optimizes loans and credit cards, and provides smart insights to improve your financial health.",
+        "status": "development",
+        "currentPhase": 1,
+        "iconBg": "#0891b2",
+        "icon": "",
+        "iconEmoji": "📱",
+        "platform": "Android",
+        "tags": ["React Native", "Node.js", "Postgres SQL", ".Net Core"],
+        "link": "",
+        "buttons": []
+      }
+    ]
+  }
 }

@@ -623,6 +623,465 @@ function LifeSection() {
   )
 }
 
+/* ── Status config ── */
+const STATUS_CONFIG = {
+  released:     { label: 'Released',              color: '#16a34a', bg: 'rgba(22,163,74,0.1)',   dot: '#16a34a' },
+  play_store:   { label: 'Live on Play Store',     color: '#1d4ed8', bg: 'rgba(29,78,216,0.1)',   dot: '#3b82f6' },
+  testing:      { label: 'Testing',                color: '#d97706', bg: 'rgba(217,119,6,0.1)',   dot: '#f59e0b' },
+  development:  { label: 'In Development',         color: '#7c3aed', bg: 'rgba(124,58,237,0.1)', dot: '#7c3aed' },
+  beta:         { label: 'Beta',                   color: '#0891b2', bg: 'rgba(8,145,178,0.1)',   dot: '#0891b2' },
+  play_testing: { label: 'Testing on Play Store',  color: '#0891b2', bg: 'rgba(8,145,178,0.1)',   dot: '#0891b2' },
+}
+
+/* ── Shared dev helpers ── */
+const isPulsing = s => s === 'development' || s === 'testing' || s === 'play_testing'
+
+const DEV_STYLES = `
+  @keyframes devPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.35;transform:scale(1.6)} }
+  @keyframes devFill  { from{width:0%} to{width:var(--fill-w)} }
+  @keyframes devFloat { 0%,100%{transform:translateY(0px)} 50%{transform:translateY(-6px)} }
+  @keyframes devShine { 0%{left:-60%} 100%{left:120%} }
+`
+
+/* Phase progress bar — the core visual for each card */
+function PhaseBar({ phases, currentPhase, color }) {
+  const total = phases.length - 1
+  const pct = Math.round((currentPhase / total) * 100)
+  return (
+    <div>
+      {/* Dot track */}
+      <div style={{ display:'flex', alignItems:'center', gap:0, position:'relative', marginBottom:8 }}>
+        {phases.map((ph, i) => {
+          const done = i <= currentPhase
+          const active = i === currentPhase
+          return (
+            <div key={ph} style={{ display:'flex', alignItems:'center', flex: i < phases.length-1 ? 1 : 0 }}>
+              {/* Dot */}
+              <motion.div
+                initial={{ scale:0 }}
+                whileInView={{ scale:1 }}
+                viewport={{ once:true }}
+                transition={{ delay: i * 0.07, type:'spring', stiffness:300 }}
+                style={{
+                  width: active ? 12 : 8,
+                  height: active ? 12 : 8,
+                  borderRadius:'50%',
+                  background: done ? color : 'var(--border)',
+                  border: active ? `2px solid ${color}` : 'none',
+                  boxShadow: active ? `0 0 10px ${color}` : 'none',
+                  animation: active ? 'devPulse 2s ease-in-out infinite' : 'none',
+                  flexShrink:0, zIndex:1, position:'relative',
+                  transition:'background 0.3s',
+                }}
+              />
+              {/* Connector line */}
+              {i < phases.length - 1 && (
+                <div style={{ flex:1, height:2, background:'var(--border)', position:'relative', overflow:'hidden' }}>
+                  <motion.div
+                    initial={{ scaleX:0 }}
+                    whileInView={{ scaleX: i < currentPhase ? 1 : 0 }}
+                    viewport={{ once:true }}
+                    transition={{ delay: i * 0.07 + 0.1, duration:0.4 }}
+                    style={{ position:'absolute', inset:0, background:color, transformOrigin:'left' }}
+                  />
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+      {/* Phase labels */}
+      <div style={{ display:'flex', justifyContent:'space-between' }}>
+        {phases.map((ph, i) => (
+          <span key={ph} style={{
+            fontSize:'0.6rem', fontFamily:'var(--mono)',
+            color: i <= currentPhase ? color : 'var(--text)',
+            opacity: i <= currentPhase ? 1 : 0.4,
+            fontWeight: i === currentPhase ? 700 : 400,
+            flex: i < phases.length-1 ? 1 : 0,
+            whiteSpace:'nowrap',
+          }}>{ph}</span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/* ════════════════════════════════════════════════════
+   DESIGN 7 — "Dashboard List"
+   A full-width table-style list that looks like a
+   project management dashboard. Each row has icon,
+   title, platform, a mini inline phase progress bar,
+   status pill, and an expand toggle that reveals
+   the description and tags below.
+   ════════════════════════════════════════════════════ */
+function DevelopmentSection() {
+  const { label, heading, subtext, phases, items } = cfg.development
+  const [expanded, setExpanded] = useState(null)
+  const [hoveredRow, setHoveredRow] = useState(null)
+
+  const containerVariants = {
+    hidden: {},
+    show: { transition: { staggerChildren: 0.1, delayChildren: 0.2 } },
+  }
+  const rowVariants = {
+    hidden: { opacity: 0, x: -24 },
+    show:   { opacity: 1, x: 0, transition: { duration: 0.5, ease: [0.25, 0.1, 0.25, 1] } },
+  }
+
+  return (
+    <section className="section" style={{ background: 'var(--bg-secondary)', position: 'relative', overflow: 'hidden' }}>
+      <style>{DEV_STYLES}{`
+        @keyframes devRowShine {
+          0%   { transform: translateX(-100%) skewX(-15deg); }
+          100% { transform: translateX(300%)  skewX(-15deg); }
+        }
+      `}</style>
+
+      {/* Ambient background glow */}
+      <motion.div
+        initial={{ opacity: 0 }} whileInView={{ opacity: 1 }}
+        viewport={{ once: true }} transition={{ duration: 1.2 }}
+        style={{ position: 'absolute', inset: 0, pointerEvents: 'none',
+          background: 'radial-gradient(ellipse 70% 50% at 50% 0%, rgba(124,58,237,0.06), transparent)' }}
+      />
+
+      <div className="page-container" style={{ position: 'relative' }}>
+        <SectionHeading label={label} title={heading} />
+        <Reveal delay={0.12}>
+          <p style={{ textAlign: 'center', color: 'var(--text)', fontSize: '0.95rem',
+            maxWidth: 520, margin: '-8px auto 52px', lineHeight: 1.7 }}>{subtext}</p>
+        </Reveal>
+
+        {/* Dashboard card — slides up on scroll */}
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-60px' }}
+          transition={{ duration: 0.65, ease: [0.25, 0.1, 0.25, 1] }}
+          style={{ maxWidth: 900, margin: '0 auto',
+            background: 'var(--card-bg)', border: '1px solid var(--border)',
+            borderRadius: 20, overflow: 'hidden', boxShadow: 'var(--shadow)' }}
+        >
+          {/* Table header — fades in */}
+          <motion.div
+            initial={{ opacity: 0 }} whileInView={{ opacity: 1 }}
+            viewport={{ once: true }} transition={{ duration: 0.4, delay: 0.3 }}
+            style={{ display: 'grid', gridTemplateColumns: '44px 1fr 120px 200px 130px 36px',
+              gap: 16, padding: '10px 24px',
+              background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}
+          >
+            {['', 'Project', 'Platform', 'Phase', 'Status', ''].map((h, i) => (
+              <span key={i} style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.08em',
+                color: 'var(--text)', opacity: 0.45, fontFamily: 'var(--mono)',
+                textTransform: 'uppercase' }}>{h}</span>
+            ))}
+          </motion.div>
+
+          {/* Rows — stagger in */}
+          <motion.div
+            variants={containerVariants}
+            initial="hidden" whileInView="show"
+            viewport={{ once: true, margin: '-40px' }}
+          >
+            {items.map((p, i) => {
+              const s = STATUS_CONFIG[p.status] || STATUS_CONFIG.development
+              const isOpen = expanded === i
+              const isHovered = hoveredRow === i
+              const pct = Math.round((p.currentPhase / (phases.length - 1)) * 100)
+
+              return (
+                <motion.div
+                  key={i}
+                  variants={rowVariants}
+                  style={{ borderBottom: i < items.length - 1 ? '1px solid var(--border)' : 'none' }}
+                >
+                  {/* Main row */}
+                  <motion.div
+                    onHoverStart={() => setHoveredRow(i)}
+                    onHoverEnd={() => setHoveredRow(null)}
+                    onClick={() => setExpanded(isOpen ? null : i)}
+                    animate={{
+                      backgroundColor: isHovered
+                        ? 'var(--accent-bg)'
+                        : isOpen ? `${p.iconBg}08` : 'transparent',
+                    }}
+                    transition={{ duration: 0.18 }}
+                    style={{ display: 'grid', gridTemplateColumns: '44px 1fr 120px 200px 130px 36px',
+                      gap: 16, padding: '14px 24px', cursor: 'pointer', alignItems: 'center',
+                      position: 'relative', overflow: 'hidden' }}
+                  >
+                    {/* Shine sweep on hover */}
+                    {isHovered && (
+                      <motion.div
+                        initial={{ x: '-100%' }} animate={{ x: '300%' }}
+                        transition={{ duration: 0.55, ease: 'easeInOut' }}
+                        style={{ position: 'absolute', top: 0, bottom: 0, width: '30%',
+                          background: `linear-gradient(90deg, transparent, ${p.iconBg}10, transparent)`,
+                          pointerEvents: 'none', zIndex: 0 }}
+                      />
+                    )}
+
+                    {/* Left accent bar that grows on hover */}
+                    <motion.div
+                      animate={{ scaleY: isHovered || isOpen ? 1 : 0, opacity: isHovered || isOpen ? 1 : 0 }}
+                      transition={{ duration: 0.2 }}
+                      style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3,
+                        background: s.color, borderRadius: '0 2px 2px 0',
+                        transformOrigin: 'center', zIndex: 1 }}
+                    />
+
+                    {/* Icon */}
+                    <motion.div
+                      whileHover={{ scale: 1.12, rotate: 5 }}
+                      transition={{ type: 'spring', stiffness: 300 }}
+                      style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, zIndex: 1,
+                        background: p.icon ? 'transparent' : `linear-gradient(135deg, ${p.iconBg}, ${p.iconBg}bb)`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem',
+                        overflow: 'hidden',
+                        boxShadow: isHovered ? `0 4px 16px ${p.iconBg}55` : 'none',
+                        transition: 'box-shadow 0.2s' }}
+                    >
+                      {p.icon
+                        ? <img src={`/${p.icon}`} alt={p.title}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 10 }} />
+                        : p.iconEmoji}
+                    </motion.div>
+
+                    {/* Title + tagline */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2, zIndex: 1, minWidth: 0 }}>
+                      <motion.span
+                        animate={{ color: isHovered ? 'var(--accent)' : 'var(--text-h)', x: isHovered ? 4 : 0 }}
+                        transition={{ duration: 0.2 }}
+                        style={{ fontSize: '0.9rem', fontWeight: 600, fontFamily: 'var(--heading)' }}
+                      >{p.title}</motion.span>
+                      {p.tagline && (
+                        <motion.span
+                          animate={{ opacity: isHovered ? 0.8 : 0.45, x: isHovered ? 4 : 0 }}
+                          transition={{ duration: 0.2 }}
+                          style={{ fontSize: '0.7rem', color: 'var(--text)', fontFamily: 'var(--sans)',
+                            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                        >{p.tagline}</motion.span>
+                      )}
+                    </div>
+
+                    {/* Platform */}
+                    <span style={{ fontSize: '0.72rem', fontFamily: 'var(--mono)',
+                      color: 'var(--text)', opacity: 0.55, zIndex: 1 }}>{p.platform}</span>
+
+                    {/* Mini phase bar */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, zIndex: 1 }}>
+                      <div style={{ display: 'flex', gap: 2 }}>
+                        {phases.map((ph, pi) => {
+                          const done = pi <= p.currentPhase
+                          const active = pi === p.currentPhase
+                          return (
+                            <motion.div key={ph}
+                              initial={{ scaleX: 0 }}
+                              whileInView={{ scaleX: 1 }}
+                              viewport={{ once: true }}
+                              transition={{ delay: i * 0.08 + pi * 0.06, duration: 0.35, ease: 'easeOut' }}
+                              style={{ flex: 1, height: 5, borderRadius: 3,
+                                background: done ? s.color : 'var(--border)',
+                                boxShadow: active ? `0 0 8px ${s.color}` : 'none',
+                                animation: active ? 'devPulse 2s ease-in-out infinite' : 'none',
+                                transformOrigin: 'left' }}
+                            />
+                          )
+                        })}
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <motion.span
+                          animate={{ color: isHovered ? s.color : s.color }}
+                          style={{ fontSize: '0.58rem', fontFamily: 'var(--mono)',
+                            color: s.color, fontWeight: 700 }}>
+                          {phases[p.currentPhase]}
+                        </motion.span>
+                        <span style={{ fontSize: '0.58rem', fontFamily: 'var(--mono)',
+                          color: 'var(--text)', opacity: 0.4 }}>{pct}%</span>
+                      </div>
+                    </div>
+
+                    {/* Status badge */}
+                    <motion.span
+                      whileHover={{ scale: 1.05 }}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 5,
+                        fontSize: '0.65rem', fontWeight: 600, padding: '4px 9px', borderRadius: 999,
+                        background: s.bg, color: s.color, border: `1px solid ${s.color}33`,
+                        fontFamily: 'var(--mono)', whiteSpace: 'nowrap', zIndex: 1 }}
+                    >
+                      <span style={{ width: 5, height: 5, borderRadius: '50%', background: s.dot,
+                        animation: isPulsing(p.status) ? 'devPulse 1.8s ease-in-out infinite' : 'none' }} />
+                      {s.label}
+                    </motion.span>
+
+                    {/* Expand chevron */}
+                    <motion.div
+                      animate={{ rotate: isOpen ? 180 : 0, color: isOpen ? s.color : 'var(--text)' }}
+                      transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        opacity: 0.6, zIndex: 1 }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="6 9 12 15 18 9"/>
+                      </svg>
+                    </motion.div>
+                  </motion.div>
+
+                  {/* Expandable detail panel */}
+                  <motion.div
+                    initial={false}
+                    animate={{ height: isOpen ? 'auto' : 0, opacity: isOpen ? 1 : 0 }}
+                    transition={{ duration: 0.38, ease: [0.25, 0.1, 0.25, 1] }}
+                    style={{ overflow: 'hidden' }}
+                  >
+                    <motion.div
+                      initial={{ y: -8 }} animate={{ y: isOpen ? 0 : -8 }}
+                      transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
+                      style={{ padding: '12px 24px 20px', paddingLeft: 84,
+                        borderTop: `1px dashed ${p.iconBg}44`,
+                        background: `linear-gradient(to right, ${p.iconBg}06, transparent)`,
+                        display: 'flex', flexDirection: 'column', gap: 12 }}
+                    >
+                      <p style={{ margin: 0, fontSize: '0.83rem', color: 'var(--text)', lineHeight: 1.75 }}>
+                        {p.desc}
+                      </p>
+
+                      {/* Tech tags — stagger in when panel opens */}
+                      <motion.div
+                        initial="hidden" animate={isOpen ? 'show' : 'hidden'}
+                        variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05 } } }}
+                        style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}
+                      >
+                        {p.tags?.map(t => (
+                          <motion.span key={t}
+                            variants={{ hidden: { opacity: 0, scale: 0.8 }, show: { opacity: 1, scale: 1 } }}
+                            whileHover={{ scale: 1.08, background: p.iconBg, color: '#fff' }}
+                            transition={{ duration: 0.15 }}
+                            style={{ fontSize: '0.65rem', padding: '3px 10px', borderRadius: 999,
+                              background: `${p.iconBg}14`, color: p.iconBg,
+                              fontWeight: 600, fontFamily: 'var(--mono)',
+                              border: `1px solid ${p.iconBg}22`,
+                              cursor: 'default', transition: 'background 0.2s, color 0.2s' }}
+                          >{t}</motion.span>
+                        ))}
+                      </motion.div>
+
+                      {/* Full phase pill track — animates in */}
+                      <motion.div
+                        initial="hidden" animate={isOpen ? 'show' : 'hidden'}
+                        variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06, delayChildren: 0.1 } } }}
+                        style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}
+                      >
+                        {phases.map((ph, pi) => {
+                          const done = pi <= p.currentPhase
+                          const active = pi === p.currentPhase
+                          return (
+                            <motion.span key={ph}
+                              variants={{ hidden: { opacity: 0, y: 6 }, show: { opacity: 1, y: 0 } }}
+                              style={{ fontSize: '0.62rem', padding: '4px 10px', borderRadius: 6,
+                                background: done ? (active ? s.color : `${s.color}18`) : 'transparent',
+                                color: done ? (active ? '#fff' : s.color) : 'var(--text)',
+                                opacity: done ? 1 : 0.28,
+                                fontWeight: active ? 700 : 500,
+                                fontFamily: 'var(--mono)',
+                                border: `1px solid ${done ? s.color + '44' : 'var(--border)'}`,
+                                boxShadow: active ? `0 0 10px ${s.color}55` : 'none' }}
+                            >
+                              {pi < p.currentPhase ? '✓ ' : active ? '▶ ' : ''}{ph}
+                            </motion.span>
+                          )
+                        })}
+                      </motion.div>
+
+                      {/* Action buttons from config */}
+                      {p.buttons?.filter(b => b.url).length > 0 && (
+                        <motion.div
+                          initial="hidden" animate={isOpen ? 'show' : 'hidden'}
+                          variants={{ hidden: {}, show: { transition: { staggerChildren: 0.08, delayChildren: 0.28 } } }}
+                          style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 4 }}
+                        >
+                          {p.buttons.filter(b => b.url).map((btn, bi) => (
+                            <motion.div
+                              key={bi}
+                              variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
+                              style={{ display: 'flex', flexDirection: 'column', gap: 6 }}
+                            >
+                              {/* Note text — only shown if set */}
+                              {btn.note && (
+                                <span style={{
+                                  fontSize: '0.75rem', color: 'var(--text)', lineHeight: 1.5,
+                                  opacity: 0.7, fontStyle: 'italic',
+                                  paddingLeft: 2,
+                                }}>
+                                  {btn.note}
+                                </span>
+                              )}
+
+                              {/* Button */}
+                              <motion.a
+                                href={btn.url} target="_blank" rel="noopener noreferrer"
+                                whileHover={{
+                                  y: -3,
+                                  boxShadow: btn.variant === 'primary'
+                                    ? `0 8px 24px ${p.iconBg}66`
+                                    : `0 8px 24px ${s.color}44`,
+                                  ...(btn.variant === 'primary'
+                                    ? { background: `linear-gradient(135deg, ${p.iconBg}ee, ${p.iconBg})` }
+                                    : { background: `${s.color}10`, borderColor: s.color }),
+                                }}
+                                whileTap={{ scale: 0.96 }}
+                                transition={{ duration: 0.2 }}
+                                style={{
+                                  display: 'inline-flex', alignItems: 'center', gap: 8,
+                                  textDecoration: 'none', borderRadius: 10,
+                                  padding: '9px 20px', fontSize: '0.78rem', fontWeight: 700,
+                                  fontFamily: 'var(--mono)', cursor: 'pointer',
+                                  width: 'fit-content',
+                                  ...(btn.variant === 'primary'
+                                    ? {
+                                        background: `linear-gradient(135deg, ${p.iconBg}, ${p.iconBg}cc)`,
+                                        color: '#fff',
+                                        border: 'none',
+                                        boxShadow: `0 2px 12px ${p.iconBg}44`,
+                                      }
+                                    : {
+                                        background: 'transparent',
+                                        color: s.color,
+                                        border: `1.5px solid ${s.color}55`,
+                                      }),
+                                }}
+                              >
+                                {btn.variant === 'primary' ? (
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M3.18 23.76C2.5 24.15 2 23.84 2 23.05V.95C2 .16 2.5-.15 3.18.24l19.2 11.05c.68.39.68 1.03 0 1.42L3.18 23.76z"/>
+                                  </svg>
+                                ) : (
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+                                  </svg>
+                                )}
+                                {btn.label}
+                              </motion.a>
+                            </motion.div>
+                          ))}
+                        </motion.div>
+                      )}
+                    </motion.div>
+                  </motion.div>
+                </motion.div>
+              )
+            })}
+          </motion.div>
+        </motion.div>
+      </div>
+    </section>
+  )
+}
+
+
+
 /* ── CTA at bottom ── */
 function AboutCTA() {
   return (
@@ -661,6 +1120,7 @@ export default function About() {
       <AboutHero />
       <BioSection />
       <TimelineSection />
+      <DevelopmentSection />
       <LifeSection />
       <AboutCTA />
     </div>
