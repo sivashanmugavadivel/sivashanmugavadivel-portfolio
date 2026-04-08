@@ -25,6 +25,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy'
 import BlogDesignShowcase from './pages/BlogDesignShowcase'
 import BlogPostDesignShowcase from './pages/BlogPostDesignShowcase'
 import AboutSectionPicker from './pages/AboutSectionPicker'
+import NowPlayingDesignPicker from './pages/NowPlayingDesignPicker'
 
 import './App.css'
 
@@ -50,6 +51,7 @@ function AppRoutes() {
         <Route path="/blog-design-picker" element={<BlogDesignShowcase />} />
         <Route path="/blog-post-design-picker" element={<BlogPostDesignShowcase />} />
         <Route path="/about-section-picker" element={<AboutSectionPicker />} />
+        <Route path="/now-playing-design-picker" element={<NowPlayingDesignPicker />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </PageWrapper>
