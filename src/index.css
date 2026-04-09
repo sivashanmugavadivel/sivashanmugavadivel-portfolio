@@ -343,6 +343,15 @@ code {
   box-sizing: border-box !important;
 }
 
+/* Loading screen responsive layout */
+.ls-desktop { display: block; position: absolute; inset: 0; }
+.ls-mobile  { display: none;  position: absolute; inset: 0; }
+
+@media (max-width: 639px) {
+  .ls-desktop { display: none;  }
+  .ls-mobile  { display: block; }
+}
+
 /* Footer layout */
 .footer-left { display: flex; flex-direction: row; align-items: flex-start; flex-shrink: 0; }
 .footer-contact-mobile { display: none; }
