@@ -350,6 +350,13 @@ code {
   .ls-gif { height: clamp(200px, 55vw, 300px) !important; }
 }
 
+/* Clip music glow horizontally on mobile to prevent page overflow */
+@media (max-width: 639px) {
+  .music-glow-wrapper {
+    overflow-x: clip !important;
+  }
+}
+
 /* Footer layout */
 .footer-left { display: flex; flex-direction: row; align-items: flex-start; flex-shrink: 0; }
 .footer-contact-mobile { display: none; }

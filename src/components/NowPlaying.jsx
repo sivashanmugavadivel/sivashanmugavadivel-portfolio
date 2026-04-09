@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useCallback, useReducer } from 'react'
+import { useRef, useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, useInView, AnimatePresence } from 'framer-motion'
 import cfg from '../data/config.json'
@@ -348,7 +348,7 @@ export default function NowPlaying() {
         transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
       >
         {/* ── Glow wrapper — overflow visible so glow bleeds outside card ── */}
-        <div style={{ position: 'relative', overflow: 'visible' }}>
+        <div className="music-glow-wrapper" style={{ position: 'relative', overflow: 'visible' }}>
 
           {/* Glow layers — soft breath base + beat pulse on top */}
           <AnimatePresence>
