@@ -641,6 +641,19 @@ const DEV_STYLES = `
   @keyframes devFill  { from{width:0%} to{width:var(--fill-w)} }
   @keyframes devFloat { 0%,100%{transform:translateY(0px)} 50%{transform:translateY(-6px)} }
   @keyframes devShine { 0%{left:-60%} 100%{left:120%} }
+
+  /* Mobile: show mobile row, hide desktop row + table header */
+  @media (max-width: 639px) {
+    .dev-table-header { display: none !important; }
+    .dev-row-desktop  { display: none !important; }
+    .dev-row-mobile   { display: flex !important; }
+  }
+
+  /* Desktop: show desktop row, hide mobile row */
+  @media (min-width: 640px) {
+    .dev-row-desktop { display: grid !important; }
+    .dev-row-mobile  { display: none !important; }
+  }
 `
 
 /* Phase progress bar — the core visual for each card */
@@ -765,6 +778,7 @@ function DevelopmentSection() {
         >
           {/* Table header — fades in */}
           <motion.div
+            className="dev-table-header"
             initial={{ opacity: 0 }} whileInView={{ opacity: 1 }}
             viewport={{ once: true }} transition={{ duration: 0.4, delay: 0.3 }}
             style={{ display: 'grid', gridTemplateColumns: '44px 1fr 120px 200px 130px 36px',
@@ -796,8 +810,9 @@ function DevelopmentSection() {
                   variants={rowVariants}
                   style={{ borderBottom: i < items.length - 1 ? '1px solid var(--border)' : 'none' }}
                 >
-                  {/* Main row */}
+                  {/* ── DESKTOP row (grid layout, hidden on mobile) ── */}
                   <motion.div
+                    className="dev-row-desktop"
                     onHoverStart={() => setHoveredRow(i)}
                     onHoverEnd={() => setHoveredRow(null)}
                     onClick={() => setExpanded(isOpen ? null : i)}
@@ -811,7 +826,6 @@ function DevelopmentSection() {
                       gap: 16, padding: '14px 24px', cursor: 'pointer', alignItems: 'center',
                       position: 'relative', overflow: 'hidden' }}
                   >
-                    {/* Shine sweep on hover */}
                     {isHovered && (
                       <motion.div
                         initial={{ x: '-100%' }} animate={{ x: '300%' }}
@@ -821,8 +835,6 @@ function DevelopmentSection() {
                           pointerEvents: 'none', zIndex: 0 }}
                       />
                     )}
-
-                    {/* Left accent bar that grows on hover */}
                     <motion.div
                       animate={{ scaleY: isHovered || isOpen ? 1 : 0, opacity: isHovered || isOpen ? 1 : 0 }}
                       transition={{ duration: 0.2 }}
@@ -830,46 +842,31 @@ function DevelopmentSection() {
                         background: s.color, borderRadius: '0 2px 2px 0',
                         transformOrigin: 'center', zIndex: 1 }}
                     />
-
-                    {/* Icon */}
-                    <motion.div
-                      whileHover={{ scale: 1.12, rotate: 5 }}
-                      transition={{ type: 'spring', stiffness: 300 }}
+                    <motion.div whileHover={{ scale: 1.12, rotate: 5 }} transition={{ type: 'spring', stiffness: 300 }}
                       style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, zIndex: 1,
                         background: p.icon ? 'transparent' : `linear-gradient(135deg, ${p.iconBg}, ${p.iconBg}bb)`,
                         display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem',
-                        overflow: 'hidden',
-                        boxShadow: isHovered ? `0 4px 16px ${p.iconBg}55` : 'none',
-                        transition: 'box-shadow 0.2s' }}
-                    >
-                      {p.icon
-                        ? <img src={`/${p.icon}`} alt={p.title}
-                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 10 }} />
+                        overflow: 'hidden', boxShadow: isHovered ? `0 4px 16px ${p.iconBg}55` : 'none',
+                        transition: 'box-shadow 0.2s' }}>
+                      {p.icon ? <img src={`/${p.icon}`} alt={p.title}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 10 }} />
                         : p.iconEmoji}
                     </motion.div>
-
-                    {/* Title + tagline */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 2, zIndex: 1, minWidth: 0 }}>
-                      <motion.span
-                        animate={{ color: isHovered ? 'var(--accent)' : 'var(--text-h)', x: isHovered ? 4 : 0 }}
+                      <motion.span animate={{ color: isHovered ? 'var(--accent)' : 'var(--text-h)', x: isHovered ? 4 : 0 }}
                         transition={{ duration: 0.2 }}
                         style={{ fontSize: '0.9rem', fontWeight: 600, fontFamily: 'var(--heading)' }}
                       >{p.title}</motion.span>
                       {p.tagline && (
-                        <motion.span
-                          animate={{ opacity: isHovered ? 0.8 : 0.45, x: isHovered ? 4 : 0 }}
+                        <motion.span animate={{ opacity: isHovered ? 0.8 : 0.45, x: isHovered ? 4 : 0 }}
                           transition={{ duration: 0.2 }}
                           style={{ fontSize: '0.7rem', color: 'var(--text)', fontFamily: 'var(--sans)',
                             whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
                         >{p.tagline}</motion.span>
                       )}
                     </div>
-
-                    {/* Platform */}
                     <span style={{ fontSize: '0.72rem', fontFamily: 'var(--mono)',
                       color: 'var(--text)', opacity: 0.55, zIndex: 1 }}>{p.platform}</span>
-
-                    {/* Mini phase bar */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 4, zIndex: 1 }}>
                       <div style={{ display: 'flex', gap: 2 }}>
                         {phases.map((ph, pi) => {
@@ -877,9 +874,7 @@ function DevelopmentSection() {
                           const active = pi === p.currentPhase
                           return (
                             <motion.div key={ph}
-                              initial={{ scaleX: 0 }}
-                              whileInView={{ scaleX: 1 }}
-                              viewport={{ once: true }}
+                              initial={{ scaleX: 0 }} whileInView={{ scaleX: 1 }} viewport={{ once: true }}
                               transition={{ delay: i * 0.08 + pi * 0.06, duration: 0.35, ease: 'easeOut' }}
                               style={{ flex: 1, height: 5, borderRadius: 3,
                                 background: done ? s.color : 'var(--border)',
@@ -891,42 +886,122 @@ function DevelopmentSection() {
                         })}
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <motion.span
-                          animate={{ color: isHovered ? s.color : s.color }}
-                          style={{ fontSize: '0.58rem', fontFamily: 'var(--mono)',
-                            color: s.color, fontWeight: 700 }}>
+                        <motion.span style={{ fontSize: '0.58rem', fontFamily: 'var(--mono)', color: s.color, fontWeight: 700 }}>
                           {phases[p.currentPhase]}
                         </motion.span>
-                        <span style={{ fontSize: '0.58rem', fontFamily: 'var(--mono)',
-                          color: 'var(--text)', opacity: 0.4 }}>{pct}%</span>
+                        <span style={{ fontSize: '0.58rem', fontFamily: 'var(--mono)', color: 'var(--text)', opacity: 0.4 }}>{pct}%</span>
                       </div>
                     </div>
-
-                    {/* Status badge */}
-                    <motion.span
-                      whileHover={{ scale: 1.05 }}
+                    <motion.span whileHover={{ scale: 1.05 }}
                       style={{ display: 'inline-flex', alignItems: 'center', gap: 5,
                         fontSize: '0.65rem', fontWeight: 600, padding: '4px 9px', borderRadius: 999,
                         background: s.bg, color: s.color, border: `1px solid ${s.color}33`,
-                        fontFamily: 'var(--mono)', whiteSpace: 'nowrap', zIndex: 1 }}
-                    >
+                        fontFamily: 'var(--mono)', whiteSpace: 'nowrap', zIndex: 1 }}>
                       <span style={{ width: 5, height: 5, borderRadius: '50%', background: s.dot,
                         animation: isPulsing(p.status) ? 'devPulse 1.8s ease-in-out infinite' : 'none' }} />
                       {s.label}
                     </motion.span>
-
-                    {/* Expand chevron */}
-                    <motion.div
-                      animate={{ rotate: isOpen ? 180 : 0, color: isOpen ? s.color : 'var(--text)' }}
+                    <motion.div animate={{ rotate: isOpen ? 180 : 0, color: isOpen ? s.color : 'var(--text)' }}
                       transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        opacity: 0.6, zIndex: 1 }}
-                    >
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.6, zIndex: 1 }}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                         strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="6 9 12 15 18 9"/>
                       </svg>
                     </motion.div>
+                  </motion.div>
+
+                  {/* ── MOBILE row (flex column layout, hidden on desktop) ── */}
+                  <motion.div
+                    className="dev-row-mobile"
+                    onClick={() => setExpanded(isOpen ? null : i)}
+                    animate={{
+                      backgroundColor: isOpen ? `${p.iconBg}08` : 'transparent',
+                    }}
+                    transition={{ duration: 0.18 }}
+                    style={{ cursor: 'pointer', position: 'relative', overflow: 'hidden',
+                      padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}
+                  >
+                    {/* Left accent bar */}
+                    <motion.div
+                      animate={{ scaleY: isOpen ? 1 : 0, opacity: isOpen ? 1 : 0 }}
+                      transition={{ duration: 0.2 }}
+                      style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3,
+                        background: s.color, borderRadius: '0 2px 2px 0',
+                        transformOrigin: 'center', zIndex: 1 }}
+                    />
+
+                    {/* Top row: icon + title/tagline + platform + chevron */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, zIndex: 1 }}>
+                      {/* Icon */}
+                      <div style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+                        background: p.icon ? 'transparent' : `linear-gradient(135deg, ${p.iconBg}, ${p.iconBg}bb)`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem',
+                        overflow: 'hidden' }}>
+                        {p.icon ? <img src={`/${p.icon}`} alt={p.title}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 10 }} />
+                          : p.iconEmoji}
+                      </div>
+                      {/* Title + tagline */}
+                      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 600, fontFamily: 'var(--heading)',
+                          color: 'var(--text-h)' }}>{p.title}</span>
+                        {p.tagline && (
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text)', opacity: 0.55,
+                            fontFamily: 'var(--sans)', whiteSpace: 'nowrap', overflow: 'hidden',
+                            textOverflow: 'ellipsis' }}>{p.tagline}</span>
+                        )}
+                      </div>
+                      {/* Platform */}
+                      <span style={{ fontSize: '0.68rem', fontFamily: 'var(--mono)',
+                        color: 'var(--text)', opacity: 0.55, whiteSpace: 'nowrap' }}>{p.platform}</span>
+                      {/* Chevron */}
+                      <motion.div animate={{ rotate: isOpen ? 180 : 0, color: isOpen ? s.color : 'var(--text)' }}
+                        transition={{ duration: 0.3 }}
+                        style={{ display: 'flex', alignItems: 'center', opacity: 0.6, flexShrink: 0 }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                      </motion.div>
+                    </div>
+
+                    {/* Bottom row: phase bar + status + pct */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, zIndex: 1 }}>
+                      {/* Phase bar segments */}
+                      <div style={{ display: 'flex', gap: 2 }}>
+                        {phases.map((ph, pi) => {
+                          const done = pi <= p.currentPhase
+                          const active = pi === p.currentPhase
+                          return (
+                            <motion.div key={ph}
+                              initial={{ scaleX: 0 }} whileInView={{ scaleX: 1 }} viewport={{ once: true }}
+                              transition={{ delay: i * 0.08 + pi * 0.06, duration: 0.35, ease: 'easeOut' }}
+                              style={{ flex: 1, height: 5, borderRadius: 3,
+                                background: done ? s.color : 'var(--border)',
+                                boxShadow: active ? `0 0 8px ${s.color}` : 'none',
+                                animation: active ? 'devPulse 2s ease-in-out infinite' : 'none',
+                                transformOrigin: 'left' }}
+                            />
+                          )
+                        })}
+                      </div>
+                      {/* Meta: status pill + phase label + pct */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5,
+                          fontSize: '0.62rem', fontWeight: 600, padding: '3px 8px', borderRadius: 999,
+                          background: s.bg, color: s.color, border: `1px solid ${s.color}33`,
+                          fontFamily: 'var(--mono)', whiteSpace: 'nowrap' }}>
+                          <span style={{ width: 5, height: 5, borderRadius: '50%', background: s.dot,
+                            animation: isPulsing(p.status) ? 'devPulse 1.8s ease-in-out infinite' : 'none' }} />
+                          {s.label}
+                        </span>
+                        <span style={{ fontSize: '0.62rem', fontFamily: 'var(--mono)',
+                          color: s.color, fontWeight: 700 }}>{phases[p.currentPhase]}</span>
+                        <span style={{ fontSize: '0.62rem', fontFamily: 'var(--mono)',
+                          color: 'var(--text)', opacity: 0.4, marginLeft: 'auto' }}>{pct}%</span>
+                      </div>
+                    </div>
                   </motion.div>
 
                   {/* Expandable detail panel */}
