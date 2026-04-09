@@ -176,7 +176,7 @@ export default function LoadingScreen({ isVisible }) {
               initial="hidden" animate="show" exit="exit"
               style={{
                 position: 'absolute',
-                top: '22vh',
+                top: '12vh',
                 left: 'calc(50% + 12px)',
                 right: 0,
                 display: 'flex',
@@ -198,7 +198,7 @@ export default function LoadingScreen({ isVisible }) {
               initial="hidden" animate="show" exit="exit"
               style={{
                 position: 'absolute',
-                top: `calc(22vh + ${FS_MB} * 1.35)`,
+                top: `calc(12vh + ${FS_MB} * 1.35)`,
                 left: 0,
                 width: 'calc(50% - 12px)',
                 display: 'flex',
@@ -214,7 +214,42 @@ export default function LoadingScreen({ isVisible }) {
               }}>Begins</span>
             </motion.div>
 
-            {/* GIF — smaller, centered */}
+            {/* Credit — fixed above GIF zone */}
+            <motion.div
+              custom={0.5} variants={wordVariants}
+              initial="hidden" animate="show" exit="exit"
+              style={{
+                position: 'absolute',
+                bottom: 'calc(clamp(200px, 55vw, 300px) + 24px)',
+                left: 0, right: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                zIndex: 25, pointerEvents: 'none',
+              }}
+            >
+              <span style={{
+                fontFamily: 'var(--sans)',
+                fontSize: '0.55rem',
+                fontWeight: 400,
+                color: '#1a1512',
+                opacity: 0.4,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                marginBottom: '0.2em',
+              }}>Designed &amp; Developed by</span>
+              <span style={{
+                fontFamily: 'var(--heading)',
+                fontSize: '0.9rem',
+                fontWeight: 700,
+                color: '#1a1512',
+                opacity: 0.65,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+              }}>Siva Shanmuga Vadivel</span>
+            </motion.div>
+
+            {/* GIF — bottom center */}
             <motion.img
               src={`${BASE}gif/ava_gif2.gif`}
               alt="" aria-hidden="true"
@@ -231,41 +266,6 @@ export default function LoadingScreen({ isVisible }) {
                 pointerEvents: 'none', zIndex: 20,
               }}
             />
-
-            {/* Bottom credit */}
-            <motion.div
-              custom={0.55} variants={wordVariants}
-              initial="hidden" animate="show" exit="exit"
-              style={{
-                position: 'absolute',
-                bottom: '4vh',
-                left: 0, right: 0,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                zIndex: 30, pointerEvents: 'none',
-              }}
-            >
-              <span style={{
-                fontFamily: 'var(--sans)',
-                fontSize: '0.55rem',
-                fontWeight: 400,
-                color: '#1a1512',
-                opacity: 0.4,
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                marginBottom: '0.2em',
-              }}>Designed &amp; Developed by</span>
-              <span style={{
-                fontFamily: 'var(--heading)',
-                fontSize: '0.85rem',
-                fontWeight: 700,
-                color: '#1a1512',
-                opacity: 0.65,
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-              }}>Siva Shanmuga Vadivel</span>
-            </motion.div>
 
           </div>{/* end .ls-mobile */}
 
