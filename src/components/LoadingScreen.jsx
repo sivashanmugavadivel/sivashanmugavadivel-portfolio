@@ -51,20 +51,20 @@ export default function LoadingScreen({ isVisible }) {
             />
           </motion.div>
 
-          {/* ── Mobile: Top panel slides up ── */}
+          {/* ── Mobile: Left half slides left ── */}
           <motion.div
-            initial={{ y: 0 }} exit={{ y: '-100%' }}
+            initial={{ x: 0 }} exit={{ x: '-100%' }}
             transition={{ duration: 1.0, ease, delay: 0.2 }}
             className="ls-panel-top"
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '50%', background: '#f5f0eb' }}
+            style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '50%', background: '#f5f0eb' }}
           />
 
-          {/* ── Mobile: Bottom panel slides down ── */}
+          {/* ── Mobile: Right half slides right ── */}
           <motion.div
-            initial={{ y: 0 }} exit={{ y: '100%' }}
+            initial={{ x: 0 }} exit={{ x: '100%' }}
             transition={{ duration: 1.0, ease, delay: 0.2 }}
             className="ls-panel-bottom"
-            style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '50%', background: '#f5f0eb' }}
+            style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: '50%', background: '#f5f0eb' }}
           />
 
           {/* ── Mobile: GIF centered ── */}
