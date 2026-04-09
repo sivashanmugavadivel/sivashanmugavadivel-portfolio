@@ -109,7 +109,7 @@ export default function LoadingScreen({ isVisible }) {
                 initial="hidden" animate="show" exit="exit"
                 style={{
                   position: 'absolute',
-                  bottom: 'calc(clamp(200px, 55vw, 300px) + 24px)',
+                  bottom: 'calc(clamp(200px, 55vw, 300px) + 8px)',
                   left: '20px',
                   display: 'flex',
                   flexDirection: 'column',
