@@ -38,11 +38,18 @@ export default function LoadingScreen({ isVisible }) {
                MOBILE LAYOUT
             ══════════════════════════════ */
             <>
-              {/* Background */}
+              {/* Top panel — slides up */}
               <motion.div
-                initial={{ opacity: 1 }} exit={{ opacity: 0 }}
-                transition={{ duration: 0.6, ease, delay: 0.2 }}
-                style={{ position: 'absolute', inset: 0, background: '#f5f0eb' }}
+                initial={{ y: 0 }} exit={{ y: '-100%' }}
+                transition={{ duration: 1.0, ease, delay: 0.2 }}
+                style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '50%', background: '#f5f0eb' }}
+              />
+
+              {/* Bottom panel — slides down */}
+              <motion.div
+                initial={{ y: 0 }} exit={{ y: '100%' }}
+                transition={{ duration: 1.0, ease, delay: 0.2 }}
+                style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '50%', background: '#f5f0eb' }}
               />
 
               {/* Center seam line */}
