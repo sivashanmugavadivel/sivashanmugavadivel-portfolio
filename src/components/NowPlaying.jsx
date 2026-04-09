@@ -1,8 +1,43 @@
-import { useRef, useState, useEffect, useCallback } from 'react'
+import { useRef, useState, useEffect, useCallback, useReducer } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, useInView, AnimatePresence } from 'framer-motion'
 import cfg from '../data/config.json'
 import { DESIGNS, STORAGE_KEY, getPositionStyle } from './ToastDesignPicker'
+
+
+// ── Beat pulse hook — fires on every beat with random intensity ──
+function useBeatPulse(playing, bpm) {
+  const [beat, setBeat] = useState(0) // 0 = off, >0 = intensity
+  const timerRef = useRef(null)
+  const decayRef = useRef(null)
+
+  useEffect(() => {
+    if (!playing || !bpm) { setBeat(0); return }
+
+    const interval = (60 / bpm) * 1000
+
+    const fire = () => {
+      // Accent beat every 4 beats feels more musical
+      const isAccent = Math.random() > 0.65
+      const intensity = isAccent
+        ? 0.85 + Math.random() * 0.15   // strong: 0.85–1.0
+        : 0.45 + Math.random() * 0.25   // soft:   0.45–0.7
+      setBeat(intensity)
+      clearTimeout(decayRef.current)
+      decayRef.current = setTimeout(() => setBeat(0), interval * 0.35)
+    }
+
+    fire()
+    timerRef.current = setInterval(fire, interval)
+    return () => {
+      clearInterval(timerRef.current)
+      clearTimeout(decayRef.current)
+      setBeat(0)
+    }
+  }, [playing, bpm])
+
+  return beat
+}
 
 function extractVideoId(url) {
   try { return new URL(url).searchParams.get('v') } catch { return null }
@@ -155,6 +190,7 @@ export default function NowPlaying() {
   const [dragValue, setDragValue] = useState(0)
 
   const song = songs[activeIndex]
+  const beat = useBeatPulse(playing, song.bpm)
   const videoId = extractVideoId(song.listenUrl)
   const thumb = videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : null
   const highlights = song.highlights || []
@@ -311,8 +347,68 @@ export default function NowPlaying() {
         animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
         transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
       >
+        {/* ── Glow wrapper — overflow visible so glow bleeds outside card ── */}
+        <div style={{ position: 'relative', overflow: 'visible' }}>
+
+          {/* Glow layers — soft breath base + beat pulse on top */}
+          <AnimatePresence>
+            {playing && (
+              <>
+                {/* Soft breath — always on while playing */}
+                <motion.div
+                  key="glow-breath"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: [0.6, 0.95, 0.6] }}
+                  exit={{ opacity: 0, transition: { duration: 0.8 } }}
+                  transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                  style={{
+                    position: 'absolute',
+                    top: '-50px', left: '-50px', right: '-50px', bottom: '-50px',
+                    borderRadius: 52,
+                    background: 'radial-gradient(ellipse at 50% 50%, rgba(124,58,237,0.9) 0%, rgba(124,58,237,0.5) 40%, transparent 68%)',
+                    filter: 'blur(32px)',
+                    pointerEvents: 'none', zIndex: 0,
+                  }}
+                />
+                {/* Outer slow bloom */}
+                <motion.div
+                  key="glow-bloom"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: [0.35, 0.7, 0.35] }}
+                  exit={{ opacity: 0, transition: { duration: 1.2 } }}
+                  transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+                  style={{
+                    position: 'absolute',
+                    top: '-80px', left: '-80px', right: '-80px', bottom: '-80px',
+                    borderRadius: 72,
+                    background: 'radial-gradient(ellipse at 50% 50%, rgba(124,58,237,0.7) 0%, rgba(124,58,237,0.25) 45%, transparent 68%)',
+                    filter: 'blur(55px)',
+                    pointerEvents: 'none', zIndex: 0,
+                  }}
+                />
+              </>
+            )}
+          </AnimatePresence>
+
+          {/* Beat flash — snaps on every beat, independent of AnimatePresence */}
+          {playing && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '-45px', left: '-45px', right: '-45px', bottom: '-45px',
+                borderRadius: 52,
+                background: 'radial-gradient(ellipse at 50% 50%, rgba(124,58,237,1) 0%, rgba(124,58,237,0.7) 30%, transparent 62%)',
+                filter: 'blur(20px)',
+                opacity: beat * 1.0,
+                pointerEvents: 'none', zIndex: 0,
+                transition: beat > 0 ? 'opacity 0.04s ease-out' : 'opacity 0.25s ease-out',
+                willChange: 'opacity',
+              }}
+            />
+          )}
+
         {/* ── Hero card ── */}
-        <div style={{ borderRadius: 20, overflow: 'hidden', background: 'var(--card-bg)', border: '1px solid var(--accent-border)', boxShadow: 'var(--glow), var(--shadow)' }}>
+        <div style={{ position: 'relative', zIndex: 1, borderRadius: 20, overflow: 'hidden', background: 'var(--card-bg)', border: '1px solid var(--accent-border)', boxShadow: 'var(--glow), var(--shadow)' }}>
           <div style={{ position: 'relative', height: 180, overflow: 'hidden' }}>
             <AnimatePresence mode="wait">
               <motion.img
@@ -416,6 +512,8 @@ export default function NowPlaying() {
             </div>
           </div>
         </div>
+
+        </div>{/* end relative wrapper */}
 
         {/* ── Mini song rows ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>

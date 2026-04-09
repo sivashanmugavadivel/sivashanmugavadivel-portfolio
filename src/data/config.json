@@ -232,6 +232,7 @@
         "title": "Chiri Thottu",
         "artist": "Chinmayi Sripada and Justin Prabhakaran",
         "movie": "Sarvam Maya (2025)",
+        "bpm": 104,
         "listenUrl": "https://music.youtube.com/watch?v=b2TEuMX7VY8&si=7RCEFchceWZwDTHu",
         "highlights": [{ "start": 86, "end": 130, "label": "My favourite part ❤️" }]
       },
@@ -239,6 +240,7 @@
         "title": "Esa Kaaththa",
         "artist": "Chinmayi Sripada & Sathyaprakash",
         "movie": "My Lord (2025)",
+        "bpm": 78,
         "listenUrl": "https://music.youtube.com/watch?v=vZ3kxZhLWj8&si=J20v_-iM-Yq-xnDq",
         "highlights": [{ "start": 26, "end": 77, "label": "My favourite part ❤️" }]
       }
