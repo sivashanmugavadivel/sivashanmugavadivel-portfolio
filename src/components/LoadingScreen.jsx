@@ -86,7 +86,7 @@ export default function LoadingScreen({ isVisible }) {
                 initial="hidden" animate="show" exit="exit"
                 style={{
                   position: 'absolute',
-                  top: 'calc(12vh + 6rem)',
+                  top: 'calc(12vh + 10rem)',
                   left: 0,
                   width: 'calc(50% - 12px)',
                   display: 'flex',
