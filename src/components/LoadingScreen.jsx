@@ -94,7 +94,7 @@ export default function LoadingScreen({ isVisible }) {
               initial="hidden" animate="show" exit="exit"
               style={{
                 position: 'absolute',
-                top: `calc(10vh + ${FS} * 1.35)`,
+                top: 'calc(10vh + 7rem)',
                 left: 0,
                 width: 'calc(50% - 20px)',
                 display: 'flex',
@@ -198,7 +198,7 @@ export default function LoadingScreen({ isVisible }) {
               initial="hidden" animate="show" exit="exit"
               style={{
                 position: 'absolute',
-                top: `calc(12vh + ${FS_MB} * 1.35 + 1.5rem)`,
+                top: 'calc(12vh + 5rem)',
                 left: 0,
                 width: 'calc(50% - 12px)',
                 display: 'flex',
