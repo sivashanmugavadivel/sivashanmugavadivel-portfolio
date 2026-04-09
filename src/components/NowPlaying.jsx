@@ -357,6 +357,7 @@ export default function NowPlaying() {
                 {/* Soft breath — always on while playing */}
                 <motion.div
                   key="glow-breath"
+                  className="music-glow-layer"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: [0.6, 0.95, 0.6] }}
                   exit={{ opacity: 0, transition: { duration: 0.8 } }}
@@ -373,6 +374,7 @@ export default function NowPlaying() {
                 {/* Outer slow bloom */}
                 <motion.div
                   key="glow-bloom"
+                  className="music-glow-layer"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: [0.35, 0.7, 0.35] }}
                   exit={{ opacity: 0, transition: { duration: 1.2 } }}
@@ -393,6 +395,7 @@ export default function NowPlaying() {
           {/* Beat flash — snaps on every beat, independent of AnimatePresence */}
           {playing && (
             <div
+              className="music-glow-layer"
               style={{
                 position: 'absolute',
                 top: '-45px', left: '-45px', right: '-45px', bottom: '-45px',

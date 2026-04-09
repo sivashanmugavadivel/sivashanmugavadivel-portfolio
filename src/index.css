@@ -350,10 +350,11 @@ code {
   .ls-gif { height: clamp(200px, 55vw, 300px) !important; }
 }
 
-/* Clip music glow horizontally on mobile to prevent page overflow */
+/* On mobile: contain glow within card bounds to prevent page overflow */
 @media (max-width: 639px) {
-  .music-glow-wrapper {
-    overflow-x: clip !important;
+  .music-glow-layer {
+    left: 0 !important;
+    right: 0 !important;
   }
 }
 
