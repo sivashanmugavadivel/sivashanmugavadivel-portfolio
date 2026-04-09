@@ -109,7 +109,7 @@ export default function LoadingScreen({ isVisible }) {
                 initial="hidden" animate="show" exit="exit"
                 style={{
                   position: 'absolute',
-                  bottom: 'calc(clamp(200px, 55vw, 300px) + 8px)',
+                  bottom: '24px',
                   left: '20px',
                   display: 'flex',
                   flexDirection: 'column',
@@ -148,7 +148,7 @@ export default function LoadingScreen({ isVisible }) {
                   position: 'absolute',
                   bottom: 0,
                   left: '50%',
-                  transform: 'translateX(-35%)',
+                  transform: 'translateX(-30%)',
                   height: 'clamp(200px, 55vw, 300px)',
                   width: 'auto',
                   objectFit: 'contain',
