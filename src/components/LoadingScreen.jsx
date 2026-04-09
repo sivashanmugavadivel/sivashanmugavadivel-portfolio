@@ -31,7 +31,13 @@ export default function LoadingScreen({ isVisible }) {
   return (
     <AnimatePresence>
       {isVisible && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, pointerEvents: 'all' }}>
+        <motion.div
+          key="loading-screen"
+          initial={{ opacity: 1 }}
+          exit={{ opacity: 1 }}
+          transition={{ duration: 1.2, ease }}
+          style={{ position: 'fixed', inset: 0, zIndex: 9999, pointerEvents: 'all' }}
+        >
 
           {isMobile ? (
             /* ══════════════════════════════
@@ -290,7 +296,7 @@ export default function LoadingScreen({ isVisible }) {
             </>
           )}
 
-        </div>
+        </motion.div>
       )}
     </AnimatePresence>
   )
