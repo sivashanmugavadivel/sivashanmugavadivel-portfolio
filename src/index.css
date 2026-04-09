@@ -344,12 +344,20 @@ code {
 }
 
 /* Loading screen responsive layout */
-.ls-desktop { display: block; position: absolute; inset: 0; }
-.ls-mobile  { display: none;  position: absolute; inset: 0; }
+.ls-panel-top    { display: none; }
+.ls-panel-bottom { display: none; }
+.ls-gif-mobile   { display: none; }
+.ls-text-mobile  { display: none; }
 
 @media (max-width: 639px) {
-  .ls-desktop { display: none;  }
-  .ls-mobile  { display: block; }
+  .ls-panel-left   { display: none !important; }
+  .ls-panel-right  { display: none !important; }
+  .ls-gif-desktop  { display: none !important; }
+  .ls-text-desktop { display: none !important; }
+  .ls-panel-top    { display: block; }
+  .ls-panel-bottom { display: block; }
+  .ls-gif-mobile   { display: block; }
+  .ls-text-mobile  { display: flex; }
 }
 
 /* Footer layout */
