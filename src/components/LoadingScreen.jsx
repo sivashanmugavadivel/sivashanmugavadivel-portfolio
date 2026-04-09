@@ -198,7 +198,7 @@ export default function LoadingScreen({ isVisible }) {
               initial="hidden" animate="show" exit="exit"
               style={{
                 position: 'absolute',
-                top: `calc(12vh + ${FS_MB} * 1.35)`,
+                top: `calc(12vh + ${FS_MB} * 1.35 + 1.5rem)`,
                 left: 0,
                 width: 'calc(50% - 12px)',
                 display: 'flex',
@@ -220,27 +220,27 @@ export default function LoadingScreen({ isVisible }) {
               initial="hidden" animate="show" exit="exit"
               style={{
                 position: 'absolute',
-                bottom: 'calc(clamp(200px, 55vw, 300px) + 24px)',
-                left: 0, right: 0,
+                bottom: 'calc(clamp(200px, 55vw, 300px) + 20px)',
+                left: '20px',
                 display: 'flex',
                 flexDirection: 'column',
-                alignItems: 'center',
+                alignItems: 'flex-start',
                 zIndex: 25, pointerEvents: 'none',
               }}
             >
               <span style={{
                 fontFamily: 'var(--sans)',
-                fontSize: '0.55rem',
+                fontSize: '0.5rem',
                 fontWeight: 400,
                 color: '#1a1512',
                 opacity: 0.4,
                 letterSpacing: '0.1em',
                 textTransform: 'uppercase',
-                marginBottom: '0.2em',
+                marginBottom: '0.18em',
               }}>Designed &amp; Developed by</span>
               <span style={{
                 fontFamily: 'var(--heading)',
-                fontSize: '0.9rem',
+                fontSize: '0.75rem',
                 fontWeight: 700,
                 color: '#1a1512',
                 opacity: 0.65,
@@ -250,6 +250,7 @@ export default function LoadingScreen({ isVisible }) {
             </motion.div>
 
             {/* GIF — bottom center */}
+
             <motion.img
               src={`${BASE}gif/ava_gif2.gif`}
               alt="" aria-hidden="true"
