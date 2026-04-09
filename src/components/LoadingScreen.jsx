@@ -27,6 +27,7 @@ export default function LoadingScreen({ isVisible }) {
     return () => mq.removeEventListener('change', handler)
   }, [])
 
+
   return (
     <AnimatePresence>
       {isVisible && (
