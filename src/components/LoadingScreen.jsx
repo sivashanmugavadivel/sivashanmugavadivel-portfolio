@@ -148,7 +148,7 @@ export default function LoadingScreen({ isVisible }) {
                   position: 'absolute',
                   bottom: 0,
                   left: '50%',
-                  transform: 'translateX(-50%)',
+                  transform: 'translateX(-35%)',
                   height: 'clamp(200px, 55vw, 300px)',
                   width: 'auto',
                   objectFit: 'contain',
