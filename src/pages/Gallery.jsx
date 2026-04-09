@@ -261,20 +261,20 @@ function GalleryCarousel({ items, onOpen, lightboxOpen }) {
 /* ── Main Gallery page ── */
 export default function Gallery() {
   const [showIntro, setShowIntro] = useState(true)
-  const categories = ['all', ...Array.from(new Set(galleryData.map(p => p.category))).sort()]
-  const [activeCategory, setActiveCategory] = useState('all')
+  const categories = ['All', ...Array.from(new Set(galleryData.map(p => p.category))).sort()]
+  const [activeCategory, setActiveCategory] = useState('All')
   const [lightboxIndex, setLightboxIndex] = useState(-1)
 
-  const filtered = activeCategory === 'all'
-    ? galleryData.slice().sort((a, b) => {
-        // Portrait first, then other categories alphabetically, then by filename within each
-        const catA = a.category === 'Portrait' ? '' : a.category
-        const catB = b.category === 'Portrait' ? '' : b.category
-        if (catA !== catB) return catA.localeCompare(catB)
-        return a.filename.localeCompare(b.filename)
-      })
-    : galleryData.filter(p => p.category === activeCategory)
-        .slice().sort((a, b) => a.filename.localeCompare(b.filename))
+  const sortedData = galleryData.slice().sort((a, b) => {
+    const catA = a.category === 'Portrait' ? '' : a.category
+    const catB = b.category === 'Portrait' ? '' : b.category
+    if (catA !== catB) return catA.localeCompare(catB)
+    return a.filename.localeCompare(b.filename)
+  })
+
+  const filtered = activeCategory === 'All'
+    ? sortedData
+    : sortedData.filter(p => p.category === activeCategory)
 
   const slides = filtered.map(item => ({
     src: `${BASE}gallery/${item.category}/${item.filename}`,
@@ -355,7 +355,7 @@ export default function Gallery() {
             style={{ textAlign: 'center', color: 'var(--text)', fontSize: '0.78rem', marginTop: 12, marginBottom: 0 }}
           >
             {filtered.length} {filtered.length === 1 ? 'photo' : 'photos'}
-            {activeCategory !== 'all' && ` in ${activeCategory}`}
+            {activeCategory !== 'All' && ` in ${activeCategory}`}
           </motion.p>
         </div>
       </section>

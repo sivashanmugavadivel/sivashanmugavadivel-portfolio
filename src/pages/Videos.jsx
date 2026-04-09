@@ -158,10 +158,14 @@ function VideoCardFull({ video, featured = false, onPlay }) {
 
 /* ── Shorts section with category filter ── */
 function ShortsSection({ shorts }) {
-  const categories = ['all', ...Array.from(new Set(shorts.map(s => s.category).filter(Boolean))).sort()]
-  const [activeCategory, setActiveCategory] = useState('all')
+  const categories = ['Favourite', 'All', ...Array.from(new Set(shorts.map(s => s.category).filter(Boolean))).sort()]
+  const [activeCategory, setActiveCategory] = useState('Favourite')
 
-  const filtered = activeCategory === 'all' ? shorts : shorts.filter(s => s.category === activeCategory)
+  const filtered = activeCategory === 'Favourite'
+    ? shorts.filter(s => s.fav)
+    : activeCategory === 'All'
+      ? shorts
+      : shorts.filter(s => s.category === activeCategory)
 
   return (
     <section className="section" style={{ background: 'var(--bg)' }}>
@@ -197,7 +201,26 @@ function ShortsSection({ shorts }) {
                 transition: 'all 0.2s',
               }}
             >
-              {cat.charAt(0).toUpperCase() + cat.slice(1)}
+              {cat === 'Favourite' ? (
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  Fav
+                  <motion.span
+                    animate={{ scale: [1, 1.15, 1] }}
+                    transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+                    style={{
+                      display: 'inline-block',
+                      lineHeight: 1,
+                      transformOrigin: 'center',
+                      willChange: 'transform',
+                      backfaceVisibility: 'hidden'
+                    }}
+                  >
+                    ❤️
+                  </motion.span>
+                </span>
+              ) : (
+                cat.charAt(0).toUpperCase() + cat.slice(1)
+              )}
             </motion.button>
           ))}
         </motion.div>
@@ -205,7 +228,7 @@ function ShortsSection({ shorts }) {
         {/* Count */}
         <p style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--text)', opacity: 0.6, marginBottom: 32 }}>
           {filtered.length} {filtered.length === 1 ? 'short' : 'shorts'}
-          {activeCategory !== 'all' && ` in ${activeCategory}`}
+          {activeCategory !== 'All' && ` in ${activeCategory}`}
         </p>
 
         <ShortsCarousel shorts={filtered} />
@@ -219,8 +242,21 @@ function ShortsCarousel({ shorts }) {
   const [active, setActive] = useState(0)
   const [playing, setPlaying] = useState(false)
   const [hovered, setHovered] = useState(false)
+
+  // Reset active when shorts list changes to prevent out of bounds
+  useEffect(() => { setActive(0); setPlaying(false) }, [shorts])
+
   const prev = () => { setPlaying(false); setActive(i => (i - 1 + shorts.length) % shorts.length) }
   const next = () => { setPlaying(false); setActive(i => (i + 1) % shorts.length) }
+
+  if (!shorts || shorts.length === 0) {
+    return (
+      <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text)', opacity: 0.6 }}>
+        <p style={{ fontSize: '1.1rem', marginBottom: 8 }}>No videos to display here yet.</p>
+        <p style={{ fontSize: '0.9rem' }}>Select a different category.</p>
+      </div>
+    )
+  }
 
   const getPos = (i) => {
     const diff = i - active
@@ -777,10 +813,10 @@ function InstagramCarousel({ posts }) {
 /* ── Instagram Section ── */
 function InstagramSection() {
   const posts = cfg.instagram || []
-  const categories = ['all', ...Array.from(new Set(posts.map(p => p.category).filter(Boolean)))]
-  const [activeCategory, setActiveCategory] = useState('all')
+  const categories = ['All', ...Array.from(new Set(posts.map(p => p.category).filter(Boolean)))]
+  const [activeCategory, setActiveCategory] = useState('All')
 
-  const filtered = activeCategory === 'all' ? posts : posts.filter(p => p.category === activeCategory)
+  const filtered = activeCategory === 'All' ? posts : posts.filter(p => p.category === activeCategory)
 
   if (!posts.length) return null
 

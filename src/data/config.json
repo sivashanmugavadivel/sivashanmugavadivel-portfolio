@@ -10,13 +10,11 @@
     "avatarCutout": "Avatar_nbc1.png",
     "logo": "Logo.png"
   },
-
   "contact": {
     "email": "sivashanmugavadivelofficial@gmail.com",
     "phone": "",
     "timezone": "IST (UTC+5:30)"
   },
-
   "social": {
     "instagram": {
       "href": "https://www.instagram.com/sivashanmugavadivelv/?utm_source=ig_embed&ig_rid=127ec84d-c6d1-4c45-b121-48d3605e95e5",
@@ -47,19 +45,16 @@
       "handle": "@vadivel97"
     }
   },
-
   "seo": {
     "title": "Siva Shanmuga Vadivel",
     "description": "Personal portfolio, blog, gallery and videos.",
     "ogImage": "avatar.jpg",
     "siteUrl": "https://sivashanmugavadivel.in/"
   },
-
   "hero": {
     "headline": "SIVA SHANMUGA VADIVEL",
     "subtext": "Bridging real-world systems and digital experiences.\nSimple. Practical. Meaningful."
   },
-
   "about": {
     "heading": "Hey there! Nice to meet you",
     "heroGreeting": "Hey there!",
@@ -134,7 +129,6 @@
       ]
     }
   },
-
   "journey": [
     {
       "year": "2023 – Present",
@@ -161,26 +155,47 @@
       "desc": "Focused on industrial automation, control systems, and PLC-based applications. Completed training in industrial automation and electrical systems."
     }
   ],
-
   "skills": [
     {
       "category": "Frontend",
-      "items": ["React", "TypeScript", "CSS / Sass", "Framer Motion", "Next.js"]
+      "items": [
+        "React",
+        "TypeScript",
+        "CSS / Sass",
+        "Framer Motion",
+        "Next.js"
+      ]
     },
     {
       "category": "Backend",
-      "items": ["Node.js", "Python", "REST APIs", "PostgreSQL", "MongoDB"]
+      "items": [
+        "Node.js",
+        "Python",
+        "REST APIs",
+        "PostgreSQL",
+        "MongoDB"
+      ]
     },
     {
       "category": "Tools",
-      "items": ["Git", "Vite", "Figma", "VS Code", "Linux"]
+      "items": [
+        "Git",
+        "Vite",
+        "Figma",
+        "VS Code",
+        "Linux"
+      ]
     },
     {
       "category": "Other",
-      "items": ["Photography", "Video Editing", "Technical Writing", "UI Design"]
+      "items": [
+        "Photography",
+        "Video Editing",
+        "Technical Writing",
+        "UI Design"
+      ]
     }
   ],
-
   "gallery": {
     "introImages": [
       "slideshareImages/ss1.png",
@@ -189,43 +204,163 @@
       "slideshareImages/ss4.jpg"
     ]
   },
-
-  "visitedCountries": ["356", "840"],
+  "visitedCountries": [
+    "356",
+    "840"
+  ],
   "places": [
-    { "label": "Kangayam",          "coords": [77.5590, 10.9388],  "country": "356", "home": true },
-    { "label": "Chennai",           "coords": [80.2707, 13.0827],  "country": "356" },
-    { "label": "Rameswaram",        "coords": [79.3129, 9.2876],   "country": "356" },
-    { "label": "Kanniyakumari",     "coords": [77.5385, 8.0883],   "country": "356" },
-    { "label": "Kodaikanal",        "coords": [77.4892, 10.2381],  "country": "356" },
-    { "label": "Munnar",            "coords": [77.0595, 10.0889],  "country": "356" },
-    { "label": "Ooty",              "coords": [76.6950, 11.4102],  "country": "356" },
-    { "label": "Thiruvananthapuram","coords": [76.9366, 8.5241],   "country": "356" },
-    { "label": "Kolkata",           "coords": [88.3639, 22.5726],  "country": "356" },
-    { "label": "New Delhi",         "coords": [77.2090, 28.6139],  "country": "356" },
-    { "label": "Bengaluru",         "coords": [77.5946, 12.9716],  "country": "356" },
-    { "label": "Secunderabad",      "coords": [78.4983, 17.4399],  "country": "356" },
-    { "label": "Punjab",            "coords": [75.8573, 31.1471],  "country": "356" },
-    { "label": "Pune",              "coords": [73.8567, 18.5204],  "country": "356" },
-    { "label": "Mount Vernon, IL",  "coords": [-88.9031, 38.3173], "country": "840" },
-    { "label": "Naperville, IL",    "coords": [-88.1535, 41.7508], "country": "840" }
+    {
+      "label": "Kangayam",
+      "coords": [
+        77.5590,
+        10.9388
+      ],
+      "country": "356",
+      "home": true
+    },
+    {
+      "label": "Chennai",
+      "coords": [
+        80.2707,
+        13.0827
+      ],
+      "country": "356"
+    },
+    {
+      "label": "Rameswaram",
+      "coords": [
+        79.3129,
+        9.2876
+      ],
+      "country": "356"
+    },
+    {
+      "label": "Kanniyakumari",
+      "coords": [
+        77.5385,
+        8.0883
+      ],
+      "country": "356"
+    },
+    {
+      "label": "Kodaikanal",
+      "coords": [
+        77.4892,
+        10.2381
+      ],
+      "country": "356"
+    },
+    {
+      "label": "Munnar",
+      "coords": [
+        77.0595,
+        10.0889
+      ],
+      "country": "356"
+    },
+    {
+      "label": "Ooty",
+      "coords": [
+        76.6950,
+        11.4102
+      ],
+      "country": "356"
+    },
+    {
+      "label": "Thiruvananthapuram",
+      "coords": [
+        76.9366,
+        8.5241
+      ],
+      "country": "356"
+    },
+    {
+      "label": "Kolkata",
+      "coords": [
+        88.3639,
+        22.5726
+      ],
+      "country": "356"
+    },
+    {
+      "label": "New Delhi",
+      "coords": [
+        77.2090,
+        28.6139
+      ],
+      "country": "356"
+    },
+    {
+      "label": "Bengaluru",
+      "coords": [
+        77.5946,
+        12.9716
+      ],
+      "country": "356"
+    },
+    {
+      "label": "Secunderabad",
+      "coords": [
+        78.4983,
+        17.4399
+      ],
+      "country": "356"
+    },
+    {
+      "label": "Punjab",
+      "coords": [
+        75.8573,
+        31.1471
+      ],
+      "country": "356"
+    },
+    {
+      "label": "Pune",
+      "coords": [
+        73.8567,
+        18.5204
+      ],
+      "country": "356"
+    },
+    {
+      "label": "Mount Vernon, IL",
+      "coords": [
+        -88.9031,
+        38.3173
+      ],
+      "country": "840"
+    },
+    {
+      "label": "Naperville, IL",
+      "coords": [
+        -88.1535,
+        41.7508
+      ],
+      "country": "840"
+    }
   ],
   "countryInfo": {
     "356": {
       "name": "India",
       "note": "Home country — explored from the southern tip to the northern plains.",
-      "mapCenter": [82, 22],
+      "mapCenter": [
+        82,
+        22
+      ],
       "mapScale": 900,
       "pinR": 6
     },
     "840": {
       "name": "United States",
       "note": "Lived and worked in Illinois. Snowfall, open highways, and the endless midwest sky.",
-      "mapCenter": [-96, 38],
+      "mapCenter": [
+        -96,
+        38
+      ],
       "mapScale": 700,
       "pinR": 5
     }
   },
-
   "music": {
     "songs": [
       {
@@ -234,7 +369,13 @@
         "movie": "My Lord (2025)",
         "bpm": 78,
         "listenUrl": "https://music.youtube.com/watch?v=vZ3kxZhLWj8&si=J20v_-iM-Yq-xnDq",
-        "highlights": [{ "start": 26, "end": 77, "label": "My favourite part ❤️" }]
+        "highlights": [
+          {
+            "start": 26,
+            "end": 77,
+            "label": "My favourite part ❤️"
+          }
+        ]
       },
       {
         "title": "Chiri Thottu",
@@ -242,18 +383,22 @@
         "movie": "Sarvam Maya (2025)",
         "bpm": 104,
         "listenUrl": "https://music.youtube.com/watch?v=b2TEuMX7VY8&si=7RCEFchceWZwDTHu",
-        "highlights": [{ "start": 86, "end": 130, "label": "My favourite part ❤️" }]
+        "highlights": [
+          {
+            "start": 86,
+            "end": 130,
+            "label": "My favourite part ❤️"
+          }
+        ]
       }
     ],
     "playlistLabel": "Music I enjoy",
     "playlistUrl": "https://music.youtube.com/playlist?list=PLd1Cz4iwYWGEDyN8oYXWcpX5zB2Sk47BP&si=AA7ROIC8b8Z74JUl"
   },
-
   "footer": {
     "copyright": "Siva Shanmuga Vadivel",
     "builtWith": "Built with Love & Care mixed in equal ratio"
   },
-
   "videos": [
     {
       "id": "https://youtu.be/frQfwiFEvhQ?si=RIA3bbiAO-_He3oS",
@@ -261,7 +406,9 @@
       "description": "🚀 The wait is over! Join me as I unbox the brand-new Samsung Galaxy S25 Ultra and Samsung Watch 7 (44mm).",
       "type": "video",
       "date": "2025-03-20",
-      "tags": ["Unboxing"]
+      "tags": [
+        "Unboxing"
+      ]
     },
     {
       "id": "https://youtu.be/IkPYALPXvKU?si=suDU6XG4Q-ZroSPe",
@@ -269,7 +416,9 @@
       "description": "🚀 First look at the Samsung Galaxy S23 Ultra 256GB — sleek design, flagship features, and everything inside the box.",
       "type": "video",
       "date": "2025-02-14",
-      "tags": ["Unboxing"]
+      "tags": [
+        "Unboxing"
+      ]
     },
     {
       "id": "https://youtu.be/D2RHDnm8_IY?si=E-_pqQy2R-SWUUqm",
@@ -277,34 +426,43 @@
       "description": "Exploring the KCBT bus terminal in Chennai.",
       "type": "video",
       "date": "2025-01-10",
-      "tags": ["vlog"]
+      "tags": [
+        "vlog"
+      ]
     },
     {
       "id": "https://youtube.com/shorts/1PVaLLKoGno?si=MkaWbNZadIJPrSn4",
       "title": "USA Snowfall",
       "description": "#USA #travel #vlogs #snowfall.",
       "type": "short",
-      "category": "USA",
+      "category": "United States",
       "date": "2026-02-06",
-      "tags": ["short"]
+      "tags": [
+        "short"
+      ],
+      "fav": true
     },
     {
       "id": "https://youtube.com/shorts/WKe2f3h_LRs?si=TrZHEt9XWvoxX7jG",
       "title": "Valentine’s Day for Singles",
       "description": "Valentine’s Day😂 for Single boys be like | Tamil Shorts.",
       "type": "short",
-      "category": "Fun",
+      "category": "Valentine’s Day",
       "date": "2026-02-13",
-      "tags": ["short"]
+      "tags": [
+        "short"
+      ]
     },
     {
       "id": "https://youtube.com/shorts/OLWjM8pfr-Y?si=aRflR_r-uCxhqYek",
       "title": "Walmart Shopping",
       "description": "USA #walmart #shopping #mountvernon #Illinois.",
       "type": "short",
-      "category": "USA",
+      "category": "United States",
       "date": "2026-02-05",
-      "tags": ["short"]
+      "tags": [
+        "short"
+      ]
     },
     {
       "id": "https://youtube.com/shorts/_NPbSD7dZBE?si=PYVwuZnvZgz67__S",
@@ -313,16 +471,20 @@
       "type": "short",
       "category": "Culture",
       "date": "2025-03-05",
-      "tags": ["short"]
+      "tags": [
+        "short"
+      ]
     },
     {
       "id": "https://youtube.com/shorts/V0LqZdyD-mI?si=QhzENjpb4JDvsm3D",
       "title": "Valentine’s Day Wish",
       "description": "Valentine’s Day wish panren… yaarum illa .",
       "type": "short",
-      "category": "Fun",
+      "category": "Valentine’s Day",
       "date": "2026-02-13",
-      "tags": ["short"]
+      "tags": [
+        "short"
+      ]
     },
     {
       "id": "https://youtube.com/shorts/cutlTW4B28Y?si=B7zJpqW3glkjmevq",
@@ -331,16 +493,20 @@
       "type": "short",
       "category": "Cooking",
       "date": "2026-02-21",
-      "tags": ["short"]
+      "tags": [
+        "short"
+      ]
     },
     {
       "id": "https://youtube.com/shorts/oBhpwi3CyEk?si=OVNkAHaTQZcn0Qk3",
       "title": "Valentine’s Bouquets",
       "description": "Exploring Valentine’s Day bouquets at Walmart 💐 | Tamil Shorts.",
       "type": "short",
-      "category": "Fun",
+      "category": "Valentine’s Day",
       "date": "2025-02-20",
-      "tags": ["short"]
+      "tags": [
+        "short"
+      ]
     },
     {
       "id": "https://youtube.com/shorts/g2ZtruzKL40?si=6_YGUyrso1CyZ96R",
@@ -349,16 +515,20 @@
       "type": "short",
       "category": "Cooking",
       "date": "2025-02-20",
-      "tags": ["short"]
+      "tags": [
+        "short"
+      ]
     },
     {
       "id": "https://youtube.com/shorts/2WuRRNqlgCM?si=KDFnHI-ZWcp6AiWQ",
       "title": "Flower Bouquets at Walmart",
       "description": "Exploring Valentine’s Day flower bouquets at Walmart USA 💐 | #love | Tamil vlog.",
       "type": "short",
-      "category": "Fun",
+      "category": "Valentine’s Day",
       "date": "2026-02-13",
-      "tags": ["short"]
+      "tags": [
+        "short"
+      ]
     },
     {
       "id": "https://youtube.com/shorts/M9m6vGQDdi0?si=5-HdJ1I93cCwbEG3",
@@ -367,16 +537,20 @@
       "type": "short",
       "category": "Cooking",
       "date": "2026-02-12",
-      "tags": ["short"]
+      "tags": [
+        "short"
+      ]
     },
     {
       "id": "https://youtube.com/shorts/4qGtKCIt77Y?si=QvyqpvdbEHIRg6gp",
       "title": "Bouquet for Myself",
       "description": "Valentine’s Day bouquet at Walmart… for myself 😅 | Tamil Shorts.",
       "type": "short",
-      "category": "Fun",
+      "category": "Valentine’s Day",
       "date": "2026-02-13",
-      "tags": ["short"]
+      "tags": [
+        "short"
+      ]
     },
     {
       "id": "https://youtube.com/shorts/PusD-QFn7i4?si=zJMoa-Dq2ZvwjUCV",
@@ -385,7 +559,9 @@
       "type": "short",
       "category": "Culture",
       "date": "2025-08-28",
-      "tags": ["short"]
+      "tags": [
+        "short"
+      ]
     },
     {
       "id": "https://youtube.com/shorts/j7_kruTb8p8?si=55OTcjnwxzr916yh",
@@ -394,7 +570,9 @@
       "type": "short",
       "category": "Culture",
       "date": "2025-08-28",
-      "tags": ["short"]
+      "tags": [
+        "short"
+      ]
     },
     {
       "id": "https://youtube.com/shorts/kjKS0egEA10?si=-lmaz-6N4loyTVgh",
@@ -403,16 +581,69 @@
       "type": "short",
       "category": "Culture",
       "date": "2025-08-28",
-      "tags": ["short"]
+      "tags": [
+        "short"
+      ]
     },
     {
       "id": "https://youtube.com/shorts/CGXdtOeAOgU?si=eVLpJLiLc2Ybe6UY",
       "title": "Friends Trip to Yercaud",
       "description": "#Trip #Friends #2025 #tamilnadu ",
       "type": "short",
-      "category": "Tourism",
+      "category": "Trip",
       "date": "2025-12-30",
-      "tags": ["short"]
+      "tags": [
+        "short"
+      ],
+      "fav": true
+    },
+    {
+      "id": "https://youtube.com/shorts/ca_OxBwZhac?si=RqZ5nxhs9acTQ00Q",
+      "title": "Kanthalloor Trip with Friends",
+      "description": "Kanthalloor Trip with Friends #tamilshort #trip #friends #2025 #tamilnadu ",
+      "type": "short",
+      "category": "Trip",
+      "date": "2024-12-21",
+      "tags": [
+        "short"
+      ],
+      "fav": true
+    },
+    {
+      "id": "https://youtube.com/shorts/1ryqkAPUrfE?si=g3Bez82-spxm_QN1",
+      "title": "Kanthalloor Trip Campfire",
+      "description": "Kanthalloor Trip campfire ",
+      "type": "short",
+      "category": "Trip",
+      "date": "2024-12-22",
+      "tags": [
+        "short"
+      ],
+      "fav": true
+    },
+    {
+      "id": "https://youtube.com/shorts/sxzayekAnfM?si=c8jZUDeKAvgBuxP4",
+      "title": "Kanthalloor Trip #zipline ",
+      "description": "Kanthalloor Trip #zipline ",
+      "type": "short",
+      "category": "Trip",
+      "date": "2024-12-22",
+      "tags": [
+        "short"
+      ],
+      "fav": true
+    },
+    {
+      "id": "https://youtube.com/shorts/SPWcJOrzriY?si=DtIGX-9Yph_2Aagf",
+      "title": "Kanthalloor trip #adventure #fun #friends",
+      "description": "Kanthalloor trip #adventure #fun #friends ",
+      "type": "short",
+      "category": "Trip",
+      "date": "2024-12-22",
+      "tags": [
+        "short"
+      ],
+      "fav": true
     },
     {
       "id": "https://youtube.com/shorts/kM5pwd3V9cs?si=yGu1j9RdD_95lNmI",
@@ -421,7 +652,9 @@
       "type": "short",
       "category": "Cooking",
       "date": "2025-02-01",
-      "tags": ["short"]
+      "tags": [
+        "short"
+      ]
     },
     {
       "id": "https://youtube.com/shorts/WgBVEAekYuY?si=SnHbVF2wE3SQub5q",
@@ -430,7 +663,9 @@
       "type": "short",
       "category": "Travel",
       "date": "2025-01-25",
-      "tags": ["short"]
+      "tags": [
+        "short"
+      ]
     },
     {
       "id": "https://youtube.com/shorts/YzWqDuGBYwk?si=vumpN42dzUp2djkp",
@@ -439,64 +674,113 @@
       "type": "short",
       "category": "Cooking",
       "date": "2026-02-25",
-      "tags": ["short"]
+      "tags": [
+        "short"
+      ]
     },
-    	{
+    {
       "id": "https://youtube.com/shorts/Yy59xsd05Xs?si=_A8DD-zG7hN7kLFy",
       "title": "Flight Travel",
       "description": "Flight Travel #flight #travel #world.",
       "type": "short",
       "category": "Travel",
       "date": "2025-05-13",
-      "tags": ["short"]
+      "tags": [
+        "short"
+      ]
     },
-    	{
+    {
       "id": "https://youtube.com/shorts/_CDNL_B_1zA?si=YcWdFvMvUluXJotw",
       "title": "Chicago to Dubai Flight",
       "description": "#Flightview #overthesky #nature #beauty .",
       "type": "short",
       "category": "Travel",
       "date": "2025-05-13",
-      "tags": ["short"]
+      "tags": [
+        "short"
+      ]
     },
-    	{
+    {
       "id": "https://youtube.com/shorts/ZXe8uucAxs0?si=wnsx0Y29ga5PDXqt",
       "title": "Arudhar Kabaleeshwarar Temple theerthiruvilla",
       "description": "Arudhar Kabaleeshwarar and Sree Ragupathi Narayana Permal 8th Theerthiruvilla Madavillagam, Kangayam.",
       "type": "short",
       "category": "Culture",
       "date": "2024-03-25",
-      "tags": ["short"]
+      "tags": [
+        "short"
+      ]
     },
-    	{
+    {
       "id": "https://youtube.com/shorts/Y0uNazVpTCg?si=o3Oz5rgdV0RlPs3S",
       "title": "Arudhar Kabaleeshwarar Temple theerthiruvilla part 2",
       "description": "Arudhar Kabaleeshwarar and Sree Ragupathi Narayana Permal 8th Theerthiruvilla Madavillagam, Kangayam.",
       "type": "short",
       "category": "Culture",
       "date": "2024-03-25",
-      "tags": ["short"]
+      "tags": [
+        "short"
+      ]
     },
-    	{
+    {
       "id": "https://youtube.com/shorts/RcoINLG5PYc?si=-iowU38G3jaZ1RLL",
       "title": "Fun Short",
       "description": "Fun short.",
       "type": "short",
-      "category": "USA",
+      "category": "United States",
       "date": "2023-10-31",
-      "tags": ["short"]
+      "tags": [
+        "short"
+      ]
     },
-    	{
+    {
+      "id": "https://youtube.com/shorts/1Ka9nSAiby4?si=gfbyAOUkQ0S7kiQf",
+      "title": "Office la Work… Night la Fun 😎 | Chennai",
+      "description": "Office la Work… Night la Fun 😎 | Chennai ",
+      "type": "short",
+      "category": "Chennai",
+      "date": "2025-06-04",
+      "tags": [
+        "short"
+      ],
+      "fav": true
+    },
+    {
+      "id": "https://youtube.com/shorts/QeIsS77Zx7U?si=vpwBYNq7KxTtSYZd",
+      "title": "Suthitu, sirichitu, enjoy pannitu 😄 | Life is Enjoyable",
+      "description": "Suthitu, sirichitu, enjoy pannitu 😄 | Life is Enjoyable ",
+      "type": "short",
+      "category": "Chennai",
+      "date": "2025-06-05",
+      "tags": [
+        "short"
+      ],
+      "fav": true
+    },
+    {
+      "id": "https://youtube.com/shorts/_5hXByi7xRg?si=duyu081bpz7Dy8xQ",
+      "title": "Sila views words la solla mudiyadhu #chicago view",
+      "description": "Sila views words la solla mudiyadhu #chicago view ",
+      "type": "short",
+      "category": "United States",
+      "date": "2023-10-31",
+      "tags": [
+        "short"
+      ],
+      "fav": true
+    },
+    {
       "id": "https://youtube.com/shorts/sKshz20Tr9A?si=0D3C0dSmJt2EHf5J",
       "title": "Flight Travel",
       "description": "✈️ Takeoff @LHRHeathrow, London and Land @O'HareInternationalAiport, Chicago, USA.",
       "type": "short",
       "category": "Travel",
       "date": "2023-01-24",
-      "tags": ["short"]
+      "tags": [
+        "short"
+      ]
     }
   ],
-
   "instagram": [
     {
       "url": "https://www.instagram.com/reel/DVLgz1vkSRC/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
@@ -519,13 +803,13 @@
     {
       "url": "https://www.instagram.com/reel/DUZd2MRkUws/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
       "caption": "#Yercaud #friends #trip #memories",
-      "category": "Tourism",
+      "category": "Trip",
       "thumbnail": ""
     },
     {
       "url": "https://www.instagram.com/reel/DS5b8yIEl5K/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
       "caption": "#Trip #Yarcaud #Friends #2025.",
-      "category": "Tourism",
+      "category": "Trip",
       "thumbnail": ""
     },
     {
@@ -567,7 +851,7 @@
     {
       "url": "https://www.instagram.com/reel/DIxnZ9SuJtB/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
       "caption": "#Solotravel #recap",
-      "category": "Tourism",
+      "category": "Trip",
       "thumbnail": ""
     },
     {
@@ -588,25 +872,31 @@
       "category": "Travel",
       "thumbnail": ""
     },
-     {
+    {
       "url": "https://www.instagram.com/reel/Cx3l0jEuM53/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
       "caption": "_Chiacago _Union _Station _USA",
       "category": "Travel",
       "thumbnail": ""
     },
-     {
+    {
       "url": "https://www.instagram.com/reel/CsAi2dwgkNy/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
       "caption": "#Memories #USA #Travel #India #Life #to #be #positive",
       "category": "Travel",
       "thumbnail": ""
     }
   ],
-
   "development": {
     "label": "What I'm Building",
     "heading": "Development Projects",
     "subtext": "A showcase of apps and projects at various stages — from early ideas to live products.",
-    "phases": ["Idea", "Development", "Testing", "Beta", "Play Store", "Released"],
+    "phases": [
+      "Idea",
+      "Development",
+      "Testing",
+      "Beta",
+      "Play Store",
+      "Released"
+    ],
     "items": [
       {
         "title": "My Cheetu",
@@ -618,11 +908,27 @@
         "icon": "app/mycheetu-app.png",
         "iconEmoji": "📱",
         "platform": "Android",
-        "tags": ["React Native", "Firebase", "Formspree", "Postgres SQL", ".Net Core"],
+        "tags": [
+          "React Native",
+          "Firebase",
+          "Formspree",
+          "Postgres SQL",
+          ".Net Core"
+        ],
         "link": "",
         "buttons": [
-          { "note": "Join Tester?", "label": "Click here", "url": "https://play.google.com/apps/internaltest/4701024442794426144", "variant": "primary" },
-          { "note": "", "label": "View on GitHub", "url": "", "variant": "outline" }
+          {
+            "note": "Join Tester?",
+            "label": "Click here",
+            "url": "https://play.google.com/apps/internaltest/4701024442794426144",
+            "variant": "primary"
+          },
+          {
+            "note": "",
+            "label": "View on GitHub",
+            "url": "",
+            "variant": "outline"
+          }
         ]
       },
       {
@@ -635,7 +941,12 @@
         "icon": "",
         "iconEmoji": "📱",
         "platform": "Android",
-        "tags": ["React Native", "Node.js", "Postgres SQL", ".Net Core"],
+        "tags": [
+          "React Native",
+          "Node.js",
+          "Postgres SQL",
+          ".Net Core"
+        ],
         "link": "",
         "buttons": []
       }
