@@ -25,7 +25,10 @@ jobs:
         run: |
           mkdir -p dist
           cp coming-soon.html dist/index.html
-          cp -r public/. dist/
+          cp public/Logo.png dist/Logo.png
+          cp public/favicon.svg dist/favicon.svg
+          echo "dist contents:"
+          ls -lh dist/
 
       # ── main branch: full Vite build ──
       - uses: pnpm/action-setup@v3
