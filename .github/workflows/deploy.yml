@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [main, coming-soon]
 
 permissions:
   contents: read
@@ -18,15 +18,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      # ── coming-soon branch: serve plain HTML, no build needed ──
+      - name: Prepare coming-soon page
+        if: github.ref == 'refs/heads/coming-soon'
+        run: |
+          mkdir -p dist
+          cp coming-soon.html dist/index.html
+          # Copy logo so it loads correctly
+          cp public/Logo.png dist/Logo.png
+
+      # ── main branch: full Vite build ──
       - uses: pnpm/action-setup@v3
+        if: github.ref == 'refs/heads/main'
         with:
           version: 9
       - uses: actions/setup-node@v4
+        if: github.ref == 'refs/heads/main'
         with:
           node-version: 20
           cache: pnpm
       - run: pnpm install
+        if: github.ref == 'refs/heads/main'
       - run: pnpm build
+        if: github.ref == 'refs/heads/main'
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
