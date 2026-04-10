@@ -246,8 +246,83 @@ function ShortsCarousel({ shorts }) {
   // Reset active when shorts list changes to prevent out of bounds
   useEffect(() => { setActive(0); setPlaying(false) }, [shorts])
 
-  const prev = () => { setPlaying(false); setActive(i => (i - 1 + shorts.length) % shorts.length) }
-  const next = () => { setPlaying(false); setActive(i => (i + 1) % shorts.length) }
+
+  const stopPlay = () => { setPlaying(false) }
+  const prev = () => { stopPlay(); setActive(i => (i - 1 + shorts.length) % shorts.length) }
+  const next = () => { stopPlay(); setActive(i => (i + 1) % shorts.length) }
+
+  // Auto-advance when video ends using postMessage
+  const activeRef = useRef(active)
+  useEffect(() => { activeRef.current = active }, [active])
+
+  // YouTube IFrame API — load script once, create player when playing starts
+  const ytPlayerRef = useRef(null)
+  const ytContainerRef = useRef(null)
+
+  useEffect(() => {
+    if (!playing) {
+      // Destroy player when stopped
+      if (ytPlayerRef.current) {
+        try { ytPlayerRef.current.destroy() } catch {}
+        ytPlayerRef.current = null
+      }
+      return
+    }
+
+    const vid = youtubeId(shorts[activeRef.current]?.id)
+    if (!vid) return
+
+    function createPlayer() {
+      if (!ytContainerRef.current) return
+      ytContainerRef.current.innerHTML = ''
+      const div = document.createElement('div')
+      div.id = 'yt-shorts-player-' + Date.now()
+      ytContainerRef.current.appendChild(div)
+
+      const container = ytContainerRef.current
+      ytPlayerRef.current = new window.YT.Player(div.id, {
+        videoId: vid,
+        width: container ? container.offsetWidth : '100%',
+        height: container ? container.offsetHeight : '100%',
+        playerVars: { autoplay: 1, rel: 0, playsinline: 1 },
+        events: {
+          onStateChange: (e) => {
+            if (e.data === window.YT.PlayerState.ENDED) {
+              const nextIdx = activeRef.current + 1
+              if (nextIdx < shorts.length) {
+                setActive(nextIdx)
+                setPlaying(true)
+              } else {
+                setPlaying(false)
+              }
+            } else if (e.data === window.YT.PlayerState.PAUSED) {
+              setPlaying(false)
+            }
+          }
+        }
+      })
+    }
+
+    if (window.YT && window.YT.Player) {
+      createPlayer()
+    } else {
+      // Load YT script if not already loaded
+      if (!document.getElementById('yt-api-script')) {
+        const tag = document.createElement('script')
+        tag.id = 'yt-api-script'
+        tag.src = 'https://www.youtube.com/iframe_api'
+        document.head.appendChild(tag)
+      }
+      window.onYouTubeIframeAPIReady = createPlayer
+    }
+
+    return () => {
+      if (ytPlayerRef.current) {
+        try { ytPlayerRef.current.destroy() } catch {}
+        ytPlayerRef.current = null
+      }
+    }
+  }, [playing, active, shorts])
 
   if (!shorts || shorts.length === 0) {
     return (
@@ -280,6 +355,21 @@ function ShortsCarousel({ shorts }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 32 }}>
+      <style>{`
+        @keyframes shortsGlowPulse {
+          0%,100% { box-shadow: 0 0 20px #ff0000, 0 0 40px rgba(255,0,0,0.3), 0 24px 60px rgba(0,0,0,0.45); }
+          50%      { box-shadow: 0 0 55px #ff0000, 0 0 100px rgba(255,0,0,0.65), 0 24px 60px rgba(0,0,0,0.45); }
+        }
+        /* Force YT iframe to fill container */
+        #yt-shorts-player iframe,
+        [id^="yt-shorts-player-"] {
+          position: absolute !important;
+          inset: 0 !important;
+          width: 100% !important;
+          height: 100% !important;
+          border: none !important;
+        }
+      `}</style>
 
       {/* Carousel stage */}
       <div style={{ width: '100%', overflow: 'hidden' }}>
@@ -321,12 +411,15 @@ function ShortsCarousel({ shorts }) {
                 overflow: 'hidden',
                 cursor: isCenter ? 'grab' : 'pointer',
                 transformStyle: 'preserve-3d',
-                boxShadow: isCenter && hovered
+                boxShadow: isCenter && (playing || hovered)
                   ? '0 0 40px #ff0000, 0 0 80px rgba(255,0,0,0.5), 0 24px 60px rgba(0,0,0,0.45)'
                   : isCenter
                   ? '0 24px 60px rgba(0,0,0,0.45)'
                   : '0 8px 24px rgba(0,0,0,0.2)',
-                transition: 'box-shadow 0.3s ease',
+                transition: playing
+                  ? 'box-shadow 0.8s ease-in-out'
+                  : 'box-shadow 0.3s ease',
+                animation: isCenter && playing ? 'shortsGlowPulse 2s ease-in-out infinite' : 'none',
               }}
             >
               {/* Thumbnail */}
@@ -376,14 +469,23 @@ function ShortsCarousel({ shorts }) {
                 </motion.button>
               )}
 
-              {/* Iframe when playing */}
+              {/* YT Player container when playing */}
               {isCenter && playing && (
-                <iframe
-                  src={`https://www.youtube.com/embed/${vid}?autoplay=1&rel=0`}
-                  title={v.title}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none' }}
+                <div
+                  ref={ytContainerRef}
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', overflow: 'hidden' }}
+                />
+              )}
+
+
+              {/* Tap-to-stop overlay — sits above iframe, catches taps when playing */}
+              {isCenter && playing && (
+                <div
+                  onClick={() => stopPlay()}
+                  style={{
+                    position: 'absolute', inset: 0, zIndex: 25,
+                    cursor: 'pointer', background: 'transparent',
+                  }}
                 />
               )}
 
