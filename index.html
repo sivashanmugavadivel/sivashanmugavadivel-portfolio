@@ -74,7 +74,7 @@
       70%      { transform: translate(40px,-60px) scale(0.92); }
     }
 
-    /* ── Main container ── */
+    /* ── Main container — desktop ── */
     .container {
       position: relative;
       z-index: 1;
@@ -82,8 +82,8 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
-      padding: 60px 24px 80px;
+      height: 100vh;
+      padding: 24px;
       text-align: center;
     }
 
@@ -92,30 +92,30 @@
       width: 64px; height: 64px;
       border-radius: 16px;
       object-fit: cover;
-      margin-bottom: 24px;
+      margin-bottom: 32px;
       opacity: 0;
       animation: glowPop 0.9s 1.2s cubic-bezier(0.16,1,0.3,1) forwards;
       filter: drop-shadow(0 0 20px var(--accent-glow));
     }
 
-    /* ── Mobile layout ── */
-    @media (max-width: 480px) {
+    /* ── Mobile only — does NOT affect desktop ── */
+    @media (max-width: 639px) {
+      html, body { overflow-y: auto; overflow-x: hidden; height: auto; }
       .container {
-        padding: 48px 16px 72px;
-        justify-content: flex-start;
+        height: auto;
+        min-height: 100vh;
+        padding: 50px 16px 56px;
       }
-      .logo {
-        width: 52px; height: 52px;
-        margin-bottom: 18px;
-        margin-top: 12px;
-      }
-      .subtitle { margin-bottom: 28px; font-size: 0.9rem; }
-      .countdown { gap: 6px; margin-bottom: 28px; }
-      .countdown-unit { width: 64px; height: 76px; }
-      .countdown-value { font-size: 1.4rem; }
+      .logo { width: 52px; height: 52px; margin-bottom: 20px; }
+      .title { font-size: 1.55rem; margin-bottom: 8px; }
+      .subtitle { font-size: 0.88rem; margin-bottom: 24px; }
+      .countdown { gap: 6px; margin-bottom: 24px; }
+      .countdown-unit { width: 62px; height: 74px; }
+      .countdown-value { font-size: 1.35rem; }
       .countdown-label { font-size: 0.5rem; }
-      .countdown-sep { font-size: 1.1rem; }
-      .journey-section { margin-bottom: 20px; }
+      .countdown-sep { font-size: 1rem; margin-bottom: 16px; }
+      .journey-section { margin-bottom: 16px; }
+      .credit { margin-top: 24px; }
     }
 
     /* ── Texts ── */
@@ -818,14 +818,21 @@
       50% { opacity: 0; }
     }
 
-    /* ── Credit ── */
+    /* ── Credit — desktop: pinned bottom, mobile: in flow ── */
     .credit {
+      position: absolute;
+      bottom: 20px;
       font-size: 0.68rem;
       color: var(--text);
       letter-spacing: 0.04em;
       opacity: 0;
-      margin-top: 28px;
       animation: fadeSlideUp 1s 3.4s ease-out forwards;
+    }
+    @media (max-width: 639px) {
+      .credit {
+        position: relative;
+        bottom: auto;
+      }
     }
     .credit span { color: var(--accent); }
     .type-cursor {
