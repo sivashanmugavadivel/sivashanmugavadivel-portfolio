@@ -82,8 +82,8 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
-      padding: 24px;
+      min-height: 100vh;
+      padding: 60px 24px 80px;
       text-align: center;
     }
 
@@ -92,10 +92,30 @@
       width: 64px; height: 64px;
       border-radius: 16px;
       object-fit: cover;
-      margin-bottom: 32px;
+      margin-bottom: 24px;
       opacity: 0;
       animation: glowPop 0.9s 1.2s cubic-bezier(0.16,1,0.3,1) forwards;
       filter: drop-shadow(0 0 20px var(--accent-glow));
+    }
+
+    /* ── Mobile layout ── */
+    @media (max-width: 480px) {
+      .container {
+        padding: 48px 16px 72px;
+        justify-content: flex-start;
+      }
+      .logo {
+        width: 52px; height: 52px;
+        margin-bottom: 18px;
+        margin-top: 12px;
+      }
+      .subtitle { margin-bottom: 28px; font-size: 0.9rem; }
+      .countdown { gap: 6px; margin-bottom: 28px; }
+      .countdown-unit { width: 64px; height: 76px; }
+      .countdown-value { font-size: 1.4rem; }
+      .countdown-label { font-size: 0.5rem; }
+      .countdown-sep { font-size: 1.1rem; }
+      .journey-section { margin-bottom: 20px; }
     }
 
     /* ── Texts ── */
@@ -800,12 +820,11 @@
 
     /* ── Credit ── */
     .credit {
-      position: absolute;
-      bottom: 20px;
       font-size: 0.68rem;
       color: var(--text);
       letter-spacing: 0.04em;
       opacity: 0;
+      margin-top: 28px;
       animation: fadeSlideUp 1s 3.4s ease-out forwards;
     }
     .credit span { color: var(--accent); }
@@ -864,7 +883,7 @@
 
   <!-- Main content -->
   <div class="container">
-    <img src="/Logo.png" alt="Logo" class="logo" />
+    <img src="Logo.png" alt="Logo" class="logo" onerror="this.style.display='none'" />
 
     <h1 class="title">This Journey is still <em>unfolding</em>....</h1>
     <p class="subtitle">Something meaningful is on its way</p>
