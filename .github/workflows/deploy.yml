@@ -25,8 +25,7 @@ jobs:
         run: |
           mkdir -p dist
           cp coming-soon.html dist/index.html
-          # Copy logo so it loads correctly
-          cp public/Logo.png dist/Logo.png
+          cp -r public/. dist/
 
       # ── main branch: full Vite build ──
       - uses: pnpm/action-setup@v3
