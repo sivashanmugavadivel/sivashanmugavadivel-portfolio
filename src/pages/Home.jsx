@@ -7,6 +7,7 @@ import Button from '../components/ui/Button'
 import PlacesMapV1 from '../components/PlacesMapV1'
 import PlacesMapV2 from '../components/PlacesMapV2'
 import NowPlaying from '../components/NowPlaying'
+import ScrollTextReveal from '../components/ScrollTextReveal'
 
 /* ── Reusable scroll-reveal wrapper ── */
 function Reveal({ children, delay = 0, y = 40, x = 0, style }) {
@@ -311,9 +312,7 @@ function HeroSection() {
           fontFamily: 'var(--sans)', fontSize: 'clamp(0.78rem, 1.4vw, 0.95rem)',
           color: 'rgba(255,255,255,0.65)', maxWidth: 520, lineHeight: 1.6, margin: 0,
         }}>
-          {(cfg.hero?.subtext || cfg.personal.bio).split('\n').map((line, i, arr) => (
-            <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
-          ))}
+          <ScrollTextReveal text={cfg.hero?.subtext || cfg.personal.bio} />
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
           <span style={{ fontSize: '0.6rem', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)' }}>
@@ -459,7 +458,7 @@ function NowPlayingSection() {
   return (
     <section className="section" style={{ background: 'var(--bg)' }}>
       <div className="page-container" style={{ maxWidth: 600 }}>
-        <SectionHeading label="Music" title="Now Playing 🎧" />
+        <SectionHeading label="Music" title="🎧Music Can Heal❤️‍🩹" />
         <Reveal delay={0.15}>
           <NowPlaying />
         </Reveal>

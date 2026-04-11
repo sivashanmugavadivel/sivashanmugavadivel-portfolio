@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useConfetti } from '../hooks/useConfetti'
 
 const TYPES = ['Suggestion', 'Bug', 'Compliment', 'Other']
 
@@ -7,6 +8,7 @@ const brown = '#78350f'
 const yellow = '#fef08a'
 
 export default function FeedbackPanel({ open, onClose }) {
+  const { fire: fireConfetti, canvas: confettiCanvas } = useConfetti()
   const [rating, setRating] = useState(0)
   const [hoverRating, setHoverRating] = useState(0)
   const [type, setType] = useState('')
@@ -31,6 +33,7 @@ export default function FeedbackPanel({ open, onClose }) {
       })
       if (res.ok) {
         setStatus('success')
+        fireConfetti()
         setTimeout(() => { handleClose() }, 2800)
       } else {
         setStatus('error')
@@ -41,6 +44,8 @@ export default function FeedbackPanel({ open, onClose }) {
   }
 
   return (
+    <>
+    {confettiCanvas}
     <AnimatePresence>
       {open && (
         <>
@@ -241,5 +246,6 @@ export default function FeedbackPanel({ open, onClose }) {
         </>
       )}
     </AnimatePresence>
+    </>
   )
 }

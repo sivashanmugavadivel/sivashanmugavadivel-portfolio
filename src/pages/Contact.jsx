@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import cfg from '../data/config.json'
+import { useConfetti } from '../hooks/useConfetti'
 
 /* ── Animated form field ── */
 function Field({ label, id, type = 'text', value, onChange, required, multiline }) {
@@ -69,6 +70,7 @@ function Field({ label, id, type = 'text', value, onChange, required, multiline 
 function ContactForm() {
   const [form, setForm] = useState({ name: '', email: '', message: '' })
   const [status, setStatus] = useState('idle')
+  const { fire: fireConfetti, canvas: confettiCanvas } = useConfetti()
 
   const handleChange = field => e => setForm(f => ({ ...f, [field]: e.target.value }))
 
@@ -84,6 +86,7 @@ function ContactForm() {
       if (res.ok) {
         setStatus('success')
         setForm({ name: '', email: '', message: '' })
+        fireConfetti()
         setTimeout(() => setStatus('idle'), 10000)
       } else {
         setStatus('error')
@@ -94,6 +97,8 @@ function ContactForm() {
   }
 
   return (
+    <>
+    {confettiCanvas}
     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div className="grid-2" style={{ gap: 16 }}>
         <Field id="name" label="Name" value={form.name} onChange={handleChange('name')} required />
@@ -150,6 +155,7 @@ function ContactForm() {
         </p>
       )}
     </form>
+    </>
   )
 }
 
