@@ -7,6 +7,7 @@ import FeedbackPanel from './components/FeedbackPanel'
 import SmartToast from './components/SmartToast'
 import EasterEgg from './components/EasterEgg'
 
+import WordIntro from './components/WordIntro'
 import LoadingScreen from './components/LoadingScreen'
 import Navbar from './components/layout/Navbar'
 import Footer from './components/layout/Footer'
@@ -58,52 +59,64 @@ function AppRoutes() {
 
 export default function App() {
   const { theme, toggle } = useTheme()
-  const isLoading = usePageLoad()
+  const { isWordIntro, isLoading, contentReady, onWordIntroComplete, onLoadingExitComplete } = usePageLoad()
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const location = useLocation()
   const showFeedback = location.pathname !== '/contact'
 
   return (
     <>
-      <LoadingScreen isVisible={isLoading} />
-      <ScrollProgress />
-      <Navbar theme={theme} onToggleTheme={toggle} />
-      <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <AppRoutes />
-      </main>
-      <Footer />
+      <WordIntro isVisible={isWordIntro} onComplete={onWordIntroComplete} />
+      <LoadingScreen isVisible={isLoading} onExitComplete={onLoadingExitComplete} />
 
-      {/* ── Floating Feedback Button ── */}
-      {showFeedback && (
-        <motion.button
-          animate={{ y: [0, -10, 0] }}
-          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', scale: { duration: 0.35, ease: 'easeOut' }, x: { duration: 0.35, ease: 'easeOut' } }}
-          whileHover={{ x: -8, scale: 1.15, transition: { duration: 0.2, ease: 'easeOut' } }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setFeedbackOpen(true)}
-          style={{
-            position: 'fixed',
-            right: -5,
-            top: '50%',
-            transform: 'translateX(55%) translateY(-50%)',
-            zIndex: 90,
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: 0,
-          }}
-        >
-          <img
-            src={`${import.meta.env.BASE_URL}fed-gif1.gif`}
-            alt="Feedback"
-            style={{ width: 'auto', height: '120px', display: 'block' }}
-          />
-        </motion.button>
+      {/* Render page content when loading starts exit (panels sliding) so it's visible through the gap */}
+      {((!isWordIntro && !isLoading) || contentReady) && (
+        <>
+          <ScrollProgress />
+          <Navbar theme={theme} onToggleTheme={toggle} />
+          <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <AppRoutes />
+          </main>
+          <Footer />
+        </>
       )}
 
-      <FeedbackPanel open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
-      <SmartToast />
-      <EasterEgg />
+      {/* UI overlays only after panels fully gone */}
+      {contentReady && (
+        <>
+          {/* ── Floating Feedback Button ── */}
+          {showFeedback && (
+            <motion.button
+              animate={{ y: [0, -10, 0] }}
+              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', scale: { duration: 0.35, ease: 'easeOut' }, x: { duration: 0.35, ease: 'easeOut' } }}
+              whileHover={{ x: -8, scale: 1.15, transition: { duration: 0.2, ease: 'easeOut' } }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setFeedbackOpen(true)}
+              style={{
+                position: 'fixed',
+                right: -5,
+                top: '50%',
+                transform: 'translateX(55%) translateY(-50%)',
+                zIndex: 90,
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+              }}
+            >
+              <img
+                src={`${import.meta.env.BASE_URL}fed-gif1.gif`}
+                alt="Feedback"
+                style={{ width: 'auto', height: '120px', display: 'block' }}
+              />
+            </motion.button>
+          )}
+
+          <FeedbackPanel open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
+          {location.pathname === '/' && <SmartToast />}
+          <EasterEgg />
+        </>
+      )}
     </>
   )
 }

@@ -8,7 +8,8 @@
     "availability": "Available for freelance",
     "avatar": "avatar.jpg",
     "avatarCutout": "Avatar_nbc1.png",
-    "logo": "Logo.png"
+    "logo": "Logo.png",
+    "introWords": ["IDEA", "SKILL", "EXPERIENCE", "INTO", "PORTFOLIO"]
   },
   "contact": {
     "email": "sivashanmugavadivelofficial@gmail.com",

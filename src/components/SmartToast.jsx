@@ -3,7 +3,7 @@ import { AnimatePresence } from 'framer-motion'
 import { getGreeting } from '../utils/timeGreeting'
 import { DESIGNS, STORAGE_KEY, getPositionStyle } from './ToastDesignPicker'
 
-const LOADING_DELAY = 4000
+const LOADING_DELAY = 1200
 
 const POSITIVE_THOUGHTS = [
   "Every day is a chance to grow a little more. 🌱",
