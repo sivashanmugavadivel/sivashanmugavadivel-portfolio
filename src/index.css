@@ -1,5 +1,19 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;0,700;1,500&display=swap');
 
+/* Theme toggle circular wipe — View Transitions API */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-new(root) {
+  clip-path: circle(0% at var(--wipe-x, 50%) var(--wipe-y, 50%));
+  animation: wipeExpand 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes wipeExpand {
+  to { clip-path: circle(150% at var(--wipe-x, 50%) var(--wipe-y, 50%)); }
+}
+
 :root {
   /* Colors — light mode */
   --bg: #faf9f7;

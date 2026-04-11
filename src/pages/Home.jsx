@@ -171,7 +171,9 @@ function HeroSection() {
 
   // Track window scroll — scrollY goes from 0 to ~100vh as hero leaves view
   const { scrollY } = useScroll()
-  const bgY = useTransform(scrollY, [0, window.innerHeight], ['0%', '20%'])
+  const bgY = useTransform(scrollY, [0, window.innerHeight], ['0%', '25%'])          // bg moves fast
+  const cutoutY = useTransform(scrollY, [0, window.innerHeight], ['0%', '8%'])        // cutout moves slower — parallax depth
+  const nameY = useTransform(scrollY, [0, window.innerHeight], [0, -40])              // name drifts up slightly
   // Name fades out in first 35% of hero height, gone by 40%
   const nameOpacity = useTransform(scrollY, [0, window.innerHeight * 0.35, window.innerHeight * 0.5], [1, 0, 0])
 
@@ -205,7 +207,7 @@ function HeroSection() {
         }} />
       </motion.div>
 
-      {/* ══ LAYER 2 — Fixed name ══ */}
+      {/* ══ LAYER 2 — Fixed name — drifts up on scroll ══ */}
       <motion.div
         key={`bigname-${mountKey}`}
         style={{
@@ -218,12 +220,13 @@ function HeroSection() {
           pointerEvents: 'auto',
           padding: '0 24px',
           opacity: nameOpacity,
+          y: nameY,
         }}
       >
         <TypingName key={mountKey} />
       </motion.div>
 
-      {/* ══ LAYER 3 — Cutout PNG ══ */}
+      {/* ══ LAYER 3 — Cutout PNG — moves slower than bg for depth ══ */}
       <motion.div
         key={`fg-${mountKey}`}
         initial={{ opacity: 0 }}
@@ -231,7 +234,7 @@ function HeroSection() {
         transition={{ duration: 0.01 }}
         style={{
           position: 'absolute',
-          top: 0, left: '50%',
+          top: cutoutY, left: '50%',
           x: '-50%',
           y: isMobileHero ? '22%' : '-5%',
           zIndex: 3,

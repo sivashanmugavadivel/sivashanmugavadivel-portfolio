@@ -7,6 +7,7 @@ import FeedbackPanel from './components/FeedbackPanel'
 import SmartToast from './components/SmartToast'
 import EasterEgg from './components/EasterEgg'
 
+import CustomCursor from './components/CustomCursor'
 import WordIntro from './components/WordIntro'
 import LoadingScreen from './components/LoadingScreen'
 import Navbar from './components/layout/Navbar'
@@ -66,6 +67,7 @@ export default function App() {
 
   return (
     <>
+      <CustomCursor />
       <WordIntro isVisible={isWordIntro} onComplete={onWordIntroComplete} />
       <LoadingScreen isVisible={isLoading} onExitComplete={onLoadingExitComplete} />
 
