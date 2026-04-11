@@ -845,7 +845,7 @@ function CTASection() {
 /* ── About section ── */
 function AboutSection() {
   const ref = useRef(null)
-  const inView = useInView(ref, { once: true, margin: '-80px' })
+  const inView = useInView(ref, { once: false, margin: '-80px' })
   const greeting = cfg.about?.heroGreeting || 'Hey there!'
   const heading = (cfg.about?.heading || 'Nice to meet you').replace(greeting, '').trim()
 

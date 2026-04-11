@@ -64,7 +64,7 @@ function SectionImage({ section, color }) {
         <motion.figure
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
+          viewport={{ once: false }}
           transition={{ duration: 0.5 }}
           style={{
             float, width: resolvedWidth,
@@ -98,7 +98,7 @@ function SectionImage({ section, color }) {
       <motion.figure
         initial={{ opacity: 0, y: 12 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
+        viewport={{ once: false }}
         transition={{ duration: 0.5 }}
         style={{ margin: '4px 0 24px', width: resolvedWidth, borderRadius: 12, overflow: 'hidden', boxShadow: '0 4px 24px rgba(0,0,0,0.12)', ...alignStyles[align] }}
       >
@@ -448,7 +448,7 @@ function SectionVideo({ section, color }) {
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
+      viewport={{ once: false }}
       transition={{ duration: 0.5 }}
       style={{ margin: '24px 0' }}
     >
@@ -495,7 +495,7 @@ function SectionShorts({ section }) {
 
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }} transition={{ duration: 0.5 }} style={{ margin: '24px 0' }}>
+      viewport={{ once: false }} transition={{ duration: 0.5 }} style={{ margin: '24px 0' }}>
       <SectionHeading heading={section.heading} color="#ff0000" />
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>
         <div style={{ width: '100%', overflow: 'hidden' }}>
@@ -644,7 +644,7 @@ function SectionInstagram({ section }) {
 
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }} transition={{ duration: 0.5 }} style={{ margin: '24px 0' }}>
+      viewport={{ once: false }} transition={{ duration: 0.5 }} style={{ margin: '24px 0' }}>
       <SectionHeading heading={section.heading} color="#dc2743" />
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>
         <div style={{ width: '100%', overflow: 'hidden' }}>
@@ -736,7 +736,7 @@ function SectionIngredientGroup({ section, color }) {
     <motion.div
       initial={{ opacity: 0, x: -8 }}
       whileInView={{ opacity: 1, x: 0 }}
-      viewport={{ once: true }}
+      viewport={{ once: false }}
       transition={{ duration: 0.4 }}
       style={{ margin: '20px 0' }}
     >
@@ -774,7 +774,7 @@ function SectionSteps({ section, color }) {
             key={i}
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: false }}
             transition={{ duration: 0.4, delay: i * 0.06 }}
             style={{
               display: 'flex', gap: 14, alignItems: 'flex-start',
@@ -812,7 +812,7 @@ function SectionNutrition({ section, color }) {
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
+      viewport={{ once: false }}
       transition={{ duration: 0.5 }}
       style={{ margin: '20px 0' }}
     >
@@ -871,7 +871,7 @@ function SectionCallout({ section }) {
     <motion.div
       initial={{ opacity: 0, x: -8 }}
       whileInView={{ opacity: 1, x: 0 }}
-      viewport={{ once: true }}
+      viewport={{ once: false }}
       transition={{ duration: 0.4 }}
       style={{
         margin: '20px 0', padding: '14px 16px',
@@ -905,7 +905,7 @@ function SectionPlaces({ section, color }) {
             key={i}
             initial={{ opacity: 0, y: 8 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: false }}
             transition={{ duration: 0.4, delay: i * 0.06 }}
             style={{
               padding: '14px 16px', borderRadius: 10,

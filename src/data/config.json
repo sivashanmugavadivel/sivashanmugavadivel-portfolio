@@ -135,19 +135,42 @@
       "year": "2023 – Present",
       "role": "Automation & Integration Engineer (Onsite – USA)",
       "org": "Chennova Software Pvt. Ltd. (Client: Continental Tires)",
-      "desc": "Leading PLC-to-enterprise integration and TIGER rollout across production machines. Implemented OPC UA and Modbus communication, developed machine logic (heartbeat, recipe handling), and supported commissioning, testing, and live plant troubleshooting."
+      "desc": "Leading PLC-to-enterprise integration and TIGER rollout across production machines. Implemented OPC UA and Modbus communication, developed machine logic (heartbeat, recipe handling), and supported commissioning, testing, and live plant troubleshooting.",
+      "highlights": [
+        "Led TIGER rollout across 12+ production machines",
+        "Implemented OPC UA and Modbus TCP/IP communication protocols",
+        "Developed heartbeat monitoring and recipe handling logic",
+        "Supported live plant commissioning and on-site troubleshooting",
+        "Collaborated with cross-functional teams across USA and India"
+      ],
+      "tags": ["PLC", "OPC UA", "Modbus", "TIGER", "Node.js", "Industrial IoT"]
     },
     {
       "year": "2020 – Present",
       "role": "Junior PLC & Industrial Software Engineer",
       "org": "Chennova Software Pvt. Ltd.",
-      "desc": "Developed industrial software platforms integrating PLC systems with .NET applications using OPC UA. Built PLC code-generation tools, designed web-based configuration systems, and deployed solutions using Docker for smart manufacturing environments."
+      "desc": "Developed industrial software platforms integrating PLC systems with .NET applications using OPC UA. Built PLC code-generation tools, designed web-based configuration systems, and deployed solutions using Docker for smart manufacturing environments.",
+      "highlights": [
+        "Built PLC code-generation tools for faster deployment",
+        "Designed web-based configuration systems for machine setup",
+        "Integrated PLC systems with .NET applications via OPC UA",
+        "Deployed containerized solutions using Docker",
+        "Developed internal dashboards with React and Node.js"
+      ],
+      "tags": ["React", ".NET", "OPC UA", "Docker", "Python", "REST API", "PLC"]
     },
     {
       "year": "2019 – 2020",
       "role": "Project Engineer",
       "org": "Syscoms Automation and Panels, Chennai",
-      "desc": "Worked on control panel design, PLC programming, and HMI/SCADA development. Handled commissioning and servicing of industrial systems including furnace automation projects."
+      "desc": "Worked on control panel design, PLC programming, and HMI/SCADA development. Handled commissioning and servicing of industrial systems including furnace automation projects.",
+      "highlights": [
+        "Designed and wired industrial control panels",
+        "Programmed PLCs for furnace automation projects",
+        "Developed HMI/SCADA interfaces for process monitoring",
+        "Handled on-site commissioning and system servicing"
+      ],
+      "tags": ["PLC", "HMI", "SCADA", "Control Panels", "Furnace Automation"]
     },
     {
       "year": "2015 – 2019",
@@ -889,12 +912,13 @@
   "skillLevels": [
     { "name": "PLC Programming", "level": 90 },
     { "name": "Industrial Automation", "level": 85 },
-    { "name": "React / JavaScript", "level": 80 },
-    { "name": "Node.js", "level": 75 },
-    { "name": "OPC UA / Modbus", "level": 88 },
-    { "name": "Python", "level": 70 },
+    { "name": "React / JS", "level": 80 },
+    { "name": "Robotics - KUKA", "level": 15 },
+    { "name": "OPC UA / Modbus", "level": 80 },
+    { "name": "Docker", "level": 70 },
     { "name": "UI/UX Design", "level": 65 },
-    { "name": "DevOps / CI-CD", "level": 60 }
+    { "name": "HMI / SCADA", "level": 75 },
+    { "name": ".NET / C#", "level": 75 }
   ],
   "hometown": {
     "label": "Where My Roots Are",

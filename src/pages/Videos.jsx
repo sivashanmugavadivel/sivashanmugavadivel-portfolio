@@ -927,7 +927,7 @@ function InstagramSection() {
       <div className="page-container">
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }} transition={{ duration: 0.5 }}
+          viewport={{ once: false }} transition={{ duration: 0.5 }}
           style={{ textAlign: 'center', marginBottom: 32 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
             <div style={{ width: 36, height: 36, borderRadius: 10,
@@ -971,7 +971,7 @@ function InstagramSection() {
 
         {/* Follow CTA */}
         <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }} transition={{ duration: 0.5, delay: 0.2 }}
+          viewport={{ once: false }} transition={{ duration: 0.5, delay: 0.2 }}
           style={{ textAlign: 'center', marginTop: 40 }}>
           <motion.a href={cfg.social.instagram.href} target="_blank" rel="noopener noreferrer"
             whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.94 }}

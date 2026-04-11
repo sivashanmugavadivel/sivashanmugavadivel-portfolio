@@ -31,7 +31,7 @@ function Reveal({ children, delay = 0, y = 32, x = 0, style }) {
     <motion.div
       initial={{ opacity: 0, y, x }}
       whileInView={{ opacity: 1, y: 0, x: 0 }}
-      viewport={{ once: true, margin: '-60px' }}
+      viewport={{ once: false, margin: '-60px' }}
       transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1], delay }}
       style={style}
     >
@@ -53,7 +53,7 @@ function SectionHeading({ label, title, align = 'center' }) {
           <motion.span
             initial={{ scaleX: 0 }}
             whileInView={{ scaleX: 1 }}
-            viewport={{ once: true }}
+            viewport={{ once: false }}
             transition={{ duration: 0.5, delay: 0.4, ease: 'easeOut' }}
             style={{
               position: 'absolute', bottom: -4, left: 0, right: 0,
@@ -470,9 +470,8 @@ function TimelineSection() {
                   transition={{ duration: 0.3 }}
                   style={{
                     position: 'absolute',
-                    left: '50%',
+                    left: 'calc(50% - 6px)',
                     top: 24,
-                    transform: 'translateX(-50%)',
                     width: 12,
                     height: 12,
                     borderRadius: '50%',
@@ -618,13 +617,13 @@ function NowSection() {
       <div className="page-container">
         <SectionHeading label={label} title={heading} />
         <div style={{ position: 'relative', paddingLeft: 32, maxWidth: 680, margin: '0 auto' }}>
-          <motion.div initial={{ scaleY: 0 }} whileInView={{ scaleY: 1 }} viewport={{ once: true }}
+          <motion.div initial={{ scaleY: 0 }} whileInView={{ scaleY: 1 }} viewport={{ once: false }}
             transition={{ duration: 0.8, ease: 'easeInOut' }}
             style={{ position: 'absolute', left: 10, top: 6, bottom: 6, width: 2,
               background: `linear-gradient(to bottom, ${color}, transparent)`, borderRadius: 2, transformOrigin: 'top' }} />
           {items.map((item, i) => (
             <motion.div key={i} initial={{ opacity: 0, x: -24 }} whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }} transition={{ delay: i * 0.1, duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+              viewport={{ once: false }} transition={{ delay: i * 0.1, duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
               style={{ display: 'flex', alignItems: 'flex-start', gap: 14, marginBottom: 16, position: 'relative' }}>
               <motion.div whileHover={{ scale: 1.4 }} style={{ position: 'absolute', left: -26, top: 10,
                 width: 10, height: 10, borderRadius: '50%', background: color,
@@ -654,7 +653,7 @@ function PrinciplesSection() {
           {items.map((item, i) => (
             <motion.div key={i} whileHover={{ x: 6 }}
               initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }} transition={{ delay: i * 0.08, duration: 0.4 }}
+              viewport={{ once: false }} transition={{ delay: i * 0.08, duration: 0.4 }}
               style={{ display: 'flex', alignItems: 'center', gap: 18, background: 'var(--card-bg)',
                 border: '1px solid var(--border)', borderRadius: 12, padding: '14px 20px' }}>
               <motion.div whileHover={{ scale: 1.1, boxShadow: `0 0 18px ${color}` }}
@@ -683,7 +682,7 @@ function FunSideSection() {
       <div className="page-container">
         <SectionHeading label={label} title={heading} />
         <motion.div
-          initial="hidden" whileInView="show" viewport={{ once: true }}
+          initial="hidden" whileInView="show" viewport={{ once: false }}
           variants={{ hidden: {}, show: { transition: { staggerChildren: 0.08 } } }}
           style={{ display: 'flex', flexWrap: 'wrap', gap: 14, justifyContent: 'center', maxWidth: 720, margin: '0 auto' }}>
           {items.map((item, i) => (
@@ -843,7 +842,7 @@ function DevelopmentSection() {
       {/* Ambient background glow */}
       <motion.div
         initial={{ opacity: 0 }} whileInView={{ opacity: 1 }}
-        viewport={{ once: true }} transition={{ duration: 1.2 }}
+        viewport={{ once: false }} transition={{ duration: 1.2 }}
         style={{ position: 'absolute', inset: 0, pointerEvents: 'none',
           background: 'radial-gradient(ellipse 70% 50% at 50% 0%, rgba(124,58,237,0.06), transparent)' }}
       />
@@ -859,7 +858,7 @@ function DevelopmentSection() {
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-60px' }}
+          viewport={{ once: false, margin: '-60px' }}
           transition={{ duration: 0.65, ease: [0.25, 0.1, 0.25, 1] }}
           style={{ maxWidth: 900, margin: '0 auto',
             background: 'var(--card-bg)', border: '1px solid var(--border)',
@@ -869,7 +868,7 @@ function DevelopmentSection() {
           <motion.div
             className="dev-table-header"
             initial={{ opacity: 0 }} whileInView={{ opacity: 1 }}
-            viewport={{ once: true }} transition={{ duration: 0.4, delay: 0.3 }}
+            viewport={{ once: false }} transition={{ duration: 0.4, delay: 0.3 }}
             style={{ display: 'grid', gridTemplateColumns: '44px 1fr 120px 200px 130px 36px',
               gap: 16, padding: '10px 24px',
               background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}
@@ -885,7 +884,7 @@ function DevelopmentSection() {
           <motion.div
             variants={containerVariants}
             initial="hidden" whileInView="show"
-            viewport={{ once: true, margin: '-40px' }}
+            viewport={{ once: false, margin: '-40px' }}
           >
             {items.map((p, i) => {
               const s = STATUS_CONFIG[p.status] || STATUS_CONFIG.development
@@ -963,7 +962,7 @@ function DevelopmentSection() {
                           const active = pi === p.currentPhase
                           return (
                             <motion.div key={ph}
-                              initial={{ scaleX: 0 }} whileInView={{ scaleX: 1 }} viewport={{ once: true }}
+                              initial={{ scaleX: 0 }} whileInView={{ scaleX: 1 }} viewport={{ once: false }}
                               transition={{ delay: i * 0.08 + pi * 0.06, duration: 0.35, ease: 'easeOut' }}
                               style={{ flex: 1, height: 5, borderRadius: 3,
                                 background: done ? s.color : 'var(--border)',
@@ -1064,7 +1063,7 @@ function DevelopmentSection() {
                           const active = pi === p.currentPhase
                           return (
                             <motion.div key={ph}
-                              initial={{ scaleX: 0 }} whileInView={{ scaleX: 1 }} viewport={{ once: true }}
+                              initial={{ scaleX: 0 }} whileInView={{ scaleX: 1 }} viewport={{ once: false }}
                               transition={{ delay: i * 0.08 + pi * 0.06, duration: 0.35, ease: 'easeOut' }}
                               style={{ flex: 1, height: 5, borderRadius: 3,
                                 background: done ? s.color : 'var(--border)',

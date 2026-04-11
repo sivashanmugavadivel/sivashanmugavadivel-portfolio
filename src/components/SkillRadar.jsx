@@ -20,7 +20,7 @@ const R = 150
 
 export default function SkillRadar() {
   const ref = useRef(null)
-  const inView = useInView(ref, { once: true, margin: '-100px' })
+  const inView = useInView(ref, { once: false, margin: '-100px' })
 
   const n = skills.length
   const angles = skills.map((_, i) => (Math.PI * 2 / n) * i - Math.PI / 2)
@@ -48,7 +48,7 @@ export default function SkillRadar() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: false }}
           transition={{ duration: 0.6 }}
         >
           <span style={{

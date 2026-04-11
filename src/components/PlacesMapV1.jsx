@@ -133,7 +133,7 @@ export default function PlacesMapV1() {
   const [selectedCountry, setSelectedCountry] = useState(null)
   const [expanded, setExpanded] = useState(false)
   const ref = useRef(null)
-  const inView = useInView(ref, { once: true, margin: '0px' })
+  const inView = useInView(ref, { once: false, margin: '0px' })
 
   useEffect(() => {
     function onKey(e) { if (e.key === 'Escape') setExpanded(false) }

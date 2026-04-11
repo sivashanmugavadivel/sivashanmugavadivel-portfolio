@@ -213,10 +213,10 @@ export default function Contact() {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', flexWrap: 'wrap' }}>
 
-      {/* Left panel — dark */}
+      {/* Left panel — theme-aware */}
       <div style={{
         flex: '1 1 340px',
-        background: '#0f0f14',
+        background: 'var(--bg-secondary)',
         padding: 'clamp(100px,10vw,140px) clamp(32px,5vw,80px) clamp(60px,8vw,100px)',
         display: 'flex', flexDirection: 'column', justifyContent: 'center',
         position: 'relative', minHeight: 500,
@@ -225,11 +225,11 @@ export default function Contact() {
         <motion.div
           initial={{ scaleY: 0 }}
           whileInView={{ scaleY: 1 }}
-          viewport={{ once: true }}
+          viewport={{ once: false }}
           transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
           style={{
             position: 'absolute', right: 0, top: '10%', bottom: '10%',
-            width: 1, background: 'rgba(255,255,255,0.08)',
+            width: 1, background: 'var(--border)',
             transformOrigin: 'top',
           }}
         />
@@ -237,17 +237,17 @@ export default function Contact() {
         <motion.div
           initial={{ opacity: 0, x: -60 }}
           whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: false }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         >
           <h1 style={{
             fontSize: 'clamp(2.8rem, 7vw, 5rem)',
-            fontWeight: 900, color: '#fff',
+            fontWeight: 900, color: 'var(--text-h)',
             lineHeight: 1.05, margin: '0 0 24px',
           }}>
             Let's<br />talk
           </h1>
-          <p style={{ fontStyle: 'italic', color: 'rgba(255,255,255,0.55)', fontSize: '1.05rem', lineHeight: 1.7, margin: '0 0 40px', maxWidth: 340 }}>
+          <p style={{ fontStyle: 'italic', color: 'var(--text)', fontSize: '1.05rem', lineHeight: 1.7, margin: '0 0 40px', maxWidth: 340 }}>
             "Let's build something interesting together 🙏."
           </p>
         </motion.div>
@@ -255,7 +255,7 @@ export default function Contact() {
         <motion.div
           initial={{ opacity: 0, x: -40 }}
           whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: false }}
           transition={{ duration: 0.7, delay: 0.2 }}
           style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
         >
@@ -265,21 +265,21 @@ export default function Contact() {
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              whileHover={{ x: 6, backgroundColor: 'rgba(255,255,255,0.1)' }}
+              whileHover={{ x: 6, backgroundColor: 'var(--accent-bg)' }}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 14,
                 padding: '12px 20px', borderRadius: 14,
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                color: '#fff', textDecoration: 'none',
+                background: 'var(--card-bg)',
+                border: '1px solid var(--border)',
+                color: 'var(--text-h)', textDecoration: 'none',
                 transition: 'background 0.2s',
                 maxWidth: 280,
               }}
             >
-              <span style={{ color: 'rgba(255,255,255,0.7)', flexShrink: 0 }}>{icon}</span>
+              <span style={{ color: 'var(--accent)', flexShrink: 0 }}>{icon}</span>
               <div>
-                <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{label}</div>
-                <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.45)' }}>{handle}</div>
+                <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-h)' }}>{label}</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text)', opacity: 0.7 }}>{handle}</div>
               </div>
             </motion.a>
           ))}
@@ -289,7 +289,7 @@ export default function Contact() {
         <motion.div
           initial={{ scaleX: 0 }}
           whileInView={{ scaleX: 1 }}
-          viewport={{ once: true }}
+          viewport={{ once: false }}
           transition={{ duration: 0.8, delay: 0.5 }}
           style={{
             height: 2, background: 'linear-gradient(90deg, #7c3aed, transparent)',
@@ -311,7 +311,7 @@ export default function Contact() {
         <motion.div
           initial={{ opacity: 0, x: 60 }}
           whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: false }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         >
           <h2 style={{ fontSize: '1.6rem', marginTop: 0, marginBottom: 28 }}>Start a conversation</h2>
@@ -358,7 +358,7 @@ export default function Contact() {
           className="contact-gif"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: false }}
           transition={{ duration: 0.6, delay: 0.4 }}
           style={{
             position: 'absolute',
