@@ -21,6 +21,7 @@ function ScrollMotion({ children, initial, visible, style, margin = '-60px', del
   )
 }
 import Button from '../components/ui/Button'
+import HometownSection from '../components/HometownSection'
 import cfg from '../data/config.json'
 
 /* ── Reusable scroll-reveal wrapper ── */
@@ -1196,6 +1197,7 @@ export default function About() {
       <BioSection />
       <TimelineSection />
       <DevelopmentSection />
+      <HometownSection />
       <LifeSection />
       <AboutCTA />
     </div>

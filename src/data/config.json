@@ -886,6 +886,19 @@
       "thumbnail": ""
     }
   ],
+  "hometown": {
+    "label": "Where My Roots Are",
+    "heading": "Kangayam",
+    "subtext": "A small town in Tamil Nadu, India",
+    "description": "Kangayam is a town and taluk headquarters in Tiruppur district of Tamil Nadu, India. Nestled at the foothills of the Western Ghats, it is renowned for the indigenous Kangayam cattle breed and its rich agricultural heritage. The town blends rural charm with a deep sense of community, surrounded by lush farmlands, coconut groves, and temple architecture that echoes centuries of Dravidian culture. It's a place where simplicity meets resilience — the spirit that shaped who I am today.",
+    "knowMoreUrl": "https://temp-uvpafjtdondadcmltzsp.webadorsite.com/?_gl=1*1t7xnse*_gcl_aw*R0NMLjE3NzUzNDU1MzMuQ2owS0NRanc3Y0xPQmhEbUFSSXNBR3N1QTBrYlpidWx4clpOd05hRURyRlJIWncxTm1obmlaSnU2T1BVNWQtQ2pkNWRfODNadXAxcDg5UWFBdTNuRUFMd193Y0I.*_gcl_au*MTkxMzcyNDEyOS4xNzc1MzQ1MTA2*_ga*NDk0MzM4ODg0LjE3NzUzNDUxMDQ.*_ga_E6PZPGE4QM*czE3NzU5MzA0MjEkbzIkZzEkdDE3NzU5MzA0NDQkajM3JGwwJGgyMDYxMTg3OTEz",
+    "knowMoreLabel": "Know More About my village",
+    "coords": [77.602, 10.995],
+    "images": ["kgm-kalai.jpg"],
+    "tamilNaduCenter": [79, 11.5],
+    "tamilNaduScale": 2800,
+    "zoomScale": 45000
+  },
   "development": {
     "label": "What I'm Building",
     "heading": "Bringing Experience to Life",
