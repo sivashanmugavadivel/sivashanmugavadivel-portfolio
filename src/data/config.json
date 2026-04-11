@@ -886,6 +886,16 @@
       "thumbnail": ""
     }
   ],
+  "skillLevels": [
+    { "name": "PLC Programming", "level": 90 },
+    { "name": "Industrial Automation", "level": 85 },
+    { "name": "React / JavaScript", "level": 80 },
+    { "name": "Node.js", "level": 75 },
+    { "name": "OPC UA / Modbus", "level": 88 },
+    { "name": "Python", "level": 70 },
+    { "name": "UI/UX Design", "level": 65 },
+    { "name": "DevOps / CI-CD", "level": 60 }
+  ],
   "hometown": {
     "label": "Where My Roots Are",
     "heading": "Kangayam",

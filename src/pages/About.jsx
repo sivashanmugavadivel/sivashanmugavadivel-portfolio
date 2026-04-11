@@ -22,6 +22,7 @@ function ScrollMotion({ children, initial, visible, style, margin = '-60px', del
 }
 import Button from '../components/ui/Button'
 import HometownSection from '../components/HometownSection'
+import SkillRadar from '../components/SkillRadar'
 import cfg from '../data/config.json'
 
 /* ── Reusable scroll-reveal wrapper ── */
@@ -425,6 +426,8 @@ function BioSection() {
 
 /* ── Timeline Section ── */
 function TimelineSection() {
+  const [expanded, setExpanded] = useState(null)
+
   return (
     <section className="section" style={{ overflow: 'hidden' }}>
       <div className="page-container">
@@ -449,6 +452,7 @@ function TimelineSection() {
 
           {timeline.map((item, i) => {
             const isLeft = i % 2 === 0
+            const isOpen = expanded === i
             return (
               <ScrollMotion
                 key={i}
@@ -458,18 +462,25 @@ function TimelineSection() {
                 style={{ marginBottom: 48, position: 'relative' }}
               >
                 {/* Dot on the line */}
-                <div style={{
-                  position: 'absolute',
-                  left: '50%',
-                  top: 24,
-                  transform: 'translateX(-50%)',
-                  width: 12,
-                  height: 12,
-                  borderRadius: '50%',
-                  background: 'var(--accent)',
-                  border: '2px solid var(--bg)',
-                  zIndex: 1,
-                }} />
+                <motion.div
+                  animate={{
+                    scale: isOpen ? 1.5 : 1,
+                    boxShadow: isOpen ? '0 0 12px var(--accent)' : 'none',
+                  }}
+                  transition={{ duration: 0.3 }}
+                  style={{
+                    position: 'absolute',
+                    left: '50%',
+                    top: 24,
+                    transform: 'translateX(-50%)',
+                    width: 12,
+                    height: 12,
+                    borderRadius: '50%',
+                    background: 'var(--accent)',
+                    border: '2px solid var(--bg)',
+                    zIndex: 1,
+                  }}
+                />
 
                 {/* Card */}
                 <div className="timeline-card" style={{
@@ -477,7 +488,11 @@ function TimelineSection() {
                   marginLeft: isLeft ? 0 : 'calc(50% + 32px)',
                 }}>
                   <motion.div
+                    onClick={() => setExpanded(isOpen ? null : i)}
                     whileHover={{ y: -4, boxShadow: 'var(--shadow-hover)' }}
+                    animate={{
+                      borderColor: isOpen ? 'var(--accent-border)' : 'var(--border)',
+                    }}
                     transition={{ duration: 0.25 }}
                     style={{
                       background: 'var(--card-bg)',
@@ -485,20 +500,93 @@ function TimelineSection() {
                       borderRadius: 'var(--radius)',
                       padding: '20px 24px',
                       boxShadow: 'var(--shadow)',
+                      cursor: 'pointer',
+                      position: 'relative',
+                      overflow: 'hidden',
                     }}
                   >
-                    <span style={{
-                      fontSize: '0.72rem',
-                      fontWeight: 600,
-                      letterSpacing: '0.1em',
-                      textTransform: 'uppercase',
-                      color: 'var(--accent)',
-                    }}>
-                      {item.year}
-                    </span>
+                    {/* Accent top bar when expanded */}
+                    <motion.div
+                      animate={{ scaleX: isOpen ? 1 : 0 }}
+                      transition={{ duration: 0.3 }}
+                      style={{
+                        position: 'absolute', top: 0, left: 0, right: 0, height: 3,
+                        background: 'var(--accent)', transformOrigin: 'left',
+                      }}
+                    />
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <span style={{
+                        fontSize: '0.72rem', fontWeight: 600,
+                        letterSpacing: '0.1em', textTransform: 'uppercase',
+                        color: 'var(--accent)',
+                      }}>{item.year}</span>
+                      <motion.span
+                        animate={{ rotate: isOpen ? 180 : 0 }}
+                        transition={{ duration: 0.3 }}
+                        style={{ fontSize: '0.7rem', color: 'var(--text)', opacity: 0.5 }}
+                      >▼</motion.span>
+                    </div>
+
                     <h3 style={{ margin: '6px 0 2px', fontSize: '1rem' }}>{item.role}</h3>
                     <p style={{ fontSize: '0.85rem', color: 'var(--accent)', marginBottom: 8 }}>{item.org}</p>
                     <p style={{ fontSize: '0.875rem', color: 'var(--text)', lineHeight: 1.65, margin: 0 }}>{item.desc}</p>
+
+                    {/* Expandable detail section */}
+                    <motion.div
+                      initial={false}
+                      animate={{ height: isOpen ? 'auto' : 0, opacity: isOpen ? 1 : 0 }}
+                      transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
+                      style={{ overflow: 'hidden' }}
+                    >
+                      <div style={{ paddingTop: 14, borderTop: '1px dashed var(--border)', marginTop: 14 }}>
+                        {/* Highlights / achievements */}
+                        {item.highlights?.length > 0 && (
+                          <div style={{ marginBottom: 10 }}>
+                            {item.highlights.map((h, hi) => (
+                              <motion.div
+                                key={hi}
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={isOpen ? { opacity: 1, x: 0 } : { opacity: 0, x: -10 }}
+                                transition={{ delay: hi * 0.08, duration: 0.3 }}
+                                style={{
+                                  display: 'flex', alignItems: 'flex-start', gap: 8,
+                                  marginBottom: 6, fontSize: '0.82rem', color: 'var(--text)', lineHeight: 1.55,
+                                }}
+                              >
+                                <span style={{ color: 'var(--accent)', flexShrink: 0 }}>▸</span>
+                                {h}
+                              </motion.div>
+                            ))}
+                          </div>
+                        )}
+                        {/* Tags */}
+                        {item.tags?.length > 0 && (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                            {item.tags.map((t, ti) => (
+                              <motion.span
+                                key={ti}
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={isOpen ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
+                                transition={{ delay: ti * 0.05, duration: 0.2 }}
+                                style={{
+                                  fontSize: '0.68rem', padding: '3px 10px', borderRadius: 999,
+                                  background: 'var(--accent-bg)', color: 'var(--accent)',
+                                  border: '1px solid var(--accent-border)',
+                                  fontWeight: 600, fontFamily: 'var(--mono)',
+                                }}
+                              >{t}</motion.span>
+                            ))}
+                          </div>
+                        )}
+                        {/* Tap hint if no extra data */}
+                        {!item.highlights?.length && !item.tags?.length && (
+                          <p style={{ fontSize: '0.78rem', color: 'var(--text)', opacity: 0.5, fontStyle: 'italic' }}>
+                            More details coming soon...
+                          </p>
+                        )}
+                      </div>
+                    </motion.div>
                   </motion.div>
                 </div>
               </ScrollMotion>
@@ -1199,6 +1287,7 @@ export default function About() {
       <DevelopmentSection />
       <HometownSection />
       <LifeSection />
+      <SkillRadar />
       <AboutCTA />
     </div>
   )
