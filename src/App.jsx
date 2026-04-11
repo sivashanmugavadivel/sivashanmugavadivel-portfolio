@@ -10,6 +10,7 @@ import EasterEgg from './components/EasterEgg'
 import CustomCursor from './components/CustomCursor'
 import WordIntro from './components/WordIntro'
 import LoadingScreen from './components/LoadingScreen'
+import BackToTop from './components/BackToTop'
 import Navbar from './components/layout/Navbar'
 import Footer from './components/layout/Footer'
 import PageWrapper from './components/layout/PageWrapper'
@@ -117,6 +118,7 @@ export default function App() {
           <FeedbackPanel open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
           {location.pathname === '/' && <SmartToast />}
           <EasterEgg />
+          <BackToTop />
         </>
       )}
     </>
