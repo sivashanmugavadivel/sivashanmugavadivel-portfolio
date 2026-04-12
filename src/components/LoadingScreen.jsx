@@ -259,8 +259,8 @@ export default function LoadingScreen({ isVisible, onExitComplete }) {
               }}>Siva Shanmuga Vadivel</span>
               <style>{`
                 @media (max-width: 639px) {
-                  .ls-credit-label { font-size: 0.42rem !important; }
-                  .ls-credit-name { font-size: 0.6rem !important; letter-spacing: 0.08em !important; }
+                  .ls-credit-label { font-size: 0.36rem !important; }
+                  .ls-credit-name { font-size: 0.5rem !important; letter-spacing: 0.06em !important; }
                 }
               `}</style>
             </motion.div>
