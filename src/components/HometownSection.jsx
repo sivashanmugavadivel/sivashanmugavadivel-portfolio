@@ -4,9 +4,9 @@ import { ComposableMap, Geographies, Geography } from 'react-simple-maps'
 import cfg from '../data/config.json'
 
 // ── TWEAK THESE to adjust image fit inside Kangayam boundary ──
-const KGM_IMG_SCALE   = 1.2   // 1.0 = fit exactly, 1.5 = 50% larger, 0.8 = 80% size
-const KGM_IMG_OFFSET_X = 15    // shift image left (-) or right (+) in SVG units
-const KGM_IMG_OFFSET_Y = -5    // shift image up (-) or down (+) in SVG units
+const KGM_IMG_SCALE   = 1.8   // 1.0 = fit exactly, 1.5 = 50% larger, 0.8 = 80% size
+const KGM_IMG_OFFSET_X = 0    // shift image left (-) or right (+) in SVG units
+const KGM_IMG_OFFSET_Y = -35    // shift image up (-) or down (+) in SVG units
 const KGM_IMG_OPACITY  = 0.55 // 0 = invisible, 1 = fully visible
 
 /* Clipped image that tracks the path's bounding box as it moves */
@@ -156,6 +156,7 @@ export default function HometownSection() {
   const titleOpacity  = useTransform(scrollYProgress, [0.02, 0.08], [0, 1])
   const mapOpacity    = useTransform(scrollYProgress, [0.04, 0.12], [0, 1])
   const textOpacity   = useTransform(scrollYProgress, [0.5, 0.6], [0, 1])
+  const watermarkOpacity = useTransform(scrollYProgress, [0.4, 0.55], [0, 1])
   const textY         = useTransform(scrollYProgress, [0.5, 0.6], [30, 0])
 
   return (
@@ -280,6 +281,25 @@ export default function HometownSection() {
             )}
 
           </ComposableMap>
+        </motion.div>
+
+        {/* KANGAYAM watermark text */}
+        <motion.div style={{
+          position: 'absolute', inset: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          opacity: watermarkOpacity,
+          pointerEvents: 'none', zIndex: 2,
+        }}>
+          <span style={{
+            fontFamily: "'Sekuya', sans-serif",
+            fontSize: 'clamp(2.5rem, 8vw, 6rem)',
+            fontWeight: 400,
+            color: 'var(--text-h)',
+            opacity: 0.07,
+            letterSpacing: '0.15em',
+            textTransform: 'uppercase',
+            userSelect: 'none',
+          }}>KANGAYAM</span>
         </motion.div>
 
         {/* Description + Know More — dark card below map */}

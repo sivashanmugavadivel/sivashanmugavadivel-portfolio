@@ -226,7 +226,8 @@
       "slideshareImages/ss2.jpg",
       "slideshareImages/ss3.jpg",
       "slideshareImages/ss4.jpg"
-    ]
+    ],
+    "shutterstockUrl": "https://www.shutterstock.com/g/siva+shanmuga+vadivel"
   },
   "visitedCountries": [
     "356",
@@ -909,13 +910,26 @@
       "thumbnail": ""
     }
   ],
+  "faq": [
+    { "q": "What is your favourite food?", "a": "Life la stable relationship nu onu irundha adhu Tomato rice dhaan😄" },
+    { "q": "Are you a night owl?", "a": "Night la ideas varum…😄 morning la regret varum 😴" },
+    { "q": "What is your expectation from life?", "a": "Simple… stress kammi, happiness jaasthi 😄" },
+    { "q": "Do you prefer coffee or tea?", "a": "Coffee or tea… eathu illanalum system boot aagum 😄" },
+    { "q": "Do you prioritize sleep or scrolling?", "a": "Sleep nu plan pannuvan… scrolling dhaan nadakkum 😅" },
+    { "q": "Do you tend to overthink?", "a": "Konjam illa… full version 😌" },
+    { "q": "Are you more calm or do you have an attitude?", "a": "Calm ah dhaan irupen… but over aana situation ku attitude free ah varum 😅" },
+    { "q": "How often do you use your phone?", "a": "Battery vida naan dhaan fast ah drain aaguren 😭" },
+    { "q": "Easy ah approach pannalama?", "a": "Yes… bite panna maaten 😄 (unless bug ah irundha 👀)" },
+    { "q": "Are you a serious person?", "a": "Naan jolly type… life ah jolly ah move panna try panren 😄" },
+    { "q": "Are you single?", "a": "Yes… but ippo life dhaan full time partner 😎" }
+  ],
   "skillLevels": [
     { "name": "PLC Programming", "level": 90 },
     { "name": "Industrial Automation", "level": 85 },
-    { "name": "React / JS", "level": 80 },
+    { "name": "React / JS", "level": 70 },
     { "name": "Robotics - KUKA", "level": 15 },
     { "name": "OPC UA / Modbus", "level": 80 },
-    { "name": "Docker", "level": 70 },
+    { "name": "Docker", "level": 52 },
     { "name": "UI/UX Design", "level": 65 },
     { "name": "HMI / SCADA", "level": 75 },
     { "name": ".NET / C#", "level": 75 }

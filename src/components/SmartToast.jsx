@@ -31,8 +31,10 @@ export default function SmartToast() {
   const [thought] = useState(randomThought)
 
   useEffect(() => {
-    // Show welcome after loading screen
+    // Only show once per session
+    if (sessionStorage.getItem('smart_toast_shown')) return
     const t1 = setTimeout(() => {
+      sessionStorage.setItem('smart_toast_shown', '1')
       setDesignId(parseInt(localStorage.getItem(STORAGE_KEY) || '17'))
       setPhase('welcome')
     }, LOADING_DELAY)

@@ -391,6 +391,40 @@ export default function Gallery() {
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Shutterstock link */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: false }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            style={{ textAlign: 'center', marginTop: 32, paddingBottom: 8 }}
+          >
+            <p style={{ fontSize: '0.82rem', color: 'var(--text)', opacity: 0.6, marginBottom: 10 }}>
+              Want to see more of my photography?
+            </p>
+            <a
+              href={cfg.gallery?.shutterstockUrl || 'https://www.shutterstock.com/g/siva+shanmuga+vadivel'}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                padding: '10px 24px', borderRadius: 999,
+                background: 'var(--accent)', color: '#fff',
+                fontSize: '0.8rem', fontWeight: 600,
+                textDecoration: 'none', letterSpacing: '0.03em',
+                boxShadow: '0 4px 16px rgba(124,58,237,0.3)',
+                transition: 'filter 0.2s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.filter = 'brightness(1.15)'}
+              onMouseLeave={e => e.currentTarget.style.filter = 'none'}
+            >
+              Visit My Shutterstock
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M7 17L17 7M17 7H7M17 7v10" />
+              </svg>
+            </a>
+          </motion.div>
         </div>
       </section>
 

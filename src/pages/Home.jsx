@@ -8,6 +8,7 @@ import PlacesMapV1 from '../components/PlacesMapV1'
 import PlacesMapV2 from '../components/PlacesMapV2'
 import NowPlaying from '../components/NowPlaying'
 import ScrollTextReveal from '../components/ScrollTextReveal'
+import FAQSection from '../components/FAQSection'
 
 /* ── Reusable scroll-reveal wrapper ── */
 function Reveal({ children, delay = 0, y = 40, x = 0, style }) {
@@ -890,6 +891,7 @@ export default function Home() {
       <NowPlayingSection />
       <PlacesMapSection />
       <SocialSection />
+      <FAQSection />
       <CTASection />
     </div>
   )
