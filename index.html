@@ -985,19 +985,30 @@
         color:#9ca3af; max-width:420px; line-height:1.6;
         animation:liveSlideUp 0.8s 0.6s ease-out both;
       ">The journey has unfolded. The portfolio is now live and ready to explore.</p>
-      <a href="https://sivashanmugavadivel.in" style="
-        display:inline-flex; align-items:center; gap:8px;
-        padding:14px 32px; border-radius:999px;
-        background:linear-gradient(135deg,#7c3aed,#a78bfa);
-        color:#fff; font-size:0.9rem; font-weight:600;
-        text-decoration:none; letter-spacing:0.04em;
-        box-shadow:0 4px 24px rgba(124,58,237,0.4);
-        animation:liveSlideUp 0.8s 0.7s ease-out both;
-        transition:filter 0.2s;
-      " onmouseenter="this.style.filter='brightness(1.15)'" onmouseleave="this.style.filter='none'">
-        Visit Portfolio
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg>
-      </a>
+      <!-- Visit link -->
+      <div style="
+        display:flex; flex-direction:column; align-items:center; gap:6px;
+        animation:liveSlideUp 0.8s 0.75s ease-out both;
+      ">
+        <span style="font-size:0.78rem; color:#9ca3af; letter-spacing:0.04em;">Visit</span>
+        <a href="https://sivashanmugavadivel.in" style="
+          font-family:var(--mono); font-size:clamp(0.9rem, 2vw, 1.1rem);
+          color:#a78bfa; text-decoration:none; font-weight:600;
+          letter-spacing:0.02em; transition:all 0.3s;
+          border-bottom:1px dashed rgba(167,139,250,0.4);
+          padding-bottom:2px;
+        " onmouseenter="this.style.color='#c084fc';this.style.borderBottomColor='#c084fc'" onmouseleave="this.style.color='#a78bfa';this.style.borderBottomColor='rgba(167,139,250,0.4)'">
+          sivashanmugavadivel.in
+        </a>
+      </div>
+
+      <!-- Support message -->
+      <p style="
+        font-size:clamp(0.78rem, 1.8vw, 0.9rem);
+        color:#9ca3af; max-width:420px; line-height:1.7;
+        text-align:center; margin:0;
+        animation:liveSlideUp 0.8s 0.95s ease-out both;
+      ">Show it to your friends and family — visit the site, explore, and drop your feedback using the <span style="color:#a78bfa;font-weight:600">Feedback</span> button. Your support means everything <span style="font-size:1.1em">🙏</span></p>
     </div>
   </div>
   <style>
@@ -1155,7 +1166,7 @@
 
     // ── Countdown timer ──
     // Set your launch date here (YYYY-MM-DD)
-    const LAUNCH_DATE = new Date('2026-04-12T08:00:00+05:30')
+    const LAUNCH_DATE = new Date('2026-04-12T07:40:00+05:30')
 
     let launched = false
     function updateCountdown() {
