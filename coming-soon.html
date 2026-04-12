@@ -326,7 +326,8 @@
       border-radius: 99px;
       background: linear-gradient(90deg, #7c3aed, var(--accent), #c084fc);
       background-size: 200% 100%;
-      animation: journeyGrow 2s 1.8s ease-out forwards, journeyShimmer 3s 3.8s ease-in-out infinite;
+      animation: journeyShimmer 3s ease-in-out infinite;
+      transition: width 1s ease-out;
       position: relative;
     }
     .journey-fill::after {
@@ -1154,7 +1155,7 @@
 
     // ── Countdown timer ──
     // Set your launch date here (YYYY-MM-DD)
-    const LAUNCH_DATE = new Date('2026-04-12T07:10:00+05:30')
+    const LAUNCH_DATE = new Date('2026-04-12T07:15:00+05:30')
 
     let launched = false
     function updateCountdown() {
@@ -1192,16 +1193,31 @@
     updateCountdown()
     setInterval(updateCountdown, 1000)
 
-    // ── Journey percentage counter ──
-    setTimeout(() => {
-      let current = 0
-      const target = 80
-      const interval = setInterval(() => {
-        current++
-        document.getElementById('journey-pct').textContent = current + '%'
-        if (current >= target) clearInterval(interval)
-      }, 25)
-    }, 1800) // sync with journeyGrow animation delay
+    // ── Journey progress — synced with countdown ──
+    const PROJECT_START = new Date('2025-01-01T00:00:00+05:30')
+    const TOTAL_DURATION = LAUNCH_DATE - PROJECT_START
+
+    function updateJourneyProgress() {
+      const now = new Date()
+      const elapsed = now - PROJECT_START
+      const remaining = LAUNCH_DATE - now
+      let pct = Math.min(99.9, Math.max(0, (elapsed / TOTAL_DURATION) * 100))
+      if (remaining <= 0) pct = 100
+
+      document.getElementById('journey-pct').textContent = Math.round(pct) + '%'
+      document.getElementById('journey-fill').style.width = pct + '%'
+
+      const buildText = document.querySelector('.building-text')
+      if (buildText) {
+        if (pct >= 100) buildText.textContent = 'We are live!'
+        else if (pct >= 99) buildText.textContent = 'Almost there...'
+        else if (pct >= 95) buildText.textContent = 'Final touches'
+        else if (pct >= 90) buildText.textContent = 'Polishing everything'
+        else buildText.textContent = 'Actively being built'
+      }
+    }
+    updateJourneyProgress()
+    setInterval(updateJourneyProgress, 1000)
 
     // ── Touch / Mouse interactive canvas ──
     const canvas = document.getElementById('touchCanvas')
