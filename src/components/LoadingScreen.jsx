@@ -244,25 +244,21 @@ export default function LoadingScreen({ isVisible, onExitComplete }) {
                 zIndex: 25, pointerEvents: 'none',
               }}
             >
-              <span className="ls-credit-label" style={{
+              <span style={{
                 fontFamily: 'var(--sans)',
-                fontSize: '0.6rem', fontWeight: 400,
+                fontSize: window.innerWidth <= 639 ? '0.36rem' : '0.6rem',
+                fontWeight: 400,
                 color: '#f3f0ff', opacity: 0.4,
                 letterSpacing: '0.1em', textTransform: 'uppercase',
                 marginBottom: '0.25em',
               }}>Designed &amp; Developed by</span>
-              <span className="ls-credit-name" style={{
+              <span style={{
                 fontFamily: 'var(--heading)',
-                fontSize: 'clamp(0.85rem, 1.6vw, 1.1rem)',
+                fontSize: window.innerWidth <= 639 ? '0.5rem' : 'clamp(0.85rem, 1.6vw, 1.1rem)',
                 fontWeight: 700, color: '#f3f0ff', opacity: 0.65,
-                letterSpacing: '0.12em', textTransform: 'uppercase',
+                letterSpacing: window.innerWidth <= 639 ? '0.06em' : '0.12em',
+                textTransform: 'uppercase',
               }}>Siva Shanmuga Vadivel</span>
-              <style>{`
-                @media (max-width: 639px) {
-                  .ls-credit-label { font-size: 0.36rem !important; }
-                  .ls-credit-name { font-size: 0.5rem !important; letter-spacing: 0.06em !important; }
-                }
-              `}</style>
             </motion.div>
 
           </div>
