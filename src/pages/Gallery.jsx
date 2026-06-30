@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useState, useEffect, useRef } from 'react'
+import { motion, AnimatePresence, useInView } from 'framer-motion'
 import Lightbox from 'yet-another-react-lightbox'
 import 'yet-another-react-lightbox/styles.css'
+import { DESIGNS, STORAGE_KEY, getPositionStyle } from '../components/ToastDesignPicker'
 import galleryData from '../data/gallery.json'
 import cfg from '../data/config.json'
 
@@ -258,6 +259,503 @@ function GalleryCarousel({ items, onOpen, lightboxOpen }) {
   )
 }
 
+/* ── 360° Panorama viewer ──
+   True spherical viewer powered by photo-sphere-viewer (three.js / WebGL).
+   Drag to look around with correct perspective on any screen width; pinch or
+   scroll zooms — and because fisheye is on, zooming out curves the scene into a
+   round "little planet" globe (Insta360 / Street-View style). */
+function Panorama360({ pano, onClose }) {
+  const containerRef = useRef(null)
+  const src = pano.src.startsWith('http') ? pano.src : `${BASE}${pano.src}`
+  const [ready, setReady] = useState(false)
+
+  // Build the WebGL sphere viewer once per panorama. photo-sphere-viewer + three.js
+  // (~620 KB) are dynamically imported here so they only download when a 360 view is
+  // actually opened — they never weigh down the gallery or any other page.
+  useEffect(() => {
+    let viewer
+    let cancelled = false
+    ;(async () => {
+      const [{ Viewer }] = await Promise.all([
+        import('@photo-sphere-viewer/core'),
+        import('@photo-sphere-viewer/core/index.css'),
+      ])
+      if (cancelled || !containerRef.current) return
+      viewer = new Viewer({
+        container: containerRef.current,
+        panorama: src,
+        navbar: false,
+        fisheye: true,        // curves into a globe as you zoom out
+        defaultZoomLvl: 40,
+        minFov: 30,
+        maxFov: 130,          // allow zooming out far enough to see the whole globe
+        mousewheel: true,
+        touchmoveTwoFingers: false,
+        loadingTxt: '',
+      })
+      viewer.addEventListener('ready', () => setReady(true), { once: true })
+    })()
+    return () => { cancelled = true; viewer?.destroy() }
+  }, [src])
+
+  // Escape to close + lock body scroll while open
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      document.body.style.overflow = prevOverflow
+    }
+  }, [onClose])
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.25 }}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 300,
+        background: '#000',
+        display: 'flex', flexDirection: 'column',
+      }}
+    >
+      <div ref={containerRef} style={{ flex: 1, background: '#000', touchAction: 'none' }} />
+
+      {/* Hide photo-sphere-viewer's built-in loader — we use our own below */}
+      <style>{`.psv-loader-container{display:none!important}`}</style>
+
+      {/* Loading overlay — a 360°-themed animation until the sphere is ready */}
+      {!ready && (
+        <div style={{
+          position: 'absolute', inset: 0, background: '#000', zIndex: 10,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          gap: 22, color: '#fff', pointerEvents: 'none',
+        }}>
+          <div style={{ position: 'relative', width: 96, height: 96 }}>
+            {/* Soft pulsing glow */}
+            <motion.div
+              animate={{ opacity: [0.25, 0.6, 0.25], scale: [0.9, 1.12, 0.9] }}
+              transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+              style={{ position: 'absolute', inset: -16, borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,58,237,0.55) 0%, transparent 70%)', filter: 'blur(8px)' }}
+            />
+            {/* Rotating gradient ring */}
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1.6, repeat: Infinity, ease: 'linear' }}
+              style={{
+                position: 'absolute', inset: 0, borderRadius: '50%',
+                background: 'conic-gradient(from 0deg, transparent 0deg, #7c3aed 300deg, #a855f7 360deg)',
+                WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px))',
+                mask: 'radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px))',
+              }}
+            />
+            {/* Dashed orbit path */}
+            <div style={{ position: 'absolute', inset: 16, borderRadius: '50%', border: '1px dashed rgba(255,255,255,0.18)' }} />
+            {/* Orbiting dot */}
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 2.4, repeat: Infinity, ease: 'linear' }}
+              style={{ position: 'absolute', inset: 16 }}
+            >
+              <span style={{ position: 'absolute', top: -4, left: '50%', transform: 'translateX(-50%)', width: 9, height: 9, borderRadius: '50%', background: '#fff', boxShadow: '0 0 10px 2px rgba(167,139,250,0.9)' }} />
+            </motion.div>
+            {/* Center globe */}
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <motion.svg
+                width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"
+                animate={{ scale: [1, 1.08, 1] }}
+                transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+              >
+                <circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/>
+              </motion.svg>
+            </div>
+          </div>
+          <span style={{ fontSize: '0.9rem', fontWeight: 600, letterSpacing: '0.04em' }}>Loading 360° view…</span>
+        </div>
+      )}
+
+      {/* Title */}
+      <div style={{
+        position: 'absolute', top: 'clamp(16px, 4vw, 28px)', left: 'clamp(16px, 4vw, 32px)',
+        color: '#fff', pointerEvents: 'none', textShadow: '0 2px 8px rgba(0,0,0,0.6)',
+      }}>
+        <div style={{ fontWeight: 800, fontSize: 'clamp(1.1rem, 3vw, 1.5rem)' }}>{pano.title}</div>
+        {pano.location && (
+          <div style={{ fontSize: '0.85rem', opacity: 0.8, marginTop: 2 }}>{pano.location}</div>
+        )}
+      </div>
+
+      {/* Hint */}
+      <div style={{
+        position: 'absolute', bottom: 'clamp(20px, 5vw, 36px)', left: '50%', transform: 'translateX(-50%)',
+        color: '#fff', fontSize: '0.8rem', opacity: 0.75, pointerEvents: 'none',
+        display: 'inline-flex', alignItems: 'center', gap: 8,
+        background: 'rgba(0,0,0,0.4)', padding: '8px 16px', borderRadius: 999,
+        whiteSpace: 'nowrap',
+      }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M18 8L22 12L18 16"/><path d="M6 8L2 12L6 16"/><line x1="2" y1="12" x2="22" y2="12"/>
+        </svg>
+        Drag to look around · pinch or scroll to zoom into a globe
+      </div>
+
+      {/* Close */}
+      <motion.button
+        onClick={onClose}
+        whileHover={{ scale: 1.1, background: 'rgba(255,255,255,0.25)' }}
+        whileTap={{ scale: 0.92 }}
+        aria-label="Close 360 view"
+        style={{
+          position: 'absolute', top: 'clamp(16px, 4vw, 28px)', right: 'clamp(16px, 4vw, 32px)',
+          width: 44, height: 44, borderRadius: '50%',
+          border: '1.5px solid rgba(255,255,255,0.4)',
+          background: 'rgba(0,0,0,0.4)', color: '#fff', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </motion.button>
+    </motion.div>
+  )
+}
+
+/* ── 360 hint toast — reuses the site's shared toast design system ── */
+function Pano360HintToast({ onDone }) {
+  const designId = parseInt(localStorage.getItem(STORAGE_KEY) || '17')
+  const design = DESIGNS.find(d => d.id === designId) || DESIGNS[16]
+  const { Component, pos } = design
+  const message = (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+      <motion.span animate={{ rotate: [0, 360] }} transition={{ duration: 3, repeat: Infinity, ease: 'linear' }} style={{ display: 'inline-block' }}>🌐</motion.span>
+      Click to explore in 360°
+      <motion.span animate={{ y: [0, -4, 0] }} transition={{ duration: 0.8, repeat: Infinity, repeatDelay: 0.4 }} style={{ display: 'inline-block' }}>👆</motion.span>
+    </span>
+  )
+  return <div style={getPositionStyle(pos)}><Component message={message} onDone={onDone} /></div>
+}
+
+/* ── 360° section — featured panorama card ── */
+function Panorama360Section() {
+  const panoramas = cfg.gallery?.panoramas ?? []
+  const [activePano, setActivePano] = useState(null)
+  const [index, setIndex] = useState(0)
+  const [loaded, setLoaded] = useState({})
+  const [showHint, setShowHint] = useState(false)
+  const [darkPill, setDarkPill] = useState(true)
+  const sectionRef = useRef(null)
+  const inView = useInView(sectionRef, { once: false, margin: '-80px' })
+
+  // Auto-detect brightness behind the "Explore in 360°" pill (top-right of the card)
+  // so the pill always contrasts with each photo: dark pill on bright areas, light
+  // pill on dark areas.
+  useEffect(() => {
+    const cur = panoramas[index]
+    if (!cur) return
+    const t = cur.thumbnail || cur.src
+    const url = t.startsWith('http') ? t : `${BASE}${t}`
+    let cancelled = false
+    const img = new Image()
+    img.onload = () => {
+      if (cancelled) return
+      try {
+        const cw = 80, ch = 40
+        const canvas = document.createElement('canvas')
+        canvas.width = cw; canvas.height = ch
+        const ctx = canvas.getContext('2d', { willReadFrequently: true })
+        ctx.drawImage(img, 0, 0, cw, ch)
+        // Sample the top-right region (where the pill sits)
+        const x0 = Math.floor(cw * 0.6)
+        const h = Math.floor(ch * 0.5)
+        const { data } = ctx.getImageData(x0, 0, cw - x0, h)
+        let sum = 0, n = 0
+        for (let i = 0; i < data.length; i += 4) {
+          sum += 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2]
+          n++
+        }
+        const lum = n ? sum / n : 0
+        setDarkPill(lum > 145) // bright area → dark pill for contrast
+      } catch { /* tainted (cross-origin) image: keep current style */ }
+    }
+    img.src = url
+    return () => { cancelled = true }
+  }, [index, panoramas])
+
+  // Show the hint a moment after the 360 section scrolls into view — every time.
+  // Hidden while the viewer is open or the section leaves view; re-entering re-triggers it.
+  useEffect(() => {
+    if (!inView || activePano) { setShowHint(false); return }
+    const showT = setTimeout(() => setShowHint(true), 1200)
+    return () => clearTimeout(showT)
+  }, [inView, activePano])
+
+  // Auto-hide the hint after it has been visible for a bit
+  useEffect(() => {
+    if (!showHint) return
+    const hideT = setTimeout(() => setShowHint(false), 6500)
+    return () => clearTimeout(hideT)
+  }, [showHint])
+
+  // Background prefetch the full-res panoramas during browser idle time, so the
+  // card preview and the viewer are already cached — no lag, no blocking the page.
+  useEffect(() => {
+    if (panoramas.length === 0) return
+    const idle = window.requestIdleCallback || (cb => setTimeout(cb, 1500))
+    const cancelIdle = window.cancelIdleCallback || clearTimeout
+    const handle = idle(() => {
+      panoramas.forEach(p => {
+        const img = new Image()
+        img.src = p.src.startsWith('http') ? p.src : `${BASE}${p.src}`
+      })
+    })
+    return () => cancelIdle(handle)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  if (panoramas.length === 0) return null
+
+  const current = panoramas[index]
+  // Card preview: use the dedicated thumbnail if provided, else fall back to the
+  // full 360 image flattened. The viewer always loads the full `src`.
+  const resolve = (p) => (p.startsWith('http') ? p : `${BASE}${p}`)
+  const currentThumb = resolve(current.thumbnail || current.src)
+  const multiple = panoramas.length > 1
+  const go = (dir) => setIndex(i => (i + dir + panoramas.length) % panoramas.length)
+  const openViewer = () => setActivePano(current)
+
+  return (
+    <section ref={sectionRef} style={{ paddingBottom: 'clamp(64px, 8vw, 96px)' }}>
+      <div className="page-container">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: false }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          style={{ textAlign: 'center', marginBottom: 'clamp(28px, 4vw, 44px)' }}
+        >
+          <span className="section-label">Immersive</span>
+          <h2 style={{ fontSize: 'clamp(1.8rem, 5vw, 3rem)', marginTop: 8, marginBottom: 12 }}>
+            360° Interactive Views
+          </h2>
+          <p style={{ color: 'var(--text)', maxWidth: 460, margin: '0 auto', lineHeight: 1.7 }}>
+            Step inside the scene — open a panorama and look all the way around.
+          </p>
+        </motion.div>
+
+        {/* Featured panorama card — click anywhere to open the 360 viewer */}
+        <motion.div
+          className="pano-feature"
+          onClick={openViewer}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openViewer() } }}
+          aria-label={`Open ${current.title} in 360 view`}
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: false }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        >
+          {/* Slide image (crossfades between panoramas) */}
+          <AnimatePresence mode="wait">
+            <motion.img
+              key={current.src}
+              src={currentThumb}
+              alt={current.title}
+              decoding="async"
+              onLoad={() => setLoaded(s => ({ ...s, [index]: true }))}
+              className="pano-feature-img"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            />
+          </AnimatePresence>
+
+          {!loaded[index] && <div className="pano-feature-shimmer" />}
+
+          {/* Dark scrim for legibility */}
+          <div className="pano-feature-scrim" />
+
+          {/* Explore pill — colour auto-adapts to the area behind it */}
+          <span
+            className="pano-feature-explore"
+            style={darkPill ? undefined : {
+              background: 'rgba(255,255,255,0.82)',
+              color: '#111',
+              borderColor: 'rgba(0,0,0,0.12)',
+              textShadow: 'none',
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <ellipse cx="12" cy="12" rx="10" ry="4.5"/><path d="M2 12a10 4.5 0 0 0 20 0"/>
+            </svg>
+            Explore in 360°
+          </span>
+
+          {/* Headline caption */}
+          <div className="pano-feature-caption-wrap">
+            <p className="pano-feature-caption">{current.caption || current.title}</p>
+          </div>
+
+          {/* Bottom bar: identity · dots · arrows */}
+          <div className="pano-feature-bar">
+            <div className="pano-feature-id">
+              <span className="pano-feature-id-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/>
+                </svg>
+              </span>
+              <div>
+                <div className="pano-feature-id-title">{current.title}</div>
+                {current.location && <div className="pano-feature-id-sub">{current.location}</div>}
+              </div>
+            </div>
+
+            {multiple && (
+              <div className="pano-feature-dots" onClick={(e) => e.stopPropagation()}>
+                {panoramas.map((p, i) => (
+                  <button
+                    key={p.src}
+                    className={`pano-feature-dot${i === index ? ' is-active' : ''}`}
+                    onClick={(e) => { e.stopPropagation(); setIndex(i) }}
+                    aria-label={`Go to ${p.title}`}
+                  />
+                ))}
+              </div>
+            )}
+
+            {multiple && (
+              <div className="pano-feature-nav" onClick={(e) => e.stopPropagation()}>
+                <button onClick={(e) => { e.stopPropagation(); go(-1) }} aria-label="Previous panorama">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <span className="pano-feature-nav-divider" />
+                <button onClick={(e) => { e.stopPropagation(); go(1) }} aria-label="Next panorama">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      </div>
+
+      <AnimatePresence>
+        {showHint && <Pano360HintToast onDone={() => setShowHint(false)} />}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {activePano && <Panorama360 pano={activePano} onClose={() => setActivePano(null)} />}
+      </AnimatePresence>
+
+      {/* Scoped styles — mobile/desktop isolated via media query */}
+      <style>{`
+        .pano-feature {
+          position: relative;
+          width: 100%;
+          aspect-ratio: 21 / 9;
+          border-radius: clamp(16px, 2vw, 28px);
+          overflow: hidden;
+          cursor: pointer;
+          background: var(--card-bg);
+          box-shadow: 0 30px 70px rgba(0,0,0,0.35);
+          outline: none;
+        }
+        .pano-feature:focus-visible { box-shadow: 0 0 0 3px var(--accent), 0 30px 70px rgba(0,0,0,0.35); }
+        .pano-feature-img {
+          position: absolute; inset: 0;
+          width: 100%; height: 100%;
+          object-fit: cover; display: block;
+          transition: transform 0.6s ease;
+        }
+        .pano-feature:hover .pano-feature-img { transform: scale(1.04); }
+        .pano-feature-shimmer {
+          position: absolute; inset: 0;
+          background: linear-gradient(100deg, var(--card-bg) 30%, var(--border) 50%, var(--card-bg) 70%);
+          background-size: 200% 100%;
+          animation: pano-shimmer 1.4s infinite linear;
+        }
+        @keyframes pano-shimmer {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
+        .pano-feature-scrim {
+          position: absolute; inset: 0; pointer-events: none;
+          background:
+            linear-gradient(95deg, rgba(0,0,0,0.74) 0%, rgba(0,0,0,0.42) 30%, rgba(0,0,0,0.05) 58%, rgba(0,0,0,0) 78%),
+            linear-gradient(to top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 40%);
+        }
+        .pano-feature-explore {
+          position: absolute; top: clamp(14px, 2vw, 22px); right: clamp(14px, 2vw, 22px);
+          display: inline-flex; align-items: center; gap: 6px;
+          padding: 7px 14px; border-radius: 999px;
+          background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+          border: 1px solid rgba(255,255,255,0.28);
+          color: #fff; font-size: 0.74rem; font-weight: 700; letter-spacing: 0.02em;
+          text-shadow: 0 1px 6px rgba(0,0,0,0.55);
+          pointer-events: none;
+        }
+        .pano-feature-caption-wrap {
+          position: absolute; inset: 0; pointer-events: none;
+          display: flex; flex-direction: column; justify-content: center;
+          padding: clamp(24px, 4vw, 56px);
+        }
+        .pano-feature-caption {
+          margin: 0; max-width: 46%;
+          color: #fff; font-weight: 700;
+          font-size: clamp(1.15rem, 2.4vw, 2rem); line-height: 1.25;
+          text-shadow: 0 2px 16px rgba(0,0,0,0.45);
+        }
+        .pano-feature-bar {
+          position: absolute; left: 0; right: 0; bottom: 0;
+          display: flex; align-items: center; justify-content: space-between; gap: 14px;
+          padding: clamp(16px, 3vw, 28px) clamp(18px, 4vw, 40px);
+        }
+        .pano-feature-id { display: flex; align-items: center; gap: 12px; pointer-events: none; min-width: 0; }
+        .pano-feature-id-icon {
+          width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+          background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.35);
+          backdrop-filter: blur(6px); color: #fff;
+          display: flex; align-items: center; justify-content: center;
+        }
+        .pano-feature-id-title { color: #fff; font-weight: 700; font-size: 0.95rem; }
+        .pano-feature-id-sub { color: rgba(255,255,255,0.78); font-size: 0.8rem; margin-top: 1px; }
+        .pano-feature-dots {
+          display: flex; align-items: center; gap: 7px;
+          padding: 9px 16px; border-radius: 999px;
+          background: rgba(0,0,0,0.3); backdrop-filter: blur(6px);
+        }
+        .pano-feature-dot {
+          width: 18px; height: 5px; border-radius: 999px; border: none; padding: 0;
+          background: rgba(255,255,255,0.4); cursor: pointer;
+          transition: width 0.3s ease, background 0.3s ease;
+        }
+        .pano-feature-dot.is-active { width: 30px; background: #fff; }
+        .pano-feature-nav {
+          display: flex; align-items: center; flex-shrink: 0;
+          background: rgba(255,255,255,0.92); border-radius: 999px; overflow: hidden;
+          backdrop-filter: blur(6px);
+        }
+        .pano-feature-nav button {
+          border: none; background: transparent; cursor: pointer; color: #111;
+          padding: 9px 13px; display: flex; align-items: center; justify-content: center;
+          transition: background 0.2s ease;
+        }
+        .pano-feature-nav button:hover { background: rgba(0,0,0,0.07); }
+        .pano-feature-nav-divider { width: 1px; align-self: stretch; background: rgba(0,0,0,0.15); }
+
+        @media (max-width: 768px) {
+          .pano-feature { aspect-ratio: 4 / 5; }
+          .pano-feature-caption { max-width: 90%; }
+          .pano-feature-bar { flex-wrap: wrap; gap: 12px; }
+          .pano-feature-id-icon { width: 38px; height: 38px; }
+        }
+      `}</style>
+    </section>
+  )
+}
+
 /* ── Main Gallery page ── */
 export default function Gallery() {
   const [showIntro, setShowIntro] = useState(true)
@@ -427,6 +925,9 @@ export default function Gallery() {
           </motion.div>
         </div>
       </section>
+
+      {/* ── 360° Interactive Views ── */}
+      <Panorama360Section />
 
       {/* Lightbox */}
       <Lightbox

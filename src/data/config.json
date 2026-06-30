@@ -19,7 +19,7 @@
   "social": {
     "instagram": {
       "href": "https://www.instagram.com/sivashanmugavadivel/?utm_source=ig_embed&ig_rid=127ec84d-c6d1-4c45-b121-48d3605e95e5",
-      "handle": "@sivashanmugavadivelv"
+      "handle": "@sivashanmugavadivel"
     },
     "youtube": {
       "href": "https://www.youtube.com/c/SIVASHANMUGAVADIVEL?sub_confirmation=1",
@@ -227,7 +227,16 @@
       "slideshareImages/ss3.jpg",
       "slideshareImages/ss4.jpg"
     ],
-    "shutterstockUrl": "https://www.shutterstock.com/g/siva+shanmuga+vadivel"
+    "shutterstockUrl": "https://www.shutterstock.com/g/siva+shanmuga+vadivel",
+    "panoramas": [
+      {
+        "src": "360image/Chicago_river_360_view.jpg",
+        "thumbnail": "360image/thumbs/Chicago_river_360_view_thumb.jpg",
+        "title": "Chicago River",
+        "location": "Chicago, USA",
+        "caption": "Stand in the heart of the Chicago River and look all the way around."
+      }
+    ]
   },
   "visitedCountries": [
     "356",
@@ -389,6 +398,35 @@
   "music": {
     "songs": [
       {
+        "title": "Edhukku Dhan Indha Kaadhal",
+        "artist": "Yuvan Shankar Raja",
+        "movie": "With Love (2026)",
+        "bpm": 75,
+        "listenUrl": "https://music.youtube.com/watch?v=gCTILf3vttY&si=lHlz4v9DNcuJBR-e",
+        "highlights": [
+          {
+            "start": 40,
+            "end": 90,
+            "label": "My favourite part ❤️"
+          }
+        ]
+      },
+      {
+        "title": "Oru Oorula",
+        "artist": "Arun Raj & Pradeep kumar",
+        "movie": "Erumbu (2026)",
+        "bpm": 75,
+        "listenUrl": "https://music.youtube.com/watch?v=QJJbL6iuh_w&si=rRIeLwLO_Xli3f0K",
+        "highlights": [
+          {
+            "start": 23,
+            "end": 90,
+            "label": "My favourite part ❤️"
+          }
+        ]
+      },
+      {
+        "enabled": false,
         "title": "Esa Kaaththa",
         "artist": "Chinmayi Sripada & Sathyaprakash",
         "movie": "My Lord (2025)",
@@ -403,6 +441,7 @@
         ]
       },
       {
+        "enabled": false,
         "title": "Chiri Thottu",
         "artist": "Chinmayi Sripada and Justin Prabhakaran",
         "movie": "Sarvam Maya (2025)",

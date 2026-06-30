@@ -10,6 +10,7 @@ const links = [
   { to: '/blog', label: 'Blog' },
   { to: '/gallery', label: 'Gallery' },
   { to: '/videos', label: 'Videos' },
+  { to: '/garage', label: 'My Garage' },
   { to: '/contact', label: 'Contact' },
 ]
 

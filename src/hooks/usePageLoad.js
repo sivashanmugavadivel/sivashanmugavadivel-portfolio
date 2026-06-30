@@ -20,7 +20,11 @@ export function usePageLoad() {
   })
 
   const onWordIntroComplete = useCallback(() => {
-    setPhase('loading')
+    // Loading screen is disabled — skip straight to content after the word intro.
+    // (LoadingScreen stays in the code; isLoading just never becomes true.)
+    sessionStorage.setItem('portfolio_loaded', '1')
+    setPhase('done')
+    setContentReady(true)
   }, [])
 
   const onLoadingExitComplete = useCallback(() => {

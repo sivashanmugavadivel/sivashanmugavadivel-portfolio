@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cursor Design Picker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@500;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; cursor:none !important; }
+    :root { --bg:#16141a; --bg2:#1e1c24; --text:#9ca3af; --text-h:#f3f0ff; --accent:#a78bfa; --accent2:#7c3aed; --border:#2e2a38; --sans:'Inter',sans-serif; --heading:'Playfair Display',serif; }
+    body { background:var(--bg); color:var(--text); font-family:var(--sans); min-height:100vh; }
+
+    .layout { display:flex; height:100vh; }
+    .sidebar { width:260px; flex-shrink:0; background:#13111e; border-right:1px solid var(--border); display:flex; flex-direction:column; padding:16px 0; z-index:10; cursor:none !important; }
+    .sidebar-title { font-size:0.68rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--accent); padding:0 16px 14px; border-bottom:1px solid var(--border); }
+    .design-list { flex:1; overflow-y:auto; padding:10px; display:flex; flex-direction:column; gap:5px; }
+    .design-btn { padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:transparent; color:var(--text); font-family:var(--sans); font-size:0.78rem; text-align:left; transition:all 0.2s; }
+    .design-btn:hover { border-color:var(--accent); color:var(--text-h); background:rgba(167,139,250,0.06); }
+    .design-btn.active { border-color:var(--accent); background:rgba(167,139,250,0.12); color:var(--text-h); }
+    .btn-name { font-weight:600; display:block; margin-bottom:2px; }
+    .btn-desc { font-size:0.65rem; opacity:0.55; display:block; }
+
+    .preview { flex:1; position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:24px; padding:40px; }
+    .preview h1 { font-family:var(--heading); font-size:2.5rem; color:var(--text-h); }
+    .preview p { max-width:500px; text-align:center; line-height:1.7; font-size:0.9rem; }
+    .preview-btns { display:flex; gap:12px; }
+    .preview-btn { padding:10px 24px; border-radius:99px; font-family:var(--sans); font-size:0.82rem; font-weight:600; border:none; transition:all 0.2s; }
+    .btn-primary { background:var(--accent); color:#fff; }
+    .btn-primary:hover { filter:brightness(1.15); }
+    .btn-outline { background:transparent; color:var(--accent); border:1.5px solid var(--accent); }
+    .btn-outline:hover { background:rgba(167,139,250,0.1); }
+    .preview-link { color:var(--accent); text-decoration:underline; text-underline-offset:3px; font-weight:500; }
+    .preview-card { background:var(--bg2); border:1px solid var(--border); border-radius:16px; padding:20px 28px; max-width:400px; text-align:center; }
+    .preview-card h3 { color:var(--text-h); font-size:1rem; margin-bottom:6px; }
+    .preview-card p { font-size:0.8rem; opacity:0.7; }
+    .preview-img { width:200px; height:140px; border-radius:12px; background:linear-gradient(135deg, var(--accent2), var(--accent)); display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.8rem; font-weight:600; }
+
+    #toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(60px); background:#1e1c24; border:1px solid var(--accent); color:var(--text-h); padding:9px 22px; border-radius:99px; font-size:0.8rem; transition:transform 0.4s,opacity 0.4s; opacity:0; z-index:999; white-space:nowrap; }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <div class="sidebar">
+    <div class="sidebar-title">Cursor Picker</div>
+    <div class="design-list" id="list"></div>
+  </div>
+  <div class="preview" id="preview">
+    <h1>Hover Around</h1>
+    <p>Move your cursor around this area. Hover over buttons, links, cards, and images to see how each cursor design reacts.</p>
+    <div class="preview-btns">
+      <button class="preview-btn btn-primary">Primary Button</button>
+      <button class="preview-btn btn-outline">Outline Button</button>
+    </div>
+    <a href="#" class="preview-link">This is a link — hover me</a>
+    <div class="preview-card">
+      <h3>Sample Card</h3>
+      <p>Hover to see cursor interaction on cards and content areas.</p>
+    </div>
+    <div class="preview-img">Image Hover</div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+const preview = document.getElementById('preview')
+let cursorEls = []
+let mx = -100, my = -100
+let activeId = null
+
+document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY })
+
+function isHover(e) {
+  const t = e.target
+  return t.closest('a') || t.closest('button') || t.closest('.preview-card') || t.closest('.preview-img') || t.closest('.design-btn')
+}
+let hovering = false
+document.addEventListener('mouseover', e => { hovering = !!isHover(e) })
+document.addEventListener('mouseout', () => { hovering = false })
+let clicking = false
+document.addEventListener('mousedown', () => { clicking = true })
+document.addEventListener('mouseup', () => { clicking = false })
+
+// ═══════════════════════════════════
+// CURSOR DESIGNS
+// ═══════════════════════════════════
+const DESIGNS = []
+
+function reg(d) { DESIGNS.push(d) }
+
+// A — Dot + Ring
+reg({ id:'A', name:'Dot + Ring', desc:'Classic: snappy dot with trailing ring',
+  create() {
+    const dot = mk('div'); const ring = mk('div')
+    Object.assign(dot.style, { width:'8px',height:'8px',borderRadius:'50%',background:'var(--accent)',position:'fixed',pointerEvents:'none',zIndex:'99999',transition:'width 0.15s,height 0.15s',boxShadow:'0 0 8px rgba(167,139,250,0.6)' })
+    Object.assign(ring.style, { width:'32px',height:'32px',borderRadius:'50%',border:'2px solid var(--accent)',position:'fixed',pointerEvents:'none',zIndex:'99998',transition:'width 0.25s,height 0.25s,opacity 0.15s',opacity:'0.5',boxShadow:'0 0 12px rgba(167,139,250,0.2)' })
+    return { els:[dot,ring], update(){
+      dot.style.left=(mx-4)+'px'; dot.style.top=(my-4)+'px'
+      const rw=hovering?48:32; ring.style.width=ring.style.height=rw+'px'
+      ring.style.left=(mx-rw/2)+'px'; ring.style.top=(my-rw/2)+'px'
+      ring.style.opacity=clicking?'0.3':'0.5'
+      dot.style.width=dot.style.height=(hovering?5:clicking?6:8)+'px'
+      dot.style.left=(mx-(hovering?2.5:clicking?3:4))+'px'; dot.style.top=(my-(hovering?2.5:clicking?3:4))+'px'
+    }}
+  }
+})
+
+// B — Glow Orb
+reg({ id:'B', name:'Glow Orb', desc:'Soft glowing orb that expands on hover',
+  create() {
+    const orb = mk('div')
+    Object.assign(orb.style, { width:'24px',height:'24px',borderRadius:'50%',background:'radial-gradient(circle,rgba(167,139,250,0.7),rgba(124,58,237,0.2),transparent)',position:'fixed',pointerEvents:'none',zIndex:'99999',transition:'width 0.3s,height 0.3s,opacity 0.2s',filter:'blur(1px)' })
+    return { els:[orb], update(){
+      const s=hovering?44:clicking?18:24
+      orb.style.width=orb.style.height=s+'px'
+      orb.style.left=(mx-s/2)+'px'; orb.style.top=(my-s/2)+'px'
+      orb.style.opacity=clicking?'0.5':'0.8'
+      orb.style.filter=hovering?'blur(4px)':'blur(1px)'
+    }}
+  }
+})
+
+// C — Crosshair
+reg({ id:'C', name:'Crosshair', desc:'Precision crosshair with center dot',
+  create() {
+    const h = mk('div'); const v = mk('div'); const dot = mk('div')
+    const base = { position:'fixed',pointerEvents:'none',zIndex:'99999',background:'var(--accent)',transition:'all 0.2s' }
+    Object.assign(h.style, { ...base, width:'20px',height:'1.5px' })
+    Object.assign(v.style, { ...base, width:'1.5px',height:'20px' })
+    Object.assign(dot.style, { ...base, width:'4px',height:'4px',borderRadius:'50%' })
+    return { els:[h,v,dot], update(){
+      h.style.left=(mx-10)+'px'; h.style.top=(my-0.75)+'px'
+      v.style.left=(mx-0.75)+'px'; v.style.top=(my-10)+'px'
+      dot.style.left=(mx-2)+'px'; dot.style.top=(my-2)+'px'
+      const s=hovering?1.4:1; h.style.transform=v.style.transform=`scale(${s})`
+      h.style.opacity=v.style.opacity=clicking?'0.4':'0.7'
+    }}
+  }
+})
+
+// D — Trail Particles
+reg({ id:'D', name:'Trail Particles', desc:'Particles spawn and fade behind cursor',
+  create() {
+    const canvas = mk('canvas')
+    Object.assign(canvas.style, { position:'fixed',inset:'0',width:'100%',height:'100%',pointerEvents:'none',zIndex:'99999' })
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight
+    const ctx = canvas.getContext('2d')
+    const particles = []
+    let lastX=mx, lastY=my
+    return { els:[canvas], update(){
+      const dx=mx-lastX, dy=my-lastY
+      const speed = Math.sqrt(dx*dx+dy*dy)
+      if(speed>2){ for(let i=0;i<Math.min(3,speed/5);i++){
+        particles.push({ x:mx+Math.random()*6-3, y:my+Math.random()*6-3, r:1.5+Math.random()*2, life:1, decay:0.025+Math.random()*0.02, vx:(Math.random()-.5)*0.5, vy:(Math.random()-.5)*0.5 })
+      }}
+      lastX=mx; lastY=my
+      ctx.clearRect(0,0,canvas.width,canvas.height)
+      for(let i=particles.length-1;i>=0;i--){
+        const p=particles[i]; p.x+=p.vx; p.y+=p.vy; p.life-=p.decay
+        if(p.life<=0){particles.splice(i,1);continue}
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.r*p.life,0,Math.PI*2)
+        ctx.fillStyle=`rgba(167,139,250,${p.life*0.8})`; ctx.fill()
+      }
+      // Main dot
+      ctx.beginPath(); ctx.arc(mx,my,hovering?6:4,0,Math.PI*2)
+      ctx.fillStyle='rgba(167,139,250,0.9)'; ctx.fill()
+    }}
+  }
+})
+
+// E — Magnetic Ring
+reg({ id:'E', name:'Magnetic Ring', desc:'Ring snaps to nearby elements, stretches on move',
+  create() {
+    const ring = mk('div'); const dot = mk('div')
+    Object.assign(ring.style, { width:'36px',height:'36px',borderRadius:'50%',border:'1.5px solid var(--accent)',position:'fixed',pointerEvents:'none',zIndex:'99998',transition:'width 0.35s cubic-bezier(0.16,1,0.3,1),height 0.35s cubic-bezier(0.16,1,0.3,1),border-radius 0.35s',opacity:'0.55',mixBlendMode:'screen' })
+    Object.assign(dot.style, { width:'5px',height:'5px',borderRadius:'50%',background:'#fff',position:'fixed',pointerEvents:'none',zIndex:'99999' })
+    return { els:[ring,dot], update(){
+      dot.style.left=(mx-2.5)+'px'; dot.style.top=(my-2.5)+'px'
+      if(hovering){ ring.style.width=ring.style.height='52px'; ring.style.borderRadius='14px'; ring.style.opacity='0.7'
+        ring.style.left=(mx-26)+'px'; ring.style.top=(my-26)+'px'; ring.style.borderColor='var(--accent)'
+      } else { ring.style.width=ring.style.height='36px'; ring.style.borderRadius='50%'; ring.style.opacity='0.45'
+        ring.style.left=(mx-18)+'px'; ring.style.top=(my-18)+'px' }
+      ring.style.boxShadow=hovering?'0 0 20px rgba(167,139,250,0.3)':'none'
+    }}
+  }
+})
+
+// F — Spotlight
+reg({ id:'F', name:'Spotlight', desc:'Dark overlay with a spotlight circle following cursor',
+  create() {
+    const overlay = mk('div')
+    Object.assign(overlay.style, { position:'fixed',inset:'0',pointerEvents:'none',zIndex:'99997',transition:'opacity 0.3s' })
+    const dot = mk('div')
+    Object.assign(dot.style, { width:'6px',height:'6px',borderRadius:'50%',background:'var(--accent)',position:'fixed',pointerEvents:'none',zIndex:'99999',boxShadow:'0 0 6px var(--accent)' })
+    return { els:[overlay,dot], update(){
+      overlay.style.background=`radial-gradient(circle 120px at ${mx}px ${my}px, transparent 0%, rgba(0,0,0,0.35) 100%)`
+      dot.style.left=(mx-3)+'px'; dot.style.top=(my-3)+'px'
+      if(hovering){ dot.style.width=dot.style.height='10px'; dot.style.left=(mx-5)+'px'; dot.style.top=(my-5)+'px' }
+      else { dot.style.width=dot.style.height='6px'; dot.style.left=(mx-3)+'px'; dot.style.top=(my-3)+'px' }
+    }}
+  }
+})
+
+// G — Emoji Cursor
+reg({ id:'G', name:'Emoji Trail', desc:'Fun emoji follows with rotating trail',
+  create() {
+    const el = mk('div')
+    Object.assign(el.style, { position:'fixed',pointerEvents:'none',zIndex:'99999',fontSize:'20px',transition:'transform 0.15s',userSelect:'none',filter:'drop-shadow(0 0 4px rgba(167,139,250,0.5))' })
+    el.textContent = '⚡'
+    return { els:[el], update(){
+      el.style.left=(mx-10)+'px'; el.style.top=(my-10)+'px'
+      el.style.transform=hovering?'scale(1.4) rotate(15deg)':clicking?'scale(0.8)':'scale(1) rotate(0deg)'
+      el.textContent=hovering?'👆':clicking?'✨':'⚡'
+    }}
+  }
+})
+
+// H — Minimal Line
+reg({ id:'H', name:'Minimal Line', desc:'Tiny vertical line that tilts toward movement',
+  create() {
+    const line = mk('div')
+    Object.assign(line.style, { width:'2px',height:'24px',background:'var(--accent)',position:'fixed',pointerEvents:'none',zIndex:'99999',transition:'height 0.2s,transform 0.15s',transformOrigin:'center center',opacity:'0.8',borderRadius:'1px' })
+    let lastX=mx
+    return { els:[line], update(){
+      const dx = mx-lastX; lastX=mx
+      const angle = Math.max(-30, Math.min(30, dx*2))
+      line.style.left=(mx-1)+'px'; line.style.top=(my-12)+'px'
+      line.style.transform=`rotate(${angle}deg)`
+      line.style.height=hovering?'32px':'24px'
+      line.style.opacity=clicking?'0.4':'0.8'
+    }}
+  }
+})
+
+// I — Double Ring
+reg({ id:'I', name:'Double Ring', desc:'Two concentric rings rotating in opposite directions',
+  create() {
+    const r1 = mk('div'); const r2 = mk('div'); const dot = mk('div')
+    const base = { position:'fixed',pointerEvents:'none',borderRadius:'50%',border:'1.5px solid var(--accent)' }
+    Object.assign(r1.style, { ...base, width:'28px',height:'28px',zIndex:'99998',opacity:'0.5',borderStyle:'dashed' })
+    Object.assign(r2.style, { ...base, width:'42px',height:'42px',zIndex:'99997',opacity:'0.3' })
+    Object.assign(dot.style, { width:'4px',height:'4px',borderRadius:'50%',background:'var(--accent)',position:'fixed',pointerEvents:'none',zIndex:'99999',boxShadow:'0 0 6px var(--accent)' })
+    let angle = 0
+    return { els:[r1,r2,dot], update(){
+      angle += 1.5
+      dot.style.left=(mx-2)+'px'; dot.style.top=(my-2)+'px'
+      const s1=hovering?36:28, s2=hovering?54:42
+      r1.style.width=r1.style.height=s1+'px'; r1.style.left=(mx-s1/2)+'px'; r1.style.top=(my-s1/2)+'px'
+      r1.style.transform=`rotate(${angle}deg)`
+      r2.style.width=r2.style.height=s2+'px'; r2.style.left=(mx-s2/2)+'px'; r2.style.top=(my-s2/2)+'px'
+      r2.style.transform=`rotate(${-angle*0.7}deg)`
+      r1.style.opacity=hovering?'0.7':'0.5'; r2.style.opacity=hovering?'0.45':'0.3'
+    }}
+  }
+})
+
+// J — Morphing Shape
+reg({ id:'J', name:'Morphing Shape', desc:'Circle that morphs to rounded square on hover',
+  create() {
+    const shape = mk('div')
+    Object.assign(shape.style, { width:'28px',height:'28px',position:'fixed',pointerEvents:'none',zIndex:'99999',transition:'all 0.3s cubic-bezier(0.16,1,0.3,1)',background:'var(--accent)',opacity:'0.25',mixBlendMode:'screen' })
+    return { els:[shape], update(){
+      const s=hovering?40:clicking?22:28
+      shape.style.width=shape.style.height=s+'px'
+      shape.style.left=(mx-s/2)+'px'; shape.style.top=(my-s/2)+'px'
+      shape.style.borderRadius=hovering?'10px':'50%'
+      shape.style.opacity=hovering?'0.35':clicking?'0.15':'0.25'
+      shape.style.boxShadow=hovering?'0 0 24px rgba(167,139,250,0.4)':'0 0 12px rgba(167,139,250,0.2)'
+    }}
+  }
+})
+
+// Helper
+function mk(tag){ const el=document.createElement(tag); document.body.appendChild(el); return el }
+
+// ═══════════════════════════════════
+// Build sidebar + switching
+// ═══════════════════════════════════
+const listEl = document.getElementById('list')
+let currentCursor = null
+let animFrame = null
+
+DESIGNS.forEach(d => {
+  const btn = document.createElement('button')
+  btn.className = 'design-btn'
+  btn.id = 'btn-' + d.id
+  btn.innerHTML = `<span class="btn-name">${d.id} — ${d.name}</span><span class="btn-desc">${d.desc}</span>`
+  btn.onclick = () => selectCursor(d.id)
+  listEl.appendChild(btn)
+})
+
+function selectCursor(id) {
+  // Clean old
+  if (currentCursor) { currentCursor.els.forEach(el => el.remove()) }
+  cancelAnimationFrame(animFrame)
+  document.querySelectorAll('.design-btn').forEach(b => b.classList.remove('active'))
+  document.getElementById('btn-' + id).classList.add('active')
+  activeId = id
+
+  const d = DESIGNS.find(x => x.id === id)
+  currentCursor = d.create()
+
+  function loop() {
+    currentCursor.update()
+    animFrame = requestAnimationFrame(loop)
+  }
+  loop()
+}
+
+// Init
+selectCursor('A')
+</script>
+</body>
+</html>

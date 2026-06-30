@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Loading Screen Background Picker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Merienda:wght@400;700;900&family=Caveat+Brush&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root { --sans:'Inter',sans-serif; --heading:'Playfair Display',serif; }
+    body { background:#1a1520; color:#f3f0ff; font-family:var(--sans); min-height:100vh; }
+    .layout { display:flex; height:100vh; overflow:hidden; }
+
+    /* Sidebar */
+    .sidebar { width:270px; flex-shrink:0; background:#13111e; border-right:1px solid #2e2a38; display:flex; flex-direction:column; }
+    .sidebar-title { font-size:0.68rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#a78bfa; padding:16px 18px 14px; border-bottom:1px solid #2e2a38; flex-shrink:0; }
+    .design-list { flex:1; overflow-y:auto; padding:10px; display:flex; flex-direction:column; gap:5px; }
+    .design-btn { padding:10px 12px; border-radius:10px; border:1px solid #2e2a38; background:transparent; color:#9ca3af; font-family:var(--sans); font-size:0.78rem; cursor:pointer; text-align:left; transition:all 0.2s; }
+    .design-btn:hover { border-color:#a78bfa; color:#f3f0ff; background:rgba(167,139,250,0.06); }
+    .design-btn.active { border-color:#a78bfa; background:rgba(167,139,250,0.12); color:#f3f0ff; }
+    .btn-name { font-weight:600; font-size:0.8rem; display:block; margin-bottom:2px; }
+    .btn-desc { font-size:0.65rem; opacity:0.55; display:block; margin-bottom:5px; }
+    .swatches { display:flex; align-items:center; gap:4px; }
+    .sw { width:11px; height:11px; border-radius:50%; border:1px solid rgba(255,255,255,0.12); }
+    .sw-label { font-size:0.55rem; opacity:0.4; margin-left:2px; }
+    .badge { font-size:0.58rem; padding:2px 7px; border-radius:99px; background:rgba(124,58,237,0.2); color:#a78bfa; border:1px solid rgba(167,139,250,0.25); font-weight:600; margin-left:auto; }
+    .pick-btn { margin:10px; padding:11px; background:linear-gradient(135deg,#7c3aed,#a78bfa); border:none; border-radius:10px; color:#fff; font-family:var(--sans); font-size:0.78rem; font-weight:600; cursor:pointer; letter-spacing:0.06em; text-transform:uppercase; flex-shrink:0; transition:filter 0.2s; }
+    .pick-btn:hover { filter:brightness(1.15); }
+
+    /* Preview */
+    .preview { flex:1; position:relative; overflow:hidden; }
+    #bgCanvas { position:absolute; inset:0; width:100%; height:100%; }
+
+    /* Loading screen UI */
+    .ls-overlay { position:absolute; inset:0; z-index:5; pointer-events:none; }
+    .ls-seam { position:absolute; top:0; bottom:0; left:50%; transform:translateX(-50%); width:2px; z-index:10; }
+    .ls-gif { position:absolute; bottom:0; left:50%; transform:translateX(-80%); height:clamp(220px,38vw,420px); width:auto; object-fit:contain; z-index:8; }
+    .ls-journey { position:absolute; top:10vh; left:calc(50% + 18px); font-family:'Merienda', cursive; font-size:clamp(1.8rem,4vw,4rem); font-weight:700; line-height:1.2; letter-spacing:-0.01em; z-index:12; }
+    .ls-begins { position:absolute; top:calc(10vh + 5.5rem); width:calc(50% - 18px); text-align:right; font-family:var(--heading); font-size:clamp(1.8rem,4vw,4rem); font-weight:700; line-height:1.2; letter-spacing:-0.02em; z-index:12; }
+    .ls-credit { position:absolute; bottom:5vh; left:28px; display:flex; flex-direction:column; z-index:12; }
+    .ls-credit .by { font-size:0.55rem; font-weight:400; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:0.2em; }
+    .ls-credit .name { font-family:var(--heading); font-size:clamp(0.75rem,1.3vw,0.95rem); font-weight:700; letter-spacing:0.1em; text-transform:uppercase; }
+
+    #toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(60px); background:#1e1c24; border:1px solid #a78bfa; color:#f3f0ff; padding:9px 22px; border-radius:99px; font-size:0.8rem; font-weight:500; transition:transform 0.4s,opacity 0.4s; opacity:0; z-index:999; white-space:nowrap; }
+
+  </style>
+</head>
+<body>
+<div class="layout">
+  <div class="sidebar">
+    <div class="sidebar-title">🎨 Background Picker</div>
+    <div class="design-list" id="designList"></div>
+    <button class="pick-btn" id="pickBtn">Pick This Design</button>
+  </div>
+  <div class="preview" id="preview">
+    <canvas id="bgCanvas"></canvas>
+    <div class="ls-overlay">
+      <div id="lsLeft"  style="position:absolute;top:0;left:0;bottom:0;width:50%;transition:background 0.5s;"></div>
+      <div id="lsRight" style="position:absolute;top:0;right:0;bottom:0;width:50%;overflow:visible;transition:background 0.5s;">
+        <img id="lsGif" src="public/gif/ava_gif2.gif" class="ls-gif" alt="" />
+      </div>
+      <div class="ls-seam" id="lsSeam"></div>
+      <div class="ls-journey" id="lsJourney">Journey</div>
+      <div class="ls-begins"  id="lsBegins">Begins</div>
+      <div class="ls-credit">
+        <span class="by" id="lsBy">Designed &amp; Developed by</span>
+        <span class="name" id="lsName">Siva Shanmuga Vadivel</span>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+const canvas  = document.getElementById('bgCanvas')
+const ctx     = canvas.getContext('2d')
+const preview = document.getElementById('preview')
+
+function resize() { canvas.width=preview.offsetWidth; canvas.height=preview.offsetHeight }
+resize(); window.addEventListener('resize', resize)
+
+let raf=null, stopFn=null
+
+// RIGHT panel is always light cream #f5f0eb to match real loading screen + GIF
+const RIGHT_LIGHT = '#f5f0eb'
+const RIGHT_LIGHTER = '#ede8e0'
+
+const DESIGNS = []
+
+function reg(d) { DESIGNS.push(d) }
+
+// ══════════════════════════════════════════════════════
+// A — Floating Orbs (purple particles on dark)
+// ══════════════════════════════════════════════════════
+reg({ id:'A', name:'Floating Orbs', desc:'Glowing purple spheres drifting on dark left', badge:'Soft',
+  lc:'#0e0c18', rc:RIGHT_LIGHT, tc:'#f3f0ff', ac:'#a78bfa',
+  run() {
+    const orbs = Array.from({length:18},()=>({
+      x:Math.random(), y:Math.random(),
+      r:20+Math.random()*60, vx:(Math.random()-.5)*0.3, vy:(Math.random()-.5)*0.2,
+      c:[Math.random()>0.5?[124,58,237]:[167,139,250]], a:0.15+Math.random()*0.2,
+      phase:Math.random()*Math.PI*2,
+    }))
+    let t=0,s=false; stopFn=()=>{s=true}
+    ;(function loop(){
+      if(s)return
+      const W=canvas.width,H=canvas.height
+      ctx.fillStyle='rgba(14,12,24,0.12)'; ctx.fillRect(0,0,W,H)
+      orbs.forEach(o=>{
+        o.x+=o.vx/W*2; o.y+=o.vy/H*2
+        if(o.x<-0.1)o.x=1.1; if(o.x>1.1)o.x=-0.1
+        if(o.y<-0.1)o.y=1.1; if(o.y>1.1)o.y=-0.1
+        const x=o.x*W,y=o.y*H
+        const pulse=o.a*(0.6+Math.sin(t*0.02+o.phase)*0.4)
+        const g=ctx.createRadialGradient(x,y,0,x,y,o.r*(1+Math.sin(t*0.015+o.phase)*0.15))
+        g.addColorStop(0,`rgba(124,58,237,${pulse})`); g.addColorStop(0.5,`rgba(167,139,250,${pulse*0.3})`); g.addColorStop(1,'transparent')
+        ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,o.r*2,0,Math.PI*2); ctx.fill()
+      })
+      t++; raf=requestAnimationFrame(loop)
+    })()
+    ctx.fillStyle='#0e0c18'; ctx.fillRect(0,0,canvas.width,canvas.height)
+  }
+})
+
+// ══════════════════════════════════════════════════════
+// B — 3D Starfield Rush
+// ══════════════════════════════════════════════════════
+reg({ id:'B', name:'3D Starfield', desc:'Stars rushing toward you from deep space', badge:'Dynamic',
+  lc:'#16141a', rc:RIGHT_LIGHT, tc:'#f3f0ff', ac:'#fc7b03',
+  run() {
+    const stars=Array.from({length:300},()=>({ x:(Math.random()-.5)*2, y:(Math.random()-.5)*2, z:Math.random(), pz:0 }))
+    stars.forEach(s=>s.pz=s.z)
+    let s=false; stopFn=()=>{s=true}
+
+    // ── Fireworks on top of starfield ──
+    const FW_COLORS=['#f0abfc','#a78bfa','#7c3aed','#c084fc','#fbbf24','#f472b6','#38bdf8','#ffffff']
+    const fwParticles=[]
+    function fwBurst(x,y){
+      const color=FW_COLORS[Math.floor(Math.random()*FW_COLORS.length)]
+      const count=50+Math.floor(Math.random()*30)
+      for(let i=0;i<count;i++){
+        const angle=(Math.PI*2/count)*i+Math.random()*0.3
+        const speed=1.5+Math.random()*4
+        fwParticles.push({ x,y, vx:Math.cos(angle)*speed, vy:Math.sin(angle)*speed, color, alpha:1, r:1.5+Math.random()*2, decay:0.012+Math.random()*0.01, gravity:0.06 })
+      }
+      // sparkle ring
+      for(let i=0;i<12;i++){
+        const angle=(Math.PI*2/12)*i
+        fwParticles.push({ x,y, vx:Math.cos(angle)*1.5, vy:Math.sin(angle)*1.5, color:'#fff', alpha:0.8, r:1, decay:0.022, gravity:0.02 })
+      }
+    }
+    const fwTimers=[]
+    const schedule=[1200,1600,2100,2700,3400,4200]
+    schedule.forEach((delay,idx)=>{
+      const tid=setTimeout(()=>{
+        if(s)return
+        const W=canvas.width,H=canvas.height
+        fwBurst(W*(0.15+Math.random()*0.7), H*(0.1+Math.random()*0.6))
+        if(idx%2===0) setTimeout(()=>{ if(!s) fwBurst(W*(0.2+Math.random()*0.6), H*(0.15+Math.random()*0.5)) },180)
+      },delay)
+      fwTimers.push(tid)
+    })
+    const origStop=stopFn
+    stopFn=()=>{ origStop && origStop(); fwTimers.forEach(clearTimeout) }
+
+    ctx.fillStyle='#16141a'; ctx.fillRect(0,0,canvas.width,canvas.height)
+    ;(function loop(){
+      if(s)return
+      const W=canvas.width,H=canvas.height,cx=W/2,cy=H/2
+      ctx.fillStyle='rgba(22,20,26,0.25)'; ctx.fillRect(0,0,W,H)
+
+      // Stars
+      stars.forEach((st,i)=>{
+        st.pz=st.z; st.z-=0.006
+        if(st.z<=0){st.x=(Math.random()-.5)*2;st.y=(Math.random()-.5)*2;st.z=1;st.pz=1;return}
+        const sc=1/st.z,px=st.x*sc*cx+cx,py=st.y*sc*cy+cy
+        if(px<0||px>W||py<0||py>H)return
+        const ps=1/st.pz,ppx=st.x*ps*cx+cx,ppy=st.y*ps*cy+cy
+        const sz=Math.max(0.2,(1-st.z)*3), br=1-st.z
+        ctx.beginPath(); ctx.moveTo(ppx,ppy); ctx.lineTo(px,py)
+        ctx.strokeStyle=i%6===0?`rgba(240,171,252,${br*0.9})`:`rgba(220,220,255,${br*0.7})`
+        ctx.lineWidth=sz; ctx.stroke()
+        ctx.beginPath(); ctx.arc(px,py,sz*0.7,0,Math.PI*2)
+        ctx.fillStyle=`rgba(255,255,255,${br})`; ctx.fill()
+      })
+
+      // Fireworks
+      for(let i=fwParticles.length-1;i>=0;i--){
+        const p=fwParticles[i]
+        p.x+=p.vx; p.y+=p.vy; p.vy+=p.gravity; p.vx*=0.97; p.vy*=0.97; p.alpha-=p.decay
+        if(p.alpha<=0){fwParticles.splice(i,1);continue}
+        // glow
+        ctx.save(); ctx.globalAlpha=p.alpha*0.4
+        const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*3)
+        g.addColorStop(0,p.color); g.addColorStop(1,'transparent')
+        ctx.fillStyle=g; ctx.beginPath(); ctx.arc(p.x,p.y,p.r*3,0,Math.PI*2); ctx.fill()
+        ctx.restore()
+        // core
+        ctx.save(); ctx.globalAlpha=p.alpha
+        ctx.fillStyle=p.color; ctx.shadowColor=p.color; ctx.shadowBlur=6
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill()
+        ctx.restore()
+      }
+      raf=requestAnimationFrame(loop)
+    })()
+  }
+})
+
+// ══════════════════════════════════════════════════════
+// C — Matrix Rain
+// ══════════════════════════════════════════════════════
+reg({ id:'C', name:'Matrix Rain', desc:'Purple glowing characters raining down', badge:'Techy',
+  lc:'#040810', rc:RIGHT_LIGHT, tc:'#f3f0ff', ac:'#a78bfa',
+  run() {
+    const cols=Math.floor(canvas.width/16)
+    const drops=Array.from({length:cols},()=>Math.random()*-80)
+    const chars='01アイウエオABCDEF</>{}()=>const let'
+    let s=false; stopFn=()=>{s=true}
+    ctx.fillStyle='#040810'; ctx.fillRect(0,0,canvas.width,canvas.height)
+    ;(function loop(){
+      if(s)return
+      const H=canvas.height
+      ctx.fillStyle='rgba(4,8,16,0.1)'; ctx.fillRect(0,0,canvas.width,H)
+      ctx.font='13px monospace'
+      drops.forEach((y,i)=>{
+        const c=chars[Math.floor(Math.random()*chars.length)]
+        const bright=Math.random()>0.93
+        ctx.fillStyle=bright?`rgba(200,160,255,0.95)`:`rgba(124,58,237,${0.35+Math.random()*0.4})`
+        ctx.fillText(c,i*16,y*16)
+        if(y*16>H&&Math.random()>0.975)drops[i]=0
+        drops[i]+=0.5
+      })
+      raf=requestAnimationFrame(loop)
+    })()
+  }
+})
+
+// ══════════════════════════════════════════════════════
+// D — Geometric Mesh
+// ══════════════════════════════════════════════════════
+reg({ id:'D', name:'Geometric Mesh', desc:'Connected nodes forming a living web', badge:'Modern',
+  lc:'#0a0814', rc:RIGHT_LIGHT, tc:'#f3f0ff', ac:'#a78bfa',
+  run() {
+    const nodes=Array.from({length:50},()=>({ x:Math.random(), y:Math.random(), vx:(Math.random()-.5)*0.0008, vy:(Math.random()-.5)*0.0008 }))
+    let s=false; stopFn=()=>{s=true}
+    ctx.fillStyle='#0a0814'; ctx.fillRect(0,0,canvas.width,canvas.height)
+    ;(function loop(){
+      if(s)return
+      const W=canvas.width,H=canvas.height
+      ctx.fillStyle='rgba(10,8,20,0.2)'; ctx.fillRect(0,0,W,H)
+      nodes.forEach(n=>{
+        n.x+=n.vx; n.y+=n.vy
+        if(n.x<0||n.x>0.5)n.vx*=-1; if(n.y<0||n.y>1)n.vy*=-1
+      })
+      nodes.forEach((a,i)=>{
+        nodes.slice(i+1).forEach(b=>{
+          const dx=(a.x-b.x)*W,dy=(a.y-b.y)*H,d=Math.sqrt(dx*dx+dy*dy)
+          if(d<130){ ctx.beginPath(); ctx.moveTo(a.x*W,a.y*H); ctx.lineTo(b.x*W,b.y*H); ctx.strokeStyle=`rgba(167,139,250,${(1-d/130)*0.4})`; ctx.lineWidth=0.7; ctx.stroke() }
+        })
+        const g=ctx.createRadialGradient(a.x*W,a.y*H,0,a.x*W,a.y*H,6)
+        g.addColorStop(0,'rgba(192,132,252,0.9)'); g.addColorStop(1,'transparent')
+        ctx.fillStyle=g; ctx.beginPath(); ctx.arc(a.x*W,a.y*H,6,0,Math.PI*2); ctx.fill()
+      })
+      raf=requestAnimationFrame(loop)
+    })()
+  }
+})
+
+// ══════════════════════════════════════════════════════
+// E — Aurora Borealis
+// ══════════════════════════════════════════════════════
+reg({ id:'E', name:'Aurora Borealis', desc:'Flowing northern lights ribbons dancing', badge:'Dreamy',
+  lc:'#060c14', rc:RIGHT_LIGHT, tc:'#f3f0ff', ac:'#a78bfa',
+  run() {
+    let t=0,s=false; stopFn=()=>{s=true}
+    ctx.fillStyle='#060c14'; ctx.fillRect(0,0,canvas.width,canvas.height)
+    ;(function loop(){
+      if(s)return
+      const W=canvas.width,H=canvas.height
+      ctx.fillStyle='rgba(6,12,20,0.08)'; ctx.fillRect(0,0,W,H)
+      const ribbons=[
+        {c:[124,58,237],baseY:0.25,amp:0.08,freq:0.003,speed:0.0004,width:H*0.15},
+        {c:[167,139,250],baseY:0.4, amp:0.1, freq:0.004,speed:0.0003,width:H*0.2},
+        {c:[99,102,241], baseY:0.55,amp:0.07,freq:0.0035,speed:0.0005,width:H*0.12},
+        {c:[192,132,252],baseY:0.18,amp:0.06,freq:0.005,speed:0.00035,width:H*0.1},
+      ]
+      ribbons.forEach((r,ri)=>{
+        ctx.beginPath()
+        for(let x=0;x<=W;x+=4){
+          const y=H*(r.baseY+Math.sin(x*r.freq+t*r.speed*1000+ri)*r.amp+Math.sin(x*r.freq*2.3+t*r.speed*800)*r.amp*0.4)
+          x===0?ctx.moveTo(x,y):ctx.lineTo(x,y)
+        }
+        const g=ctx.createLinearGradient(0,0,0,H)
+        g.addColorStop(0,`rgba(${r.c},0)`)
+        g.addColorStop(0.3,`rgba(${r.c},${0.25+Math.sin(t*0.002+ri)*0.1})`)
+        g.addColorStop(0.7,`rgba(${r.c},${0.15+Math.sin(t*0.002+ri)*0.05})`)
+        g.addColorStop(1,`rgba(${r.c},0)`)
+        ctx.strokeStyle=`rgba(${r.c},${0.4+Math.sin(t*0.002)*0.2})`
+        ctx.lineWidth=r.width; ctx.stroke()
+      })
+      t++; raf=requestAnimationFrame(loop)
+    })()
+  }
+})
+
+// ══════════════════════════════════════════════════════
+// F — Lightning Storm
+// ══════════════════════════════════════════════════════
+reg({ id:'F', name:'Lightning Storm', desc:'Electric bolts crackling across dark sky', badge:'Electric',
+  lc:'#060810', rc:RIGHT_LIGHT, tc:'#f3f0ff', ac:'#a78bfa',
+  run() {
+    let bolts=[],t=0,s=false; stopFn=()=>{s=true}
+    function makeBolt(x,y){
+      const pts=[{x,y}]; let cx=x,cy=y
+      for(let i=0;i<14;i++){ cx+=(Math.random()-.5)*70; cy+=25+Math.random()*35; pts.push({x:cx,y:cy}) }
+      return {pts,alpha:1}
+    }
+    function spawnBolts(){
+      if(s)return
+      const W=canvas.width
+      bolts.push(makeBolt(Math.random()*W,0))
+      if(Math.random()>0.4)setTimeout(()=>{ if(!s)bolts.push(makeBolt(Math.random()*W,0)) },100)
+      setTimeout(spawnBolts,500+Math.random()*1200)
+    }
+    spawnBolts()
+    ctx.fillStyle='#060810'; ctx.fillRect(0,0,canvas.width,canvas.height)
+    ;(function loop(){
+      if(s)return
+      const W=canvas.width,H=canvas.height
+      ctx.fillStyle='rgba(6,8,16,0.3)'; ctx.fillRect(0,0,W,H)
+      bolts.forEach((b,i)=>{
+        b.alpha-=0.018; if(b.alpha<=0){bolts.splice(i,1);return}
+        ctx.save(); ctx.globalAlpha=b.alpha
+        ctx.strokeStyle=`rgba(167,139,250,${b.alpha})`; ctx.lineWidth=1.5
+        ctx.shadowColor='#a78bfa'; ctx.shadowBlur=14
+        ctx.beginPath(); b.pts.forEach((p,j)=>j===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y)); ctx.stroke()
+        ctx.strokeStyle=`rgba(230,210,255,${b.alpha*0.7})`; ctx.lineWidth=0.4; ctx.shadowBlur=4
+        ctx.beginPath(); b.pts.forEach((p,j)=>j===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y)); ctx.stroke()
+        ctx.restore()
+      })
+      t++; raf=requestAnimationFrame(loop)
+    })()
+  }
+})
+
+// ══════════════════════════════════════════════════════
+// G — Firefly Garden
+// ══════════════════════════════════════════════════════
+reg({ id:'G', name:'Firefly Garden', desc:'Glowing fireflies drifting organically', badge:'Magical',
+  lc:'#060c08', rc:RIGHT_LIGHT, tc:'#f3f0ff', ac:'#86efac',
+  run() {
+    const flies=Array.from({length:70},()=>({ x:Math.random(), y:Math.random(), vx:(Math.random()-.5)*0.001, vy:(Math.random()-.5)*0.001, r:1.5+Math.random()*2.5, phase:Math.random()*Math.PI*2, c:Math.random()>0.5?[134,239,172]:[167,139,250] }))
+    let t=0,s=false; stopFn=()=>{s=true}
+    ctx.fillStyle='#060c08'; ctx.fillRect(0,0,canvas.width,canvas.height)
+    ;(function loop(){
+      if(s)return
+      const W=canvas.width,H=canvas.height
+      ctx.fillStyle='rgba(6,12,8,0.15)'; ctx.fillRect(0,0,W,H)
+      flies.forEach(f=>{
+        f.x+=f.vx+Math.sin(t*0.015+f.phase)*0.0005; f.y+=f.vy+Math.cos(t*0.012+f.phase)*0.0005
+        if(f.x<0)f.x=1; if(f.x>1)f.x=0; if(f.y<0)f.y=1; if(f.y>1)f.y=0
+        const px=f.x*W,py=f.y*H,pulse=0.2+Math.sin(t*0.05+f.phase)*0.8
+        const g=ctx.createRadialGradient(px,py,0,px,py,f.r*6)
+        g.addColorStop(0,`rgba(${f.c},${pulse*0.9})`); g.addColorStop(1,'transparent')
+        ctx.fillStyle=g; ctx.beginPath(); ctx.arc(px,py,f.r*6,0,Math.PI*2); ctx.fill()
+        ctx.beginPath(); ctx.arc(px,py,f.r*0.4,0,Math.PI*2)
+        ctx.fillStyle=`rgba(255,255,255,${pulse})`; ctx.fill()
+      })
+      t++; raf=requestAnimationFrame(loop)
+    })()
+  }
+})
+
+// ══════════════════════════════════════════════════════
+// H — Neon Grid Tunnel
+// ══════════════════════════════════════════════════════
+reg({ id:'H', name:'Neon Grid Tunnel', desc:'Perspective grid rushing at you from center', badge:'Retro',
+  lc:'#070510', rc:RIGHT_LIGHT, tc:'#f3f0ff', ac:'#c084fc',
+  run() {
+    let t=0,s=false; stopFn=()=>{s=true}
+    ctx.fillStyle='#070510'; ctx.fillRect(0,0,canvas.width,canvas.height)
+    ;(function loop(){
+      if(s)return
+      const W=canvas.width,H=canvas.height,cx=W/2,cy=H/2
+      ctx.fillStyle='rgba(7,5,16,0.2)'; ctx.fillRect(0,0,W,H)
+      const speed=(t*0.6)%80
+      for(let i=0;i<14;i++){
+        const pct=((i/14)*80+speed)%80
+        const sc=pct/80
+        if(sc<0.01)continue
+        const hw=sc*W*1.5,hh=sc*H*1.5
+        ctx.globalAlpha=sc*0.55
+        const bright=sc>0.85
+        ctx.strokeStyle=bright?`rgba(220,130,255,${sc*0.6})`:`rgba(167,139,250,${sc*0.45})`
+        ctx.lineWidth=bright?1.2:0.7
+        ctx.shadowColor='#a78bfa'; ctx.shadowBlur=bright?12:4
+        ctx.beginPath(); ctx.rect(cx-hw/2,cy-hh/2,hw,hh); ctx.stroke()
+        ctx.beginPath()
+        ctx.moveTo(cx,cy);ctx.lineTo(cx-hw/2,cy-hh/2);ctx.stroke()
+        ctx.moveTo(cx,cy);ctx.lineTo(cx+hw/2,cy-hh/2);ctx.stroke()
+        ctx.moveTo(cx,cy);ctx.lineTo(cx-hw/2,cy+hh/2);ctx.stroke()
+        ctx.moveTo(cx,cy);ctx.lineTo(cx+hw/2,cy+hh/2);ctx.stroke()
+      }
+      ctx.globalAlpha=1; ctx.shadowBlur=0
+      t++; raf=requestAnimationFrame(loop)
+    })()
+  }
+})
+
+// ══════════════════════════════════════════════════════
+// I — Constellation Map
+// ══════════════════════════════════════════════════════
+reg({ id:'I', name:'Constellation Map', desc:'Stars slowly connecting into constellations', badge:'Cosmic',
+  lc:'#080612', rc:RIGHT_LIGHT, tc:'#f3f0ff', ac:'#a78bfa',
+  run() {
+    const stars=Array.from({length:80},()=>({ x:Math.random(), y:Math.random(), r:0.5+Math.random()*2, tw:Math.random()*Math.PI*2, ts:0.02+Math.random()*0.03 }))
+    let t=0,s=false; stopFn=()=>{s=true}
+    ctx.fillStyle='#080612'; ctx.fillRect(0,0,canvas.width,canvas.height)
+    ;(function loop(){
+      if(s)return
+      const W=canvas.width,H=canvas.height
+      ctx.fillStyle='rgba(8,6,18,0.18)'; ctx.fillRect(0,0,W,H)
+      stars.forEach((a,i)=>{
+        stars.slice(i+1,i+5).forEach(b=>{
+          const dx=(a.x-b.x)*W,dy=(a.y-b.y)*H,d=Math.sqrt(dx*dx+dy*dy)
+          if(d<W*0.1){
+            const alpha=(1-d/(W*0.1))*0.25*(0.5+Math.sin(t*0.008)*0.5)
+            ctx.beginPath();ctx.moveTo(a.x*W,a.y*H);ctx.lineTo(b.x*W,b.y*H)
+            ctx.strokeStyle=`rgba(167,139,250,${alpha})`;ctx.lineWidth=0.6;ctx.stroke()
+          }
+        })
+        a.tw+=a.ts; const pulse=0.4+Math.sin(a.tw)*0.6
+        const g=ctx.createRadialGradient(a.x*W,a.y*H,0,a.x*W,a.y*H,a.r*4)
+        g.addColorStop(0,`rgba(200,180,255,${pulse*0.8})`);g.addColorStop(1,'transparent')
+        ctx.fillStyle=g;ctx.beginPath();ctx.arc(a.x*W,a.y*H,a.r*4,0,Math.PI*2);ctx.fill()
+        ctx.beginPath();ctx.arc(a.x*W,a.y*H,a.r*0.4,0,Math.PI*2)
+        ctx.fillStyle=`rgba(255,255,255,${pulse})`;ctx.fill()
+      })
+      t++; raf=requestAnimationFrame(loop)
+    })()
+  }
+})
+
+// ══════════════════════════════════════════════════════
+// J — Ink Splash
+// ══════════════════════════════════════════════════════
+reg({ id:'J', name:'Ink Splash', desc:'Purple ink blobs morphing and expanding', badge:'Organic',
+  lc:'#080612', rc:RIGHT_LIGHT, tc:'#f3f0ff', ac:'#c084fc',
+  run() {
+    let t=0,s=false; stopFn=()=>{s=true}
+    const blobs=Array.from({length:7},(_,i)=>({ x:Math.random(), y:Math.random(), r:0.08+Math.random()*0.1, sp:0.0003+Math.random()*0.0002, ph:Math.random()*Math.PI*2, c:[[124,58,237],[167,139,250],[192,132,252],[99,102,241],[139,92,246]][i%5] }))
+    ctx.fillStyle='#080612'; ctx.fillRect(0,0,canvas.width,canvas.height)
+    ;(function loop(){
+      if(s)return
+      const W=canvas.width,H=canvas.height
+      ctx.fillStyle='rgba(8,6,18,0.1)'; ctx.fillRect(0,0,W,H)
+      blobs.forEach(b=>{
+        const x=(b.x+Math.sin(t*b.sp+b.ph)*0.08)*W
+        const y=(b.y+Math.cos(t*b.sp*1.3+b.ph)*0.07)*H
+        const r=b.r*Math.min(W,H)*(1+Math.sin(t*b.sp*2+b.ph)*0.25)
+        const g=ctx.createRadialGradient(x,y,0,x,y,r)
+        g.addColorStop(0,`rgba(${b.c},0.4)`);g.addColorStop(0.5,`rgba(${b.c},0.12)`);g.addColorStop(1,'transparent')
+        ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill()
+      })
+      t++; raf=requestAnimationFrame(loop)
+    })()
+  }
+})
+
+// ══════════════════════════════════════════════════════
+// K — Smoke Wisps
+// ══════════════════════════════════════════════════════
+reg({ id:'K', name:'Smoke Wisps', desc:'Ethereal smoke tendrils rising from below', badge:'Ethereal',
+  lc:'#0c0a14', rc:RIGHT_LIGHT, tc:'#f3f0ff', ac:'#a78bfa',
+  run() {
+    let t=0,s=false; stopFn=()=>{s=true}
+    const wisps=Array.from({length:10},(_,i)=>({ x:i*0.05+0.02, speed:0.0004+Math.random()*0.0003, ph:Math.random()*Math.PI*2 }))
+    ctx.fillStyle='#0c0a14'; ctx.fillRect(0,0,canvas.width,canvas.height)
+    ;(function loop(){
+      if(s)return
+      const W=canvas.width,H=canvas.height
+      ctx.fillStyle='rgba(12,10,20,0.1)'; ctx.fillRect(0,0,W,H)
+      wisps.forEach(w=>{
+        w.ph+=w.speed*2
+        ctx.beginPath()
+        for(let i=0;i<=24;i++){
+          const frac=i/24
+          const x=w.x*W+Math.sin(w.ph+frac*Math.PI*4)*35*frac+Math.sin(w.ph*1.7+frac*Math.PI*2)*15*frac
+          const y=H*(0.98-frac*0.85)
+          const lw=12*frac*(1-frac*0.5)
+          if(i===0){ctx.moveTo(x,y)}else{ctx.lineTo(x,y)}
+        }
+        ctx.strokeStyle=`rgba(167,139,250,0.18)`;ctx.lineWidth=14;ctx.lineCap='round';ctx.stroke()
+        ctx.strokeStyle=`rgba(192,132,252,0.08)`;ctx.lineWidth=28;ctx.stroke()
+      })
+      t++; raf=requestAnimationFrame(loop)
+    })()
+  }
+})
+
+// ══════════════════════════════════════════════════════
+// L — Sand Ripples (light bg both sides)
+// ══════════════════════════════════════════════════════
+reg({ id:'L', name:'Sand Ripples', desc:'Gentle sine ripples on warm cream background', badge:'Serene',
+  lc:'#f5f0eb', rc:RIGHT_LIGHTER, tc:'#f3f0ff', ac:'#a78bfa',
+  run() {
+    let t=0,s=false; stopFn=()=>{s=true}
+    ;(function loop(){
+      if(s)return
+      const W=canvas.width,H=canvas.height
+      ctx.fillStyle='#f5f0eb'; ctx.fillRect(0,0,W,H)
+      for(let y=0;y<H;y+=16){
+        ctx.beginPath()
+        for(let x=0;x<=W;x+=6){
+          const wy=y+Math.sin(x*0.025+t*0.025+y*0.008)*14+Math.sin(x*0.012+t*0.018)*8
+          x===0?ctx.moveTo(x,wy):ctx.lineTo(x,wy)
+        }
+        const alpha=0.04+Math.sin(y*0.015+t*0.015)*0.025
+        ctx.strokeStyle=`rgba(124,58,237,${alpha})`;ctx.lineWidth=1.2;ctx.stroke()
+      }
+      t++; raf=requestAnimationFrame(loop)
+    })()
+  }
+})
+
+// ══════════════════════════════════════════════════════
+// M — Lava Lamp
+// ══════════════════════════════════════════════════════
+reg({ id:'M', name:'Lava Lamp', desc:'Slow morphing blobs floating up and down', badge:'Fluid',
+  lc:'#100818', rc:RIGHT_LIGHT, tc:'#f3f0ff', ac:'#c084fc',
+  run() {
+    let t=0,s=false; stopFn=()=>{s=true}
+    const blobs=Array.from({length:5},(_,i)=>({ x:0.08+i*0.08, by:0.3+Math.random()*0.3, r:0.1+Math.random()*0.08, sp:0.0004+Math.random()*0.0003, ph:Math.random()*Math.PI*2, c:[[124,58,237],[167,139,250],[192,132,252],[139,92,246],[99,102,241]][i] }))
+    ctx.fillStyle='#100818'; ctx.fillRect(0,0,canvas.width,canvas.height)
+    ;(function loop(){
+      if(s)return
+      const W=canvas.width,H=canvas.height
+      ctx.fillStyle='rgba(16,8,24,0.12)'; ctx.fillRect(0,0,W,H)
+      blobs.forEach(b=>{
+        const x=(b.x+Math.sin(t*b.sp*0.6+b.ph)*0.04)*W
+        const y=(b.by+Math.sin(t*b.sp+b.ph)*0.22)*H
+        const r=b.r*Math.min(W,H)*(1+Math.sin(t*b.sp*1.5+b.ph)*0.18)
+        const g=ctx.createRadialGradient(x,y,0,x,y,r)
+        g.addColorStop(0,`rgba(${b.c},0.6)`);g.addColorStop(0.5,`rgba(${b.c},0.2)`);g.addColorStop(1,'transparent')
+        ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill()
+      })
+      t++; raf=requestAnimationFrame(loop)
+    })()
+  }
+})
+
+// ══════════════════════════════════════════════════════
+// N — Wormhole Vortex
+// ══════════════════════════════════════════════════════
+reg({ id:'N', name:'Wormhole Vortex', desc:'Spiraling rings pulling you into a vortex', badge:'Intense',
+  lc:'#060410', rc:RIGHT_LIGHT, tc:'#f3f0ff', ac:'#c084fc',
+  run() {
+    let t=0,s=false; stopFn=()=>{s=true}
+    ctx.fillStyle='#060410'; ctx.fillRect(0,0,canvas.width,canvas.height)
+    ;(function loop(){
+      if(s)return
+      const W=canvas.width,H=canvas.height,cx=W/2,cy=H/2
+      ctx.fillStyle='rgba(6,4,16,0.15)'; ctx.fillRect(0,0,W,H)
+      const rings=20
+      for(let i=0;i<rings;i++){
+        const phase=(i/rings+t*0.005)%(1)
+        const r=phase*Math.min(W,H)*0.6
+        const alpha=(1-phase)*0.6
+        const twist=phase*Math.PI*8+t*0.02
+        // Draw twisted ring
+        ctx.beginPath()
+        for(let a=0;a<=Math.PI*2;a+=0.1){
+          const wobble=1+Math.sin(a*6+twist)*0.08
+          const rx=cx+Math.cos(a)*r*wobble
+          const ry=cy+Math.sin(a)*r*wobble*(H/W*0.7)
+          a===0?ctx.moveTo(rx,ry):ctx.lineTo(rx,ry)
+        }
+        ctx.closePath()
+        ctx.strokeStyle=`rgba(${phase>0.5?'192,132,252':'124,58,237'},${alpha})`
+        ctx.lineWidth=1.5*(1-phase*0.5)
+        ctx.shadowColor='#a78bfa';ctx.shadowBlur=phase<0.3?12:4
+        ctx.stroke()
+        ctx.shadowBlur=0
+      }
+      t++; raf=requestAnimationFrame(loop)
+    })()
+  }
+})
+
+// ══════════════════════════════════════════════════════
+// O — Particle Explosion
+// ══════════════════════════════════════════════════════
+reg({ id:'O', name:'Particle Explosion', desc:'Continuous bursts of particles from center', badge:'Energetic',
+  lc:'#08060e', rc:RIGHT_LIGHT, tc:'#f3f0ff', ac:'#a78bfa',
+  run() {
+    let t=0,s=false; stopFn=()=>{s=true}
+    const particles=[]
+    function spawn(){
+      const W=canvas.width,H=canvas.height
+      const cx=W/2,cy=H/2
+      for(let i=0;i<6;i++){
+        const angle=Math.random()*Math.PI*2
+        const speed=1+Math.random()*3
+        particles.push({ x:cx,y:cy, vx:Math.cos(angle)*speed, vy:Math.sin(angle)*speed, life:1, r:1.5+Math.random()*3, c:Math.random()>0.5?[167,139,250]:[192,132,252] })
+      }
+    }
+    ctx.fillStyle='#08060e'; ctx.fillRect(0,0,canvas.width,canvas.height)
+    ;(function loop(){
+      if(s)return
+      const W=canvas.width,H=canvas.height
+      ctx.fillStyle='rgba(8,6,14,0.2)'; ctx.fillRect(0,0,W,H)
+      if(t%4===0)spawn()
+      for(let i=particles.length-1;i>=0;i--){
+        const p=particles[i]
+        p.x+=p.vx;p.y+=p.vy;p.vx*=0.97;p.vy*=0.97;p.life-=0.012
+        if(p.life<=0){particles.splice(i,1);continue}
+        const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*3)
+        g.addColorStop(0,`rgba(${p.c},${p.life*0.5})`);g.addColorStop(1,'transparent')
+        ctx.fillStyle=g;ctx.beginPath();ctx.arc(p.x,p.y,p.r*3,0,Math.PI*2);ctx.fill()
+        ctx.beginPath();ctx.arc(p.x,p.y,p.r*0.5,0,Math.PI*2)
+        ctx.fillStyle=`rgba(255,255,255,${p.life*0.8})`;ctx.fill()
+      }
+      t++; raf=requestAnimationFrame(loop)
+    })()
+  }
+})
+
+// ══════════════════════════════════════════════════════
+// P — DNA Helix
+// ══════════════════════════════════════════════════════
+reg({ id:'P', name:'DNA Helix', desc:'Double helix strands rotating and rising', badge:'Sci-Fi',
+  lc:'#06100e', rc:RIGHT_LIGHT, tc:'#f3f0ff', ac:'#34d399',
+  run() {
+    let t=0,s=false; stopFn=()=>{s=true}
+    ctx.fillStyle='#06100e'; ctx.fillRect(0,0,canvas.width,canvas.height)
+    ;(function loop(){
+      if(s)return
+      const W=canvas.width,H=canvas.height
+      ctx.fillStyle='rgba(6,16,14,0.15)'; ctx.fillRect(0,0,W,H)
+      const cx=W/2,amp=W*0.18
+      for(let y=0;y<H+30;y+=4){
+        const prog=(y-t*0.8)/H
+        const angle=prog*Math.PI*6
+        const x1=cx+Math.sin(angle)*amp
+        const x2=cx+Math.sin(angle+Math.PI)*amp
+        const depth=(Math.sin(angle)+1)/2
+        const bright=0.2+depth*0.7
+        // Strand 1
+        ctx.beginPath();ctx.arc(x1,y,3,0,Math.PI*2)
+        ctx.fillStyle=`rgba(52,211,153,${bright*0.9})`;ctx.fill()
+        // Strand 2
+        ctx.beginPath();ctx.arc(x2,y,3,0,Math.PI*2)
+        ctx.fillStyle=`rgba(167,139,250,${bright*0.9})`;ctx.fill()
+        // Rungs every 20px
+        if(Math.round(y)%20<4){
+          ctx.beginPath();ctx.moveTo(x1,y);ctx.lineTo(x2,y)
+          ctx.strokeStyle=`rgba(134,239,172,${bright*0.4})`;ctx.lineWidth=1;ctx.stroke()
+        }
+      }
+      t++; raf=requestAnimationFrame(loop)
+    })()
+  }
+})
+
+// ══════════════════════════════════════════════════════
+// Build sidebar
+// ══════════════════════════════════════════════════════
+let activeId='A'
+const listEl=document.getElementById('designList')
+
+function buildBtn(d){
+  const btn=document.createElement('button')
+  btn.className='design-btn'+(d.id===activeId?' active':'')
+  btn.id='btn-'+d.id
+  btn.innerHTML=`
+    <span class="btn-name">${d.id} — ${d.name}</span>
+    <span class="btn-desc">${d.desc}</span>
+    <div class="swatches">
+      <div class="sw" style="background:${d.lc}" title="Left panel"></div>
+      <div class="sw" style="background:${d.rc}" title="Right panel"></div>
+      <div class="sw" style="background:${d.ac}" title="Accent"></div>
+      <span class="sw-label">L · R · A</span>
+      <span class="badge">${d.badge}</span>
+    </div>`
+  btn.onclick=()=>selectDesign(d.id)
+  listEl.appendChild(btn)
+}
+DESIGNS.forEach(buildBtn)
+
+function selectDesign(id){
+  activeId=id
+  document.querySelectorAll('.design-btn').forEach(b=>b.classList.remove('active'))
+  document.getElementById('btn-'+id).classList.add('active')
+  // Stop current
+  if(stopFn){stopFn();stopFn=null}
+  cancelAnimationFrame(raf);raf=null
+  ctx.clearRect(0,0,canvas.width,canvas.height)
+  const d=DESIGNS.find(x=>x.id===id)
+  // Apply panel styles
+  // Use rgba so animation shows through both panels
+  function hexToRgba(hex, a) {
+    const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16)
+    return `rgba(${r},${g},${b},${a})`
+  }
+  document.getElementById('lsLeft').style.background  = hexToRgba(d.lc, 0.72)
+  document.getElementById('lsRight').style.background = hexToRgba(d.rc, 0.78)
+  const seamColor=d.ac
+  document.getElementById('lsSeam').style.background=`linear-gradient(to bottom,transparent,${seamColor} 30%,${seamColor} 70%,transparent)`
+  document.getElementById('lsSeam').style.boxShadow=`0 0 8px 3px ${seamColor}99, 0 0 20px 6px ${seamColor}44`
+  document.getElementById('lsJourney').style.color=d.ac
+  document.getElementById('lsBegins').style.color=d.tc
+  document.getElementById('lsBegins').style.opacity='0.35'
+  document.getElementById('lsBy').style.color=d.tc
+  document.getElementById('lsBy').style.opacity='0.45'
+  document.getElementById('lsName').style.color=d.tc
+  document.getElementById('lsName').style.opacity='0.7'
+  d.run()
+}
+
+document.getElementById('pickBtn').onclick=()=>{
+  const d=DESIGNS.find(x=>x.id===activeId)
+  const t=document.getElementById('toast')
+  t.textContent=`✓ Design ${d.id} — "${d.name}" selected! Tell Claude to apply it.`
+  t.style.opacity='1';t.style.transform='translateX(-50%) translateY(0)'
+  setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(-50%) translateY(60px)'},3500)
+}
+
+// ══════════════════════════════════════════════════════
+// Q — Floating Geometric Shapes
+// ══════════════════════════════════════════════════════
+reg({ id:'Q', name:'Floating Geometry', desc:'Rotating triangles, circles & squares drifting', badge:'Modern',
+  lc:'#0a0818', rc:'#f0eef8', tc:'#1a0e30', ac:'#7c3aed',
+  run() {
+    const shapes=Array.from({length:22},(_,i)=>({
+      x:Math.random(), y:Math.random(), size:15+Math.random()*45,
+      vx:(Math.random()-.5)*0.0006, vy:(Math.random()-.5)*0.0006,
+      rot:Math.random()*Math.PI*2, rspeed:(Math.random()-.5)*0.008,
+      type:i%3, alpha:0.06+Math.random()*0.12,
+      c:[[124,58,237],[167,139,250],[192,132,252]][i%3],
+    }))
+    let s=false; stopFn=()=>{s=true}
+    ctx.fillStyle='#0a0818'; ctx.fillRect(0,0,canvas.width,canvas.height)
+    ;(function loop(){
+      if(s)return
+      const W=canvas.width,H=canvas.height
+      ctx.fillStyle='rgba(10,8,24,0.15)'; ctx.fillRect(0,0,W,H)
+      shapes.forEach(sh=>{
+        sh.x+=sh.vx; sh.y+=sh.vy; sh.rot+=sh.rspeed
+        if(sh.x<-0.1)sh.x=1.1; if(sh.x>1.1)sh.x=-0.1
+        if(sh.y<-0.1)sh.y=1.1; if(sh.y>1.1)sh.y=-0.1
+        const x=sh.x*W, y=sh.y*H
+        ctx.save(); ctx.translate(x,y); ctx.rotate(sh.rot)
+        ctx.strokeStyle=`rgba(${sh.c},${sh.alpha*2})`
+        ctx.fillStyle=`rgba(${sh.c},${sh.alpha})`
+        ctx.lineWidth=1.2
+        ctx.beginPath()
+        if(sh.type===0){ // triangle
+          ctx.moveTo(0,-sh.size); ctx.lineTo(sh.size*0.866,sh.size*0.5); ctx.lineTo(-sh.size*0.866,sh.size*0.5); ctx.closePath()
+        } else if(sh.type===1){ // circle ring
+          ctx.arc(0,0,sh.size,0,Math.PI*2)
+        } else { // square
+          ctx.rect(-sh.size/2,-sh.size/2,sh.size,sh.size)
+        }
+        ctx.fill(); ctx.stroke(); ctx.restore()
+      })
+      raf=requestAnimationFrame(loop)
+    })()
+  }
+})
+
+// ══════════════════════════════════════════════════════
+// R — Cyber Glitch
+// ══════════════════════════════════════════════════════
+reg({ id:'R', name:'Cyber Glitch', desc:'Scanlines + RGB glitch distortion effects', badge:'Glitch',
+  lc:'#040810', rc:'#f5f0f8', tc:'#0a0020', ac:'#e879f9',
+  run() {
+    let t=0,s=false; stopFn=()=>{s=true}
+    ctx.fillStyle='#040810'; ctx.fillRect(0,0,canvas.width,canvas.height)
+    ;(function loop(){
+      if(s)return
+      const W=canvas.width,H=canvas.height
+      ctx.fillStyle='rgba(4,8,16,0.25)'; ctx.fillRect(0,0,W,H)
+      // Horizontal glitch bars
+      if(Math.random()>0.85){
+        const by=Math.random()*H, bh=4+Math.random()*20
+        ctx.fillStyle=`rgba(${Math.random()>0.5?'232,121,249':'167,139,250'},0.15)`
+        ctx.fillRect(0,by,W,bh)
+        // shift a slice
+        const imgData=ctx.getImageData(0,by,W,bh)
+        ctx.putImageData(imgData,Math.random()>0.5?8:-8,by)
+      }
+      // Scanlines
+      for(let y=0;y<H;y+=3){
+        ctx.fillStyle='rgba(0,0,0,0.06)'; ctx.fillRect(0,y,W,1)
+      }
+      // Vertical neon lines
+      for(let i=0;i<3;i++){
+        const lx=(Math.sin(t*0.02+i*2.1)*0.5+0.5)*W
+        const g=ctx.createLinearGradient(lx,0,lx+2,H)
+        g.addColorStop(0,'transparent')
+        g.addColorStop(0.4,`rgba(232,121,249,${0.1+Math.random()*0.15})`)
+        g.addColorStop(0.6,`rgba(167,139,250,${0.1+Math.random()*0.1})`)
+        g.addColorStop(1,'transparent')
+        ctx.fillStyle=g; ctx.fillRect(lx,0,2,H)
+      }
+      t++; raf=requestAnimationFrame(loop)
+    })()
+  }
+})
+
+// ══════════════════════════════════════════════════════
+// S — Particle Web (cursor-free)
+// ══════════════════════════════════════════════════════
+reg({ id:'S', name:'Particle Web', desc:'Particles forming a breathing web network', badge:'Network',
+  lc:'#06080e', rc:'#eef0f8', tc:'#0a1020', ac:'#6366f1',
+  run() {
+    const pts=Array.from({length:80},()=>({
+      x:Math.random(), y:Math.random(),
+      vx:(Math.random()-.5)*0.001, vy:(Math.random()-.5)*0.001,
+      pulse:Math.random()*Math.PI*2,
+    }))
+    let t=0,s=false; stopFn=()=>{s=true}
+    ctx.fillStyle='#06080e'; ctx.fillRect(0,0,canvas.width,canvas.height)
+    ;(function loop(){
+      if(s)return
+      const W=canvas.width,H=canvas.height
+      ctx.fillStyle='rgba(6,8,14,0.18)'; ctx.fillRect(0,0,W,H)
+      pts.forEach(p=>{ p.x+=p.vx; p.y+=p.vy; p.pulse+=0.02; if(p.x<0||p.x>1)p.vx*=-1; if(p.y<0||p.y>1)p.vy*=-1 })
+      pts.forEach((a,i)=>{
+        pts.slice(i+1).forEach(b=>{
+          const dx=(a.x-b.x)*W, dy=(a.y-b.y)*H, d=Math.sqrt(dx*dx+dy*dy)
+          if(d<100){
+            ctx.beginPath(); ctx.moveTo(a.x*W,a.y*H); ctx.lineTo(b.x*W,b.y*H)
+            ctx.strokeStyle=`rgba(99,102,241,${(1-d/100)*0.35})`; ctx.lineWidth=0.6; ctx.stroke()
+          }
+        })
+        const pulse=0.4+Math.sin(a.pulse)*0.6
+        ctx.beginPath(); ctx.arc(a.x*W,a.y*H,2.5,0,Math.PI*2)
+        ctx.fillStyle=`rgba(129,140,248,${pulse*0.8})`; ctx.fill()
+      })
+      t++; raf=requestAnimationFrame(loop)
+    })()
+  }
+})
+
+// ══════════════════════════════════════════════════════
+// T — Morphing Gradient Mesh
+// ══════════════════════════════════════════════════════
+reg({ id:'T', name:'Gradient Mesh', desc:'Smooth mesh of colors warping fluidly', badge:'Fluid',
+  lc:'#080612', rc:'#f3f0fe', tc:'#150c30', ac:'#8b5cf6',
+  run() {
+    let t=0,s=false; stopFn=()=>{s=true}
+    ctx.fillStyle='#080612'; ctx.fillRect(0,0,canvas.width,canvas.height)
+    ;(function loop(){
+      if(s)return
+      const W=canvas.width,H=canvas.height
+      const pts=[
+        {x:Math.sin(t*0.007)*0.4+0.3, y:Math.cos(t*0.005)*0.3+0.3, c:[139,92,246]},
+        {x:Math.sin(t*0.006+2)*0.4+0.6, y:Math.cos(t*0.008+1)*0.3+0.5, c:[124,58,237]},
+        {x:Math.sin(t*0.009+4)*0.35+0.5, y:Math.cos(t*0.006+2)*0.35+0.2, c:[192,132,252]},
+        {x:Math.sin(t*0.005+1)*0.4+0.2, y:Math.cos(t*0.007+3)*0.3+0.7, c:[99,102,241]},
+        {x:Math.sin(t*0.008+3)*0.35+0.7, y:Math.cos(t*0.005+4)*0.35+0.3, c:[167,139,250]},
+      ]
+      ctx.fillStyle='rgba(8,6,18,0.12)'; ctx.fillRect(0,0,W,H)
+      pts.forEach(p=>{
+        const g=ctx.createRadialGradient(p.x*W,p.y*H,0,p.x*W,p.y*H,W*0.4)
+        g.addColorStop(0,`rgba(${p.c},0.28)`); g.addColorStop(0.5,`rgba(${p.c},0.08)`); g.addColorStop(1,'transparent')
+        ctx.fillStyle=g; ctx.fillRect(0,0,W,H)
+      })
+      t++; raf=requestAnimationFrame(loop)
+    })()
+  }
+})
+
+// ══════════════════════════════════════════════════════
+// U — Neon Rain
+// ══════════════════════════════════════════════════════
+reg({ id:'U', name:'Neon Rain', desc:'Glowing neon lines falling like rain', badge:'Neon',
+  lc:'#04060e', rc:'#f0f2fa', tc:'#0a0c20', ac:'#22d3ee',
+  run() {
+    const drops=Array.from({length:60},()=>({
+      x:Math.random(), y:Math.random(),
+      len:0.04+Math.random()*0.1, speed:0.003+Math.random()*0.006,
+      c:Math.random()>0.5?[34,211,238]:[167,139,250], alpha:0.3+Math.random()*0.5,
+    }))
+    let s=false; stopFn=()=>{s=true}
+    ctx.fillStyle='#04060e'; ctx.fillRect(0,0,canvas.width,canvas.height)
+    ;(function loop(){
+      if(s)return
+      const W=canvas.width,H=canvas.height
+      ctx.fillStyle='rgba(4,6,14,0.25)'; ctx.fillRect(0,0,W,H)
+      drops.forEach(d=>{
+        d.y+=d.speed; if(d.y>1.1)d.y=-d.len
+        const x=d.x*W, y1=d.y*H, y2=(d.y+d.len)*H
+        const g=ctx.createLinearGradient(x,y1,x,y2)
+        g.addColorStop(0,'transparent')
+        g.addColorStop(0.6,`rgba(${d.c},${d.alpha})`)
+        g.addColorStop(1,`rgba(${d.c},${d.alpha*0.4})`)
+        ctx.fillStyle=g; ctx.fillRect(x-0.5,y1,1,y2-y1)
+        // bright tip
+        ctx.beginPath(); ctx.arc(x,y2,1.5,0,Math.PI*2)
+        ctx.fillStyle=`rgba(${d.c},${d.alpha})`; ctx.fill()
+      })
+      raf=requestAnimationFrame(loop)
+    })()
+  }
+})
+
+// ══════════════════════════════════════════════════════
+// V — Breathing Rings
+// ══════════════════════════════════════════════════════
+reg({ id:'V', name:'Breathing Rings', desc:'Concentric rings expanding and breathing', badge:'Zen',
+  lc:'#06040e', rc:'#f5f0fd', tc:'#180840', ac:'#9333ea',
+  run() {
+    let t=0,s=false; stopFn=()=>{s=true}
+    ctx.fillStyle='#06040e'; ctx.fillRect(0,0,canvas.width,canvas.height)
+    ;(function loop(){
+      if(s)return
+      const W=canvas.width,H=canvas.height,cx=W/2,cy=H/2
+      ctx.fillStyle='rgba(6,4,14,0.15)'; ctx.fillRect(0,0,W,H)
+      const rings=12
+      for(let i=0;i<rings;i++){
+        const phase=(i/rings+t*0.003)%1
+        const r=phase*Math.min(W,H)*0.6*(1+Math.sin(t*0.01+i)*0.05)
+        const alpha=(1-phase)*0.5*(0.5+Math.sin(t*0.015+i*0.5)*0.5)
+        const colorShift=Math.sin(t*0.005+i*0.5)
+        const rc=colorShift>0?`rgba(147,51,234,${alpha})`:`rgba(192,132,252,${alpha})`
+        ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2)
+        ctx.strokeStyle=rc; ctx.lineWidth=1.5*(1-phase)
+        ctx.shadowColor='#9333ea'; ctx.shadowBlur=phase<0.3?10:2
+        ctx.stroke(); ctx.shadowBlur=0
+      }
+      t++; raf=requestAnimationFrame(loop)
+    })()
+  }
+})
+
+// ══════════════════════════════════════════════════════
+// W — Northern Lights (wide bands)
+// ══════════════════════════════════════════════════════
+reg({ id:'W', name:'Northern Lights', desc:'Wide sweeping aurora curtains across sky', badge:'Aurora',
+  lc:'#040c10', rc:'#eef8f5', tc:'#041820', ac:'#34d399',
+  run() {
+    let t=0,s=false; stopFn=()=>{s=true}
+    ctx.fillStyle='#040c10'; ctx.fillRect(0,0,canvas.width,canvas.height)
+    ;(function loop(){
+      if(s)return
+      const W=canvas.width,H=canvas.height
+      ctx.fillStyle='rgba(4,12,16,0.1)'; ctx.fillRect(0,0,W,H)
+      const curtains=[
+        {c:[52,211,153], phase:0,    freq:0.003, amp:0.15, base:0.35},
+        {c:[16,185,129], phase:1.2,  freq:0.0025,amp:0.12, base:0.5},
+        {c:[6,182,212],  phase:2.4,  freq:0.0035,amp:0.1,  base:0.25},
+        {c:[99,102,241], phase:3.6,  freq:0.002, amp:0.18, base:0.6},
+      ]
+      curtains.forEach(c=>{
+        for(let x=0;x<W;x+=2){
+          const wave=Math.sin(x*c.freq+t*0.008+c.phase)*c.amp+Math.sin(x*c.freq*2.3+t*0.006)*c.amp*0.4
+          const y=(c.base+wave)*H
+          const height=H*0.25*(0.5+Math.sin(x*c.freq*0.5+t*0.004)*0.5)
+          const g=ctx.createLinearGradient(x,y,x,y+height)
+          g.addColorStop(0,`rgba(${c.c},0)`)
+          g.addColorStop(0.3,`rgba(${c.c},0.2)`)
+          g.addColorStop(0.7,`rgba(${c.c},0.1)`)
+          g.addColorStop(1,`rgba(${c.c},0)`)
+          ctx.fillStyle=g; ctx.fillRect(x,y,2,height)
+        }
+      })
+      t++; raf=requestAnimationFrame(loop)
+    })()
+  }
+})
+
+// ══════════════════════════════════════════════════════
+// X — Bokeh Blur Lights
+// ══════════════════════════════════════════════════════
+reg({ id:'X', name:'Bokeh Lights', desc:'Out-of-focus glowing bokeh circles floating', badge:'Cinematic',
+  lc:'#080610', rc:'#f5f0fc', tc:'#1a0828', ac:'#a78bfa',
+  run() {
+    const bokeh=Array.from({length:25},()=>({
+      x:Math.random(), y:Math.random(), r:30+Math.random()*80,
+      vx:(Math.random()-.5)*0.0004, vy:(Math.random()-.5)*0.0003,
+      alpha:0.04+Math.random()*0.1, phase:Math.random()*Math.PI*2,
+      c:[[167,139,250],[124,58,237],[192,132,252],[99,102,241]][Math.floor(Math.random()*4)],
+    }))
+    let t=0,s=false; stopFn=()=>{s=true}
+    ctx.fillStyle='#080610'; ctx.fillRect(0,0,canvas.width,canvas.height)
+    ;(function loop(){
+      if(s)return
+      const W=canvas.width,H=canvas.height
+      ctx.fillStyle='rgba(8,6,16,0.08)'; ctx.fillRect(0,0,W,H)
+      bokeh.forEach(b=>{
+        b.x+=b.vx; b.y+=b.vy
+        if(b.x<-0.2)b.x=1.2; if(b.x>1.2)b.x=-0.2
+        if(b.y<-0.2)b.y=1.2; if(b.y>1.2)b.y=-0.2
+        const pulse=b.alpha*(0.6+Math.sin(t*0.02+b.phase)*0.4)
+        const r=b.r*(1+Math.sin(t*0.015+b.phase)*0.1)
+        // Outer soft glow
+        const g=ctx.createRadialGradient(b.x*W,b.y*H,0,b.x*W,b.y*H,r)
+        g.addColorStop(0,`rgba(${b.c},${pulse*1.5})`); g.addColorStop(0.4,`rgba(${b.c},${pulse*0.5})`); g.addColorStop(1,'transparent')
+        ctx.fillStyle=g; ctx.beginPath(); ctx.arc(b.x*W,b.y*H,r,0,Math.PI*2); ctx.fill()
+        // Bright inner ring
+        ctx.beginPath(); ctx.arc(b.x*W,b.y*H,r*0.3,0,Math.PI*2)
+        ctx.strokeStyle=`rgba(${b.c},${pulse*3})`; ctx.lineWidth=1; ctx.stroke()
+      })
+      t++; raf=requestAnimationFrame(loop)
+    })()
+  }
+})
+
+// Rebuild buttons for new designs
+DESIGNS.filter(d=>!document.getElementById('btn-'+d.id)).forEach(d=>buildBtn(d))
+
+selectDesign('A')
+</script>
+</body>
+</html>

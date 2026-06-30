@@ -456,6 +456,10 @@ function FeaturedPostsSection() {
 
 /* ── Now Playing Section ── */
 function NowPlayingSection() {
+  // Hide the whole section if every song is disabled (enabled: false) in config
+  const hasSongs = (cfg.music?.songs || []).some(s => s.enabled !== false)
+  if (!hasSongs) return null
+
   return (
     <section className="section" style={{ background: 'var(--bg)' }}>
       <div className="page-container" style={{ maxWidth: 600 }}>

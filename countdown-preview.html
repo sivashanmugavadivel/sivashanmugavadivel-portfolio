@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Countdown Design Picker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #16141a; --bg2: #1e1c24; --bg3: #0d0b12;
+      --text: #9ca3af; --text-h: #f3f0ff;
+      --accent: #a78bfa; --accent2: #7c3aed; --accent3: #c084fc;
+      --dim: rgba(167,139,250,0.12); --glow: rgba(167,139,250,0.5);
+      --border: #2e2a38;
+      --sans: 'Inter', sans-serif; --mono: 'Space Mono', monospace; --orb: 'Orbitron', sans-serif;
+    }
+    html, body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100%; }
+    h1 { text-align: center; padding: 44px 20px 6px; color: var(--text-h); font-size: 1.5rem; font-family: 'Playfair Display', serif; }
+    .page-sub { text-align: center; color: var(--text); font-size: 0.82rem; margin-bottom: 48px; }
+    .page-sub span { color: var(--accent); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 28px; max-width: 1300px; margin: 0 auto; padding: 0 24px 80px; }
+    .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s; }
+    .card:hover { border-color: var(--accent); box-shadow: 0 0 40px rgba(167,139,250,0.1); transform: translateY(-2px); }
+    .card-label { padding: 14px 20px 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+    .card-label h2 { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-h); }
+    .badge { font-size: 0.62rem; padding: 3px 10px; border-radius: 99px; background: var(--dim); color: var(--accent); border: 1px solid rgba(167,139,250,0.25); font-weight: 600; }
+    .card-body { padding: 36px 20px; display: flex; justify-content: center; align-items: center; min-height: 170px; }
+    .pick-btn { width: 100%; padding: 13px; border: none; background: linear-gradient(135deg, var(--accent2), var(--accent)); color: #fff; font-family: var(--sans); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; cursor: pointer; transition: filter 0.2s; }
+    .pick-btn:hover { filter: brightness(1.15); }
+    @keyframes sepBlink { 0%,100%{opacity:.7} 50%{opacity:.1} }
+    @keyframes numSlideIn { from{opacity:0;transform:translateY(-12px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes numSlideOut { from{opacity:1;transform:translateY(0)} to{opacity:0;transform:translateY(12px)} }
+
+    /* ════════════════════════════════════
+       A — ROLLING SLOT MACHINE
+    ════════════════════════════════════ */
+    .sa-wrap { display: flex; gap: 8px; align-items: flex-end; }
+    .sa-unit { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .sa-slot {
+      width: 68px; height: 80px;
+      background: var(--bg3); border: 1px solid rgba(167,139,250,0.25);
+      border-radius: 10px; overflow: hidden; position: relative;
+    }
+    .sa-slot::before, .sa-slot::after {
+      content: ''; position: absolute; left: 0; right: 0; height: 28px; z-index: 2; pointer-events: none;
+    }
+    .sa-slot::before { top: 0; background: linear-gradient(to bottom, var(--bg3), transparent); }
+    .sa-slot::after  { bottom: 0; background: linear-gradient(to top, var(--bg3), transparent); }
+    .sa-reel {
+      display: flex; flex-direction: column; align-items: center;
+      transition: transform 0.45s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+    .sa-num-item {
+      width: 68px; height: 80px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--orb); font-size: 2.2rem; font-weight: 700;
+      color: var(--text-h); text-shadow: 0 0 16px var(--glow); flex-shrink: 0;
+    }
+    .sa-label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent); opacity: 0.7; }
+    .sa-sep { font-family: var(--orb); font-size: 1.5rem; color: var(--accent); animation: sepBlink 1s step-end infinite; margin-bottom: 24px; }
+
+    /* ════════════════════════════════════
+       B — CIRCULAR ARCS + CENTER NUMBER
+    ════════════════════════════════════ */
+    .sb-wrap { display: flex; gap: 14px; }
+    .sb-unit { position: relative; width: 80px; height: 80px; }
+    .sb-svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+    .sb-track { fill: none; stroke: var(--border); stroke-width: 5; }
+    .sb-arc {
+      fill: none; stroke: var(--accent); stroke-width: 5;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1);
+      filter: drop-shadow(0 0 4px var(--glow));
+    }
+    .sb-center {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .sb-val { font-family: var(--orb); font-size: 1.2rem; font-weight: 700; color: var(--text-h); line-height: 1; }
+    .sb-lbl { font-size: 0.48rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); margin-top: 3px; }
+
+    /* ════════════════════════════════════
+       C — MORPHING BLOB CARDS
+    ════════════════════════════════════ */
+    .sc-wrap { display: flex; gap: 10px; align-items: center; }
+    .sc-unit {
+      width: 70px; height: 82px; position: relative;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+    }
+    .sc-blob {
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(124,58,237,0.3), rgba(167,139,250,0.15));
+      border: 1px solid rgba(167,139,250,0.3);
+      border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+      animation: blobMorph 4s ease-in-out infinite;
+    }
+    .sc-unit:nth-child(3) .sc-blob { animation-delay: 1s; }
+    .sc-unit:nth-child(5) .sc-blob { animation-delay: 2s; }
+    .sc-unit:nth-child(7) .sc-blob { animation-delay: 3s; }
+    @keyframes blobMorph {
+      0%,100% { border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; }
+      25%  { border-radius: 58% 42% 75% 25% / 76% 46% 54% 24%; }
+      50%  { border-radius: 50% 50% 33% 67% / 55% 27% 73% 45%; }
+      75%  { border-radius: 33% 67% 58% 42% / 63% 68% 32% 37%; }
+    }
+    .sc-val { position: relative; z-index: 1; font-family: var(--orb); font-size: 1.7rem; font-weight: 700; color: var(--text-h); line-height: 1; text-shadow: 0 0 14px var(--glow); }
+    .sc-lbl { position: relative; z-index: 1; font-size: 0.55rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); }
+    .sc-sep { font-family: var(--orb); font-size: 1.3rem; color: var(--accent); animation: sepBlink 1s step-end infinite; opacity: 0.5; }
+
+    /* ════════════════════════════════════
+       D — NEON TUBE LETTERS (stroke draw)
+    ════════════════════════════════════ */
+    .sd-wrap { display: flex; flex-direction: column; gap: 6px; width: 100%; max-width: 300px; }
+    .sd-row { display: flex; align-items: center; gap: 10px; }
+    .sd-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text); width: 38px; text-align: right; flex-shrink: 0; }
+    .sd-track { flex: 1; height: 32px; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; position: relative; }
+    .sd-bar {
+      position: absolute; top: 0; bottom: 0; left: 0;
+      background: linear-gradient(90deg, var(--accent2), var(--accent), var(--accent3));
+      border-radius: 6px;
+      transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 12px var(--glow);
+    }
+    .sd-bar::after {
+      content: ''; position: absolute; right: 0; top: 0; bottom: 0; width: 20px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15));
+    }
+    .sd-val { font-family: var(--orb); font-size: 1rem; font-weight: 700; color: var(--text-h); width: 32px; text-align: left; flex-shrink: 0; text-shadow: 0 0 10px var(--glow); }
+
+    /* ════════════════════════════════════
+       E — GLASSMORPHISM HOVER CARDS
+    ════════════════════════════════════ */
+    .se-wrap { display: flex; gap: 8px; }
+    .se-unit {
+      flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 4px; padding: 18px 8px;
+      background: rgba(167,139,250,0.05);
+      border: 1px solid rgba(167,139,250,0.2);
+      border-radius: 14px;
+      backdrop-filter: blur(12px);
+      position: relative; overflow: hidden;
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+    .se-unit:hover { background: rgba(167,139,250,0.12); box-shadow: 0 0 24px rgba(167,139,250,0.2); }
+    .se-unit::before {
+      content: ''; position: absolute; top: 0; left: 10%; right: 10%; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(167,139,250,0.6), transparent);
+    }
+    .se-glow {
+      position: absolute; inset: -20px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(124,58,237,0.2), transparent 70%);
+      animation: glowPulse 3s ease-in-out infinite;
+      pointer-events: none;
+    }
+    .se-unit:nth-child(2) .se-glow { animation-delay: 0.75s; }
+    .se-unit:nth-child(3) .se-glow { animation-delay: 1.5s; }
+    .se-unit:nth-child(4) .se-glow { animation-delay: 2.25s; }
+    @keyframes glowPulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
+    .se-val { position: relative; z-index: 1; font-family: var(--orb); font-size: 1.9rem; font-weight: 700; color: var(--text-h); line-height: 1; text-shadow: 0 0 16px var(--glow); transition: transform 0.3s; }
+    .se-val.changed { animation: numPop 0.35s ease-out; }
+    @keyframes numPop { 0%{transform:scale(1.3);color:var(--accent3)} 100%{transform:scale(1)} }
+    .se-lbl { position: relative; z-index: 1; font-size: 0.55rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent); }
+
+    /* ════════════════════════════════════
+       F — VERTICAL STACK TICKER
+    ════════════════════════════════════ */
+    .sf-wrap { display: flex; gap: 0; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+    .sf-unit { flex: 1; border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+    .sf-unit:last-child { border-right: none; }
+    .sf-top {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      background: var(--bg3); padding: 16px 8px 10px; position: relative; overflow: hidden;
+    }
+    .sf-top::after {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(167,139,250,0.15), transparent 70%);
+      animation: radialPulse 3s ease-in-out infinite;
+    }
+    .sf-unit:nth-child(2) .sf-top::after { animation-delay: 0.75s; }
+    .sf-unit:nth-child(3) .sf-top::after { animation-delay: 1.5s; }
+    .sf-unit:nth-child(4) .sf-top::after { animation-delay: 2.25s; }
+    @keyframes radialPulse { 0%,100%{opacity:0.5} 50%{opacity:1} }
+    .sf-val {
+      font-family: var(--orb); font-size: 2rem; font-weight: 900;
+      color: var(--text-h); z-index: 1; position: relative;
+      text-shadow: 0 0 20px var(--glow);
+    }
+    .sf-val.tick { animation: tickBounce 0.3s ease-out; }
+    @keyframes tickBounce { 0%{transform:translateY(-6px);opacity:0} 60%{transform:translateY(2px)} 100%{transform:translateY(0);opacity:1} }
+    .sf-bot { padding: 8px; background: var(--bg2); text-align: center; border-top: 1px solid var(--border); }
+    .sf-lbl { font-size: 0.55rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent); opacity: 0.7; }
+
+    /* ════════════════════════════════════
+       G — PARTICLE BURST NUMBERS
+    ════════════════════════════════════ */
+    .sg-canvas-wrap { position: relative; width: 300px; height: 110px; }
+    .sg-canvas { position: absolute; inset: 0; pointer-events: none; }
+    .sg-nums {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center; gap: 0;
+    }
+    .sg-unit { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 66px; }
+    .sg-val {
+      font-family: var(--orb); font-size: 2.4rem; font-weight: 900;
+      color: var(--text-h); line-height: 1;
+      text-shadow: 0 0 20px var(--glow), 0 0 40px rgba(167,139,250,0.3);
+      transition: color 0.15s;
+    }
+    .sg-val.burst { animation: burstFlash 0.4s ease-out; }
+    @keyframes burstFlash { 0%{color:var(--accent3);text-shadow:0 0 30px var(--accent3),0 0 60px var(--glow)} 100%{color:var(--text-h)} }
+    .sg-lbl { font-size: 0.55rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); opacity: 0.6; }
+    .sg-sep { font-family: var(--orb); font-size: 1.8rem; color: var(--accent); opacity: 0.4; animation: sepBlink 1s step-end infinite; width: 16px; text-align: center; margin-bottom: 18px; }
+
+    /* ════════════════════════════════════
+       H — TYPEWRITER MONO
+    ════════════════════════════════════ */
+    .sh-outer {
+      background: #080610; border: 1px solid #1e1c2e; border-radius: 12px;
+      padding: 20px 24px; width: 100%; max-width: 300px;
+      box-shadow: inset 0 1px 0 rgba(167,139,250,0.05), 0 8px 32px rgba(0,0,0,0.5);
+      position: relative; overflow: hidden;
+    }
+    .sh-outer::before {
+      content: '> LAUNCH_TIMER --iss'; display: block;
+      font-family: var(--mono); font-size: 0.6rem; color: var(--accent); opacity: 0.5;
+      margin-bottom: 12px; letter-spacing: 0.06em;
+    }
+    .sh-line { display: flex; align-items: baseline; gap: 6px; margin-bottom: 8px; }
+    .sh-key { font-family: var(--mono); font-size: 0.65rem; color: var(--accent); opacity: 0.6; width: 38px; }
+    .sh-val { font-family: var(--mono); font-size: 1.5rem; font-weight: 700; color: #7ec850; text-shadow: 0 0 8px rgba(126,200,80,0.5); line-height: 1; min-width: 44px; }
+    .sh-unit-lbl { font-family: var(--mono); font-size: 0.6rem; color: #4a6030; }
+    .sh-cursor { display: inline-block; width: 8px; height: 16px; background: var(--accent); margin-left: 4px; animation: cursorBlink 0.8s step-end infinite; vertical-align: middle; }
+    @keyframes cursorBlink { 0%,100%{opacity:1} 50%{opacity:0} }
+    .sh-scanline {
+      position: absolute; inset: 0; pointer-events: none;
+      background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.08) 3px, rgba(0,0,0,0.08) 4px);
+    }
+
+    /* Toast */
+    #toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(80px); background: #1e1c24; border: 1px solid var(--accent); color: var(--text-h); padding: 12px 28px; border-radius: 99px; font-size: 0.85rem; font-weight: 500; box-shadow: 0 4px 32px rgba(167,139,250,0.3); transition: transform 0.4s ease, opacity 0.4s ease; opacity: 0; pointer-events: none; z-index: 999; white-space: nowrap; }
+  </style>
+</head>
+<body>
+
+<h1>Countdown Design Picker</h1>
+<p class="page-sub">Live countdown to <span>April 12, 2026 · 8:00 AM IST</span> — pick your favourite</p>
+
+<div class="grid">
+
+  <!-- A: Slot Machine -->
+  <div class="card">
+    <div class="card-label"><h2>Design A — Slot Machine Roll</h2><span class="badge">Smooth</span></div>
+    <div class="card-body">
+      <div class="sa-wrap">
+        <div class="sa-unit"><div class="sa-slot"><div class="sa-reel" id="sa-days-reel"></div></div><span class="sa-label">Days</span></div>
+        <span class="sa-sep">:</span>
+        <div class="sa-unit"><div class="sa-slot"><div class="sa-reel" id="sa-hrs-reel"></div></div><span class="sa-label">Hours</span></div>
+        <span class="sa-sep">:</span>
+        <div class="sa-unit"><div class="sa-slot"><div class="sa-reel" id="sa-mins-reel"></div></div><span class="sa-label">Mins</span></div>
+        <span class="sa-sep">:</span>
+        <div class="sa-unit"><div class="sa-slot"><div class="sa-reel" id="sa-secs-reel"></div></div><span class="sa-label">Secs</span></div>
+      </div>
+    </div>
+    <button class="pick-btn" onclick="pick('A','Slot Machine Roll')">Pick This Design</button>
+  </div>
+
+  <!-- B: Circular Arcs -->
+  <div class="card">
+    <div class="card-label"><h2>Design B — Circular Arcs</h2><span class="badge">Elegant</span></div>
+    <div class="card-body">
+      <div class="sb-wrap" id="sb-wrap"></div>
+    </div>
+    <button class="pick-btn" onclick="pick('B','Circular Arcs')">Pick This Design</button>
+  </div>
+
+  <!-- C: Morphing Blobs -->
+  <div class="card">
+    <div class="card-label"><h2>Design C — Morphing Blobs</h2><span class="badge">Organic</span></div>
+    <div class="card-body">
+      <div class="sc-wrap">
+        <div class="sc-unit"><div class="sc-blob"></div><span class="sc-val" id="sc-days">01</span><span class="sc-lbl">Days</span></div>
+        <span class="sc-sep">:</span>
+        <div class="sc-unit"><div class="sc-blob"></div><span class="sc-val" id="sc-hrs">00</span><span class="sc-lbl">Hrs</span></div>
+        <span class="sc-sep">:</span>
+        <div class="sc-unit"><div class="sc-blob"></div><span class="sc-val" id="sc-mins">00</span><span class="sc-lbl">Mins</span></div>
+        <span class="sc-sep">:</span>
+        <div class="sc-unit"><div class="sc-blob"></div><span class="sc-val" id="sc-secs">00</span><span class="sc-lbl">Secs</span></div>
+      </div>
+    </div>
+    <button class="pick-btn" onclick="pick('C','Morphing Blobs')">Pick This Design</button>
+  </div>
+
+  <!-- D: Glowing Bar Meters -->
+  <div class="card">
+    <div class="card-label"><h2>Design D — Glow Bar Meters</h2><span class="badge">Minimal</span></div>
+    <div class="card-body">
+      <div class="sd-wrap">
+        <div class="sd-row"><span class="sd-label">Days</span><div class="sd-track"><div class="sd-bar" id="sd-days-bar"></div></div><span class="sd-val" id="sd-days-val">01</span></div>
+        <div class="sd-row"><span class="sd-label">Hours</span><div class="sd-track"><div class="sd-bar" id="sd-hrs-bar"></div></div><span class="sd-val" id="sd-hrs-val">00</span></div>
+        <div class="sd-row"><span class="sd-label">Mins</span><div class="sd-track"><div class="sd-bar" id="sd-mins-bar"></div></div><span class="sd-val" id="sd-mins-val">00</span></div>
+        <div class="sd-row"><span class="sd-label">Secs</span><div class="sd-track"><div class="sd-bar" id="sd-secs-bar"></div></div><span class="sd-val" id="sd-secs-val">00</span></div>
+      </div>
+    </div>
+    <button class="pick-btn" onclick="pick('D','Glow Bar Meters')">Pick This Design</button>
+  </div>
+
+  <!-- E: Glassmorphism -->
+  <div class="card">
+    <div class="card-label"><h2>Design E — Glass Cards</h2><span class="badge">Frosted</span></div>
+    <div class="card-body" style="width:100%">
+      <div class="se-wrap" style="width:100%">
+        <div class="se-unit"><div class="se-glow"></div><span class="se-val" id="se-days">01</span><span class="se-lbl">Days</span></div>
+        <div class="se-unit"><div class="se-glow"></div><span class="se-val" id="se-hrs">00</span><span class="se-lbl">Hrs</span></div>
+        <div class="se-unit"><div class="se-glow"></div><span class="se-val" id="se-mins">00</span><span class="se-lbl">Mins</span></div>
+        <div class="se-unit"><div class="se-glow"></div><span class="se-val" id="se-secs">00</span><span class="se-lbl">Secs</span></div>
+      </div>
+    </div>
+    <button class="pick-btn" onclick="pick('E','Glass Cards')">Pick This Design</button>
+  </div>
+
+  <!-- F: Vertical Stack -->
+  <div class="card">
+    <div class="card-label"><h2>Design F — Panel Stack</h2><span class="badge">Bold</span></div>
+    <div class="card-body" style="padding:0;width:100%">
+      <div class="sf-wrap" style="width:100%">
+        <div class="sf-unit"><div class="sf-top"><span class="sf-val" id="sf-days">01</span></div><div class="sf-bot"><span class="sf-lbl">Days</span></div></div>
+        <div class="sf-unit"><div class="sf-top"><span class="sf-val" id="sf-hrs">00</span></div><div class="sf-bot"><span class="sf-lbl">Hrs</span></div></div>
+        <div class="sf-unit"><div class="sf-top"><span class="sf-val" id="sf-mins">00</span></div><div class="sf-bot"><span class="sf-lbl">Mins</span></div></div>
+        <div class="sf-unit"><div class="sf-top"><span class="sf-val" id="sf-secs">00</span></div><div class="sf-bot"><span class="sf-lbl">Secs</span></div></div>
+      </div>
+    </div>
+    <button class="pick-btn" onclick="pick('F','Panel Stack')">Pick This Design</button>
+  </div>
+
+  <!-- G: Particle Burst -->
+  <div class="card">
+    <div class="card-label"><h2>Design G — Particle Burst</h2><span class="badge">Dynamic</span></div>
+    <div class="card-body">
+      <div class="sg-canvas-wrap">
+        <canvas class="sg-canvas" id="sg-canvas"></canvas>
+        <div class="sg-nums">
+          <div class="sg-unit"><span class="sg-val" id="sg-days">01</span><span class="sg-lbl">Days</span></div>
+          <span class="sg-sep">:</span>
+          <div class="sg-unit"><span class="sg-val" id="sg-hrs">00</span><span class="sg-lbl">Hrs</span></div>
+          <span class="sg-sep">:</span>
+          <div class="sg-unit"><span class="sg-val" id="sg-mins">00</span><span class="sg-lbl">Mins</span></div>
+          <span class="sg-sep">:</span>
+          <div class="sg-unit"><span class="sg-val" id="sg-secs">00</span><span class="sg-lbl">Secs</span></div>
+        </div>
+      </div>
+    </div>
+    <button class="pick-btn" onclick="pick('G','Particle Burst')">Pick This Design</button>
+  </div>
+
+  <!-- H: Terminal Mono -->
+  <div class="card">
+    <div class="card-label"><h2>Design H — Terminal Mono</h2><span class="badge">Dev Vibes</span></div>
+    <div class="card-body">
+      <div class="sh-outer">
+        <div class="sh-scanline"></div>
+        <div class="sh-line"><span class="sh-key">days:</span><span class="sh-val" id="sh-days">01</span><span class="sh-unit-lbl">d</span></div>
+        <div class="sh-line"><span class="sh-key">hrs:</span><span class="sh-val" id="sh-hrs">00</span><span class="sh-unit-lbl">h</span></div>
+        <div class="sh-line"><span class="sh-key">mins:</span><span class="sh-val" id="sh-mins">00</span><span class="sh-unit-lbl">m</span></div>
+        <div class="sh-line"><span class="sh-key">secs:</span><span class="sh-val" id="sh-secs">00</span><span class="sh-unit-lbl">s</span><span class="sh-cursor"></span></div>
+      </div>
+    </div>
+    <button class="pick-btn" onclick="pick('H','Terminal Mono')">Pick This Design</button>
+  </div>
+
+  <!-- I: Neon Border Pulse -->
+  <div class="card">
+    <div class="card-label"><h2>Design I — Neon Border Pulse</h2><span class="badge">Electric</span></div>
+    <div class="card-body">
+      <div class="si-wrap">
+        <div class="si-unit" id="si-days-unit"><div class="si-border-svg"><svg viewBox="0 0 100 100" fill="none"><rect id="si-days-rect" x="2" y="2" width="96" height="96" rx="14" stroke="url(#gi)" stroke-width="2" stroke-dasharray="380" stroke-dashoffset="380"/><defs><linearGradient id="gi" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#7c3aed"/><stop offset="100%" stop-color="#c084fc"/></linearGradient></defs></svg></div><span class="si-val" id="si-days">01</span><span class="si-lbl">Days</span></div>
+        <div class="si-unit" id="si-hrs-unit"><div class="si-border-svg"><svg viewBox="0 0 100 100" fill="none"><rect id="si-hrs-rect" x="2" y="2" width="96" height="96" rx="14" stroke="url(#gi2)" stroke-width="2" stroke-dasharray="380" stroke-dashoffset="380"/><defs><linearGradient id="gi2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#7c3aed"/><stop offset="100%" stop-color="#c084fc"/></linearGradient></defs></svg></div><span class="si-val" id="si-hrs">00</span><span class="si-lbl">Hrs</span></div>
+        <div class="si-unit" id="si-mins-unit"><div class="si-border-svg"><svg viewBox="0 0 100 100" fill="none"><rect id="si-mins-rect" x="2" y="2" width="96" height="96" rx="14" stroke="url(#gi3)" stroke-width="2" stroke-dasharray="380" stroke-dashoffset="380"/><defs><linearGradient id="gi3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#7c3aed"/><stop offset="100%" stop-color="#c084fc"/></linearGradient></defs></svg></div><span class="si-val" id="si-mins">00</span><span class="si-lbl">Mins</span></div>
+        <div class="si-unit" id="si-secs-unit"><div class="si-border-svg"><svg viewBox="0 0 100 100" fill="none"><rect id="si-secs-rect" x="2" y="2" width="96" height="96" rx="14" stroke="url(#gi4)" stroke-width="2" stroke-dasharray="380" stroke-dashoffset="380"/><defs><linearGradient id="gi4" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#7c3aed"/><stop offset="100%" stop-color="#c084fc"/></linearGradient></defs></svg></div><span class="si-val" id="si-secs">00</span><span class="si-lbl">Secs</span></div>
+      </div>
+    </div>
+    <button class="pick-btn" onclick="pick('I','Neon Border Pulse')">Pick This Design</button>
+  </div>
+
+  <!-- J: Stacked 3D Depth -->
+  <div class="card">
+    <div class="card-label"><h2>Design J — 3D Depth Stack</h2><span class="badge">Dimensional</span></div>
+    <div class="card-body">
+      <div class="sj-wrap">
+        <div class="sj-unit"><div class="sj-shadow"></div><div class="sj-mid"></div><div class="sj-front"><span class="sj-val" id="sj-days">01</span></div><span class="sj-lbl">Days</span></div>
+        <div class="sj-unit"><div class="sj-shadow"></div><div class="sj-mid"></div><div class="sj-front"><span class="sj-val" id="sj-hrs">00</span></div><span class="sj-lbl">Hrs</span></div>
+        <div class="sj-unit"><div class="sj-shadow"></div><div class="sj-mid"></div><div class="sj-front"><span class="sj-val" id="sj-mins">00</span></div><span class="sj-lbl">Mins</span></div>
+        <div class="sj-unit"><div class="sj-shadow"></div><div class="sj-mid"></div><div class="sj-front"><span class="sj-val" id="sj-secs">00</span></div><span class="sj-lbl">Secs</span></div>
+      </div>
+    </div>
+    <button class="pick-btn" onclick="pick('J','3D Depth Stack')">Pick This Design</button>
+  </div>
+
+  <!-- K: Wave Warp Numbers -->
+  <div class="card">
+    <div class="card-label"><h2>Design K — Wave Warp</h2><span class="badge">Fluid</span></div>
+    <div class="card-body">
+      <div class="sk-wrap">
+        <div class="sk-unit"><canvas class="sk-wave" id="sk-days-wave" width="70" height="70"></canvas><span class="sk-val" id="sk-days">01</span><span class="sk-lbl">Days</span></div>
+        <div class="sk-unit"><canvas class="sk-wave" id="sk-hrs-wave" width="70" height="70"></canvas><span class="sk-val" id="sk-hrs">00</span><span class="sk-lbl">Hrs</span></div>
+        <div class="sk-unit"><canvas class="sk-wave" id="sk-mins-wave" width="70" height="70"></canvas><span class="sk-val" id="sk-mins">00</span><span class="sk-lbl">Mins</span></div>
+        <div class="sk-unit"><canvas class="sk-wave" id="sk-secs-wave" width="70" height="70"></canvas><span class="sk-val" id="sk-secs">00</span><span class="sk-lbl">Secs</span></div>
+      </div>
+    </div>
+    <button class="pick-btn" onclick="pick('K','Wave Warp')">Pick This Design</button>
+  </div>
+
+  <!-- L: Spotlight Cinema -->
+  <div class="card">
+    <div class="card-label"><h2>Design L — Spotlight Cinema</h2><span class="badge">Dramatic</span></div>
+    <div class="card-body" style="width:100%">
+      <div class="sl-wrap">
+        <div class="sl-unit">
+          <div class="sl-spot"><div class="sl-beam"></div><span class="sl-val" id="sl-days">01</span></div>
+          <span class="sl-lbl">Days</span>
+        </div>
+        <div class="sl-unit">
+          <div class="sl-spot"><div class="sl-beam"></div><span class="sl-val" id="sl-hrs">00</span></div>
+          <span class="sl-lbl">Hrs</span>
+        </div>
+        <div class="sl-unit">
+          <div class="sl-spot"><div class="sl-beam"></div><span class="sl-val" id="sl-mins">00</span></div>
+          <span class="sl-lbl">Mins</span>
+        </div>
+        <div class="sl-unit">
+          <div class="sl-spot"><div class="sl-beam"></div><span class="sl-val" id="sl-secs">00</span></div>
+          <span class="sl-lbl">Secs</span>
+        </div>
+      </div>
+    </div>
+    <button class="pick-btn" onclick="pick('L','Spotlight Cinema')">Pick This Design</button>
+  </div>
+
+  <!-- M: Orbit Rings -->
+  <div class="card">
+    <div class="card-label"><h2>Design M — Orbit Rings</h2><span class="badge">Cosmic</span></div>
+    <div class="card-body">
+      <div class="sm-outer">
+        <div class="sm-ring sm-r4"><div class="sm-dot sm-d4"></div></div>
+        <div class="sm-ring sm-r3"><div class="sm-dot sm-d3"></div></div>
+        <div class="sm-ring sm-r2"><div class="sm-dot sm-d2"></div></div>
+        <div class="sm-ring sm-r1"><div class="sm-dot sm-d1"></div></div>
+        <div class="sm-core">
+          <span class="sm-val" id="sm-secs">00</span>
+          <span class="sm-micro">secs</span>
+        </div>
+        <div class="sm-labels">
+          <span id="sm-days-lbl">01d</span>
+          <span id="sm-hrs-lbl">00h</span>
+          <span id="sm-mins-lbl">00m</span>
+        </div>
+      </div>
+    </div>
+    <button class="pick-btn" onclick="pick('M','Orbit Rings')">Pick This Design</button>
+  </div>
+
+  <!-- N: Typewriter Reveal -->
+  <div class="card">
+    <div class="card-label"><h2>Design N — Typewriter Reveal</h2><span class="badge">Cinematic</span></div>
+    <div class="card-body" style="width:100%">
+      <div class="sn-wrap">
+        <div class="sn-row">
+          <span class="sn-label">Launching in</span>
+        </div>
+        <div class="sn-big">
+          <span class="sn-num" id="sn-days">01</span><span class="sn-unit">d</span>
+          <span class="sn-num" id="sn-hrs">00</span><span class="sn-unit">h</span>
+          <span class="sn-num" id="sn-mins">00</span><span class="sn-unit">m</span>
+          <span class="sn-num" id="sn-secs">00</span><span class="sn-unit">s</span>
+        </div>
+        <div class="sn-sub">April 12, 2026 · 8:00 AM IST</div>
+      </div>
+    </div>
+    <button class="pick-btn" onclick="pick('N','Typewriter Reveal')">Pick This Design</button>
+  </div>
+
+</div>
+<div id="toast"></div>
+
+<style>
+  /* ── I: Neon Border Pulse ── */
+  .si-wrap { display:flex; gap:10px; }
+  .si-unit { width:72px; display:flex; flex-direction:column; align-items:center; gap:6px; position:relative; }
+  .si-border-svg { position:absolute; inset:0; top:-4px; width:72px; height:72px; }
+  .si-border-svg svg { width:100%; height:100%; }
+  .si-val { font-family:var(--orb); font-size:1.6rem; font-weight:700; color:var(--text-h); line-height:1; margin-top:4px; text-shadow:0 0 16px var(--glow); width:72px; height:64px; display:flex; align-items:center; justify-content:center; border:1px solid rgba(167,139,250,0.15); border-radius:12px; background:var(--bg3); }
+  .si-lbl { font-size:0.55rem; text-transform:uppercase; letter-spacing:0.12em; color:var(--accent); opacity:0.65; }
+  .si-border-svg rect { transition: stroke-dashoffset 1s cubic-bezier(0.4,0,0.2,1); }
+
+  /* ── J: 3D Depth Stack ── */
+  .sj-wrap { display:flex; gap:12px; align-items:flex-end; }
+  .sj-unit { display:flex; flex-direction:column; align-items:center; gap:8px; position:relative; }
+  .sj-shadow, .sj-mid, .sj-front {
+    position:absolute; width:68px; height:78px; border-radius:10px;
+  }
+  .sj-shadow { background:rgba(124,58,237,0.25); transform:translate(6px,6px); filter:blur(4px); }
+  .sj-mid { background:rgba(124,58,237,0.12); border:1px solid rgba(167,139,250,0.2); transform:translate(3px,3px); }
+  .sj-front { background:linear-gradient(135deg,#1e1b2e,#13111e); border:1px solid rgba(167,139,250,0.35); display:flex; align-items:center; justify-content:center; box-shadow:inset 0 1px 0 rgba(167,139,250,0.1); }
+  .sj-val { font-family:var(--orb); font-size:2rem; font-weight:700; color:var(--text-h); text-shadow:0 0 16px var(--glow); }
+  .sj-lbl { font-size:0.58rem; text-transform:uppercase; letter-spacing:0.12em; color:var(--accent); margin-top:82px; }
+  .sj-unit { height:96px; width:74px; }
+  .sj-val.pop { animation:depthPop 0.35s ease-out; }
+  @keyframes depthPop { 0%{transform:scale(1.25);color:var(--accent3)} 100%{transform:scale(1)} }
+
+  /* ── K: Wave Warp ── */
+  .sk-wrap { display:flex; gap:8px; }
+  .sk-unit { display:flex; flex-direction:column; align-items:center; gap:4px; position:relative; }
+  .sk-wave { position:absolute; top:0; left:0; border-radius:50%; }
+  .sk-val { font-family:var(--orb); font-size:1.8rem; font-weight:700; color:var(--text-h); text-shadow:0 0 14px var(--glow); width:70px; height:70px; display:flex; align-items:center; justify-content:center; position:relative; z-index:1; }
+  .sk-lbl { font-size:0.55rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--accent); opacity:0.7; }
+
+  /* ── L: Spotlight Cinema ── */
+  .sl-wrap { display:flex; width:100%; }
+  .sl-unit { flex:1; display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .sl-spot {
+    width:100%; height:80px; position:relative; overflow:hidden;
+    background:var(--bg3); display:flex; align-items:center; justify-content:center;
+  }
+  .sl-beam {
+    position:absolute; top:-20px; left:50%; transform:translateX(-50%);
+    width:60px; height:120px;
+    background:conic-gradient(from -15deg at 50% 0%, transparent 0deg, rgba(167,139,250,0.25) 15deg, rgba(167,139,250,0.08) 30deg, transparent 30deg);
+    animation:beamSway 4s ease-in-out infinite;
+  }
+  .sl-unit:nth-child(2) .sl-beam { animation-delay:1s; }
+  .sl-unit:nth-child(3) .sl-beam { animation-delay:2s; }
+  .sl-unit:nth-child(4) .sl-beam { animation-delay:3s; }
+  @keyframes beamSway { 0%,100%{transform:translateX(-50%) rotate(-8deg)} 50%{transform:translateX(-50%) rotate(8deg)} }
+  .sl-val { position:relative; z-index:1; font-family:var(--orb); font-size:2rem; font-weight:700; color:var(--text-h); text-shadow:0 0 20px var(--glow),0 0 40px rgba(167,139,250,0.3); }
+  .sl-lbl { font-size:0.55rem; text-transform:uppercase; letter-spacing:0.12em; color:var(--accent); opacity:0.65; }
+  .sl-val.flash { animation:spotFlash 0.3s ease-out; }
+  @keyframes spotFlash { 0%{text-shadow:0 0 40px var(--accent3),0 0 80px var(--glow)} 100%{text-shadow:0 0 20px var(--glow)} }
+
+  /* ── M: Orbit Rings ── */
+  .sm-outer { position:relative; width:180px; height:180px; display:flex; align-items:center; justify-content:center; }
+  .sm-ring { position:absolute; border-radius:50%; border:1px solid rgba(167,139,250,0.15); }
+  .sm-r1 { width:60px;height:60px; animation:orbitSpin 4s linear infinite; }
+  .sm-r2 { width:90px;height:90px; animation:orbitSpin 7s linear infinite reverse; }
+  .sm-r3 { width:120px;height:120px; animation:orbitSpin 11s linear infinite; }
+  .sm-r4 { width:160px;height:160px; animation:orbitSpin 16s linear infinite reverse; }
+  @keyframes orbitSpin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+  .sm-dot { width:8px;height:8px; border-radius:50%; position:absolute; top:-4px; left:50%; transform:translateX(-50%); }
+  .sm-d1 { background:var(--accent); box-shadow:0 0 8px var(--accent); }
+  .sm-d2 { background:var(--accent2); box-shadow:0 0 8px var(--accent2); }
+  .sm-d3 { background:var(--accent3); box-shadow:0 0 8px var(--accent3); }
+  .sm-d4 { background:rgba(167,139,250,0.5); box-shadow:0 0 6px var(--accent); }
+  .sm-core { position:absolute; display:flex; flex-direction:column; align-items:center; justify-content:center; width:48px; height:48px; }
+  .sm-val { font-family:var(--orb); font-size:1.1rem; font-weight:700; color:var(--text-h); text-shadow:0 0 12px var(--glow); line-height:1; }
+  .sm-micro { font-size:0.45rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--accent); margin-top:2px; }
+  .sm-labels {
+    position:absolute; bottom:-28px; left:0; right:0;
+    display:flex; justify-content:center; gap:12px;
+  }
+  .sm-labels span { font-family:var(--orb); font-size:0.65rem; color:var(--accent); opacity:0.7; }
+
+  /* ── N: Typewriter Reveal ── */
+  .sn-wrap { width:100%; padding:0 8px; }
+  .sn-row { margin-bottom:8px; }
+  .sn-label { font-size:0.7rem; text-transform:uppercase; letter-spacing:0.15em; color:var(--text); opacity:0.5; }
+  .sn-big { display:flex; align-items:baseline; gap:2px; flex-wrap:wrap; }
+  .sn-num {
+    font-family:var(--orb); font-size:2.8rem; font-weight:900; color:var(--text-h);
+    text-shadow:0 0 24px var(--glow); line-height:1; min-width:64px; text-align:right;
+    transition:color 0.1s;
+  }
+  .sn-num.change { animation:snPop 0.3s ease-out; }
+  @keyframes snPop { 0%{transform:translateY(-8px);opacity:0;color:var(--accent3)} 100%{transform:translateY(0);opacity:1} }
+  .sn-unit { font-family:var(--orb); font-size:1rem; font-weight:400; color:var(--accent); margin-right:8px; margin-bottom:6px; }
+  .sn-sub { font-size:0.65rem; color:var(--text); opacity:0.4; margin-top:10px; letter-spacing:0.06em; }
+</style>
+
+<script>
+  const LAUNCH = new Date('2026-04-12T08:00:00+05:30')
+  function getTime() {
+    const diff = Math.max(0, LAUNCH - new Date())
+    return { days: Math.floor(diff/864e5), hrs: Math.floor((diff/36e5)%24), mins: Math.floor((diff/6e4)%60), secs: Math.floor((diff/1e3)%60) }
+  }
+  function pad(n) { return String(n).padStart(2,'0') }
+
+  // ── A: Slot Machine ──
+  const slotPrev = {}
+  const slotKeys = ['days','hrs','mins','secs']
+  const slotMax  = [365, 24, 60, 60]
+  slotKeys.forEach(k => {
+    const reel = document.getElementById(`sa-${k}-reel`)
+    // Pre-fill 3 items: prev, current, next
+    for (let i = 0; i < 3; i++) {
+      const el = document.createElement('div')
+      el.className = 'sa-num-item'
+      el.textContent = pad(0)
+      reel.appendChild(el)
+    }
+    reel.style.transform = 'translateY(-80px)' // show middle item
+  })
+
+  function updateSlot(key, val) {
+    const str = pad(val)
+    const reel = document.getElementById(`sa-${key}-reel`)
+    if (slotPrev[key] === str) return
+    slotPrev[key] = str
+    const items = reel.querySelectorAll('.sa-num-item')
+    items[0].textContent = pad(val + 1 < slotMax[slotKeys.indexOf(key)] ? val + 1 : 0)
+    items[1].textContent = str
+    items[2].textContent = pad(val > 0 ? val - 1 : slotMax[slotKeys.indexOf(key)] - 1)
+    reel.style.transition = 'none'
+    reel.style.transform = 'translateY(0px)'
+    void reel.offsetWidth
+    reel.style.transition = 'transform 0.45s cubic-bezier(0.25,0.8,0.25,1)'
+    reel.style.transform = 'translateY(-80px)'
+  }
+
+  // ── B: Circular Arcs ──
+  const sbUnits = [{lbl:'Days',max:365},{lbl:'Hrs',max:24},{lbl:'Mins',max:60},{lbl:'Secs',max:60}]
+  const sbR = 33, sbC = 2*Math.PI*sbR
+  const sbEl = document.getElementById('sb-wrap')
+  sbUnits.forEach((u,i) => {
+    sbEl.innerHTML += `<div class="sb-unit">
+      <svg class="sb-svg" viewBox="0 0 80 80">
+        <circle class="sb-track" cx="40" cy="40" r="${sbR}"/>
+        <circle class="sb-arc" id="sb-arc-${i}" cx="40" cy="40" r="${sbR}" stroke-dasharray="${sbC}" stroke-dashoffset="${sbC}"/>
+      </svg>
+      <div class="sb-center"><span class="sb-val" id="sb-val-${i}">00</span><span class="sb-lbl">${u.lbl}</span></div>
+    </div>`
+  })
+
+  function updateArcs(t) {
+    const vals = [t.days,t.hrs,t.mins,t.secs]
+    sbUnits.forEach((u,i) => {
+      document.getElementById(`sb-val-${i}`).textContent = pad(vals[i])
+      document.getElementById(`sb-arc-${i}`).style.strokeDashoffset = sbC*(1-vals[i]/u.max)
+    })
+  }
+
+  // ── G: Particle burst canvas ──
+  const sgCanvas = document.getElementById('sg-canvas')
+  const sgCtx = sgCanvas.getContext('2d')
+  let sgParticles = []
+  function resizeSg() { sgCanvas.width = sgCanvas.parentElement.offsetWidth; sgCanvas.height = sgCanvas.parentElement.offsetHeight }
+  resizeSg()
+
+  function sgBurst(x, y) {
+    for (let i = 0; i < 14; i++) {
+      const angle = Math.random()*Math.PI*2
+      const speed = 1+Math.random()*3
+      sgParticles.push({ x, y, vx: Math.cos(angle)*speed, vy: Math.sin(angle)*speed, life: 1, r: 1+Math.random()*2.5 })
+    }
+  }
+
+  function sgLoop() {
+    sgCtx.clearRect(0,0,sgCanvas.width,sgCanvas.height)
+    for (let i=sgParticles.length-1; i>=0; i--) {
+      const p = sgParticles[i]
+      p.x+=p.vx; p.y+=p.vy; p.vx*=0.94; p.vy*=0.94; p.life-=0.025
+      if (p.life<=0){sgParticles.splice(i,1);continue}
+      sgCtx.fillStyle = `rgba(167,139,250,${p.life})`
+      sgCtx.beginPath(); sgCtx.arc(p.x,p.y,p.r*p.life,0,Math.PI*2); sgCtx.fill()
+    }
+    requestAnimationFrame(sgLoop)
+  }
+  sgLoop()
+
+  const sgPrev = {}
+  function updateSg(key, val) {
+    const str = pad(val)
+    const el = document.getElementById(`sg-${key}`)
+    if (sgPrev[key]===str||!el) return
+    sgPrev[key] = str
+    const rect = el.getBoundingClientRect()
+    const canRect = sgCanvas.getBoundingClientRect()
+    sgBurst(rect.left-canRect.left+rect.width/2, rect.top-canRect.top+rect.height/2)
+    el.textContent = str
+    el.classList.remove('burst'); void el.offsetWidth; el.classList.add('burst')
+  }
+
+  // ── Simple updaters ──
+  const simplePrev = {}
+  function simpleUpdate(id, val, animate) {
+    const str = pad(val)
+    const el = document.getElementById(id)
+    if (!el || simplePrev[id]===str) return
+    simplePrev[id] = str
+    el.textContent = str
+    if (animate) { el.classList.remove(animate); void el.offsetWidth; el.classList.add(animate) }
+  }
+
+  // ── Master tick ──
+  function tick() {
+    const t = getTime()
+    // A
+    slotKeys.forEach((k,i) => updateSlot(k, [t.days,t.hrs,t.mins,t.secs][i]))
+    // B
+    updateArcs(t)
+    // C
+    simpleUpdate('sc-days',t.days); simpleUpdate('sc-hrs',t.hrs); simpleUpdate('sc-mins',t.mins); simpleUpdate('sc-secs',t.secs)
+    // D
+    ;[['days',365],['hrs',24],['mins',60],['secs',60]].forEach(([k,max])=>{
+      const val=[t.days,t.hrs,t.mins,t.secs][['days','hrs','mins','secs'].indexOf(k)]
+      const el=document.getElementById(`sd-${k}-bar`)
+      const vel=document.getElementById(`sd-${k}-val`)
+      if(el) el.style.width=(val/max*100)+'%'
+      if(vel) vel.textContent=pad(val)
+    })
+    // E
+    simpleUpdate('se-days',t.days,'changed'); simpleUpdate('se-hrs',t.hrs,'changed'); simpleUpdate('se-mins',t.mins,'changed'); simpleUpdate('se-secs',t.secs,'changed')
+    // F
+    simpleUpdate('sf-days',t.days,'tick'); simpleUpdate('sf-hrs',t.hrs,'tick'); simpleUpdate('sf-mins',t.mins,'tick'); simpleUpdate('sf-secs',t.secs,'tick')
+    // G
+    updateSg('days',t.days); updateSg('hrs',t.hrs); updateSg('mins',t.mins); updateSg('secs',t.secs)
+    // H
+    simpleUpdate('sh-days',t.days); simpleUpdate('sh-hrs',t.hrs); simpleUpdate('sh-mins',t.mins); simpleUpdate('sh-secs',t.secs)
+  }
+  tick(); window._tickInterval = setInterval(tick, 1000)
+
+  // ── I: Neon Border Pulse ──
+  const siMax = { days:365, hrs:24, mins:60, secs:60 }
+  const siPerimeter = 380
+  function updateI(t) {
+    ['days','hrs','mins','secs'].forEach(k => {
+      document.getElementById(`si-${k}`).textContent = pad(t[k])
+      const rect = document.getElementById(`si-${k}-rect`)
+      if (rect) rect.style.strokeDashoffset = siPerimeter * (1 - t[k]/siMax[k])
+    })
+  }
+
+  // ── J: 3D Depth Stack ──
+  const sjPrev = {}
+  function updateJ(t) {
+    ['days','hrs','mins','secs'].forEach(k => {
+      const str = pad(t[k])
+      const el = document.getElementById(`sj-${k}`)
+      if (!el || sjPrev[k]===str) return
+      sjPrev[k] = str
+      el.textContent = str
+      el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop')
+    })
+  }
+
+  // ── K: Wave Warp ──
+  const skPhases = [0, 1.5, 3, 4.5]
+  const skMax = [365, 24, 60, 60]
+  const skKeys = ['days','hrs','mins','secs']
+  function drawWave(canvasId, pct, phase) {
+    const c = document.getElementById(canvasId)
+    if (!c) return
+    const ctx = c.getContext('2d')
+    const w = c.width, h = c.height
+    ctx.clearRect(0,0,w,h)
+    // Circle clip
+    ctx.save()
+    ctx.beginPath(); ctx.arc(w/2,h/2,w/2-1,0,Math.PI*2); ctx.clip()
+    // Background
+    ctx.fillStyle = '#0d0b12'
+    ctx.fillRect(0,0,w,h)
+    // Wave fill
+    const fillY = h - (pct * h)
+    ctx.beginPath()
+    ctx.moveTo(0, fillY)
+    for (let x=0; x<=w; x+=2) {
+      const y = fillY + Math.sin((x/w)*Math.PI*3 + phase)*5 + Math.sin((x/w)*Math.PI*6 + phase*1.3)*3
+      ctx.lineTo(x, y)
+    }
+    ctx.lineTo(w,h); ctx.lineTo(0,h); ctx.closePath()
+    const grad = ctx.createLinearGradient(0,fillY,0,h)
+    grad.addColorStop(0,'rgba(167,139,250,0.6)')
+    grad.addColorStop(1,'rgba(124,58,237,0.35)')
+    ctx.fillStyle = grad; ctx.fill()
+    // Glow ring
+    ctx.restore()
+    ctx.strokeStyle = 'rgba(167,139,250,0.4)'; ctx.lineWidth = 1.5
+    ctx.beginPath(); ctx.arc(w/2,h/2,w/2-1,0,Math.PI*2); ctx.stroke()
+  }
+  function animateWaves() {
+    const t = getTime()
+    skKeys.forEach((k,i) => {
+      skPhases[i] += 0.04
+      drawWave(`sk-${k}-wave`, t[k]/skMax[i], skPhases[i])
+    })
+    requestAnimationFrame(animateWaves)
+  }
+  animateWaves()
+  const skPrev = {}
+  function updateK(t) {
+    skKeys.forEach(k => {
+      const str = pad(t[k])
+      if (skPrev[k]===str) return
+      skPrev[k] = str
+      document.getElementById(`sk-${k}`).textContent = str
+    })
+  }
+
+  // ── L: Spotlight Cinema ──
+  const slPrev = {}
+  function updateL(t) {
+    ['days','hrs','mins','secs'].forEach(k => {
+      const str = pad(t[k])
+      const el = document.getElementById(`sl-${k}`)
+      if (!el || slPrev[k]===str) return
+      slPrev[k] = str
+      el.textContent = str
+      el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash')
+    })
+  }
+
+  // ── M: Orbit Rings ──
+  const smPrev = {}
+  function updateM(t) {
+    const sstr = pad(t.secs)
+    if (smPrev.secs !== sstr) {
+      smPrev.secs = sstr
+      document.getElementById('sm-secs').textContent = sstr
+    }
+    document.getElementById('sm-days-lbl').textContent = pad(t.days)+'d'
+    document.getElementById('sm-hrs-lbl').textContent  = pad(t.hrs)+'h'
+    document.getElementById('sm-mins-lbl').textContent = pad(t.mins)+'m'
+  }
+
+  // ── N: Typewriter Reveal ──
+  const snPrev = {}
+  function updateN(t) {
+    ['days','hrs','mins','secs'].forEach(k => {
+      const str = pad(t[k])
+      const el = document.getElementById(`sn-${k}`)
+      if (!el || snPrev[k]===str) return
+      snPrev[k] = str
+      el.textContent = str
+      el.classList.remove('change'); void el.offsetWidth; el.classList.add('change')
+    })
+  }
+
+  // Extend master tick
+  const origTick = tick
+  function tickAll() {
+    origTick()
+    const t = getTime()
+    updateI(t); updateJ(t); updateK(t); updateL(t); updateM(t); updateN(t)
+  }
+  tickAll()
+  // Replace interval — clear old, start new
+  clearInterval(window._tickInterval)
+  window._tickInterval = setInterval(tickAll, 1000)
+
+  function pick(id, name) {
+    const toast = document.getElementById('toast')
+    toast.textContent = `✓ Design ${id} — ${name} selected! Tell Claude to apply it.`
+    toast.style.opacity='1'; toast.style.transform='translateX(-50%) translateY(0)'
+    setTimeout(()=>{ toast.style.opacity='0'; toast.style.transform='translateX(-50%) translateY(80px)' },3500)
+  }
+</script>
+</body>
+</html>

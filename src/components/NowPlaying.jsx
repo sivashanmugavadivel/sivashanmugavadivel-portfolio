@@ -165,15 +165,19 @@ function loadYTScript() {
   })
 }
 
-const { songs, playlistLabel, playlistUrl } = cfg.music
+// Songs with `"enabled": false` in config are skipped (the JSON way to "comment out" a song)
+const songs = (cfg.music.songs || []).filter(s => s.enabled !== false)
+const { playlistLabel, playlistUrl } = cfg.music
 
 // ── Main export — Waveform Hero design ──
 export default function NowPlaying() {
+  // No enabled songs → render nothing (handled together with the section in Home)
+  if (songs.length === 0) return null
+
   const ref = useRef(null)
   const inView = useInView(ref, { once: false, margin: '-80px' })
   const [activeIndex, setActiveIndex] = useState(0)
   const [showHint, setShowHint] = useState(false)
-  const hintShownRef = useRef(false)
 
   // Per-song player refs
   const containerRefs = useRef(songs.map(() => null))
@@ -195,20 +199,20 @@ export default function NowPlaying() {
   const thumb = videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : null
   const highlights = song.highlights || []
 
-  // Show hint toast only after SmartToast is done (loading 4s + welcome 6s + thought 10s = 20s)
-  const pageLoadTime = useRef(Date.now())
+  // Show the hint a moment after the music section scrolls into view — every time.
+  // Hides when the section leaves view, so re-entering re-triggers it.
   useEffect(() => {
-    if (inView && !hintShownRef.current) {
-      hintShownRef.current = true
-      const elapsed = Date.now() - pageLoadTime.current
-      const delay = Math.max(0, 21000 - elapsed)
-      const t1 = setTimeout(() => {
-        setShowHint(true)
-        setTimeout(() => setShowHint(false), 6500)
-      }, delay)
-      return () => clearTimeout(t1)
-    }
+    if (!inView) { setShowHint(false); return }
+    const showT = setTimeout(() => setShowHint(true), 1500)
+    return () => clearTimeout(showT)
   }, [inView])
+
+  // Auto-hide the hint after it has been visible for a bit
+  useEffect(() => {
+    if (!showHint) return
+    const hideT = setTimeout(() => setShowHint(false), 6500)
+    return () => clearTimeout(hideT)
+  }, [showHint])
 
   // Init all YT players
   useEffect(() => {
