@@ -11,7 +11,9 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  # Let in-progress Pages deployments finish — cancelling mid-sync causes
+  # "Deployment failed, try again later" (GitHub's recommended setting).
+  cancel-in-progress: false
 
 jobs:
   build:
