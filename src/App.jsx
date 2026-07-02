@@ -11,6 +11,7 @@ import CustomCursor from './components/CustomCursor'
 import WordIntro from './components/WordIntro'
 import LoadingScreen from './components/LoadingScreen'
 import BackToTop from './components/BackToTop'
+import SocialFAB from './components/SocialFAB'
 import Navbar from './components/layout/Navbar'
 import Footer from './components/layout/Footer'
 import PageWrapper from './components/layout/PageWrapper'
@@ -72,12 +73,16 @@ function AppRoutes() {
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:slug" element={<BlogPost />} />
 
-          {/* Public garage route — always the Coming Soon page */}
-          <Route path="/garage" element={<GarageComingSoon />} />
+          {/* /garage → real garage in dev, Coming Soon on the live/built site */}
+          <Route
+            path="/garage"
+            element={import.meta.env.DEV ? <DEV_GARAGE.Original /> : <GarageComingSoon />}
+          />
 
           {/* Garage design variants — only registered in local dev */}
           {DEV_GARAGE && (
             <>
+              <Route path="/garage/coming-soon" element={<GarageComingSoon />} />
               <Route path="/garage/v1" element={<DEV_GARAGE.Original />} />
               <Route path="/garage/new" element={<DEV_GARAGE.New />} />
               <Route path="/garage/premium" element={<DEV_GARAGE.Premium />} />
@@ -143,7 +148,7 @@ export default function App() {
               style={{
                 position: 'fixed',
                 right: -5,
-                top: '50%',
+                top: '42%',
                 transform: 'translateX(55%) translateY(-50%)',
                 zIndex: 90,
                 background: 'none',
@@ -164,6 +169,7 @@ export default function App() {
           {location.pathname === '/' && <SmartToast />}
           <EasterEgg />
           <BackToTop />
+          <SocialFAB />
         </>
       )}
     </>
