@@ -239,6 +239,52 @@
       }
     ]
   },
+  "travel": {
+    "label": "Journeys",
+    "heading": "Where the Road Has Taken Me",
+    "subtext": "Arcs trace every place I've traveled — from my hometown out into the world.",
+    "home": "Kangeyam",
+    "places": {
+      "Kangeyam":     { "coords": [77.56, 10.94],    "label": "Kangeyam" },
+      "Chennai":      { "coords": [80.2707, 13.0827], "label": "Chennai" },
+      "Coimbatore":   { "coords": [76.9558, 11.0168], "label": "Coimbatore" },
+      "Mumbai":       { "coords": [72.8777, 19.076],  "label": "Mumbai" },
+      "Delhi":        { "coords": [77.209, 28.6139],  "label": "Delhi" },
+      "Dubai":        { "coords": [55.2708, 25.2048], "label": "Dubai" },
+      "Frankfurt":    { "coords": [8.6821, 50.1109],  "label": "Frankfurt" },
+      "London":       { "coords": [-0.4543, 51.47],   "label": "London (Heathrow)" },
+      "Chicago":      { "coords": [-87.6298, 41.8781],"label": "Chicago" },
+      "Mount Vernon": { "coords": [-88.9031, 38.3173],"label": "Mount Vernon, IL" }
+    },
+    "routes": [
+      { "label": "India → USA · via Dubai", "legs": [
+        { "from": "Kangeyam", "to": "Chennai", "mode": "bus" },
+        { "from": "Chennai", "to": "Dubai", "mode": "flight" },
+        { "from": "Dubai", "to": "Chicago", "mode": "flight" },
+        { "from": "Chicago", "to": "Mount Vernon", "mode": "train" }
+      ] },
+      { "label": "India → USA · via Frankfurt", "legs": [
+        { "from": "Kangeyam", "to": "Chennai", "mode": "bus" },
+        { "from": "Chennai", "to": "Frankfurt", "mode": "flight" },
+        { "from": "Frankfurt", "to": "Chicago", "mode": "flight" },
+        { "from": "Chicago", "to": "Mount Vernon", "mode": "train" }
+      ] },
+      { "label": "India → USA · via London", "legs": [
+        { "from": "Kangeyam", "to": "Chennai", "mode": "bus" },
+        { "from": "Chennai", "to": "London", "mode": "flight" },
+        { "from": "London", "to": "Chicago", "mode": "flight" },
+        { "from": "Chicago", "to": "Mount Vernon", "mode": "train" }
+      ] },
+      { "label": "Delhi → Home", "legs": [
+        { "from": "Delhi", "to": "Chennai", "mode": "flight" },
+        { "from": "Chennai", "to": "Coimbatore", "mode": "flight" },
+        { "from": "Coimbatore", "to": "Kangeyam", "mode": "car" }
+      ] },
+      { "label": "Chennai → Mumbai", "legs": [
+        { "from": "Chennai", "to": "Mumbai", "mode": "flight" }
+      ] }
+    ]
+  },
   "visitedCountries": [
     "356",
     "840"

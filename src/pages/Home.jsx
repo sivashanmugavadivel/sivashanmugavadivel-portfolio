@@ -7,6 +7,7 @@ import Button from '../components/ui/Button'
 import PlacesMapV1 from '../components/PlacesMapV1'
 import PlacesMapV2 from '../components/PlacesMapV2'
 import NowPlaying from '../components/NowPlaying'
+import WorldMapArc from '../components/WorldMapArc'
 import ScrollTextReveal from '../components/ScrollTextReveal'
 import FAQSection from '../components/FAQSection'
 
@@ -742,6 +743,31 @@ function TickerRow({ items, direction = 'left', speed = 18, dim = false }) {
   )
 }
 
+function WorldMapArcSection() {
+  const T = cfg.travel
+  if (!T) return null
+  return (
+    <section className="section" style={{ background: 'var(--bg)' }}>
+      <div className="page-container">
+        <SectionHeading label={T.label || 'Journeys'} title={T.heading || 'Where the Road Has Taken Me'} />
+        {T.subtext && (
+          <Reveal delay={0.15}>
+            <p style={{ textAlign: 'center', color: 'var(--text)', opacity: 0.65, fontSize: '0.95rem', marginTop: -8, marginBottom: 32 }}>
+              {T.subtext}
+            </p>
+          </Reveal>
+        )}
+      </div>
+      {/* Wider than the text column so the map fills the page */}
+      <div style={{ maxWidth: 1500, margin: '0 auto', padding: '0 clamp(12px, 3vw, 28px)' }}>
+        <Reveal delay={0.2}>
+          <WorldMapArc />
+        </Reveal>
+      </div>
+    </section>
+  )
+}
+
 function PlacesMapSection() {
   return (
     <section className="section">
@@ -893,6 +919,7 @@ export default function Home() {
       <FeaturedPostsSection />
       <FeaturedVideosSection />
       <NowPlayingSection />
+      <WorldMapArcSection />
       <PlacesMapSection />
       <SocialSection />
       <FAQSection />
