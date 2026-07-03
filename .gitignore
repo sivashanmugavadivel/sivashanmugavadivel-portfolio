@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local originals of compressed video previews (not deployed)
+public/video-previews/_orig/
