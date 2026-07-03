@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect, useMemo } from 'react'
+import { useInView } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 
 /*
@@ -20,6 +21,8 @@ export default function SphereGridGallery({ images, to = '/gallery' }) {
   const navigate = useNavigate()
   const outerRef = useRef(null)
   const sphereRef = useRef(null)
+  // Only load the tiles (thumbnails) once the sphere is near the viewport.
+  const inView = useInView(outerRef, { once: true, margin: '250px' })
   const anim = useRef({ rot: 0, tilt: -8, velX: 0, velY: 0, dragging: false, lastX: 0, lastY: 0, moved: 0, onTile: false })
   const [scale, setScale] = useState(1)
 
@@ -110,7 +113,7 @@ export default function SphereGridGallery({ images, to = '/gallery' }) {
       <div style={{ width: DB, height: DB, transform: `scale(${scale})`, position: 'relative' }}>
         <div style={{ position: 'absolute', inset: 0, perspective: 1300 }}>
           <div ref={sphereRef} style={{ position: 'absolute', inset: 0, transformStyle: 'preserve-3d' }}>
-            {tiles.map((t, i) => (
+            {inView && tiles.map((t, i) => (
               <div
                 key={i}
                 data-si={t.idx}

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, useScroll, useTransform, useInView, useAnimation } from 'framer-motion'
 import { loadAllPosts } from '../hooks/usePosts'
 import cfg from '../data/config.json'
-import VideoCard from '../components/video/VideoCard'
+import VideoArc from '../components/VideoArc'
 import Button from '../components/ui/Button'
 import PeepingEyesButton from '../components/ui/PeepingEyesButton'
 import PlacesMapV1 from '../components/PlacesMapV1'
@@ -14,8 +14,9 @@ import FAQSection from '../components/FAQSection'
 import SphereGridGallery from '../components/SphereGridGallery'
 import galleryData from '../data/gallery.json'
 
-// Lightweight, evenly-sampled set of gallery photos for the home-page sphere
-// (a handful of unique images cycled across the tiles → small download).
+// Lightweight, evenly-sampled set of gallery photos for the home-page sphere.
+// Uses the small pre-generated thumbnails (public/gallery-thumbs, ~20-30 KB each)
+// instead of the multi-MB originals, so it loads fast and lag-free.
 const SPHERE_IMAGES = (() => {
   const BASE = import.meta.env.BASE_URL
   const MAX = 20
@@ -23,7 +24,10 @@ const SPHERE_IMAGES = (() => {
   return galleryData
     .filter((_, i) => i % stepN === 0)
     .slice(0, MAX)
-    .map(it => ({ src: `${BASE}gallery/${it.category}/${it.filename}`, alt: it.caption }))
+    .map(it => ({
+      src: `${BASE}gallery-thumbs/${it.category}/${it.filename.replace(/\.(png|webp)$/i, '.jpg')}`,
+      alt: it.caption,
+    }))
 })()
 
 /* ── Reusable scroll-reveal wrapper ── */
@@ -494,30 +498,43 @@ function NowPlayingSection() {
 }
 
 /* ── Featured Videos Section ── */
+// Videos for the rotating arc. Add a `preview` (path to a short muted clip,
+// e.g. "video-previews/xyz.mp4") to any video in config to play a real sample.
+// Until then, these placeholder sample clips are cycled across the cards
+// (swap the files in public/video-previews or set per-video `preview`).
+const SAMPLE_PREVIEWS = ['video-previews/sample1.mp4', 'video-previews/sample2.mp4', 'video-previews/sample3.mp4']
+const ARC_VIDEOS = (() => {
+  const BASE = import.meta.env.BASE_URL
+  const resolve = (p) => (p.startsWith('http') ? p : `${BASE}${p}`)
+  // Every video that has a preview clip — shown once each, in config order.
+  const withPreview = (cfg.videos || []).filter(v => v.preview)
+  if (withPreview.length) {
+    return withPreview.map(v => ({ url: v.id, title: v.title, preview: resolve(v.preview) }))
+  }
+  // Fallback (no previews set yet): first few videos with placeholder samples.
+  return (cfg.videos || [])
+    .filter(v => v.type === 'video')
+    .slice(0, 6)
+    .map((v, i) => ({ url: v.id, title: v.title, preview: `${BASE}${SAMPLE_PREVIEWS[i % SAMPLE_PREVIEWS.length]}` }))
+})()
+
 function FeaturedVideosSection() {
-  const featured = (cfg.videos || []).filter(v => v.type === 'video').slice(0, 1)
+  if (ARC_VIDEOS.length === 0) return null
 
   return (
-    <section className="section" style={{ background: 'var(--bg-secondary)' }}>
+    <section className="section" style={{ background: 'var(--bg-secondary)', overflow: 'hidden' }}>
       <div className="page-container">
         <SectionHeading label="Videos" title="Watch" />
+      </div>
 
-        <motion.div
-          variants={cardContainerVariants}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: false, margin: '-60px' }}
-          style={{ maxWidth: 600, margin: '0 auto' }}
-        >
-          {featured.map(video => (
-            <motion.div key={video.id} variants={cardVariants}>
-              <VideoCard video={video} />
-            </motion.div>
-          ))}
-        </motion.div>
+      {/* Rotating half-circle of video previews — drag to spin, click to watch */}
+      <Reveal delay={0.15}>
+        <VideoArc videos={ARC_VIDEOS} to="/videos" />
+      </Reveal>
 
+      <div className="page-container">
         <Reveal delay={0.3}>
-          <div style={{ textAlign: 'center', marginTop: 40 }}>
+          <div style={{ textAlign: 'center', marginTop: 16 }}>
             <Button to="/videos" variant="outline">All Videos →</Button>
           </div>
         </Reveal>

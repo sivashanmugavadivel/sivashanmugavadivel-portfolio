@@ -513,6 +513,7 @@
   "videos": [
     {
       "id": "https://youtu.be/frQfwiFEvhQ?si=RIA3bbiAO-_He3oS",
+      "preview": "video-previews/chicago_river.mp4",
       "title": "Samsung Galaxy S25 Ultra (Jet Black - 512GB) & Watch 7 (44mm) Unboxing || First Impression || தமிழ்",
       "description": "🚀 The wait is over! Join me as I unbox the brand-new Samsung Galaxy S25 Ultra and Samsung Watch 7 (44mm).",
       "type": "video",
@@ -523,6 +524,7 @@
     },
     {
       "id": "https://youtu.be/IkPYALPXvKU?si=suDU6XG4Q-ZroSPe",
+      "preview": "video-previews/chicago_trip.mp4",
       "title": "Samsung galaxy S23 Ultra Unboxing | First Look | 256GB | Black | Tamil",
       "description": "🚀 First look at the Samsung Galaxy S23 Ultra 256GB — sleek design, flagship features, and everything inside the box.",
       "type": "video",
@@ -533,6 +535,7 @@
     },
     {
       "id": "https://youtu.be/D2RHDnm8_IY?si=E-_pqQy2R-SWUUqm",
+      "preview": "video-previews/chicago_ovr.mp4",
       "title": "KCBT || Kelambakkam Bus Terminal || Kalaignar Centenary Bus Terminat - KCBT || Chennai",
       "description": "Exploring the KCBT bus terminal in Chennai.",
       "type": "video",
@@ -543,6 +546,7 @@
     },
     {
       "id": "https://youtube.com/shorts/1PVaLLKoGno?si=MkaWbNZadIJPrSn4",
+      "preview": "video-previews/kandhalur.mp4",
       "title": "USA Snowfall",
       "description": "#USA #travel #vlogs #snowfall.",
       "type": "short",
@@ -555,6 +559,7 @@
     },
     {
       "id": "https://youtube.com/shorts/WKe2f3h_LRs?si=TrZHEt9XWvoxX7jG",
+      "preview": "video-previews/recap.mp4",
       "title": "Valentine’s Day for Singles",
       "description": "Valentine’s Day😂 for Single boys be like | Tamil Shorts.",
       "type": "short",
@@ -566,6 +571,7 @@
     },
     {
       "id": "https://youtube.com/shorts/OLWjM8pfr-Y?si=aRflR_r-uCxhqYek",
+      "preview": "video-previews/trip1.mp4",
       "title": "Walmart Shopping",
       "description": "USA #walmart #shopping #mountvernon #Illinois.",
       "type": "short",
@@ -577,6 +583,7 @@
     },
     {
       "id": "https://youtube.com/shorts/_NPbSD7dZBE?si=PYVwuZnvZgz67__S",
+      "preview": "video-previews/yarcadu.mp4",
       "title": "Kumbhabhishekam",
       "description": "Arulmigu Shri Kariyakali Amman Kumbhabhishekam #maniyankulam.",
       "type": "short",

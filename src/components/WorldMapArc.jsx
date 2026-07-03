@@ -121,12 +121,22 @@ export default function WorldMapArc() {
   const [playId, setPlayId] = useState(0)      // bumps each time the section enters view → replays once
   const [settingsOpen, setSettingsOpen] = useState(false) // settings live behind a gear button
   const [fullscreen, setFullscreen] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const rootRef = useRef(null)
   const mapRef = useRef(null)
   const posRef = useRef({ x: 0, y: 0 })        // cursor pos in a ref → no re-render on mouse move
   const tipRef = useRef(null)
   const inView = useInView(mapRef, { amount: 0.3 })
   useEffect(() => { if (inView) setPlayId(p => p + 1) }, [inView])
+
+  // Mobile-only tweaks (settings panel sizing) — desktop stays untouched.
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)')
+    const apply = () => setIsMobile(mq.matches)
+    apply()
+    mq.addEventListener('change', apply)
+    return () => mq.removeEventListener('change', apply)
+  }, [])
 
   // Move the tooltip by writing to the DOM directly (avoids re-rendering the map on every move)
   const onMapMove = (e) => {
@@ -257,11 +267,14 @@ export default function WorldMapArc() {
         transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
         style={{
         position: 'absolute', top: 60, left: 14, zIndex: 21,
-        display: 'flex', flexDirection: 'column', gap: 9, width: 'max-content',
+        display: 'flex', flexDirection: 'column', gap: isMobile ? 7 : 9, width: 'max-content',
         maxWidth: 'calc(100% - 28px)', transformOrigin: 'top left',
         background: panelBg, backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
-        border: `1px solid ${panelBorder}`, borderRadius: 14, padding: '11px 13px',
+        border: `1px solid ${panelBorder}`, borderRadius: 14, padding: isMobile ? '9px 11px' : '11px 13px',
         boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+        // On mobile the map is short — cap the panel height and let it scroll so
+        // every control (View, Pin, Style…) stays reachable.
+        ...(isMobile ? { maxHeight: 'calc(100% - 74px)', overflowY: 'auto' } : {}),
       }}>
         <CtrlGroup label="Dark" dark={dark}>
           <button onClick={() => setDark(d => !d)} aria-label="Toggle dark" style={{

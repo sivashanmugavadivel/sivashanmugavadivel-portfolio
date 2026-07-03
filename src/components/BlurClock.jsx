@@ -27,9 +27,18 @@ function Digit({ char }) {
 
 export default function BlurClock({ timeZone = 'Asia/Kolkata' }) {
   const [now, setNow] = useState(() => new Date())
+  const [isMobile, setIsMobile] = useState(false)
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000)
     return () => clearInterval(id)
+  }, [])
+  // Mobile-only: smaller clock so the full time + AM/PM clears the avatar GIF.
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)')
+    const apply = () => setIsMobile(mq.matches)
+    apply()
+    mq.addEventListener('change', apply)
+    return () => mq.removeEventListener('change', apply)
   }, [])
 
   const str = now.toLocaleTimeString('en-US', {
@@ -38,15 +47,15 @@ export default function BlurClock({ timeZone = 'Asia/Kolkata' }) {
   const [clock, period] = str.split(' ') // "03:24:15", "PM"
 
   return (
-    <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: 6, color: 'var(--text-h)', fontVariantNumeric: 'tabular-nums' }}>
-      <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: '1.6rem', fontWeight: 800, letterSpacing: '0.01em' }}>
+    <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: isMobile ? 5 : 6, color: 'var(--text-h)', fontVariantNumeric: 'tabular-nums' }}>
+      <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: isMobile ? '1.25rem' : '1.6rem', fontWeight: 800, letterSpacing: '0.01em' }}>
         {clock.split('').map((ch, i) =>
           ch === ':'
             ? <span key={i} style={{ padding: '0 1px', opacity: 0.45 }}>:</span>
             : <Digit key={i} char={ch} />
         )}
       </span>
-      {period && <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text)', opacity: 0.7 }}>{period}</span>}
+      {period && <span style={{ fontSize: isMobile ? '0.66rem' : '0.72rem', fontWeight: 700, color: 'var(--text)', opacity: 0.7, flexShrink: 0 }}>{period}</span>}
     </div>
   )
 }
