@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { useInView } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 
@@ -25,6 +25,16 @@ export default function VideoArc({ videos, to = '/videos' }) {
   const inView = useInView(stageRef, { margin: '150px' })
   const N = videos.length
 
+  // Mobile: no drag (so vertical page scroll works), wider spacing + smaller cards.
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)')
+    const apply = () => setIsMobile(mq.matches)
+    apply()
+    mq.addEventListener('change', apply)
+    return () => mq.removeEventListener('change', apply)
+  }, [])
+
   useEffect(() => {
     const measure = () => {
       const el = stageRef.current
@@ -33,8 +43,9 @@ export default function VideoArc({ videos, to = '/videos' }) {
       const s = anim.current
       s.cx = r.width / 2
       s.halfW = r.width / 2
-      // Spread cards across the FULL width (no upper cap) → ~5 span corner-to-corner.
-      s.spacing = Math.max(r.width * 0.2, 150)
+      // Desktop: spread across the full width (~5 cards). Mobile: fewer, wider
+      // apart so they don't overlap on the narrow screen.
+      s.spacing = isMobile ? r.width * 0.6 : Math.max(r.width * 0.2, 150)
       s.arcR = r.width * 1.05                      // circle radius → clean, shallow arch
       const cardH = cardRefs.current[0]?.offsetHeight || 250
       s.topY = cardH * 0.5 + 14                    // centre card just below the heading
@@ -42,13 +53,14 @@ export default function VideoArc({ videos, to = '/videos' }) {
     measure()
     window.addEventListener('resize', measure)
     return () => window.removeEventListener('resize', measure)
-  }, [])
+  }, [isMobile])
 
   useEffect(() => {
     const s = anim.current
+    const speed = isMobile ? 0.9 : 1.4   // gentler auto-spin on mobile
     let raf
     const frame = () => {
-      if (!s.dragging) { s.rot += 1.4 + s.vel; s.vel *= 0.95 }
+      if (!s.dragging) { s.rot += speed + s.vel; s.vel *= 0.95 }
       const span = N * s.spacing
       const R = s.arcR
       for (let i = 0; i < N; i++) {
@@ -78,7 +90,7 @@ export default function VideoArc({ videos, to = '/videos' }) {
     }
     raf = requestAnimationFrame(frame)
     return () => cancelAnimationFrame(raf)
-  }, [N, inView])
+  }, [N, inView, isMobile])
 
   const onDown = (e) => {
     const s = anim.current
@@ -107,13 +119,16 @@ export default function VideoArc({ videos, to = '/videos' }) {
   return (
     <div
       ref={stageRef}
-      onPointerDown={onDown}
-      onPointerMove={onMove}
-      onPointerUp={onUp}
-      onPointerCancel={onUp}
+      onPointerDown={isMobile ? undefined : onDown}
+      onPointerMove={isMobile ? undefined : onMove}
+      onPointerUp={isMobile ? undefined : onUp}
+      onPointerCancel={isMobile ? undefined : onUp}
       style={{
         position: 'relative', width: '100%', height: 'clamp(400px, 46vw, 560px)',
-        overflow: 'hidden', touchAction: 'none', cursor: 'grab',
+        overflow: 'hidden',
+        // Mobile: allow the page to scroll vertically through the arc (no drag).
+        touchAction: isMobile ? 'pan-y' : 'none',
+        cursor: isMobile ? 'default' : 'grab',
         userSelect: 'none', WebkitUserSelect: 'none',
       }}
     >
@@ -124,9 +139,10 @@ export default function VideoArc({ videos, to = '/videos' }) {
             key={i}
             data-vi={i}
             ref={(el) => (cardRefs.current[i] = el)}
+            onClick={isMobile ? () => navigate(to) : undefined}
             style={{
               position: 'absolute', left: 0, top: 0,
-              width: 'clamp(150px, 16vw, 210px)', aspectRatio: '3 / 4.4',
+              width: isMobile ? 'clamp(140px, 42vw, 180px)' : 'clamp(150px, 16vw, 210px)', aspectRatio: '3 / 4.4',
               borderRadius: 18, overflow: 'hidden', cursor: 'pointer',
               boxShadow: '0 24px 55px rgba(0,0,0,0.5)', willChange: 'transform',
               background: '#111',
