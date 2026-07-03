@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import cfg from '../data/config.json'
 import { useConfetti } from '../hooks/useConfetti'
+import DateBadge from '../components/DateBadge'
+import BlurClock from '../components/BlurClock'
 
 /* ── Animated form field ── */
 function Field({ label, id, type = 'text', value, onChange, required, multiline }) {
@@ -336,6 +338,18 @@ export default function Contact() {
                 <span style={{ color: 'var(--text-h)', fontSize: '0.9rem', fontWeight: 500 }}>{value}</span>
               </div>
             ))}
+
+            {/* Today's date — my local time */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 8, flexWrap: 'wrap' }}>
+              <DateBadge timeZone="Asia/Kolkata" />
+              <div>
+                <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text)' }}>My local time</div>
+                <div style={{ marginTop: 6, marginBottom: 4 }}>
+                  <BlurClock timeZone="Asia/Kolkata" />
+                </div>
+                <div style={{ color: 'var(--text-h)', fontSize: '0.85rem', fontWeight: 500 }}>{cfg.contact.timezone}</div>
+              </div>
+            </div>
 
           </div>
         </motion.div>

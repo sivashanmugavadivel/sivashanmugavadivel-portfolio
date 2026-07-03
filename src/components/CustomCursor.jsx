@@ -1,142 +1,63 @@
 import { useEffect, useRef, useState } from 'react'
 
 export default function CustomCursor() {
-  const canvasRef = useRef(null)
-  const particles = useRef([])
-  const mouse = useRef({ x: -100, y: -100, px: -100, py: -100 })
-  const hovering = useRef(false)
-  const clicking = useRef(false)
+  const wrapRef = useRef(null)
+  const bodyRef = useRef(null)
+  // target = live mouse, pos = eased butterfly position
+  const target = useRef({ x: -100, y: -100 })
+  const pos = useRef({ x: -100, y: -100 })
+  const angle = useRef(0)
+  const flap = useRef(0)      // 0..1 flap phase
+  const flapSpeed = useRef(0.15)
   const [hidden, setHidden] = useState(false)
 
   useEffect(() => {
     if ('ontouchstart' in window) { setHidden(true); return }
 
-    const cvs = canvasRef.current
-    if (!cvs) return
-    const ctx = cvs.getContext('2d')
-
-    function resize() {
-      cvs.width = window.innerWidth
-      cvs.height = window.innerHeight
-    }
-    resize()
-    window.addEventListener('resize', resize)
-
     const move = (e) => {
-      mouse.current.px = mouse.current.x
-      mouse.current.py = mouse.current.y
-      mouse.current.x = e.clientX
-      mouse.current.y = e.clientY
+      target.current.x = e.clientX
+      target.current.y = e.clientY
     }
-
-    const down = () => { clicking.current = true }
-    const up = () => { clicking.current = false }
-
-    const over = (e) => {
-      const t = e.target
-      if (
-        t.closest('a') || t.closest('button') || t.closest('[role="button"]') ||
-        t.closest('input') || t.closest('textarea') ||
-        window.getComputedStyle(t).cursor === 'pointer'
-      ) hovering.current = true
-    }
-    const out = () => { hovering.current = false }
-
     window.addEventListener('mousemove', move)
-    window.addEventListener('mousedown', down)
-    window.addEventListener('mouseup', up)
-    document.addEventListener('mouseover', over)
-    document.addEventListener('mouseout', out)
 
     let raf
     function loop() {
-      const { x, y, px, py } = mouse.current
-      const dx = x - px, dy = y - py
+      const t = target.current
+      const p = pos.current
+
+      // Ease toward the cursor (subtle trailing float)
+      const dx = t.x - p.x
+      const dy = t.y - p.y
+      p.x += dx * 0.28
+      p.y += dy * 0.28
+
       const speed = Math.sqrt(dx * dx + dy * dy)
 
-      // Spawn particles based on speed
-      if (speed > 2) {
-        const count = Math.min(4, Math.floor(speed / 4))
-        for (let i = 0; i < count; i++) {
-          particles.current.push({
-            x: x + (Math.random() - 0.5) * 8,
-            y: y + (Math.random() - 0.5) * 8,
-            r: 1.5 + Math.random() * 2.5,
-            life: 1,
-            decay: 0.02 + Math.random() * 0.02,
-            vx: (Math.random() - 0.5) * 0.6,
-            vy: (Math.random() - 0.5) * 0.6,
-          })
-        }
+      // Tilt toward direction of travel; ease back upright when still
+      if (speed > 0.5) {
+        // butterfly SVG points "up", so offset by 90deg
+        const targetAngle = Math.atan2(dy, dx) * (180 / Math.PI) + 90
+        let diff = targetAngle - angle.current
+        while (diff > 180) diff -= 360
+        while (diff < -180) diff += 360
+        angle.current += diff * 0.12
       }
 
-      // Click burst
-      if (clicking.current && Math.random() > 0.7) {
-        for (let i = 0; i < 3; i++) {
-          const angle = Math.random() * Math.PI * 2
-          particles.current.push({
-            x, y,
-            r: 2 + Math.random() * 2,
-            life: 1,
-            decay: 0.03 + Math.random() * 0.02,
-            vx: Math.cos(angle) * (1 + Math.random()),
-            vy: Math.sin(angle) * (1 + Math.random()),
-          })
-        }
+      // Flap faster when moving, gentle idle flutter when still
+      flapSpeed.current = 0.12 + Math.min(speed, 40) * 0.012
+      flap.current += flapSpeed.current
+      // wing fold factor: 0.15 (nearly closed) .. 1 (open)
+      const fold = 0.15 + (Math.sin(flap.current) * 0.5 + 0.5) * 0.85
+
+      const wrap = wrapRef.current
+      const body = bodyRef.current
+      if (wrap) {
+        wrap.style.transform =
+          `translate(${p.x}px, ${p.y}px) translate(-50%, -50%) rotate(${angle.current}deg)`
       }
-
-      mouse.current.px = x
-      mouse.current.py = y
-
-      // Draw
-      ctx.clearRect(0, 0, cvs.width, cvs.height)
-
-      // Particles
-      const ps = particles.current
-      for (let i = ps.length - 1; i >= 0; i--) {
-        const p = ps[i]
-        p.x += p.vx; p.y += p.vy
-        p.life -= p.decay
-        if (p.life <= 0) { ps.splice(i, 1); continue }
-
-        // Glow
-        ctx.save()
-        ctx.globalAlpha = p.life * 0.4
-        const grd = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 3)
-        grd.addColorStop(0, 'rgba(167,139,250,0.8)')
-        grd.addColorStop(1, 'transparent')
-        ctx.fillStyle = grd
-        ctx.beginPath(); ctx.arc(p.x, p.y, p.r * 3, 0, Math.PI * 2); ctx.fill()
-        ctx.restore()
-
-        // Core
-        ctx.beginPath()
-        ctx.arc(p.x, p.y, p.r * p.life, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(167,139,250,${p.life * 0.85})`
-        ctx.fill()
+      if (body) {
+        body.style.setProperty('--fold', fold.toFixed(3))
       }
-
-      // Main cursor dot
-      const dotR = hovering.current ? 7 : clicking.current ? 3 : 5
-      // Outer glow
-      ctx.save()
-      ctx.globalAlpha = 0.35
-      const g = ctx.createRadialGradient(x, y, 0, x, y, dotR * 3)
-      g.addColorStop(0, 'rgba(167,139,250,0.8)')
-      g.addColorStop(1, 'transparent')
-      ctx.fillStyle = g
-      ctx.beginPath(); ctx.arc(x, y, dotR * 3, 0, Math.PI * 2); ctx.fill()
-      ctx.restore()
-      // Dot
-      ctx.beginPath()
-      ctx.arc(x, y, dotR, 0, Math.PI * 2)
-      ctx.fillStyle = 'rgba(167,139,250,0.9)'
-      ctx.fill()
-      // White inner
-      ctx.beginPath()
-      ctx.arc(x, y, dotR * 0.35, 0, Math.PI * 2)
-      ctx.fillStyle = 'rgba(255,255,255,0.7)'
-      ctx.fill()
 
       raf = requestAnimationFrame(loop)
     }
@@ -145,11 +66,6 @@ export default function CustomCursor() {
     return () => {
       cancelAnimationFrame(raf)
       window.removeEventListener('mousemove', move)
-      window.removeEventListener('mousedown', down)
-      window.removeEventListener('mouseup', up)
-      document.removeEventListener('mouseover', over)
-      document.removeEventListener('mouseout', out)
-      window.removeEventListener('resize', resize)
     }
   }, [])
 
@@ -158,14 +74,69 @@ export default function CustomCursor() {
   return (
     <>
       <style>{`*, *::before, *::after { cursor: none !important; }`}</style>
-      <canvas
-        ref={canvasRef}
+      <div
+        ref={wrapRef}
         style={{
-          position: 'fixed', inset: 0,
+          position: 'fixed',
+          left: 0,
+          top: 0,
+          width: 34,
+          height: 34,
           pointerEvents: 'none',
           zIndex: 99999,
+          willChange: 'transform',
         }}
-      />
+      >
+        <div
+          ref={bodyRef}
+          style={{
+            width: '100%',
+            height: '100%',
+            filter: 'drop-shadow(0 0 6px rgba(56,189,248,0.55))',
+          }}
+        >
+          <svg viewBox="0 0 100 100" width="34" height="34">
+            <defs>
+              <linearGradient id="bfWing" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#bae6fd" />
+                <stop offset="100%" stopColor="#0284c7" />
+              </linearGradient>
+            </defs>
+            {/* Left wing pair — scaled horizontally by --fold to flap */}
+            <g style={{ transformOrigin: '50px 50px', transform: 'scaleX(var(--fold, 1))' }}>
+              <path
+                d="M50 50 C 20 20, 5 30, 12 48 C 5 55, 22 60, 50 52 Z"
+                fill="url(#bfWing)"
+                opacity="0.95"
+              />
+              <path
+                d="M50 52 C 24 58, 12 70, 24 82 C 34 88, 46 72, 50 58 Z"
+                fill="url(#bfWing)"
+                opacity="0.8"
+              />
+            </g>
+            {/* Right wing pair (mirror) */}
+            <g style={{ transformOrigin: '50px 50px', transform: 'scaleX(calc(var(--fold, 1) * -1))' }}>
+              <path
+                d="M50 50 C 20 20, 5 30, 12 48 C 5 55, 22 60, 50 52 Z"
+                fill="url(#bfWing)"
+                opacity="0.95"
+              />
+              <path
+                d="M50 52 C 24 58, 12 70, 24 82 C 34 88, 46 72, 50 58 Z"
+                fill="url(#bfWing)"
+                opacity="0.8"
+              />
+            </g>
+            {/* Body */}
+            <ellipse cx="50" cy="52" rx="2.6" ry="14" fill="#075985" />
+            <circle cx="50" cy="38" r="3.2" fill="#075985" />
+            {/* Antennae */}
+            <path d="M50 36 C 46 28, 42 26, 40 24" stroke="#075985" strokeWidth="1.4" fill="none" strokeLinecap="round" />
+            <path d="M50 36 C 54 28, 58 26, 60 24" stroke="#075985" strokeWidth="1.4" fill="none" strokeLinecap="round" />
+          </svg>
+        </div>
+      </div>
     </>
   )
 }

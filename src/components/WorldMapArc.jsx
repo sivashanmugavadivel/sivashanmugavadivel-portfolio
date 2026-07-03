@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { motion, useInView } from 'framer-motion'
+import { motion, AnimatePresence, useInView } from 'framer-motion'
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simple-maps'
 import cfg from '../data/config.json'
 
@@ -110,14 +110,18 @@ export default function WorldMapArc() {
 
   const [dark, setDark]   = useState(true)
   const [type, setType]   = useState('flat')   // dots | flat
-  const [anim, setAnim]   = useState('seq')     // seq | all
-  const [pin, setPin]     = useState('bracket') // bracket | dot
-  const [styleIdx, setStyleIdx] = useState(0)   // default blue (matches reference)
+  const anim = 'seq'                            // route arcs animate sequentially
+  const [view, setView]   = useState('route')  // route (arcs) | cities (visited pins)
+  const [pin, setPin]     = useState('pin') // bracket | dot | pin
+  const [styleIdx, setStyleIdx] = useState(6)   // default grey / monochrome
   const [hoverLeg, setHoverLeg]     = useState(null)
   const [hoverPlace, setHoverPlace] = useState(null)
   const [zoom, setZoom]     = useState(1)
   const [center, setCenter] = useState([0, 0])
   const [playId, setPlayId] = useState(0)      // bumps each time the section enters view → replays once
+  const [settingsOpen, setSettingsOpen] = useState(false) // settings live behind a gear button
+  const [fullscreen, setFullscreen] = useState(false)
+  const rootRef = useRef(null)
   const mapRef = useRef(null)
   const posRef = useRef({ x: 0, y: 0 })        // cursor pos in a ref → no re-render on mouse move
   const tipRef = useRef(null)
@@ -134,6 +138,30 @@ export default function WorldMapArc() {
   }
   const zoomBy = f => setZoom(z => Math.min(8, Math.max(1, z * f)))
   const resetView = () => { setZoom(1); setCenter([0, 0]) }
+
+  // Fullscreen — fills the screen; on mobile it also tries to lock to landscape
+  // so the wide map has room. Falls back gracefully where unsupported (e.g. iOS).
+  const enterFullscreen = async () => {
+    setFullscreen(true)
+    try { await rootRef.current?.requestFullscreen?.() } catch { /* CSS overlay fallback */ }
+    try { await window.screen?.orientation?.lock?.('landscape') } catch { /* not supported */ }
+  }
+  const exitFullscreen = async () => {
+    try { window.screen?.orientation?.unlock?.() } catch { /* noop */ }
+    try { if (document.fullscreenElement) await document.exitFullscreen?.() } catch { /* noop */ }
+    setFullscreen(false)
+  }
+  // Keep state in sync when the user leaves native fullscreen (Esc / system gesture).
+  useEffect(() => {
+    const onFs = () => { if (!document.fullscreenElement) setFullscreen(false) }
+    const onKey = (e) => { if (e.key === 'Escape') setFullscreen(false) }
+    document.addEventListener('fullscreenchange', onFs)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('fullscreenchange', onFs)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [])
 
   if (!T || !T.places || !T.home) return null
 
@@ -187,15 +215,50 @@ export default function WorldMapArc() {
   }
 
   return (
-    <div style={{
-      position: 'relative', borderRadius: 20, overflow: 'hidden',
-      background: bg, border: `1px solid ${dark ? 'rgba(139,92,246,0.18)' : 'rgba(0,0,0,0.08)'}`,
-      boxShadow: '0 24px 60px rgba(0,0,0,0.4)', transition: 'background 0.3s',
+    <div ref={rootRef} style={{
+      position: fullscreen ? 'fixed' : 'relative',
+      inset: fullscreen ? 0 : undefined,
+      zIndex: fullscreen ? 2000 : undefined,
+      display: fullscreen ? 'flex' : undefined,
+      alignItems: fullscreen ? 'center' : undefined,
+      justifyContent: fullscreen ? 'center' : undefined,
+      borderRadius: fullscreen ? 0 : 20, overflow: 'hidden',
+      background: bg,
+      border: fullscreen ? 'none' : `1px solid ${dark ? 'rgba(139,92,246,0.18)' : 'rgba(0,0,0,0.08)'}`,
+      boxShadow: fullscreen ? 'none' : '0 24px 60px rgba(0,0,0,0.4)', transition: 'background 0.3s',
     }}>
-      {/* ── Control panel — compact, anchored in the empty left area ── */}
-      <div style={{
-        position: 'absolute', top: 14, left: 14, zIndex: 20,
+      {/* ── Settings gear — click to open the control panel ── */}
+      <button
+        onClick={() => setSettingsOpen(o => !o)}
+        aria-label={settingsOpen ? 'Close map settings' : 'Open map settings'}
+        style={{
+          position: 'absolute', top: 14, left: 14, zIndex: 22,
+          width: 38, height: 38, borderRadius: 11, cursor: 'pointer',
+          border: `1px solid ${panelBorder}`, background: panelBg, color: dark ? '#fff' : '#111',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+        }}
+      >
+        {settingsOpen ? (
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        ) : (
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        )}
+      </button>
+
+      {/* ── Control panel — opens from the gear ── */}
+      <AnimatePresence>
+      {settingsOpen && (
+      <motion.div
+        initial={{ opacity: 0, y: -8, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: -8, scale: 0.96 }}
+        transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+        style={{
+        position: 'absolute', top: 60, left: 14, zIndex: 21,
         display: 'flex', flexDirection: 'column', gap: 9, width: 'max-content',
+        maxWidth: 'calc(100% - 28px)', transformOrigin: 'top left',
         background: panelBg, backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
         border: `1px solid ${panelBorder}`, borderRadius: 14, padding: '11px 13px',
         boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
@@ -217,14 +280,14 @@ export default function WorldMapArc() {
                options={[{ value: 'dots', label: 'Dots' }, { value: 'flat', label: 'Flat' }]} />
         </CtrlGroup>
         <div style={{ height: 1, width: '100%', background: divider }} />
-        <CtrlGroup label="Anim" dark={dark}>
-          <Seg dark={dark} value={anim} onChange={setAnim}
-               options={[{ value: 'seq', label: 'Seq' }, { value: 'all', label: 'All' }]} />
+        <CtrlGroup label="View" dark={dark}>
+          <Seg dark={dark} value={view} onChange={setView}
+               options={[{ value: 'route', label: 'Route' }, { value: 'cities', label: 'Cities' }]} />
         </CtrlGroup>
         <div style={{ height: 1, width: '100%', background: divider }} />
         <CtrlGroup label="Pin" dark={dark}>
           <Seg dark={dark} value={pin} onChange={setPin}
-               options={[{ value: 'bracket', label: '⌜⌟' }, { value: 'dot', label: '●' }]} />
+               options={[{ value: 'bracket', label: '⌜⌟' }, { value: 'dot', label: '●' }, { value: 'pin', label: '📍' }]} />
         </CtrlGroup>
         <div style={{ height: 1, width: '100%', background: divider }} />
         <CtrlGroup label="Style" dark={dark}>
@@ -238,15 +301,19 @@ export default function WorldMapArc() {
             ))}
           </div>
         </CtrlGroup>
-      </div>
+      </motion.div>
+      )}
+      </AnimatePresence>
 
       {/* ── Map ── */}
-      <div ref={mapRef} onMouseMove={onMapMove} style={{ position: 'relative' }}>
+      <div ref={mapRef} onMouseMove={onMapMove} style={{ position: 'relative', width: '100%', ...(fullscreen ? { display: 'flex', alignItems: 'center', justifyContent: 'center' } : {}) }}>
         <ComposableMap
           projection="geoEquirectangular"
           projectionConfig={{ scale: S, center: [0, 0] }}
           width={W} height={H}
-          style={{ width: '100%', height: 'auto', display: 'block' }}
+          style={fullscreen
+            ? { width: '100%', height: '100vh', display: 'block' }
+            : { width: '100%', height: 'auto', display: 'block' }}
         >
           <defs>
             <pattern id="wma-dots" width="6.4" height="6.4" patternUnits="userSpaceOnUse">
@@ -279,8 +346,9 @@ export default function WorldMapArc() {
             }
           </Geographies>
 
-          {/* Arcs + travelling transport icons.
+          {/* Arcs + travelling transport icons — Route view only.
               Keyed on `anim`+`playId` so it replays once each time the section enters view. */}
+          {view === 'route' && (
           <g key={`${anim}-${playId}`}>
             {/* Glowing route lines */}
             <g fill="none" filter="url(#wma-glow)">
@@ -330,8 +398,10 @@ export default function WorldMapArc() {
               })}
             </g>
           </g>
+          )}
 
-          {/* Arc hover hit-areas (invisible, thick) */}
+          {/* Arc hover hit-areas (invisible, thick) — Route view only */}
+          {view === 'route' && (
           <g fill="none" stroke="transparent" strokeWidth={12 * kz} style={{ pointerEvents: 'stroke' }}>
             {legs.map(leg => (
               <path key={leg.key} d={leg.d}
@@ -339,8 +409,10 @@ export default function WorldMapArc() {
                 onMouseLeave={() => setHoverLeg(h => (h === leg.key ? null : h))} />
             ))}
           </g>
+          )}
 
-          {/* Place markers */}
+          {/* Place markers — Route view */}
+          {view === 'route' && (
           <g key={`markers-${playId}`}>
             {placeKeys.map((k, i) => {
               const [x, y] = project(T.places[k].coords)
@@ -362,6 +434,22 @@ export default function WorldMapArc() {
                         style={{ transformBox: 'fill-box', transformOrigin: 'center' }} />
                       <circle cx={x} cy={y} r={1.6 * kz} fill={c} />
                     </>
+                  ) : pin === 'pin' ? (
+                    <>
+                      {/* Same floating red pin as the Cities view */}
+                      <motion.circle cx={x} cy={y} fill="none" stroke={isHome ? '#f5b301' : '#ef4444'} strokeWidth={0.8 * kz}
+                        initial={{ r: 1.2 * kz, opacity: 0 }}
+                        animate={{ r: [1.2 * kz, 6 * kz], opacity: [0.55, 0] }}
+                        transition={{ duration: 2.2, delay: i * 0.14, repeat: Infinity, ease: 'easeOut' }} />
+                      <motion.g animate={{ y: [0, -4 * kz, 0] }} transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut', delay: i * 0.12 }}>
+                        <g transform={`translate(${x},${y}) scale(${kz * 0.55})`}>
+                          <path d="M0,0 c-4.6,-6.2 -8,-10 -8,-14.4 a8,8 0 1,1 16,0 c0,4.4 -3.4,8.2 -8,14.4 z"
+                            fill={isHome ? '#f5b301' : '#ef4444'} stroke={hovered ? '#fff' : 'rgba(0,0,0,0.25)'} strokeWidth={0.8}
+                            filter="url(#wma-glow)" />
+                          <circle cx={0} cy={-14.4} r={3} fill="#fff" />
+                        </g>
+                      </motion.g>
+                    </>
                   ) : (
                     <>
                       <motion.circle cx={x} cy={y} fill="none" stroke={c} strokeWidth={kz}
@@ -378,6 +466,65 @@ export default function WorldMapArc() {
               )
             })}
           </g>
+          )}
+
+          {/* Visited-city pins — Cities view (red pin floats on each city) */}
+          {view === 'cities' && (
+          <g key={`cities-${playId}`}>
+            {placeKeys.map((k, i) => {
+              const [x, y] = project(T.places[k].coords)
+              const isHome = k === homeKey
+              const pinColor = isHome ? '#f5b301' : '#ef4444' // home gold, visited red
+              const hovered = hoverPlace === k
+              return (
+                <g key={k}
+                   onMouseEnter={() => setHoverPlace(k)}
+                   onMouseLeave={() => setHoverPlace(h => (h === k ? null : h))}
+                   style={{ cursor: 'pointer' }}>
+                  <circle cx={x} cy={y} r={9 * kz} fill="transparent" />
+                  {/* Marker style follows the Pin setting (red/gold city colours) */}
+                  {pin === 'bracket' ? (
+                    <>
+                      <motion.path d={bracket(x, y, (hovered ? 8 : 6) * kz, 3 * kz)}
+                        fill="none" stroke={pinColor} strokeWidth={(hovered ? 1.6 : 1.2) * kz}
+                        initial={{ opacity: 0, scale: 0.6 }} animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.3 + i * 0.08 }}
+                        style={{ transformBox: 'fill-box', transformOrigin: 'center' }} />
+                      <circle cx={x} cy={y} r={1.6 * kz} fill={pinColor} />
+                    </>
+                  ) : pin === 'dot' ? (
+                    <>
+                      <motion.circle cx={x} cy={y} fill="none" stroke={pinColor} strokeWidth={kz}
+                        initial={{ r: 2 * kz, opacity: 0 }} animate={{ r: [2 * kz, (isHome ? 12 : 9) * kz], opacity: [0.75, 0] }}
+                        transition={{ duration: isHome ? 2.2 : 2.4, delay: i * 0.15, ease: 'easeOut', repeat: Infinity }} />
+                      <motion.circle cx={x} cy={y} r={(isHome ? 4 : 2.8) * kz}
+                        fill={hovered ? lightDot : pinColor} filter={isHome ? 'url(#wma-glow)' : undefined}
+                        initial={{ scale: 0 }} animate={{ scale: 1 }}
+                        transition={{ delay: 0.3 + i * 0.08, type: 'spring', stiffness: 300 }}
+                        style={{ transformBox: 'fill-box', transformOrigin: 'center' }} />
+                    </>
+                  ) : (
+                    <>
+                      {/* Floating teardrop pin */}
+                      <motion.circle cx={x} cy={y} fill="none" stroke={pinColor} strokeWidth={0.8 * kz}
+                        initial={{ r: 1.2 * kz, opacity: 0 }}
+                        animate={{ r: [1.2 * kz, 6 * kz], opacity: [0.55, 0] }}
+                        transition={{ duration: 2.2, delay: i * 0.14, repeat: Infinity, ease: 'easeOut' }} />
+                      <motion.g animate={{ y: [0, -2.5 * kz, 0] }} transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut', delay: i * 0.12 }}>
+                        <g transform={`translate(${x},${y}) scale(${kz * 0.55})`}>
+                          <path d="M0,0 c-4.6,-6.2 -8,-10 -8,-14.4 a8,8 0 1,1 16,0 c0,4.4 -3.4,8.2 -8,14.4 z"
+                            fill={pinColor} stroke={hovered ? '#fff' : 'rgba(0,0,0,0.25)'} strokeWidth={0.8}
+                            filter="url(#wma-glow)" />
+                          <circle cx={0} cy={-14.4} r={3} fill="#fff" />
+                        </g>
+                      </motion.g>
+                    </>
+                  )}
+                </g>
+              )
+            })}
+          </g>
+          )}
           </ZoomableGroup>
         </ComposableMap>
 
@@ -425,12 +572,32 @@ export default function WorldMapArc() {
           )
         })()}
 
-        {/* Zoom controls */}
+        {/* Zoom + fullscreen controls */}
         <div style={{ position: 'absolute', right: 14, bottom: 14, zIndex: 15, display: 'flex', flexDirection: 'column', gap: 6 }}>
           <button aria-label="Zoom in" style={zBtn} onClick={() => zoomBy(1.5)}>+</button>
           <button aria-label="Zoom out" style={zBtn} onClick={() => zoomBy(1 / 1.5)}>−</button>
           <button aria-label="Reset view" style={{ ...zBtn, fontSize: '0.85rem' }} onClick={resetView}>⟳</button>
+          <button aria-label={fullscreen ? 'Exit fullscreen' : 'Open fullscreen map'} style={zBtn} onClick={fullscreen ? exitFullscreen : enterFullscreen}>
+            {fullscreen ? (
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3M21 8h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3M16 21v-3a2 2 0 0 1 2-2h3"/></svg>
+            ) : (
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+            )}
+          </button>
         </div>
+
+        {/* Exit-fullscreen button — top-right, only while fullscreen */}
+        {fullscreen && (
+          <button aria-label="Exit fullscreen" onClick={exitFullscreen} style={{
+            position: 'absolute', top: 14, right: 14, zIndex: 25,
+            width: 40, height: 40, borderRadius: 11, cursor: 'pointer',
+            border: `1px solid ${panelBorder}`, background: panelBg, color: dark ? '#fff' : '#111',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+          }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        )}
       </div>
 
       {/* Legend */}
@@ -442,9 +609,15 @@ export default function WorldMapArc() {
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
           <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#f5b301' }} /> Home
         </span>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 14, height: 2, borderRadius: 2, background: arcColor }} /> Route · hover for details
-        </span>
+        {view === 'route' ? (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ width: 14, height: 2, borderRadius: 2, background: arcColor }} /> Route · hover for details
+          </span>
+        ) : (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444' }} /> Visited city
+          </span>
+        )}
         <span style={{ opacity: 0.7 }}>Pinch / Ctrl+scroll to zoom · drag to pan</span>
       </div>
     </div>

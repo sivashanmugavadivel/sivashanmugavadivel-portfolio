@@ -23,6 +23,8 @@ function ScrollMotion({ children, initial, visible, style, margin = '-60px', del
 import Button from '../components/ui/Button'
 import HometownSection from '../components/HometownSection'
 import SkillRadar from '../components/SkillRadar'
+import FragmentedImage from '../components/FragmentedImage'
+import PeepingEyesButton from '../components/ui/PeepingEyesButton'
 import cfg from '../data/config.json'
 
 /* ── Reusable scroll-reveal wrapper ── */
@@ -379,27 +381,25 @@ function BioSection() {
       <div className="page-container">
         <div className="grid-2" style={{ alignItems: 'center', gap: 64 }}>
 
-          {/* Photo */}
-          <Reveal delay={0} x={-30} y={0}>
+          {/* Photo — assembles from scattered 3D fragments on scroll */}
+          <div style={{
+            borderRadius: 'var(--radius-lg)',
+            overflow: 'hidden',
+            aspectRatio: '4/5',
+            position: 'relative',
+            boxShadow: 'var(--shadow)',
+          }}>
+            <FragmentedImage
+              src={`${import.meta.env.BASE_URL}avatar1.jpg`}
+              alt="Siva at work"
+              rows={6}
+              cols={5}
+            />
             <div style={{
-              borderRadius: 'var(--radius-lg)',
-              overflow: 'hidden',
-              aspectRatio: '4/5',
-              position: 'relative',
-              boxShadow: 'var(--shadow)',
-            }}>
-              <img
-                src={`${import.meta.env.BASE_URL}avatar1.jpg`}
-                alt="Siva at work"
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                onError={e => { e.target.style.display = 'none' }}
-              />
-              <div style={{
-                position: 'absolute', inset: 0,
-                background: 'linear-gradient(to top, rgba(0,0,0,0.3), transparent 50%)',
-              }} />
-            </div>
-          </Reveal>
+              position: 'absolute', inset: 0, pointerEvents: 'none',
+              background: 'linear-gradient(to top, rgba(0,0,0,0.3), transparent 50%)',
+            }} />
+          </div>
 
           {/* Text */}
           <div>
@@ -415,7 +415,7 @@ function BioSection() {
               </Reveal>
             ))}
             <Reveal delay={0.5}>
-              <Button to="/contact">Work Together →</Button>
+              <PeepingEyesButton to="/contact">Work Together →</PeepingEyesButton>
             </Reveal>
           </div>
         </div>
@@ -1266,7 +1266,7 @@ function AboutCTA() {
               {cfg.about.ctaSubtext}
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
-              <Button to="/contact">Get in Touch</Button>
+              <PeepingEyesButton to="/contact">Get in Touch</PeepingEyesButton>
               <Button to="/blog" variant="outline">Read the Blog →</Button>
             </div>
           </div>

@@ -4,12 +4,27 @@ import { loadAllPosts } from '../hooks/usePosts'
 import cfg from '../data/config.json'
 import VideoCard from '../components/video/VideoCard'
 import Button from '../components/ui/Button'
+import PeepingEyesButton from '../components/ui/PeepingEyesButton'
 import PlacesMapV1 from '../components/PlacesMapV1'
 import PlacesMapV2 from '../components/PlacesMapV2'
 import NowPlaying from '../components/NowPlaying'
 import WorldMapArc from '../components/WorldMapArc'
 import ScrollTextReveal from '../components/ScrollTextReveal'
 import FAQSection from '../components/FAQSection'
+import SphereGridGallery from '../components/SphereGridGallery'
+import galleryData from '../data/gallery.json'
+
+// Lightweight, evenly-sampled set of gallery photos for the home-page sphere
+// (a handful of unique images cycled across the tiles → small download).
+const SPHERE_IMAGES = (() => {
+  const BASE = import.meta.env.BASE_URL
+  const MAX = 20
+  const stepN = Math.max(1, Math.ceil(galleryData.length / MAX))
+  return galleryData
+    .filter((_, i) => i % stepN === 0)
+    .slice(0, MAX)
+    .map(it => ({ src: `${BASE}gallery/${it.category}/${it.filename}`, alt: it.caption }))
+})()
 
 /* ── Reusable scroll-reveal wrapper ── */
 function Reveal({ children, delay = 0, y = 40, x = 0, style }) {
@@ -439,13 +454,18 @@ function FeaturedPostsSection() {
       <div className="page-container">
         <SectionHeading label="Writing" title="Latest Posts" />
         <Reveal delay={0.15}>
-          <p style={{ textAlign: 'center', color: 'var(--text)', opacity: 0.65, fontSize: '0.95rem', marginTop: -8, marginBottom: 32 }}>
+          <p style={{ textAlign: 'center', color: 'var(--text)', opacity: 0.65, fontSize: '0.95rem', marginTop: -8, marginBottom: 8 }}>
             Food, travel, and moments I like to capture and share.
           </p>
         </Reveal>
 
+        {/* 3D sphere showcase — drag to spin, click a photo to open the gallery */}
         <Reveal delay={0.2}>
-          <div style={{ textAlign: 'center', marginTop: 40, display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <SphereGridGallery images={SPHERE_IMAGES} to="/gallery" />
+        </Reveal>
+
+        <Reveal delay={0.2}>
+          <div style={{ textAlign: 'center', marginTop: 8, display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Button to="/blog">Read Blog →</Button>
             <Button to="/gallery" variant="outline">View My Gallery →</Button>
           </div>
@@ -862,7 +882,7 @@ function CTASection() {
             </Reveal>
             <Reveal delay={0.35}>
               <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', position: 'relative' }}>
-                <Button to="/contact">Get in Touch</Button>
+                <PeepingEyesButton to="/contact">Get in Touch</PeepingEyesButton>
                 <Button to="/about" variant="outline">Learn More</Button>
               </div>
             </Reveal>
@@ -920,7 +940,7 @@ export default function Home() {
       <FeaturedVideosSection />
       <NowPlayingSection />
       <WorldMapArcSection />
-      <PlacesMapSection />
+      {/* <PlacesMapSection /> — Travel section hidden */}
       <SocialSection />
       <FAQSection />
       <CTASection />
