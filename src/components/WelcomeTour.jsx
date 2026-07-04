@@ -234,6 +234,17 @@ export default function WelcomeTour({ preview = false }) {
     <AnimatePresence>
       {open && (
         <>
+          {/* Mobile only: the component's open animation slides the paper far to
+              the right (right:-320px) which runs off a phone screen. Keep the
+              paper on the card on small screens; desktop keeps the full slide. */}
+          <style>{`
+            @media (max-width: 768px) {
+              .framer-Tg3fG.framer-v-3anvpa .framer-1qsw93b,
+              .framer-Tg3fG.framer-v-eq2zab .framer-1qsw93b {
+                right: 15px !important; left: unset !important; width: 288px !important;
+              }
+            }
+          `}</style>
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}
             onClick={dismiss}
