@@ -977,13 +977,22 @@ function SetupPreview() {
   const sectionRef = useRef(null)
   const inView = useInView(sectionRef, { margin: '-25% 0px -25% 0px' })
 
+  // Lock navigation while a card is flying out, so rapid clicks can't stack
+  // multiple exit animations (which overflow the layout and collide card keys).
+  const lockRef = useRef(false)
   const advance = dir => {
+    if (lockRef.current) return
+    lockRef.current = true
     setExitDir(dir)
     setIdx(i => (i + 1) % total)
+    setTimeout(() => { lockRef.current = false }, 450)
   }
   const retreat = () => {
+    if (lockRef.current) return
+    lockRef.current = true
     setExitDir(-1)
     setIdx(i => (i - 1 + total) % total)
+    setTimeout(() => { lockRef.current = false }, 450)
   }
 
   // Auto-advance every 5s — but ONLY when the section is in view. The timer is

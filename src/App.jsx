@@ -49,10 +49,14 @@ const DEV_GARAGE = import.meta.env.DEV
       V7:              lazy(() => import('./pages/GarageV7')),
       V7RideDetail:    lazy(() => import('./pages/GarageV7RideDetail')),
       V7AllRides:      lazy(() => import('./pages/GarageV7RideDetail').then(m => ({ default: m.GarageV7AllRides }))),
-      V8:              lazy(() => import('./pages/GarageV8')),
       AccessoryDetail: lazy(() => import('./pages/GarageAccessoryDetail')),
     }
   : null
+
+/* Garage V8 preview — reachable in production ONLY via the direct address
+   /garage/v8 (nothing links to it). /garage itself stays Coming Soon.
+   Lazy-loaded so it's a separate chunk, fetched only when visited. */
+const GarageV8Preview = lazy(() => import('./pages/GarageV8'))
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -80,6 +84,9 @@ function AppRoutes() {
             element={import.meta.env.DEV ? <DEV_GARAGE.Original /> : <GarageComingSoon />}
           />
 
+          {/* Direct-address-only V8 preview (works in production too) */}
+          <Route path="/garage/v8" element={<GarageV8Preview />} />
+
           {/* Garage design variants — only registered in local dev */}
           {DEV_GARAGE && (
             <>
@@ -94,7 +101,6 @@ function AppRoutes() {
               <Route path="/garage/v7" element={<DEV_GARAGE.V7 />} />
               <Route path="/garage/v7/rides" element={<DEV_GARAGE.V7AllRides />} />
               <Route path="/garage/v7/rides/:id" element={<DEV_GARAGE.V7RideDetail />} />
-              <Route path="/garage/v8" element={<DEV_GARAGE.V8 />} />
               <Route path="/garage/accessories/:id" element={<DEV_GARAGE.AccessoryDetail />} />
             </>
           )}
