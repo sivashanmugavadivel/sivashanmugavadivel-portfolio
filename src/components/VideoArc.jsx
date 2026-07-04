@@ -1,6 +1,8 @@
 import { useRef, useEffect, useState } from 'react'
 import { useInView } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
+import InteractiveHint from './InteractiveHint'
+import { useHint } from '../hooks/useOnboarding'
 
 /*
  * VideoArc — video cards ride a wide arc (Virelle-style): they enter from the
@@ -24,6 +26,7 @@ export default function VideoArc({ videos, to = '/videos' }) {
   const anim = useRef({ rot: 0, cx: 0, halfW: 500, spacing: 220, topY: 150, arcR: 1000, dragging: false, vel: 0, lastX: 0, moved: 0, downIdx: -1 })
   const inView = useInView(stageRef, { margin: '150px' })
   const N = videos.length
+  const [hintOn, dismissArcHint] = useHint('arc')
 
   // Mobile: no drag (so vertical page scroll works), wider spacing + smaller cards.
   const [isMobile, setIsMobile] = useState(false)
@@ -108,6 +111,7 @@ export default function VideoArc({ videos, to = '/videos' }) {
   }
   const onUp = (e) => {
     const s = anim.current
+    dismissArcHint() // any press counts — they've discovered it
     // A tap (not a drag) on any card → go to the Videos page.
     if (s.moved < 8 && s.downIdx >= 0) navigate(to)
     s.dragging = false; s.downIdx = -1
@@ -132,6 +136,11 @@ export default function VideoArc({ videos, to = '/videos' }) {
         userSelect: 'none', WebkitUserSelect: 'none',
       }}
     >
+      <InteractiveHint
+        show={hintOn}
+        label={isMobile ? '👆 Tap a card to watch' : '✋ Drag the arc of videos'}
+        style={{ bottom: 16, left: '50%', transform: 'translateX(-50%)' }}
+      />
       {videos.map((vid, i) => {
         const thumb = `https://i.ytimg.com/vi/${ytId(vid.url)}/hqdefault.jpg`
         return (
@@ -139,7 +148,7 @@ export default function VideoArc({ videos, to = '/videos' }) {
             key={i}
             data-vi={i}
             ref={(el) => (cardRefs.current[i] = el)}
-            onClick={isMobile ? () => navigate(to) : undefined}
+            onClick={isMobile ? () => { dismissArcHint(); navigate(to) } : undefined}
             style={{
               position: 'absolute', left: 0, top: 0,
               width: isMobile ? 'clamp(140px, 42vw, 180px)' : 'clamp(150px, 16vw, 210px)', aspectRatio: '3 / 4.4',

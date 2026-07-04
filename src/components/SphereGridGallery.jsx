@@ -1,6 +1,8 @@
 import { useRef, useState, useEffect, useMemo } from 'react'
 import { useInView } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
+import InteractiveHint from './InteractiveHint'
+import { useHint } from '../hooks/useOnboarding'
 
 /*
  * SphereGridGallery — image tiles arranged in a latitude/longitude grid wrapped
@@ -25,6 +27,7 @@ export default function SphereGridGallery({ images, to = '/gallery' }) {
   const inView = useInView(outerRef, { once: true, margin: '250px' })
   const anim = useRef({ rot: 0, tilt: -8, velX: 0, velY: 0, dragging: false, lastX: 0, lastY: 0, moved: 0, onTile: false })
   const [scale, setScale] = useState(1)
+  const [hintOn, dismissSphereHint] = useHint('sphere')
 
   const tiles = useMemo(() => {
     const arr = []
@@ -88,6 +91,7 @@ export default function SphereGridGallery({ images, to = '/gallery' }) {
   }
   const onUp = (e) => {
     const s = anim.current
+    dismissSphereHint() // any press counts — they've discovered it
     // A tap (not a drag) on a photo → go to the gallery.
     if (s.moved < 8 && s.onTile) navigate(to)
     s.dragging = false; s.onTile = false
@@ -110,6 +114,11 @@ export default function SphereGridGallery({ images, to = '/gallery' }) {
         overflow: 'hidden',
       }}
     >
+      <InteractiveHint
+        show={hintOn}
+        label="✋ Drag to spin · tap a photo"
+        style={{ top: 16, left: '50%', transform: 'translateX(-50%)' }}
+      />
       <div style={{ width: DB, height: DB, transform: `scale(${scale})`, position: 'relative' }}>
         <div style={{ position: 'absolute', inset: 0, perspective: 1300 }}>
           <div ref={sphereRef} style={{ position: 'absolute', inset: 0, transformStyle: 'preserve-3d' }}>

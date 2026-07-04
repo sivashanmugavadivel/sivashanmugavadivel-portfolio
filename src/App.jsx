@@ -12,6 +12,7 @@ import WordIntro from './components/WordIntro'
 import LoadingScreen from './components/LoadingScreen'
 import BackToTop from './components/BackToTop'
 import SocialFAB from './components/SocialFAB'
+import WelcomeTour from './components/WelcomeTour'
 import Navbar from './components/layout/Navbar'
 import Footer from './components/layout/Footer'
 import PageWrapper from './components/layout/PageWrapper'
@@ -170,6 +171,9 @@ export default function App() {
           <EasterEgg />
           <BackToTop />
           <SocialFAB />
+          {/* First-visit welcome tour — home page only, after the intro/loading
+              (this block is gated by contentReady) and the hero has settled. */}
+          {location.pathname === '/' && <WelcomeTour />}
         </>
       )}
     </>

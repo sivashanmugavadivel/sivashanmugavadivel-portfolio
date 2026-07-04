@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence, useInView } from 'framer-motion'
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simple-maps'
 import cfg from '../data/config.json'
+import InteractiveHint from './InteractiveHint'
+import { useHint } from '../hooks/useOnboarding'
 
 const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'
 
@@ -120,6 +122,7 @@ export default function WorldMapArc() {
   const [center, setCenter] = useState([0, 0])
   const [playId, setPlayId] = useState(0)      // bumps each time the section enters view → replays once
   const [settingsOpen, setSettingsOpen] = useState(false) // settings live behind a gear button
+  const [hintOn, dismissMapHint] = useHint('map')
   const [fullscreen, setFullscreen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const rootRef = useRef(null)
@@ -238,8 +241,13 @@ export default function WorldMapArc() {
       boxShadow: fullscreen ? 'none' : '0 24px 60px rgba(0,0,0,0.4)', transition: 'background 0.3s',
     }}>
       {/* ── Settings gear — click to open the control panel ── */}
+      <InteractiveHint
+        show={hintOn && !settingsOpen}
+        label="⚙️ Tap the gear to customize"
+        style={{ top: 22, left: 62 }}
+      />
       <button
-        onClick={() => setSettingsOpen(o => !o)}
+        onClick={() => { dismissMapHint(); setSettingsOpen(o => !o) }}
         aria-label={settingsOpen ? 'Close map settings' : 'Open map settings'}
         style={{
           position: 'absolute', top: 14, left: 14, zIndex: 22,

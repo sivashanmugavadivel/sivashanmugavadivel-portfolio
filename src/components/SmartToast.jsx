@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { getGreeting } from '../utils/timeGreeting'
 import { DESIGNS, STORAGE_KEY, getPositionStyle } from './ToastDesignPicker'
+import { hintDismissed } from '../hooks/useOnboarding'
 
 const LOADING_DELAY = 1200
+const TOAST_AFTER_TOUR_MS = 2000   // welcome toast appears 2s after the tour
 
 const POSITIVE_THOUGHTS = [
   "Every day is a chance to grow a little more. 🌱",
@@ -31,13 +33,25 @@ export default function SmartToast() {
   const [thought] = useState(randomThought)
 
   useEffect(() => {
-    // Only show once per session
-    if (sessionStorage.getItem('smart_toast_shown')) return
-    const t1 = setTimeout(() => {
+    const showWelcome = () => {
       sessionStorage.setItem('smart_toast_shown', '1')
       setDesignId(parseInt(localStorage.getItem(STORAGE_KEY) || '17'))
       setPhase('welcome')
-    }, LOADING_DELAY)
+    }
+
+    // First-time visitors get the welcome tour — show the toast 2s AFTER the tour
+    // appears, EVERY time it appears (tied to the tour event, not the session
+    // flag), so the toast always accompanies the tour.
+    const tourPending = !hintDismissed('welcome') && window.location.pathname === '/'
+    if (tourPending) {
+      const onTour = () => setTimeout(showWelcome, TOAST_AFTER_TOUR_MS)
+      window.addEventListener('welcome-tour-shown', onTour, { once: true })
+      return () => window.removeEventListener('welcome-tour-shown', onTour)
+    }
+
+    // Returning visitors: normal quick toast, once per session.
+    if (sessionStorage.getItem('smart_toast_shown')) return
+    const t1 = setTimeout(showWelcome, LOADING_DELAY)
     return () => clearTimeout(t1)
   }, [])
 

@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from 'framer-motion'
 import cfg from '../data/config.json'
+import InteractiveHint from './InteractiveHint'
+import { useHint } from '../hooks/useOnboarding'
 
 /*
  * SocialFAB — floating "follow me" button, fixed to the bottom-right corner on
@@ -160,6 +162,7 @@ export default function SocialFAB() {
   const [message, setMessage] = useState('')
   const [hoveredKey, setHoveredKey] = useState(null)
   const [isMobile, setIsMobile] = useState(false)
+  const [fabHintOn, dismissFabHint] = useHint('fab')
 
   useEffect(() => { chatOpenRef.current = chatOpen }, [chatOpen])
 
@@ -215,7 +218,7 @@ export default function SocialFAB() {
     }, 220)
   }, [isMobile, cancelClose])
 
-  const open = useCallback(() => { cancelClose(); setIsOpen(true) }, [cancelClose])
+  const open = useCallback(() => { cancelClose(); dismissFabHint(); setIsOpen(true) }, [cancelClose, dismissFabHint])
   const openChat = useCallback(() => { cancelClose(); setIsOpen(true); setChatOpen(true) }, [cancelClose])
   const closeAll = useCallback(() => { cancelClose(); setChatOpen(false); setIsOpen(false); setHoveredKey(null) }, [cancelClose])
   useEffect(() => () => cancelClose(), [cancelClose])
@@ -407,11 +410,21 @@ export default function SocialFAB() {
         />
       ))}
 
+      {/* First-visit hint — above the closed FAB only, so it never collides
+          with the fanned icons or the WhatsApp invite bubble */}
+      <InteractiveHint
+        show={fabHintOn && !isOpen && !chatOpen}
+        label="👋 Tap to connect"
+        style={{ right: 0, bottom: fabSize + 14 }}
+        delay={1.2}
+        autoHide={8000}
+      />
+
       {/* Main FAB — hidden while the chat box is open */}
       <AnimatePresence initial={false}>
         {!chatOpen && (
           <motion.button
-            onClick={() => (isOpen ? closeAll() : setIsOpen(true))}
+            onClick={() => { dismissFabHint(); if (isOpen) closeAll(); else setIsOpen(true) }}
             onMouseEnter={!isMobile ? open : undefined}
             onMouseLeave={!isMobile ? scheduleClose : undefined}
             initial={{ opacity: 0, scale: 0.6 }}

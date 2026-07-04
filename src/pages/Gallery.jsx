@@ -3,6 +3,8 @@ import { motion, AnimatePresence, useInView } from 'framer-motion'
 import Lightbox from 'yet-another-react-lightbox'
 import 'yet-another-react-lightbox/styles.css'
 import { DESIGNS, STORAGE_KEY, getPositionStyle } from '../components/ToastDesignPicker'
+import InteractiveHint from '../components/InteractiveHint'
+import { useHint } from '../hooks/useOnboarding'
 import galleryData from '../data/gallery.json'
 import cfg from '../data/config.json'
 
@@ -103,9 +105,10 @@ function PolaroidIntro({ onDone }) {
 function GalleryCarousel({ items, onOpen, lightboxOpen }) {
   const [active, setActive] = useState(0)
   const [paused, setPaused] = useState(false)
+  const [hintOn, dismissCarouselHint] = useHint('carousel')
 
-  const prev = () => setActive(i => (i - 1 + items.length) % items.length)
-  const next = () => setActive(i => (i + 1) % items.length)
+  const prev = () => { dismissCarouselHint(); setActive(i => (i - 1 + items.length) % items.length) }
+  const next = () => { dismissCarouselHint(); setActive(i => (i + 1) % items.length) }
 
   // Auto-scroll every 3s — pauses on hover or when lightbox is open
   useEffect(() => {
@@ -147,6 +150,11 @@ function GalleryCarousel({ items, onOpen, lightboxOpen }) {
       }}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}>
+        <InteractiveHint
+          show={hintOn}
+          label="↔️ Swipe to browse · tap to enlarge"
+          style={{ bottom: 14, left: '50%', transform: 'translateX(-50%)' }}
+        />
         {items.map((item, i) => {
           const pos = getPos(i)
           // Only render the 5 visible cards — skip hidden ones entirely
@@ -167,7 +175,7 @@ function GalleryCarousel({ items, onOpen, lightboxOpen }) {
                 if (info.offset.x < -60) next()
                 else if (info.offset.x > 60) prev()
               }}
-              onClick={() => { if (!isCenter) setActive(i); else onOpen(i) }}
+              onClick={() => { dismissCarouselHint(); if (!isCenter) setActive(i); else onOpen(i) }}
               style={{
                 position: 'absolute',
                 width: 'clamp(200px, 32vw, 380px)',

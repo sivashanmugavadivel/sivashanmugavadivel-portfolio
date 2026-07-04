@@ -8,6 +8,7 @@ import PeepingEyesButton from '../components/ui/PeepingEyesButton'
 import PlacesMapV1 from '../components/PlacesMapV1'
 import PlacesMapV2 from '../components/PlacesMapV2'
 import NowPlaying from '../components/NowPlaying'
+import BeatMakerLauncher from '../components/BeatMaker'
 import WorldMapArc from '../components/WorldMapArc'
 import ScrollTextReveal from '../components/ScrollTextReveal'
 import FAQSection from '../components/FAQSection'
@@ -491,6 +492,9 @@ function NowPlayingSection() {
         <SectionHeading label="Music" title="🎧Music Can Heal❤️‍🩹" />
         <Reveal delay={0.15}>
           <NowPlaying />
+        </Reveal>
+        <Reveal delay={0.2}>
+          <BeatMakerLauncher />
         </Reveal>
       </div>
     </section>
