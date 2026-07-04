@@ -130,10 +130,18 @@ export default function WelcomeTour({ preview = false }) {
   const [resetKey, setResetKey] = useState(0)   // remount to snap the card closed (preview replay)
 
   const wrapRef = useRef(null)
-  const openedRef = useRef(false)   // is the folder currently open (native)?
   const idxRef = useRef(0)
   const turningRef = useRef(false)
   useEffect(() => { idxRef.current = idx }, [idx])
+
+  // Read the component's REAL state from the DOM instead of tracking taps.
+  // Framer swaps a framer-v-* class per variant; jx98nn / 1cz3u7p are the two
+  // "document open & readable" variants. Tap-counting breaks on touch devices
+  // (the first tap only triggers the hover-peek variant), so never guess.
+  const isDocOpen = () => {
+    const root = wrapRef.current?.querySelector('.framer-Tg3fG')
+    return /framer-v-(jx98nn|1cz3u7p)/.test(root?.className || '')
+  }
 
   useEffect(() => {
     if (preview) { setOpen(true); return }
@@ -151,7 +159,6 @@ export default function WelcomeTour({ preview = false }) {
   // Don't touch it — just clean up AFTER the fold has fully finished (~1s), so
   // the fold transition is never cut short.
   const finish = () => {
-    openedRef.current = false
     const done = () => { if (!preview) dismissHint('welcome'); setOpen(false) }
     const sheet = wrapRef.current?.querySelector('.framer-1qsw93b')
     if (!sheet) { setTimeout(done, 1200); return }
@@ -170,7 +177,7 @@ export default function WelcomeTour({ preview = false }) {
   }
 
   const dismiss = () => {
-    if (preview) { openedRef.current = false; setIdx(0); setResetKey((k) => k + 1); return }
+    if (preview) { setIdx(0); setResetKey((k) => k + 1); return }
     dismissHint('welcome'); setOpen(false)
   }
 
@@ -211,16 +218,18 @@ export default function WelcomeTour({ preview = false }) {
   }
 
   // Capture pointerdown BEFORE the component's own tap gesture sees it.
+  // All decisions come from the LIVE variant class, so closed / hover-peek /
+  // opening taps are always left to the component's native behaviour (this is
+  // what mobile needs: its first tap only peeks, the second actually opens).
   const onPointerDownCapture = (e) => {
+    if (!isDocOpen()) return                            // native open/peek — don't interfere
     const last = idxRef.current === PAGES.length - 1
-    if (openedRef.current && !last && !turningRef.current) {
+    if (!last) {
       e.stopPropagation()             // stop the native tap → it won't close
-      pageTurn(idxRef.current + 1)    // …we turn the page instead
+      if (!turningRef.current) pageTurn(idxRef.current + 1)
       return
     }
-    // Not intercepting — let the component do its native open / fold:
-    if (!openedRef.current) openedRef.current = true   // this click opens it
-    else finish()                                       // last page → native fold, then dismiss
+    finish()                          // last page → native fold plays, then dismiss
   }
 
   useEffect(() => {
