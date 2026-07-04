@@ -19,7 +19,28 @@ function getStateName(geo, countryId) {
   return null
 }
 
-export default function CountryModal({ countryId, onClose, zIndex = 1000 }) {
+const hexA = (hex, a) => {
+  const n = parseInt(hex.slice(1), 16)
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`
+}
+
+// Corner-bracket reticle marker (same shape as WorldMapArc's)
+function bracket(x, y, b = 6, arm = 3) {
+  return [
+    `M${x - b},${y - b + arm} L${x - b},${y - b} L${x - b + arm},${y - b}`,
+    `M${x + b - arm},${y - b} L${x + b},${y - b} L${x + b},${y - b + arm}`,
+    `M${x + b},${y + b - arm} L${x + b},${y + b} L${x + b - arm},${y + b}`,
+    `M${x - b + arm},${y + b} L${x - b},${y + b} L${x - b},${y + b - arm}`,
+  ].join(' ')
+}
+
+/*
+ * `theme` (optional) — passed by WorldMapArc so the popup matches the map's
+ * current settings: { dark, type ('dots'|'flat'), pin ('bracket'|'dot'|'pin'),
+ * land, arc (palette colours), bg, panelBorder }. Without it the modal keeps
+ * its original standalone look (used by the old PlacesMap components).
+ */
+export default function CountryModal({ countryId, onClose, zIndex = 1000, theme }) {
   const info = cfg.countryInfo[countryId]
   const cities = cfg.places.filter(p => p.country === countryId)
   const [hoveredState, setHoveredState] = useState(null)
@@ -27,6 +48,22 @@ export default function CountryModal({ countryId, onClose, zIndex = 1000 }) {
   const [pinTooltip, setPinTooltip] = useState(null) // { label, x, y }
   const statesUrl = STATE_GEO[countryId]
   const isMobile = window.matchMedia('(hover: none)').matches
+
+  // Themed styling (falls back to the legacy CSS-variable look)
+  const th = theme
+  const dark = th ? th.dark : true
+  const landFill = th
+    ? (th.type === 'dots' ? 'url(#cm-dots)' : (th.dark ? th.land : hexA(th.land, 0.32)))
+    : 'var(--accent)'
+  const stateStroke = th
+    ? (th.dark ? 'rgba(6,6,12,0.55)' : hexA(th.land, 0.55))
+    : 'var(--card-bg)'
+  const cardBg = th ? th.bg : 'var(--card-bg)'
+  const cardBorder = th ? th.panelBorder : 'var(--border)'
+  const titleColor = th && !th.dark ? '#111' : '#fff'
+  const accent = th ? th.arc : 'var(--accent)'
+  const statColor = th ? '#ef4444' : '#e53935'
+  const labelColor = th ? (th.dark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)') : 'var(--text)'
 
   useEffect(() => {
     function onKey(e) { if (e.key === 'Escape') onClose() }
@@ -64,15 +101,15 @@ export default function CountryModal({ countryId, onClose, zIndex = 1000 }) {
           transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
           onClick={e => e.stopPropagation()}
           style={{
-            border: '1px solid var(--border)',
+            border: `1px solid ${cardBorder}`,
             borderRadius: 24,
             width: '100%',
             maxWidth: 520,
             maxHeight: '90vh',
             overflow: 'hidden',
-            boxShadow: 'var(--shadow)',
+            boxShadow: th ? '0 24px 60px rgba(0,0,0,0.4)' : 'var(--shadow)',
             position: 'relative',
-            background: 'var(--card-bg)',
+            background: cardBg,
           }}
         >
           {/* Close button */}
@@ -90,8 +127,8 @@ export default function CountryModal({ countryId, onClose, zIndex = 1000 }) {
           {/* Country name top-left */}
           <div style={{
             position: 'absolute', top: 16, left: 20, zIndex: 20,
-            color: '#fff', fontSize: '1.1rem', fontWeight: 700,
-            textShadow: '0 2px 8px rgba(0,0,0,0.6)',
+            color: titleColor, fontSize: '1.1rem', fontWeight: 700,
+            textShadow: dark ? '0 2px 8px rgba(0,0,0,0.6)' : 'none',
             fontFamily: 'var(--sans)',
           }}>
             {info.name}
@@ -104,7 +141,7 @@ export default function CountryModal({ countryId, onClose, zIndex = 1000 }) {
               transform: 'translateX(-50%)',
               zIndex: 20,
               background: 'rgba(0,0,0,0.75)',
-              border: '1px solid #e53935',
+              border: `1px solid ${th ? th.arc : '#e53935'}`,
               borderRadius: 8, padding: '5px 14px',
               fontSize: '0.8rem', color: '#fff', fontWeight: 600,
               pointerEvents: 'none', whiteSpace: 'nowrap',
@@ -122,6 +159,14 @@ export default function CountryModal({ countryId, onClose, zIndex = 1000 }) {
                 height={560}
                 style={{ width: '100%', height: '100%', display: 'block' }}
               >
+                {/* Dotted-land pattern — matches the main map's Dots style */}
+                {th && th.type === 'dots' && (
+                  <defs>
+                    <pattern id="cm-dots" width="6.4" height="6.4" patternUnits="userSpaceOnUse">
+                      <circle cx="1.3" cy="1.3" r="1.35" fill={th.dark ? hexA(th.land, 0.85) : hexA(th.land, 0.7)} />
+                    </pattern>
+                  </defs>
+                )}
                 {statesUrl ? (
                   <Geographies geography={statesUrl}>
                     {({ geographies }) =>
@@ -131,8 +176,8 @@ export default function CountryModal({ countryId, onClose, zIndex = 1000 }) {
                           <Geography
                             key={geo.rsmKey}
                             geography={geo}
-                            fill="var(--accent)"
-                            stroke="var(--card-bg)"
+                            fill={landFill}
+                            stroke={stateStroke}
                             strokeWidth={0.8}
                             onMouseEnter={() => setHoveredState(stateName)}
                             onMouseLeave={() => setHoveredState(null)}
@@ -155,7 +200,7 @@ export default function CountryModal({ countryId, onClose, zIndex = 1000 }) {
                           <Geography
                             key={geo.rsmKey}
                             geography={geo}
-                            fill="var(--accent)"
+                            fill={landFill}
                             stroke="transparent"
                             strokeWidth={0}
                             style={{
@@ -173,6 +218,46 @@ export default function CountryModal({ countryId, onClose, zIndex = 1000 }) {
                 {cities.map(({ label, coords, home }) => {
                   const r = info.pinR ?? 7
                   const isActive = activePin === label
+
+                  // Themed pins — same shapes/colours as the main map's Cities
+                  // view, following the current Pin setting (gold home, red city).
+                  if (th) {
+                    const pinColor = home ? '#f5b301' : '#ef4444'
+                    const tipLabel = home ? `🏠 ${label}` : label
+                    const handlers = {
+                      style: { cursor: 'pointer' },
+                      onMouseEnter: (e) => { setPinTooltip({ label: tipLabel, x: e.clientX, y: e.clientY }); setActivePin(label) },
+                      onMouseLeave: () => { setPinTooltip(null); setActivePin(null) },
+                      onClick: (e) => { const next = isActive ? null : label; setActivePin(next); setPinTooltip(next ? { label: tipLabel, x: e.clientX, y: e.clientY } : null) },
+                    }
+                    return (
+                      <Marker key={label} coordinates={coords}>
+                        {/* Pulse ring (all styles) */}
+                        <circle r={r} fill="none" stroke={pinColor} strokeWidth={1} opacity={0.5} style={{ pointerEvents: 'none' }}>
+                          <animate attributeName="r" from={r} to={r * 2.6} dur="2.2s" repeatCount="indefinite" />
+                          <animate attributeName="opacity" from="0.5" to="0" dur="2.2s" repeatCount="indefinite" />
+                        </circle>
+                        {th.pin === 'bracket' ? (
+                          <g {...handlers}>
+                            <path d={bracket(0, 0, r * 1.3, r * 0.6)} fill="none" stroke={pinColor} strokeWidth={r * 0.24} />
+                            <circle cx={0} cy={0} r={r * 0.32} fill={pinColor} />
+                          </g>
+                        ) : th.pin === 'dot' ? (
+                          <g {...handlers}>
+                            <circle cx={0} cy={0} r={r * (home ? 0.8 : 0.6)} fill={pinColor} stroke={isActive ? '#fff' : 'none'} strokeWidth={1} />
+                          </g>
+                        ) : (
+                          <g {...handlers} transform={`scale(${r * 0.1})`}>
+                            {/* Floating teardrop pin — same path as the main map */}
+                            <path d="M0,0 c-4.6,-6.2 -8,-10 -8,-14.4 a8,8 0 1,1 16,0 c0,4.4 -3.4,8.2 -8,14.4 z"
+                              fill={pinColor} stroke={isActive ? '#fff' : 'rgba(0,0,0,0.25)'} strokeWidth={0.8} />
+                            <circle cx={0} cy={-14.4} r={3} fill="#fff" />
+                          </g>
+                        )}
+                      </Marker>
+                    )
+                  }
+
                   return (
                     <Marker key={label} coordinates={coords}>
                       {home ? (
@@ -221,14 +306,14 @@ export default function CountryModal({ countryId, onClose, zIndex = 1000 }) {
           </div>
 
           {/* Stats bar */}
-          <div style={{ display: 'flex', borderTop: '1px solid var(--border)' }}>
-            <div style={{ flex: 1, padding: '14px 0', textAlign: 'center', borderRight: '1px solid var(--border)' }}>
-              <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#e53935', lineHeight: 1 }}>{cities.length}</div>
-              <div style={{ fontSize: '0.68rem', color: 'var(--text)', opacity: 0.55, marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Cities Visited</div>
+          <div style={{ display: 'flex', borderTop: `1px solid ${cardBorder}` }}>
+            <div style={{ flex: 1, padding: '14px 0', textAlign: 'center', borderRight: `1px solid ${cardBorder}` }}>
+              <div style={{ fontSize: '1.4rem', fontWeight: 700, color: statColor, lineHeight: 1 }}>{cities.length}</div>
+              <div style={{ fontSize: '0.68rem', color: labelColor, opacity: th ? 1 : 0.55, marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Cities Visited</div>
             </div>
             <div style={{ flex: 1, padding: '14px 0', textAlign: 'center' }}>
-              <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#e53935', lineHeight: 1 }}>{cities.length}</div>
-              <div style={{ fontSize: '0.68rem', color: 'var(--text)', opacity: 0.55, marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Places</div>
+              <div style={{ fontSize: '1.4rem', fontWeight: 700, color: statColor, lineHeight: 1 }}>{cities.length}</div>
+              <div style={{ fontSize: '0.68rem', color: labelColor, opacity: th ? 1 : 0.55, marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Places</div>
             </div>
           </div>
         </motion.div>
@@ -244,7 +329,7 @@ export default function CountryModal({ countryId, onClose, zIndex = 1000 }) {
         left: pinTooltip.x,
         transform: 'translateX(-50%)',
         background: 'rgba(0,0,0,0.85)',
-        border: '1px solid var(--accent)',
+        border: `1px solid ${accent}`,
         borderRadius: 8, padding: '5px 14px',
         fontSize: '0.8rem', color: '#fff', fontWeight: 600,
         pointerEvents: 'none', whiteSpace: 'nowrap',

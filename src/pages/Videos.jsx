@@ -747,6 +747,28 @@ function InstagramCarousel({ posts }) {
   // Compute card pixel width from clamp(140px, 42vw, 280px)
   const cardPx = Math.min(280, Math.max(140, vw * 0.42))
 
+  // Measure each embed's natural (unscaled) height — IG sets it asynchronously
+  // once the iframe loads. The CENTER card scales its embed to fit the card
+  // completely; scaling by width alone cropped the caption + comment box below
+  // the media (the embed is much taller than the card's 9/16 box).
+  const embedObs = useRef(null)
+  const [embedH, setEmbedH] = useState({})
+  if (!embedObs.current && typeof ResizeObserver !== 'undefined') {
+    embedObs.current = new ResizeObserver((entries) => {
+      setEmbedH(prev => {
+        let changed = false
+        const next = { ...prev }
+        for (const e of entries) {
+          const url = e.target.getAttribute('data-ig-url')
+          const h = e.target.offsetHeight // layout height — unaffected by the scale transform
+          if (url && h && Math.abs((next[url] || 0) - h) > 2) { next[url] = h; changed = true }
+        }
+        return changed ? next : prev
+      })
+    })
+  }
+  useEffect(() => () => embedObs.current?.disconnect(), [])
+
   // Load Instagram embed script once, then process
   useEffect(() => {
     const process = () => { if (window.instgrm) window.instgrm.Embeds.process() }
@@ -804,6 +826,16 @@ function InstagramCarousel({ posts }) {
           {posts.map((post, i) => {
             const pos = getPos(i)
             const isCenter = pos === 'center'
+            // Centre card hugs the embed exactly — its box takes the embed's own
+            // aspect ratio at the largest scale that fits the stage height (and
+            // the card width cap), so there are no white side bars and nothing
+            // is cropped. Falls back to the 9/16 box until the iframe reports
+            // its height. Side cards keep the fixed 9/16 design.
+            const natH = embedH[post.url]
+            const stageH = Math.min(600, Math.max(400, vw * 0.8))
+            const centerScale = natH ? Math.min(cardPx / 328, (stageH * 0.96) / natH) : cardPx / 328
+            const centerW = natH ? 328 * centerScale : cardPx
+            const centerH = natH ? natH * centerScale : cardPx * 16 / 9
             return (
               <motion.div
                 key={post.url}
@@ -817,12 +849,17 @@ function InstagramCarousel({ posts }) {
                   else if (info.offset.x > 60) prev()
                 }}
                 onClick={() => { if (!isCenter) setActive(i) }}
+                // Centre card: a tap (not a drag — framer-motion cancels the tap
+                // gesture once dragging starts) opens the post, standing in for
+                // the embed's "play" button. The overlay blocks the iframe, so
+                // we navigate ourselves.
+                onTap={() => { if (isCenter) window.open(post.url, '_blank', 'noopener,noreferrer') }}
                 onHoverStart={() => isCenter && setHovered(true)}
                 onHoverEnd={() => setHovered(false)}
                 style={{
                   position: 'absolute',
-                  width: 'clamp(140px, 42vw, 280px)',
-                  aspectRatio: '9/16',
+                  width: isCenter ? centerW : 'clamp(140px, 42vw, 280px)',
+                  ...(isCenter && natH ? { height: centerH } : { aspectRatio: '9/16' }),
                   borderRadius: 20,
                   overflow: 'hidden',
                   cursor: isCenter ? 'grab' : 'pointer',
@@ -832,19 +869,24 @@ function InstagramCarousel({ posts }) {
                     : isCenter
                     ? '0 24px 60px rgba(220,39,67,0.35), 0 0 40px rgba(220,39,67,0.15)'
                     : '0 8px 24px rgba(0,0,0,0.2)',
-                  transition: 'box-shadow 0.3s ease',
+                  transition: 'box-shadow 0.3s ease, width 0.35s ease, height 0.35s ease',
                   background: 'linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)',
                 }}
               >
-                {/* Embed preview for all cards — pointer-events off, scaled to fit */}
+                {/* Embed preview for all cards — pointer-events off, scaled to fit.
+                    Centre: the card box already matches the embed's aspect, so a
+                    plain scale fills it edge to edge. Sides keep the 75% scale. */}
                 {pos !== 'hidden' && (
                   <div style={{ position: 'absolute', inset: 0, background: '#fff',
                     overflow: 'hidden', pointerEvents: 'none' }}>
-                        {/* Scale embed to fit card — cardPx mirrors the CSS clamp */}
-                    <div style={{
-                      width: 328, transformOrigin: 'top left',
-                      transform: `scale(${isCenter ? (cardPx / 328).toFixed(3) : ((cardPx * 0.75) / 328).toFixed(3)})`,
-                    }}>
+                    <div
+                      data-ig-url={post.url}
+                      ref={(el) => { if (el) embedObs.current?.observe(el) }}
+                      style={{
+                        width: 328, transformOrigin: 'top left',
+                        transform: `scale(${(isCenter ? centerScale : (cardPx * 0.75) / 328).toFixed(3)})`,
+                      }}
+                    >
                       <blockquote
                         className="instagram-media"
                         data-instgrm-permalink={post.url}
@@ -857,23 +899,6 @@ function InstagramCarousel({ posts }) {
                 )}
                 {/* Transparent overlay — captures drag/click, blocks IG navigation */}
                 <div style={{ position: 'absolute', inset: 0, zIndex: 2 }} />
-                {/* View Post button — only on center card */}
-                {isCenter && (
-                  <div style={{ position: 'absolute', bottom: 16, left: 0, right: 0,
-                    display: 'flex', justifyContent: 'center', zIndex: 3 }}>
-                    <motion.a
-                      href={post.url} target="_blank" rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.93 }}
-                      style={{ padding: '7px 18px', borderRadius: 999,
-                        background: 'linear-gradient(135deg,#f09433,#dc2743,#bc1888)',
-                        color: '#fff', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700,
-                        fontFamily: 'var(--sans)', textDecoration: 'none', display: 'inline-block',
-                        boxShadow: '0 4px 14px rgba(220,39,67,0.4)' }}>
-                      View Post ↗
-                    </motion.a>
-                  </div>
-                )}
               </motion.div>
             )
           })}

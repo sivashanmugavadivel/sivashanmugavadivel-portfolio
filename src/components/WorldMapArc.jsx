@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence, useInView } from 'framer-motion'
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simple-maps'
 import cfg from '../data/config.json'
 import InteractiveHint from './InteractiveHint'
+import CountryModal from './CountryModal'
 import { useHint } from '../hooks/useOnboarding'
 
 const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'
@@ -125,6 +127,8 @@ export default function WorldMapArc() {
   const [hintOn, dismissMapHint] = useHint('map')
   const [fullscreen, setFullscreen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const [selectedCountry, setSelectedCountry] = useState(null) // country-expand popup (from the old map)
+  const downPosRef = useRef({ x: 0, y: 0 }) // distinguishes a click from a map pan
   const rootRef = useRef(null)
   const mapRef = useRef(null)
   const posRef = useRef({ x: 0, y: 0 })        // cursor pos in a ref → no re-render on mouse move
@@ -214,6 +218,20 @@ export default function WorldMapArc() {
   })
 
   const placeKeys = [...new Set(routes.flatMap(r => r.legs.flatMap(l => [l.from, l.to])))].filter(k => T.places[k])
+
+  // Cities view only: also include the visited cities from the (hidden) Travel
+  // map (top-level cfg.places). Route cities come first; extras are deduped by
+  // coordinates (labels differ between the two lists, e.g. Kangayam/Kangeyam,
+  // Delhi/New Delhi), so shared cities keep their route pin.
+  const cityPins = (() => {
+    const list = placeKeys.map(k => ({ key: k, label: T.places[k].label, coords: T.places[k].coords, home: k === homeKey }))
+    ;(cfg.places || []).forEach(p => {
+      const dup = list.some(c => Math.abs(c.coords[0] - p.coords[0]) < 0.15 && Math.abs(c.coords[1] - p.coords[1]) < 0.15)
+      if (!dup) list.push({ key: `x-${p.label}`, label: p.label, coords: p.coords, home: false })
+    })
+    return list
+  })()
+  const cityByKey = Object.fromEntries(cityPins.map(c => [c.key, c]))
 
   const DRAW = 1.0
   const legDelay = leg => (anim === 'all' ? 0.15 : leg.seqDelay)          // draw-in start
@@ -359,11 +377,28 @@ export default function WorldMapArc() {
 
           <Geographies geography={GEO_URL}>
             {({ geographies }) =>
-              geographies.map(geo => (
-                <Geography key={geo.rsmKey} geography={geo}
-                  fill={landFill} stroke={landStroke} strokeWidth={0.4}
-                  style={{ default: { outline: 'none' }, hover: { outline: 'none' }, pressed: { outline: 'none' } }} />
-              ))
+              geographies.map(geo => {
+                // Visited countries (India, USA) open the country-expand popup
+                // from the old Travel map — highlighted on hover so they read
+                // as clickable. A real pan (moved > 8px) never triggers it.
+                const clickable = cfg.visitedCountries?.includes(String(geo.id)) && cfg.countryInfo?.[String(geo.id)]
+                return (
+                  <Geography key={geo.rsmKey} geography={geo}
+                    fill={landFill} stroke={landStroke} strokeWidth={0.4}
+                    onPointerDown={clickable ? (e) => { downPosRef.current = { x: e.clientX, y: e.clientY } } : undefined}
+                    onClick={clickable ? (e) => {
+                      const d = Math.hypot(e.clientX - downPosRef.current.x, e.clientY - downPosRef.current.y)
+                      if (d < 8) setSelectedCountry(String(geo.id))
+                    } : undefined}
+                    style={{
+                      default: { outline: 'none' },
+                      hover: clickable
+                        ? { outline: 'none', fill: hexA(P.arc, dark ? 0.55 : 0.5), cursor: 'pointer', transition: 'fill 0.2s' }
+                        : { outline: 'none' },
+                      pressed: { outline: 'none' },
+                    }} />
+                )
+              })
             }
           </Geographies>
 
@@ -492,9 +527,10 @@ export default function WorldMapArc() {
           {/* Visited-city pins — Cities view (red pin floats on each city) */}
           {view === 'cities' && (
           <g key={`cities-${playId}`}>
-            {placeKeys.map((k, i) => {
-              const [x, y] = project(T.places[k].coords)
-              const isHome = k === homeKey
+            {cityPins.map((c, i) => {
+              const k = c.key
+              const [x, y] = project(c.coords)
+              const isHome = c.home
               const pinColor = isHome ? '#f5b301' : '#ef4444' // home gold, visited red
               const hovered = hoverPlace === k
               return (
@@ -551,7 +587,8 @@ export default function WorldMapArc() {
 
         {/* ── Hover tooltips (positioned via ref on mouse-move, so the map never re-renders) ── */}
         {hoverPlace && (() => {
-          const p = T.places[hoverPlace]
+          const p = T.places[hoverPlace] || cityByKey[hoverPlace]
+          if (!p) return null
           return (
             <div ref={tipRef} style={{
               position: 'absolute', left: posRef.current.x, top: posRef.current.y, transform: 'translate(-50%, calc(-100% - 14px))',
@@ -641,6 +678,18 @@ export default function WorldMapArc() {
         )}
         <span style={{ opacity: 0.7 }}>Pinch / Ctrl+scroll to zoom · drag to pan</span>
       </div>
+
+      {/* Country-expand popup (from the old Travel map) — portalled to escape
+          the map's overflow:hidden; above the fullscreen layer when needed. */}
+      {selectedCountry && createPortal(
+        <CountryModal
+          countryId={selectedCountry}
+          onClose={() => setSelectedCountry(null)}
+          zIndex={fullscreen ? 2500 : 1200}
+          theme={{ dark, type, pin, land: P.land, arc: P.arc, bg, panelBorder }}
+        />,
+        document.body,
+      )}
     </div>
   )
 }
