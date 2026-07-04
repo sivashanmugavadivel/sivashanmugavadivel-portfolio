@@ -129,6 +129,15 @@ export default function WelcomeTour({ preview = false }) {
   const [idx, setIdx] = useState(0)
   const [resetKey, setResetKey] = useState(0)   // remount to snap the card closed (preview replay)
 
+  // Mobile detection — isolated so desktop is never affected.
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)')
+    const apply = () => setIsMobile(mq.matches)
+    apply(); mq.addEventListener('change', apply)
+    return () => mq.removeEventListener('change', apply)
+  }, [])
+
   const wrapRef = useRef(null)
   const idxRef = useRef(0)
   const turningRef = useRef(false)
@@ -243,14 +252,17 @@ export default function WelcomeTour({ preview = false }) {
     <AnimatePresence>
       {open && (
         <>
-          {/* Mobile only: the component's open animation slides the paper far to
-              the right (right:-320px) which runs off a phone screen. Keep the
-              paper on the card on small screens; desktop keeps the full slide. */}
+          {/* Mobile only: the open/close animation slides the paper out of the
+              folder to the right (right:-320px), which runs off a phone screen.
+              Pinning it in place (old fix) killed the slide and broke the open/
+              close motion — instead keep a SHORTER slide (-64px) and shrink the
+              whole card slightly (scale .88 below) so it stays on screen.
+              Desktop keeps the original full slide. */}
           <style>{`
             @media (max-width: 768px) {
               .framer-Tg3fG.framer-v-3anvpa .framer-1qsw93b,
               .framer-Tg3fG.framer-v-eq2zab .framer-1qsw93b {
-                right: 15px !important; left: unset !important; width: 288px !important;
+                right: -64px !important; left: unset !important;
               }
             }
           `}</style>
@@ -273,7 +285,11 @@ export default function WelcomeTour({ preview = false }) {
               <div
                 ref={wrapRef}
                 onPointerDownCapture={onPointerDownCapture}
-                style={{ position: 'relative', transformStyle: 'preserve-3d', perspective: 1400 }}
+                style={{
+                  position: 'relative', transformStyle: 'preserve-3d', perspective: 1400,
+                  // Mobile: shrink the card so the shortened pull-out slide fits on screen.
+                  transform: isMobile ? 'scale(0.88)' : undefined,
+                }}
               >
                 <DocumentCard key={resetKey} {...PAGES[idx]} />
               </div>
