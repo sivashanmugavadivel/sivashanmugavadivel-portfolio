@@ -20,12 +20,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # No version pinned here on purpose — it comes from package.json's
+      # "packageManager" field, so CI always runs the same pnpm as local.
+      # Pinning it separately is what broke the build: pnpm 10+ moved
+      # `pnpm.overrides` out of package.json into pnpm-workspace.yaml, and
+      # pnpm 9 rejects that file for having no `packages:` field.
       - uses: pnpm/action-setup@v3
-        with:
-          version: 9
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
       - run: pnpm install
       - run: pnpm build
