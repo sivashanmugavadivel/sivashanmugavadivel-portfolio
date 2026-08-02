@@ -388,20 +388,24 @@ export function RidesAndRoutes({ title = 'Rides & Routes', basePath = '/mygarage
       )}
       <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr 200px', minHeight: 280 }} className="ridemap-v8">
         {/* Stats */}
-        <div style={{ padding: '20px 18px', borderRight: `1px solid ${BD}` }}>
+        <div className="ridemap-stats" style={{ padding: '20px 18px', borderRight: `1px solid ${BD}` }}>
           {rideSummary.stats.map(([k, v]) => (
-            <div key={k} style={{ marginBottom: 14 }}>
+            <div key={k} className="ridemap-stat" style={{ marginBottom: 14 }}>
               <div style={{ fontSize: '0.58rem', color: D3, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 2 }}>{k}</div>
               <div style={{ fontSize: '1rem', fontWeight: 800, color: OFF }}>{v}</div>
             </div>
           ))}
         </div>
-        {/* Map */}
-        <div style={{ position: 'relative', background: BG }}>
+        {/* Map.
+            `isolation` matters: Leaflet gives its own panes z-index 400–800,
+            and a plain position:relative parent makes no stacking context, so
+            those panes would outrank the page's fixed buttons and paint the
+            map over them. This keeps the whole map on one layer. */}
+        <div className="ridemap-map" style={{ position: 'relative', background: BG, isolation: 'isolate', zIndex: 0 }}>
           <ShowcaseMiniMap basePath={basePath} />
         </div>
         {/* List */}
-        <div style={{ borderLeft: `1px solid ${BD}`, display: 'flex', flexDirection: 'column' }}>
+        <div className="ridemap-list" style={{ borderLeft: `1px solid ${BD}`, display: 'flex', flexDirection: 'column' }}>
           <div style={{ flex: 1, overflowY: 'auto' }}>
             {listed.map(r => {
               const m = modeOf(r.mode)
@@ -424,7 +428,41 @@ export function RidesAndRoutes({ title = 'Rides & Routes', basePath = '/mygarage
           <button onClick={() => navigate(basePath)} style={{ margin: 12, padding: '8px', background: ACCBG, color: ACC2, border: `1px solid rgba(139,92,246,0.3)`, borderRadius: 8, fontFamily: 'var(--sans)', fontWeight: 600, fontSize: '0.7rem', cursor: 'pointer' }}>View All Rides</button>
         </div>
       </div>
-      <style>{`@media(max-width:760px){.ridemap-v8{grid-template-columns:1fr!important}.ridemap-v8>*:first-child,.ridemap-v8>*:last-child{display:none!important}.ridemap-v8>*:nth-child(2){min-height:280px}}`}</style>
+      {/* Desktop is untouched — everything below is a mobile-only layout.
+          The old rule stacked the grid and then hid the stats and the ride
+          list outright, so a phone got a bare map and none of the detail the
+          section is actually about. Here the three panes stack into their own
+          arrangement instead: stats as a strip across the top, the map, then
+          the rides underneath. */}
+      <style>{`
+        @media (max-width: 760px) {
+          .ridemap-v8 { grid-template-columns: 1fr !important; min-height: 0 !important; }
+
+          /* stats: a two-up strip rather than a tall left rail */
+          .ridemap-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+            gap: 12px 14px;
+            padding: 16px 18px !important;
+            border-right: none !important;
+            border-bottom: 1px solid ${BD};
+          }
+          .ridemap-stat { margin-bottom: 0 !important; }
+
+          /* the map needs its own height once the grid row stops giving it one */
+          .ridemap-map { min-height: 300px; }
+
+          .ridemap-list {
+            border-left: none !important;
+            border-top: 1px solid ${BD};
+          }
+          /* the rail scrolls on desktop because it has a fixed height to fill;
+             stacked it has none, so let it run and keep the page as the
+             scroller — a nested scroll area here fights the page on touch */
+          .ridemap-list > div:first-child { overflow-y: visible !important; }
+          .ridemap-list button { margin: 12px 14px 14px !important; padding: 10px !important; }
+        }
+      `}</style>
     </ShowcaseCard>
   )
 }

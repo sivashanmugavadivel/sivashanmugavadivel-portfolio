@@ -72,6 +72,7 @@ export default function ShowcaseMiniMap({ basePath = '/mygarage/rides' }) {
   const mapRef = useRef(null)
   const lMap = useRef(null)
   const ioRef = useRef(null)     // intersection observer handle
+  const roRef = useRef(null)     // resize observer handle
   const pending = useRef([])     // route line elements that can animate
 
   // (Re)play the reveal on all loaded route lines. Completed rides draw
@@ -158,6 +159,34 @@ export default function ShowcaseMiniMap({ basePath = '/mygarage/rides' }) {
           }
         }).catch(() => {})
       })
+      /* ── narrow containers only ──────────────────────────────────
+         The centre/zoom above is framed for the wide desktop pane; in
+         a phone-width column that same view lands on a tall slice with
+         the cities pushed off the edges. Below 760px, fit the map to
+         the cities instead so the whole route network is in frame.
+         Desktop keeps the original view untouched. */
+      const NARROW = 760
+      const fitIfNarrow = () => {
+        const el = mapRef.current
+        if (!el) return
+        map.invalidateSize()
+        if (el.clientWidth > 0 && el.clientWidth <= NARROW) {
+          const bounds = L.latLngBounds(
+            Object.values(MAP_CITIES).map(c => [c.lat, c.lng]),
+          )
+          /* generous horizontal padding: the bounds only cover the pins, and
+             each one carries a permanent label that hangs 60–80px off to its
+             side. Fitting the pins alone clips "Coimbatore" and "Chennai"
+             against the edges. */
+          map.fitBounds(bounds, { padding: [56, 30], animate: false })
+        }
+      }
+      fitIfNarrow()
+      /* re-fit on rotate/resize; Leaflet also needs invalidateSize when its
+         container changes size or it keeps rendering at the old dimensions */
+      roRef.current = new ResizeObserver(() => fitIfNarrow())
+      roRef.current.observe(mapRef.current)
+
       Object.values(MAP_CITIES).forEach(c => {
         const col = c.home ? '#a78bfa' : '#c4b5fd'
         const sz = c.home ? 14 : 11
@@ -173,6 +202,7 @@ export default function ShowcaseMiniMap({ basePath = '/mygarage/rides' }) {
     return () => {
       mounted = false
       if (ioRef.current) { ioRef.current.disconnect(); ioRef.current = null }
+      if (roRef.current) { roRef.current.disconnect(); roRef.current = null }
       if (lMap.current) { lMap.current.remove(); lMap.current = null }
     }
   }, [])
