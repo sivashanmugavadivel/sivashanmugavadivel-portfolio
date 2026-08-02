@@ -18,6 +18,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 // import RidePassDeck from '../components/garage/RidePassDeck'   // hidden — see below
 import MaintenanceLog from '../components/garage/MaintenanceLog'
 import FollowTheJourney from '../components/garage/FollowTheJourney'
+import BearFireworks from '../components/garage/BearFireworks'
 import {
   RecommendedAccessories, LatestVlogs, RideGallery, RidesAndRoutes, DreamGarageJourney,
 } from '../components/garage/ShowcaseSections'
@@ -26,6 +27,10 @@ import {
 } from '../data/bear650Specs'
 
 const TRACK_VH = 520     // height of the scroll track, in vh
+
+/* How long the fireworks run for once the bike is on screen. The two
+   lettered shells are scheduled inside this window — see BearFireworks. */
+const FIREWORKS_MS = 10000
 
 const frameSrc = (i) =>
   `${import.meta.env.BASE_URL}bear650/wild-honey${String(i + 1).padStart(2, '0')}.png`
@@ -323,6 +328,10 @@ function StopPins({ stop, elRef }) {
 export default function MyGarage() {
   const [loaded, setLoaded] = useState(0)
   const [minElapsed, setMinElapsed] = useState(introPlayed)
+  /* Fireworks go up once the bike is actually on screen, not during the
+     loader — the display is for the reveal, not the wait. Only the ending is
+     held in state, so the effect below never sets state synchronously. */
+  const [fireworksDone, setFireworksDone] = useState(false)
   /* hold the loader until BOTH the frames are in and the draw+fill has
      played out, so a warm cache doesn't flash the animation away */
   const revealed = loaded >= FRAME_COUNT && minElapsed
@@ -339,6 +348,13 @@ export default function MyGarage() {
   const curFrame   = useRef(-1)
   const pinsRef    = useRef([])
   const curF       = useRef(SPEC_LAYOUT.map(() => -1))
+
+  /* ── fireworks: five seconds from the reveal, then they fade out ── */
+  useEffect(() => {
+    if (!revealed) return
+    const t = setTimeout(() => setFireworksDone(true), FIREWORKS_MS)
+    return () => clearTimeout(t)
+  }, [revealed])
 
   /* ── let the draw + fill finish before revealing (first visit only) ── */
   useEffect(() => {
@@ -473,6 +489,24 @@ export default function MyGarage() {
             justifyContent: 'center',
           }}
         >
+          {/* Fireworks behind the bike once the loader has handed over —
+              they mark the reveal, not the wait. First in the stage so they
+              paint behind the bike box and the layers around it, and they
+              fade out rather than stopping dead. */}
+          <AnimatePresence>
+            {revealed && !fireworksDone && (
+              <motion.div
+                key="fireworks"
+                aria-hidden
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.7, ease: 'easeOut' }}
+                style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+              >
+                <BearFireworks />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* Every decorative layer is held back while loading so the stage
               stays blank behind the bear, then eases in together.
               Only opacity is animated here — the layers inside own their
