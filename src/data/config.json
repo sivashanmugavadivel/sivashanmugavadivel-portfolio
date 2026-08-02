@@ -1163,85 +1163,7 @@
       "note": "Every rupee the Bear has cost to keep running. Open any service for the full bill.",
       "currency": "₹",
       "owner": "Royal Enfield · Bear 650",
-      "services": [
-        {
-          "id": "svc-2026-07",
-          "name": "Second Free Service",
-          "summary": "Engine oil, chain clean, brake check",
-          "date": "12 Jul 2026",
-          "odometer": 4820,
-          "type": "Scheduled",
-          "workshop": "Royal Enfield · Tiruppur",
-          "invoice": "RE0000485721",
-          "items": [
-            { "label": "Engine Oil (Semi-Synthetic 15W-50)", "qty": "3.0 L", "amount": 1890 },
-            { "label": "Oil Filter Element", "qty": "1 pc", "amount": 320 },
-            { "label": "Chain Clean & Lube", "qty": "1 job", "amount": 280 },
-            { "label": "Labour — Scheduled Service", "qty": "2.0 hr", "amount": 0 }
-          ],
-          "discount": 0,
-          "taxRate": 18,
-          "nextDue": { "km": 10000, "date": "Jan 2027" },
-          "notes": "Second of the three free services. Labour waived under the warranty package."
-        },
-        {
-          "id": "svc-2026-04",
-          "name": "Chain Sprocket Kit Replacement",
-          "summary": "Chain, front and rear sprocket swap",
-          "date": "28 Apr 2026",
-          "odometer": 3650,
-          "type": "Running Repair",
-          "workshop": "Royal Enfield · Tiruppur",
-          "invoice": "RE0000462180",
-          "items": [
-            { "label": "Chain & Sprocket Kit (OEM)", "qty": "1 set", "amount": 4650 },
-            { "label": "Chain Lube — Spray", "qty": "1 pc", "amount": 420 },
-            { "label": "Labour — Fitment & Alignment", "qty": "1.5 hr", "amount": 600 }
-          ],
-          "discount": 300,
-          "taxRate": 18,
-          "nextDue": { "km": 28000, "date": null },
-          "notes": "Original chain had stretched past the adjustment marks. Rear sprocket replaced with it."
-        },
-        {
-          "id": "svc-2026-01",
-          "name": "First Free Service",
-          "summary": "Full oil change, all fluids, bolt torque",
-          "date": "18 Jan 2026",
-          "odometer": 1520,
-          "type": "Scheduled",
-          "workshop": "Royal Enfield · Tiruppur",
-          "invoice": "RE0000431905",
-          "items": [
-            { "label": "Engine Oil (Semi-Synthetic 15W-50)", "qty": "3.0 L", "amount": 1890 },
-            { "label": "Oil Filter Element", "qty": "1 pc", "amount": 320 },
-            { "label": "Brake Fluid Top-up (DOT 4)", "qty": "0.2 L", "amount": 180 },
-            { "label": "Labour — First Service", "qty": "2.5 hr", "amount": 0 }
-          ],
-          "discount": 2390,
-          "taxRate": 18,
-          "nextDue": { "km": 5000, "date": "Jul 2026" },
-          "notes": "First of the three free services — parts and labour both covered, so nothing was payable."
-        },
-        {
-          "id": "svc-2025-12",
-          "name": "Pre-Delivery Inspection",
-          "summary": "PDI, registration handover, first tank",
-          "date": "06 Dec 2025",
-          "odometer": 12,
-          "type": "Delivery",
-          "workshop": "Royal Enfield · Tiruppur",
-          "invoice": "RE0000418442",
-          "items": [
-            { "label": "Pre-Delivery Inspection", "qty": "1 job", "amount": 0 },
-            { "label": "Tank Pad & Handlebar Check", "qty": "1 job", "amount": 0 }
-          ],
-          "discount": 0,
-          "taxRate": 0,
-          "nextDue": { "km": 1500, "date": "Jan 2026" },
-          "notes": "Delivery day. Nothing chargeable — logged here so the service history starts at zero."
-        }
-      ]
+      "services": []
     },
     "gallery": {
       "title": "Ride Gallery",
@@ -1254,56 +1176,7 @@
         "scrollBoost": 2.2,
         "pauseOnHover": true
       },
-      "photos": [
-        {
-          "src": "https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=600&q=80",
-          "caption": "First light on the ghat",
-          "location": "Yelagiri Hills",
-          "date": "May 2026"
-        },
-        {
-          "src": "https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=600&q=80",
-          "caption": "Empty road, full tank",
-          "location": "East Coast Road",
-          "date": "Apr 2026"
-        },
-        {
-          "src": "https://images.unsplash.com/photo-1609630875171-b1321377ee65?w=600&q=80",
-          "caption": "Coffee before the climb",
-          "location": "Coimbatore Ghat",
-          "date": "Apr 2026"
-        },
-        {
-          "src": "https://images.unsplash.com/photo-1547549082-6bc09f2049ae?w=600&q=80",
-          "caption": "Chain oiled, bags on",
-          "location": "Home Garage",
-          "date": "Mar 2026"
-        },
-        {
-          "src": "https://images.unsplash.com/photo-1449426468159-d96dbf08f19f?w=600&q=80",
-          "caption": "Parked where the tar ends",
-          "location": "Kangayam Backroads",
-          "date": "Mar 2026"
-        },
-        {
-          "src": "https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=600&q=80",
-          "caption": "The long way round",
-          "location": "Salem Highway",
-          "date": "Feb 2026"
-        },
-        {
-          "src": "https://images.unsplash.com/photo-1558981285-6f0c94958bb6?w=600&q=80",
-          "caption": "Helmet off, view on",
-          "location": "Nathakadaiyur",
-          "date": "Feb 2026"
-        },
-        {
-          "src": "https://images.unsplash.com/photo-1502877338535-766e1452684a?w=600&q=80",
-          "caption": "Last stop before dark",
-          "location": "Pondicherry",
-          "date": "Jan 2026"
-        }
-      ]
+      "photos": []
     },
     "accessories": {
       "note": "The gear actually bolted to the bike. Links go straight to where each one was bought.",
