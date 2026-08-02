@@ -4,7 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "gen:item-images": "node scripts/gen-item-images.mjs",
+    "predev": "npm run gen:item-images",
     "dev": "vite",
+    "prebuild": "npm run gen:item-images",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -38,10 +41,5 @@
     "globals": "^17.4.0",
     "sharp": "^0.35.3",
     "vite": "^8.1.2"
-  },
-  "pnpm": {
-    "overrides": {
-      "d3-color": ">=3.1.0"
-    }
   }
 }

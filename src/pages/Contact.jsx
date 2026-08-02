@@ -374,13 +374,14 @@ export default function Contact() {
             pointerEvents: 'none',
           }}
         />
-        {/* Mobile-only GIF overrides */}
+        {/* Mobile-only GIF overrides — small and hugging the right edge so it
+            never overlaps the local-time clock (AM/PM) next to the date badge */}
         <style>{`
           @media (max-width: 768px) {
             .contact-gif {
-              width: 280px !important;
+              width: 170px !important;
               bottom: 0% !important;
-              right: -10% !important;
+              right: -4% !important;
             }
           }
         `}</style>

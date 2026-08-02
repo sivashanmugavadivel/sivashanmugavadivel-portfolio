@@ -236,6 +236,27 @@
         "title": "Chicago River",
         "location": "Chicago, USA",
         "caption": "Stand in the heart of the Chicago River and look all the way around."
+      },
+      {
+        "src": "360image/Chicago-ohare-international-airport_1.jpg",
+        "thumbnail": "360image/thumbs/Chicago-ohare-international-airport_1_thumb.jpg",
+        "title": "O'Hare — At the Gate",
+        "location": "Chicago O'Hare, USA",
+        "caption": "Waiting on the flight. Turn around for the length of the empty lounge, or look through the glass at the jets on stand."
+      },
+      {
+        "src": "360image/Chicago-ohare-international-airport_2.jpg",
+        "thumbnail": "360image/thumbs/Chicago-ohare-international-airport_2_thumb.jpg",
+        "title": "O'Hare — Out on the Apron",
+        "location": "Chicago O'Hare, USA",
+        "caption": "The same wait, closer to the window — ground crew working the stand on one side, the terminal on the other."
+      },
+      {
+        "src": "360image/Fashion-outlets-mall-chicago.jpg",
+        "thumbnail": "360image/thumbs/Fashion-outlets-mall-chicago_thumb.jpg",
+        "title": "Fashion Outlets of Chicago",
+        "location": "Chicago, USA",
+        "caption": "A sit-down halfway through the shopping. Spin round for the full length of the mall."
       }
     ]
   },
@@ -535,7 +556,6 @@
     },
     {
       "id": "https://youtu.be/D2RHDnm8_IY?si=E-_pqQy2R-SWUUqm",
-      "preview": "video-previews/chicago_ovr.mp4",
       "title": "KCBT || Kelambakkam Bus Terminal || Kalaignar Centenary Bus Terminat - KCBT || Chennai",
       "description": "Exploring the KCBT bus terminal in Chennai.",
       "type": "video",
@@ -543,6 +563,30 @@
       "tags": [
         "vlog"
       ]
+    },
+    {
+      "id": "https://youtube.com/shorts/yqxAY4R4NxE",
+      "title": "Exploring Chicago in One Day | Skydeck, Architecture Cruise & Navy Pier Fireworks",
+      "description": "#USA #travel #vlogs #chicago.",
+      "type": "short",
+      "category": "United States",
+      "date": "2026-06-20",
+      "tags": [
+        "short"
+      ],
+      "fav": true
+    },
+    {
+      "id": "https://youtube.com/shorts/U1Tq5lcd0EI",
+      "title": "One Day Tour in Chicago USA | Best Places to Visit in 24 Hours",
+      "description": "#USA #travel #vlogs #chicago.",
+      "type": "short",
+      "category": "United States",
+      "date": "2026-06-20",
+      "tags": [
+        "short"
+      ],
+      "fav": true
     },
     {
       "id": "https://youtube.com/shorts/1PVaLLKoGno?si=MkaWbNZadIJPrSn4",
@@ -901,27 +945,39 @@
   ],
   "instagram": [
     {
+      "url": "https://www.instagram.com/reel/DaYPUxPB6Hz/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
+      "caption": "Chicago one day trip #river_cruise #chicago #trip #one_day_trip",
+      "category": "chicago",
+      "thumbnail": ""
+    },
+    {
+      "url": "https://www.instagram.com/reel/DZziZ1wR1Lf/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
+      "caption": "Chicago down town indian food restaurant #chicago #indianfood #restaurant",
+      "category": "chicago",
+      "thumbnail": ""
+    },
+    {
+      "url": "https://www.instagram.com/reel/DZ3mDTaRLGI/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
+      "caption": "Chicago one day trip #chicago #trip #one_day_trip",
+      "category": "chicago",
+      "thumbnail": ""
+    },
+    {
+      "url": "https://www.instagram.com/reel/DaF42gOxKX7/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
+      "caption": "Chicago one day short video #chicago #trip #one_day_trip",
+      "category": "chicago",
+      "thumbnail": ""
+    },
+    {
+      "url": "https://www.instagram.com/reel/DaHk80bgQeZ/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
+      "caption": "Mount vernon #aviationday #mountvernon #trip #friends",
+      "category": "Mount Vernon",
+      "thumbnail": ""
+    },
+    {
       "url": "https://www.instagram.com/reel/DVLgz1vkSRC/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
-      "caption": "Add your post caption here",
+      "caption": "Mushroom omelet in 1 minute 🍳🔥 | Tamil Shorts.",
       "category": "cooking",
-      "thumbnail": ""
-    },
-    {
-      "url": "https://www.instagram.com/reel/DVT1nQcEWF7/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
-      "caption": "#kangayam #kaalai #tamil #kangayamkaalai #iconicstatue",
-      "category": "Culture",
-      "thumbnail": ""
-    },
-    {
-      "url": "https://www.instagram.com/reel/DTDEoeZD09F/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
-      "caption": "Arudhra Kabaleeshwarar Dharisanam",
-      "category": "Culture",
-      "thumbnail": ""
-    },
-    {
-      "url": "https://www.instagram.com/reel/DUZd2MRkUws/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
-      "caption": "#Yercaud #friends #trip #memories",
-      "category": "Trip",
       "thumbnail": ""
     },
     {
@@ -975,12 +1031,6 @@
     {
       "url": "https://www.instagram.com/reel/CyDelHoAaxo/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
       "caption": "Aircraft landing _chicago _O'Hare_International_Airport _USA From _Franfurt_International_Airport _Germany",
-      "category": "Travel",
-      "thumbnail": ""
-    },
-    {
-      "url": "https://www.instagram.com/reel/Cx9AlXnL3Dm/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
-      "caption": "_takeoff _Farnkfurt _Germany",
       "category": "Travel",
       "thumbnail": ""
     },
@@ -1106,5 +1156,331 @@
         "buttons": []
       }
     ]
+  },
+  "garage": {
+    "maintenance": {
+      "title": "Service & Maintenance",
+      "note": "Every rupee the Bear has cost to keep running. Open any service for the full bill.",
+      "currency": "₹",
+      "owner": "Royal Enfield · Bear 650",
+      "services": [
+        {
+          "id": "svc-2026-07",
+          "name": "Second Free Service",
+          "summary": "Engine oil, chain clean, brake check",
+          "date": "12 Jul 2026",
+          "odometer": 4820,
+          "type": "Scheduled",
+          "workshop": "Royal Enfield · Tiruppur",
+          "invoice": "RE0000485721",
+          "items": [
+            { "label": "Engine Oil (Semi-Synthetic 15W-50)", "qty": "3.0 L", "amount": 1890 },
+            { "label": "Oil Filter Element", "qty": "1 pc", "amount": 320 },
+            { "label": "Chain Clean & Lube", "qty": "1 job", "amount": 280 },
+            { "label": "Labour — Scheduled Service", "qty": "2.0 hr", "amount": 0 }
+          ],
+          "discount": 0,
+          "taxRate": 18,
+          "nextDue": { "km": 10000, "date": "Jan 2027" },
+          "notes": "Second of the three free services. Labour waived under the warranty package."
+        },
+        {
+          "id": "svc-2026-04",
+          "name": "Chain Sprocket Kit Replacement",
+          "summary": "Chain, front and rear sprocket swap",
+          "date": "28 Apr 2026",
+          "odometer": 3650,
+          "type": "Running Repair",
+          "workshop": "Royal Enfield · Tiruppur",
+          "invoice": "RE0000462180",
+          "items": [
+            { "label": "Chain & Sprocket Kit (OEM)", "qty": "1 set", "amount": 4650 },
+            { "label": "Chain Lube — Spray", "qty": "1 pc", "amount": 420 },
+            { "label": "Labour — Fitment & Alignment", "qty": "1.5 hr", "amount": 600 }
+          ],
+          "discount": 300,
+          "taxRate": 18,
+          "nextDue": { "km": 28000, "date": null },
+          "notes": "Original chain had stretched past the adjustment marks. Rear sprocket replaced with it."
+        },
+        {
+          "id": "svc-2026-01",
+          "name": "First Free Service",
+          "summary": "Full oil change, all fluids, bolt torque",
+          "date": "18 Jan 2026",
+          "odometer": 1520,
+          "type": "Scheduled",
+          "workshop": "Royal Enfield · Tiruppur",
+          "invoice": "RE0000431905",
+          "items": [
+            { "label": "Engine Oil (Semi-Synthetic 15W-50)", "qty": "3.0 L", "amount": 1890 },
+            { "label": "Oil Filter Element", "qty": "1 pc", "amount": 320 },
+            { "label": "Brake Fluid Top-up (DOT 4)", "qty": "0.2 L", "amount": 180 },
+            { "label": "Labour — First Service", "qty": "2.5 hr", "amount": 0 }
+          ],
+          "discount": 2390,
+          "taxRate": 18,
+          "nextDue": { "km": 5000, "date": "Jul 2026" },
+          "notes": "First of the three free services — parts and labour both covered, so nothing was payable."
+        },
+        {
+          "id": "svc-2025-12",
+          "name": "Pre-Delivery Inspection",
+          "summary": "PDI, registration handover, first tank",
+          "date": "06 Dec 2025",
+          "odometer": 12,
+          "type": "Delivery",
+          "workshop": "Royal Enfield · Tiruppur",
+          "invoice": "RE0000418442",
+          "items": [
+            { "label": "Pre-Delivery Inspection", "qty": "1 job", "amount": 0 },
+            { "label": "Tank Pad & Handlebar Check", "qty": "1 job", "amount": 0 }
+          ],
+          "discount": 0,
+          "taxRate": 0,
+          "nextDue": { "km": 1500, "date": "Jan 2026" },
+          "notes": "Delivery day. Nothing chargeable — logged here so the service history starts at zero."
+        }
+      ]
+    },
+    "gallery": {
+      "title": "Ride Gallery",
+      "note": "Shots from the road, pinned up as they were taken.",
+      "ticker": {
+        "photoSize": 210,
+        "gap": 34,
+        "tilt": 8,
+        "speed": 46,
+        "scrollBoost": 2.2,
+        "pauseOnHover": true
+      },
+      "photos": [
+        {
+          "src": "https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=600&q=80",
+          "caption": "First light on the ghat",
+          "location": "Yelagiri Hills",
+          "date": "May 2026"
+        },
+        {
+          "src": "https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=600&q=80",
+          "caption": "Empty road, full tank",
+          "location": "East Coast Road",
+          "date": "Apr 2026"
+        },
+        {
+          "src": "https://images.unsplash.com/photo-1609630875171-b1321377ee65?w=600&q=80",
+          "caption": "Coffee before the climb",
+          "location": "Coimbatore Ghat",
+          "date": "Apr 2026"
+        },
+        {
+          "src": "https://images.unsplash.com/photo-1547549082-6bc09f2049ae?w=600&q=80",
+          "caption": "Chain oiled, bags on",
+          "location": "Home Garage",
+          "date": "Mar 2026"
+        },
+        {
+          "src": "https://images.unsplash.com/photo-1449426468159-d96dbf08f19f?w=600&q=80",
+          "caption": "Parked where the tar ends",
+          "location": "Kangayam Backroads",
+          "date": "Mar 2026"
+        },
+        {
+          "src": "https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=600&q=80",
+          "caption": "The long way round",
+          "location": "Salem Highway",
+          "date": "Feb 2026"
+        },
+        {
+          "src": "https://images.unsplash.com/photo-1558981285-6f0c94958bb6?w=600&q=80",
+          "caption": "Helmet off, view on",
+          "location": "Nathakadaiyur",
+          "date": "Feb 2026"
+        },
+        {
+          "src": "https://images.unsplash.com/photo-1502877338535-766e1452684a?w=600&q=80",
+          "caption": "Last stop before dark",
+          "location": "Pondicherry",
+          "date": "Jan 2026"
+        }
+      ]
+    },
+    "accessories": {
+      "note": "The gear actually bolted to the bike. Links go straight to where each one was bought.",
+      "categories": [
+        {
+          "id": "camera",
+          "label": "Camera & Accessories",
+          "icon": "📷",
+          "items": [
+            {
+              "id": "insta360-x5",
+              "name": "Insta360 X5",
+              "desc": "",
+              "featured": true,
+              "links": [
+                { "vendor": "Insta360", "url": "https://www.insta360.com/sal/x5?utm_source=AffiliateCenter&utm_medium=copylink&utm_term=INRSGGO3OY3" },
+                { "vendor": "Amazon", "url": "https://amzn.in/d/0gU0cXaW" }
+              ]
+            },
+            {
+              "id": "insta360-x4-air",
+              "name": "Insta360 X4 Air",
+              "desc": "",
+              "links": [
+                { "vendor": "Insta360", "url": "https://www.insta360.com/sal/x4-air?utm_source=AffiliateCenter&utm_medium=copylink&utm_term=INRSGGO3OY3" },
+                { "vendor": "Amazon", "url": "https://amzn.in/d/04ylvhYu" }
+              ]
+            },
+            {
+              "id": "insta360-ace-pro-2",
+              "name": "Insta360 Ace Pro 2",
+              "desc": "",
+              "featured": true,
+              "links": [
+                { "vendor": "Insta360", "url": "https://www.insta360.com/sal/ace-pro-2?utm_source=AffiliateCenter&utm_medium=copylink&utm_term=INRSGGO3OY3" },
+                { "vendor": "Amazon", "url": "https://amzn.in/d/0j5mlyWS" }
+              ]
+            },
+            {
+              "id": "insta360-heavy-duty-clamp",
+              "name": "Insta360 Heavy Duty Clamp",
+              "desc": "",
+              "links": [
+                { "vendor": "Amazon", "url": "https://amzn.in/d/0hr1hLI6" }
+              ]
+            },
+            {
+              "id": "telesin-handlebar-mount",
+              "name": "TELESIN Camera Clamp Handlebar Bike Mount",
+              "desc": "",
+              "links": [
+                { "vendor": "Amazon", "url": "https://amzn.in/d/08shcZQH" }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "lighting",
+          "label": "Lighting",
+          "icon": "💡",
+          "items": [
+            {
+              "id": "futureeye-x80",
+              "name": "FutureEye X80",
+              "desc": "",
+              "featured": true,
+              "links": [
+                { "vendor": "Amazon", "url": "https://a.co/d/00IW1eUF" }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "helmet",
+          "label": "Helmet & Accessories",
+          "icon": "🎧",
+          "items": [
+            {
+              "id": "sena-60s-evo",
+              "name": "Sena 60S EVO",
+              "desc": "",
+              "featured": true,
+              "links": [
+                { "vendor": "Amazon", "url": "https://a.co/d/05C8wMTZ" }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "safety",
+          "label": "Safety",
+          "icon": "🛡️",
+          "items": [
+            {
+              "id": "headlight-grill",
+              "name": "Headlight Grill",
+              "desc": "",
+              "links": [
+                { "vendor": "Amazon", "url": "https://amzn.in/d/0hDBui68" }
+              ]
+            },
+            {
+              "id": "handlebar-brace-pad",
+              "name": "Handlebar Brace Pad",
+              "desc": "",
+              "links": [
+                { "vendor": "Amazon", "url": "https://amzn.in/d/0b8r9VKh" }
+              ]
+            },
+            {
+              "id": "suspension-forks-cover",
+              "name": "Suspension Forks Cover",
+              "desc": "",
+              "links": [
+                { "vendor": "Amazon", "url": "https://amzn.in/d/0hzQSdbK" }
+              ]
+            },
+            {
+              "id": "dashboard-screen-protector",
+              "name": "Dashboard Screen Protector",
+              "desc": "",
+              "links": [
+                { "vendor": "Amazon", "url": "https://amzn.in/d/09icZe3A" }
+              ]
+            },
+            {
+              "id": "fork-sliders",
+              "name": "Fork Sliders",
+              "desc": "",
+              "links": [
+                { "vendor": "Motocare", "url": "https://motocare.co.in/product-details/fork-sliders-for-bear-650" }
+              ]
+            },
+            {
+              "id": "saddle-stay-plate-footrest",
+              "name": "Saddle Stay with Plate with Footrest",
+              "desc": "",
+              "featured": true,
+              "links": [
+                { "vendor": "Motocare", "url": "https://motocare.co.in/product-details/saddle-stay-with-plate-with-footrest-for-bear-650" }
+              ]
+            },
+            {
+              "id": "crash-guard-sliders",
+              "name": "Crash Guard with Sliders",
+              "desc": "",
+              "featured": true,
+              "links": [
+                { "vendor": "Motocare", "url": "https://motocare.co.in/product-details/crash-guard-with-dual-sliders-for-bear-650" }
+              ]
+            },
+            {
+              "id": "tyre-hugger",
+              "name": "Tyre Hugger",
+              "desc": "",
+              "links": [
+                { "vendor": "Motocare", "url": "https://motocare.co.in/product-details/tyre-hugger-for-bear-650" }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "essentials",
+          "label": "Essentials",
+          "icon": "🔌",
+          "items": [
+            {
+              "id": "100w-two-way-charger",
+              "name": "100W Fast Two-Way Charging",
+              "desc": "",
+              "links": [
+                { "vendor": "Amazon", "url": "https://a.co/d/07qIgKj1" }
+              ]
+            }
+          ]
+        }
+      ]
+    }
   }
 }

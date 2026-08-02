@@ -506,21 +506,25 @@ function Panorama360Section() {
     return () => clearTimeout(hideT)
   }, [showHint])
 
-  // Background prefetch the full-res panoramas during browser idle time, so the
-  // card preview and the viewer are already cached — no lag, no blocking the page.
+  // Background prefetch during browser idle time, so opening the viewer on the
+  // panorama being shown has no lag and never blocks the page.
+  //
+  // Only the current one: these are 8000px equirectangular files at 12–14 MB
+  // each, so warming the whole set would idle-download tens of megabytes of
+  // panoramas the visitor may never open. Stepping the card re-runs this and
+  // warms whichever is now on screen.
   useEffect(() => {
-    if (panoramas.length === 0) return
+    const cur = panoramas[index]
+    if (!cur) return
     const idle = window.requestIdleCallback || (cb => setTimeout(cb, 1500))
     const cancelIdle = window.cancelIdleCallback || clearTimeout
     const handle = idle(() => {
-      panoramas.forEach(p => {
-        const img = new Image()
-        img.src = p.src.startsWith('http') ? p.src : `${BASE}${p.src}`
-      })
+      const img = new Image()
+      img.src = cur.src.startsWith('http') ? cur.src : `${BASE}${cur.src}`
     })
     return () => cancelIdle(handle)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [index])
 
   if (panoramas.length === 0) return null
 

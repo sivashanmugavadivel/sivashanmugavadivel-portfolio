@@ -357,170 +357,104 @@ export const recommendedAccessories = [
   },
 ]
 
-export const vlogs = [
-  { id: 'dQw4w9WgXcQ', title: 'Yelagiri Hill Ride', subtitle: 'A Perfect Weekend Escape', category: 'Latest', distance: '320 KM', duration: '20:15', views: 4800, date: 'May 2024' },
-  { id: 'dQw4w9WgXcQ', title: 'Coastal Ride to Pondy', subtitle: 'Scenic Roads & Good Vibes', category: 'Latest', distance: '210 KM', duration: '18:42', views: 3200, date: 'Apr 2024' },
-  { id: 'dQw4w9WgXcQ', title: 'Kangayam to Coimbatore', subtitle: 'Hidden Routes & Raw Nature', category: 'Latest', distance: '160 KM', duration: '25:30', views: 2700, date: 'Apr 2024' },
-  { id: 'dQw4w9WgXcQ', title: 'My Daily Setup', subtitle: 'Accessories I Use for Long Rides', category: 'Latest', distance: null, duration: '15:10', views: 2100, date: 'Mar 2024' },
-  { id: 'dQw4w9WgXcQ', title: 'Leh Ladakh Dream Ride Plan 2025', subtitle: 'Planning the Ultimate Trip', category: 'Popular', distance: null, duration: '12:35', views: 7800, date: 'Feb 2024' },
-  { id: 'dQw4w9WgXcQ', title: 'Shotgun 650 Pros & Cons After 5000 KM', subtitle: 'Honest Review', category: 'Popular', distance: null, duration: '14:20', views: 6200, date: 'Jan 2024' },
-  { id: 'dQw4w9WgXcQ', title: 'Long Ride Packing Checklist', subtitle: 'What I Carry', category: 'Popular', distance: null, duration: '10:18', views: 5400, date: 'Dec 2023' },
-  { id: 'dQw4w9WgXcQ', title: 'Chigee AIO-6 Full Review', subtitle: 'After 3 Months', category: 'Popular', distance: null, duration: '16:40', views: 4900, date: 'Nov 2023' },
-  { id: 'dQw4w9WgXcQ', title: 'Top 5 Accessories for Touring', subtitle: 'Must Have', category: 'Popular', distance: null, duration: '11:05', views: 4300, date: 'Oct 2023' },
-  { id: 'dQw4w9WgXcQ', title: 'Sunrise Vibes 🌅', subtitle: '', category: 'Shorts', distance: '45 KM', duration: '0:58', views: 12000, date: 'May 2024' },
-  { id: 'dQw4w9WgXcQ', title: 'Quick Ride Break ☕', subtitle: '', category: 'Shorts', distance: null, duration: '0:45', views: 9400, date: 'Apr 2024' },
-  { id: 'dQw4w9WgXcQ', title: 'Highway Therapy 🛣️', subtitle: '', category: 'Shorts', distance: null, duration: '0:52', views: 18000, date: 'Mar 2024' },
-  { id: 'dQw4w9WgXcQ', title: 'Rain + RE = ❤️', subtitle: '', category: 'Shorts', distance: null, duration: '0:38', views: 16000, date: 'Mar 2024' },
-  { id: 'dQw4w9WgXcQ', title: 'Night Ride Feels ✨', subtitle: '', category: 'Shorts', distance: null, duration: '0:47', views: 22000, date: 'Feb 2024' },
-  { id: 'dQw4w9WgXcQ', title: 'Chennai to Rameswaram', subtitle: 'Spiritual Ride', category: 'Ride Stories', distance: '570 KM', duration: '32:10', views: 8900, date: 'Mar 2024' },
-  { id: 'dQw4w9WgXcQ', title: 'Mahabalipuram Loop', subtitle: 'Ancient Roads & Sea Breeze', category: 'Ride Stories', distance: '110 KM', duration: '14:05', views: 3100, date: 'Feb 2024' },
-  { id: 'dQw4w9WgXcQ', title: 'Full Bike Setup Tour', subtitle: 'Every Accessory Explained', category: 'Setup', distance: null, duration: '22:30', views: 5600, date: 'Oct 2024' },
-  { id: 'dQw4w9WgXcQ', title: 'Chigee AIO-6 Installation', subtitle: 'Step by Step Guide', category: 'Setup', distance: null, duration: '18:15', views: 4100, date: 'Aug 2024' },
-]
+/**
+ * Ride vlogs. Empty until the first one is actually filmed — anything that
+ * renders these shows a "coming soon" state while the list is empty, so it
+ * fills itself in the moment a real video lands here.
+ *
+ * Shape, for when the first one is added:
+ *   { id: '<youtube-id>', title, subtitle, category, distance, duration, views, date }
+ *
+ * `category` is one of: Latest · Popular · Shorts · Ride Stories · Setup.
+ */
+export const vlogs = []
 
+/**
+ * Every ride, in the order they'll happen.
+ *
+ *   mode: 'completed' — actually ridden. The only rides that feed the odometer
+ *                       totals in `rideSummary`, so `distance` and `states`
+ *                       have to be truthful here.
+ *   mode: 'upcoming'  — next up, with a date already set.
+ *   mode: 'planned'   — decided on, no date yet.
+ *   mode: 'dream'     — someday.
+ *
+ * A ride graduates upward as it happens: planned → upcoming (once it has a
+ * date) → completed (fill in `time`, `rating` and `stats`). `RIDE_MODES`
+ * below is the one place the labels and colours for each are defined.
+ *
+ * `distance` is the display string; the leading number is what gets summed,
+ * so keep it as "<km> KM".
+ */
 export const routes = [
   {
-    id: 'r1', name: 'Yelagiri Hill Ride', subtitle: 'A Perfect Weekend Escape',
-    mode: 'completed', distance: '320 KM', time: '6h 30m', date: 'May 2024', rating: 4.8,
-    from: [80.27, 13.08], to: [78.63, 12.57],
-    fromCity: 'Chennai', toCity: 'Yelagiri',
-    // OSRM: Chennai [lng,lat] to Yelagiri [lng,lat]
-    osrm: { fromLng: 80.2707, fromLat: 13.0827, toLng: 78.6393, toLat: 12.5793 },
-    description: 'A perfect weekend escape through the Yelagiri hills.',
-    story: `Woke up at 4 AM, hit the road before sunrise. The Bangalore-Salem highway was empty and the Shotgun 650 was singing. By the time I reached the Yelagiri ghat road, the mist was still hanging between the hills. Twelve hairpin bends, each one better than the last. Parked at the viewpoint and watched the valley slowly light up. This is why I ride.`,
-    highlights: ['12 Hairpin Bends', 'Sunrise at Summit', 'Zero Traffic', '1,411m Altitude'],
-    mapCenter: [12.57, 78.63], mapZoom: 9,
+    id: 'r1', name: 'Nathakadaiyur Temple Ride', subtitle: 'Dharapuram → Home → Nathakadaiyur',
+    mode: 'upcoming', distance: '38 KM', time: null, date: '2 Aug 2026', rating: null,
+    from: [77.5200, 10.7300], to: [77.5450, 10.9400],
+    fromCity: 'Dharapuram', toCity: 'Nathakadaiyur',
+    // OSRM: Dharapuram → Kangayam (home) → Nathakadaiyur, [lng,lat]
+    osrm: { fromLng: 77.5200, fromLat: 10.7300, toLng: 77.5450, toLat: 10.9400 },
+    states: ['Tamil Nadu'],
+    description: 'Dharapuram back home to Kangayam, then out to the Nathakadaiyur temple.',
+    story: `The first ride planned on the Bear 650 — Dharapuram back home to Kangayam, then out to the Bala Thandayuthapani temple at Nathakadaiyur. Short, familiar roads, but the first time the bike and these roads will meet.`,
+    highlights: ['Bala Thandayuthapani Temple', 'Home Roads', 'First Ride'],
+    mapCenter: [10.87, 77.54], mapZoom: 11,
     color: '#a78bfa',
-    videoId: 'dQw4w9WgXcQ',
-    photos: [
-      'https://images.unsplash.com/photo-1547549082-6bc09f2049ae?w=900&q=85',
-      'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=900&q=85',
-      'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=900&q=85',
-      'https://images.unsplash.com/photo-1571068316344-75bc76f77890?w=900&q=85',
-    ],
-    stats: { avgSpeed: '52 km/h', topSpeed: '98 km/h', fuelUsed: '11.2L', mileage: '28.6 km/l', elevation: '1,411 m' },
-    via: ['Ambur', 'Vaniyambadi', 'Yelagiri Ghat'],
-  },
-  {
-    id: 'r2', name: 'Coastal Ride to Pondicherry', subtitle: 'Scenic Roads & Good Vibes',
-    mode: 'completed', distance: '210 KM', time: '5h 10m', date: 'Apr 2024', rating: 4.6,
-    from: [80.27, 13.08], to: [79.83, 11.93],
-    fromCity: 'Chennai', toCity: 'Pondicherry',
-    osrm: { fromLng: 80.2707, fromLat: 13.0827, toLng: 79.8083, toLat: 11.9416 },
-    description: 'East Coast Road — one of the most scenic routes in South India.',
-    story: `ECR on a clear Saturday morning is pure therapy. The Bay of Bengal on your right, salt breeze in your face, and almost no traffic. Stopped at Mahabalipuram for a quick darshan, grabbed a coffee at a beach shack, and rolled into Pondicherry just as the French Quarter was waking up. Every kilometre felt like a reward.`,
-    highlights: ['East Coast Road', 'Bay of Bengal Views', 'Mahabalipuram Temple', 'French Quarter'],
-    mapCenter: [12.5, 80.0], mapZoom: 9,
-    color: '#f97316',
-    videoId: 'dQw4w9WgXcQ',
-    photos: [
-      'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=900&q=85',
-      'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=900&q=85',
-      'https://images.unsplash.com/photo-1609630875171-b1321377ee65?w=900&q=85',
-      'https://images.unsplash.com/photo-1449426468159-d96dbf08f19f?w=900&q=85',
-    ],
-    stats: { avgSpeed: '68 km/h', topSpeed: '128 km/h', fuelUsed: '7.4L', mileage: '28.4 km/l', elevation: '12 m' },
-    via: ['ECR', 'Mahabalipuram', 'Tindivanam'],
+    videoId: null,
+    photos: [],
+    stats: null,
+    via: ['Kangayam (Home)'],
   },
   {
     id: 'r3', name: 'Kangayam to Coimbatore', subtitle: 'Hidden Routes & Raw Nature',
-    mode: 'completed', distance: '160 KM', time: '4h 20m', date: 'Apr 2024', rating: 4.7,
-    from: [77.56, 10.93], to: [76.96, 11.01],
+    mode: 'planned', distance: '70 KM', time: null, date: 'Planned', rating: null,
+    from: [77.5606, 11.0057], to: [76.9558, 11.0168],
     fromCity: 'Kangayam', toCity: 'Coimbatore',
-    osrm: { fromLng: 77.56, fromLat: 10.93, toLng: 76.9558, toLat: 11.0168 },
+    osrm: { fromLng: 77.5606, fromLat: 11.0057, toLng: 76.9558, toLat: 11.0168 },
+    states: ['Tamil Nadu'],
     description: 'Hidden backroads through rural Tamil Nadu.',
-    story: `Took the state highways instead of NH to discover what rural Tamil Nadu looks like from a motorcycle. Sugarcane fields, small temples, chai stops with locals who've never seen a Shotgun 650. The Coimbatore approach through the Nilgiris foothills was the perfect payoff. This is what adventure riding means.`,
+    story: `Planned. State highways instead of the NH, to see what rural Tamil Nadu looks like from a motorcycle — sugarcane fields, small temples, chai stops. The Coimbatore approach through the Nilgiris foothills should be the payoff.`,
     highlights: ['Rural Back Roads', 'Sugarcane Fields', 'Local Villages', 'Nilgiris Foothills'],
-    mapCenter: [10.97, 77.25], mapZoom: 10,
+    mapCenter: [11.01, 77.25], mapZoom: 10,
     color: '#22c55e',
-    videoId: 'dQw4w9WgXcQ',
-    photos: [
-      'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=900&q=85',
-      'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=900&q=85',
-      'https://images.unsplash.com/photo-1547549082-6bc09f2049ae?w=900&q=85',
-      'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=900&q=85',
-    ],
-    stats: { avgSpeed: '58 km/h', topSpeed: '112 km/h', fuelUsed: '5.8L', mileage: '27.6 km/l', elevation: '411 m' },
-    via: ['Dharapuram', 'Tiruppur', 'Mettupalayam'],
+    videoId: null,
+    photos: [],
+    stats: null,
+    via: ['Tiruppur', 'Avinashi'],
   },
   {
-    id: 'r4', name: 'Chennai to Rameswaram', subtitle: 'Spiritual Ride',
-    mode: 'completed', distance: '570 KM', time: '9h 15m', date: 'Mar 2024', rating: 4.9,
-    from: [80.27, 13.08], to: [79.31, 9.28],
-    fromCity: 'Chennai', toCity: 'Rameswaram',
-    osrm: { fromLng: 80.2707, fromLat: 13.0827, toLng: 79.3129, toLat: 9.2876 },
-    description: 'Spiritual ride to the tip of India.',
-    story: `The longest ride so far. Left Chennai at 4:30 AM, crossed Trichy by morning, and reached Madurai for lunch. The final stretch to Rameswaram — across the Pamban Bridge with the ocean on both sides — was one of those moments where you stop the bike, take off your helmet, and just breathe. The Ramanathaswamy Temple at sunset was perfect.`,
-    highlights: ['Pamban Bridge', 'Ramanathaswamy Temple', 'Bay of Bengal', '570 KM in One Day'],
-    mapCenter: [11.0, 79.8], mapZoom: 7,
-    color: '#facc15',
-    videoId: 'dQw4w9WgXcQ',
-    photos: [
-      'https://images.unsplash.com/photo-1571068316344-75bc76f77890?w=900&q=85',
-      'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=900&q=85',
-      'https://images.unsplash.com/photo-1609630875171-b1321377ee65?w=900&q=85',
-      'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=900&q=85',
-    ],
-    stats: { avgSpeed: '62 km/h', topSpeed: '138 km/h', fuelUsed: '20.2L', mileage: '28.2 km/l', elevation: '9 m' },
-    via: ['Villupuram', 'Trichy', 'Madurai', 'Pamban Bridge'],
+    id: 'r2', name: 'Kangayam to Chennai', subtitle: 'Home to the City',
+    mode: 'planned', distance: '450 KM', time: null, date: 'Planned', rating: null,
+    from: [77.5606, 11.0057], to: [80.2707, 13.0827],
+    fromCity: 'Kangayam', toCity: 'Chennai',
+    osrm: { fromLng: 77.5606, fromLat: 11.0057, toLng: 80.2707, toLat: 13.0827 },
+    states: ['Tamil Nadu'],
+    description: 'The long haul from home to Chennai.',
+    story: `Not ridden yet. The full stretch from home to Chennai in one go — the longest planned so far.`,
+    highlights: ['Longest Planned Ride', 'Salem Highway', 'One-day Attempt'],
+    mapCenter: [12.0, 79.0], mapZoom: 8,
+    color: '#f97316',
+    videoId: null,
+    photos: [],
+    stats: null,
+    via: ['Erode', 'Salem', 'Ulundurpet'],
   },
   {
-    id: 'r5', name: 'Mahabalipuram Loop', subtitle: 'Ancient Roads & Sea Breeze',
-    mode: 'completed', distance: '110 KM', time: '3h', date: 'Feb 2024', rating: 4.4,
-    from: [80.27, 13.08], to: [80.19, 12.61],
-    fromCity: 'Chennai', toCity: 'Mahabalipuram',
-    osrm: { fromLng: 80.2707, fromLat: 13.0827, toLng: 80.1927, toLat: 12.6269 },
-    description: 'Ancient temples and the Bay of Bengal.',
-    story: `A short Sunday ride down ECR to Mahabalipuram. The Shore Temple at sunrise is something else. Wandered through the rock-cut caves, had a fresh coconut on the beach, and rode back on the old Mamallapuram road through Sholinganallur. Perfect half-day escape from the city.`,
-    highlights: ['Shore Temple', 'Rock Cut Caves', 'ECR Sunrise', 'Beach Stop'],
-    mapCenter: [12.84, 80.23], mapZoom: 10,
+    id: 'r4', name: 'Chennai to Pondicherry', subtitle: 'Scenic Roads & Good Vibes',
+    mode: 'planned', distance: '150 KM', time: null, date: 'Planned', rating: null,
+    from: [80.2707, 13.0827], to: [79.8083, 11.9416],
+    fromCity: 'Chennai', toCity: 'Pondicherry',
+    osrm: { fromLng: 80.2707, fromLat: 13.0827, toLng: 79.8083, toLat: 11.9416 },
+    states: ['Tamil Nadu', 'Puducherry'],
+    description: 'East Coast Road — one of the most scenic routes in South India.',
+    story: `Planned. ECR the whole way down: the Bay of Bengal on the right, a stop at Mahabalipuram, and into the French Quarter at the other end.`,
+    highlights: ['East Coast Road', 'Bay of Bengal Views', 'Mahabalipuram', 'French Quarter'],
+    mapCenter: [12.5, 80.0], mapZoom: 9,
     color: '#38bdf8',
-    videoId: 'dQw4w9WgXcQ',
-    photos: [
-      'https://images.unsplash.com/photo-1449426468159-d96dbf08f19f?w=900&q=85',
-      'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=900&q=85',
-      'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=900&q=85',
-      'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=900&q=85',
-    ],
-    stats: { avgSpeed: '48 km/h', topSpeed: '88 km/h', fuelUsed: '3.9L', mileage: '28.2 km/l', elevation: '8 m' },
-    via: ['ECR', 'Kovalam', 'Mahabalipuram'],
-  },
-  {
-    id: 'r6', name: 'Leh Ladakh 2025', subtitle: 'The Ultimate Dream Trip',
-    mode: 'planned', distance: '4200+ KM', time: '12 Days', date: 'Jun 2025', rating: null,
-    from: [80.27, 13.08], to: [77.58, 34.16],
-    fromCity: 'Chennai', toCity: 'Leh',
-    osrm: null,
-    description: 'The ultimate dream ride through the Himalayas.',
-    story: `Planning stage. The route will go Chennai → Bangalore → Pune → Delhi → Chandigarh → Manali → Leh. 12 days, 4200+ KM. Training rides are ongoing. Fitness prep, bike service, packing list all in progress. This is the one.`,
-    highlights: ['Rohtang Pass', 'Khardung La', 'Pangong Lake', 'Magnetic Hill'],
-    mapCenter: [28.0, 79.0], mapZoom: 5,
-    color: '#a78bfa',
     videoId: null,
-    photos: [
-      'https://images.unsplash.com/photo-1547549082-6bc09f2049ae?w=900&q=85',
-      'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=900&q=85',
-    ],
+    photos: [],
     stats: null,
-    via: ['Bangalore', 'Pune', 'Delhi', 'Manali', 'Leh'],
-  },
-  {
-    id: 'r7', name: 'North East India Ride', subtitle: 'Mountains, Mist & Magic',
-    mode: 'planned', distance: '1000+ KM', time: '10 Days', date: 'Aug 2025', rating: null,
-    from: [80.27, 13.08], to: [91.74, 26.14],
-    fromCity: 'Chennai', toCity: 'Guwahati',
-    osrm: null,
-    description: 'Mountains, mist and magic of the north east.',
-    story: `The Seven Sisters await. Planning a circuit through Meghalaya, Assam, and Arunachal Pradesh. The living root bridges of Cherrapunji, the tea gardens of Jorhat, the rain forests of Kaziranga. This is a different India from what the Shotgun 650 has seen so far.`,
-    highlights: ['Cherrapunji', 'Living Root Bridges', 'Kaziranga', 'Tawang'],
-    mapCenter: [25.0, 87.0], mapZoom: 6,
-    color: '#ec4899',
-    videoId: null,
-    photos: [
-      'https://images.unsplash.com/photo-1571068316344-75bc76f77890?w=900&q=85',
-    ],
-    stats: null,
-    via: ['Kolkata', 'Guwahati', 'Shillong', 'Cherrapunji'],
+    via: ['ECR', 'Mahabalipuram', 'Kalpakkam'],
   },
   {
     id: 'r8', name: 'Bharat Parikrama', subtitle: 'The Ultimate India Loop',
@@ -539,6 +473,62 @@ export const routes = [
     via: ['Everywhere'],
   },
 ]
+
+/**
+ * The three ride tiers, in the order they should ever be listed, plus how each
+ * one presents itself. Anything that groups, labels or colour-codes rides
+ * reads from here rather than hard-coding a mode string — `dream` is
+ * deliberately absent, it's shown on its own elsewhere.
+ */
+export const RIDE_MODES = [
+  { key: 'completed', label: 'Completed', plural: 'Completed Rides', color: '#22c55e' },
+  { key: 'upcoming',  label: 'Upcoming',  plural: 'Upcoming Rides',  color: '#f59e0b' },
+  { key: 'planned',   label: 'Planned',   plural: 'Planned Rides',   color: '#8b5cf6' },
+]
+
+/** Rides of one mode, e.g. ridesByMode('planned'). */
+export const ridesByMode = mode => routes.filter(r => r.mode === mode)
+
+/** Completed first, then upcoming, then planned — the canonical display order. */
+export const ridesInOrder = () => RIDE_MODES.flatMap(m => ridesByMode(m.key))
+
+/**
+ * Headline numbers for the "Rides & Routes" panel, derived from `routes` so
+ * they can never drift from the list underneath them. Mark a ride
+ * `mode: 'completed'` and every figure here updates on its own.
+ *
+ * Until the first ride is actually done there is nothing to total up, so the
+ * panel counts what's lined up instead and relabels itself — an honest
+ * "4 rides lined up" beats four zeroes. `counting` says which set is on show.
+ */
+export const rideSummary = (() => {
+  const tally = list => {
+    const km = list.map(r => parseFloat(r.distance) || 0)
+    return {
+      rides: list.length,
+      km: km.reduce((a, b) => a + b, 0),
+      longest: km.length ? Math.max(...km) : 0,
+      states: new Set(list.flatMap(r => r.states || [])).size,
+    }
+  }
+  const done = tally(ridesByMode('completed'))
+  // Nothing ridden yet: upcoming and planned both count as "lined up"
+  const ahead = tally([...ridesByMode('upcoming'), ...ridesByMode('planned')])
+  const ridden = done.rides > 0
+  const live = ridden ? done : ahead
+  const fmt = n => Math.round(n).toLocaleString('en-IN')
+  const dash = n => (n > 0 ? `${fmt(n)} km` : '—')
+  return {
+    ...live,
+    counting: ridden ? 'completed' : 'ahead',
+    stats: [
+      [ridden ? 'Total Rides'     : 'Rides Lined Up',   String(live.rides)],
+      [ridden ? 'Total Distance'  : 'Distance Ahead',   dash(live.km)],
+      [ridden ? 'Longest Ride'    : 'Longest Planned',  dash(live.longest)],
+      [ridden ? 'States Explored' : 'States Covered',   String(live.states)],
+    ],
+  }
+})()
 
 export const dreamGarage = {
   phases: [
@@ -578,6 +568,69 @@ export const dreamGarage = {
     { name: 'KTM 390 Adventure', price: '~₹3.2L', reason: 'Lightweight and nimble for off-road adventures.', image: 'garage/dream/ktm-390.jpg' },
   ],
 }
+
+/**
+ * The real "dream garage" — every vehicle actually owned, in order, plus the
+ * one that's next. `cc` drives the displacement bar (null = undecided), so
+ * keep it numeric. Add the next chapter to the end when it happens.
+ */
+export const garageJourney = [
+  {
+    id: 'j1',
+    chapter: '01',
+    name: 'Hercules Bicycle',
+    type: 'Bicycle',
+    cc: 0,
+    ccLabel: 'Pedal',
+    icon: '🚲',
+    note: 'The first vehicle that was mine. Every street in the neighbourhood, learnt on it.',
+    status: 'owned',
+  },
+  {
+    id: 'j2',
+    chapter: '02',
+    name: 'TVS XL Super 100',
+    type: 'Moped',
+    cc: 99.7,
+    ccLabel: '99.7',
+    icon: '⛽',
+    note: 'First engine, first fuel bill. Carried school bags, groceries and half the family.',
+    status: 'owned',
+  },
+  {
+    id: 'j3',
+    chapter: '03',
+    name: 'Suzuki Avenis 125',
+    type: 'Scooter',
+    cc: 124,
+    ccLabel: '124',
+    icon: '🛵',
+    note: 'The daily commuter. City traffic stopped being something to plan around.',
+    status: 'owned',
+  },
+  {
+    id: 'j4',
+    chapter: '04',
+    name: 'Royal Enfield Bear 650',
+    type: 'Motorcycle',
+    cc: 648,
+    ccLabel: '648',
+    icon: '🏍️',
+    note: 'The one the highway was waiting for. Where the long rides actually began.',
+    status: 'current',
+  },
+  {
+    id: 'j5',
+    chapter: '05',
+    name: 'A Car',
+    type: 'Yet to decide',
+    cc: null,
+    ccLabel: '?',
+    icon: '🚗',
+    note: 'Four wheels next. Model still undecided — the shortlist changes every month.',
+    status: 'upcoming',
+  },
+]
 
 export const wishlist = [
   { id: 'w1', name: 'Rynox Expedition Saddle Bags', category: 'Touring', price: 18500, priority: 'high', reason: 'Essential for multi-day tours. Keeps gear organized and dry.', targetMonth: '2026-07', status: 'planning' },

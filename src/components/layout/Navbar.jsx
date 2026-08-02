@@ -10,7 +10,9 @@ const links = [
   { to: '/blog', label: 'Blog' },
   { to: '/gallery', label: 'Gallery' },
   { to: '/videos', label: 'Videos' },
-  { to: '/garage', label: 'My Garage' },
+  /* the Bear 650 page — /garage is the older variant and stays Coming Soon
+     on the live site, so the menu goes straight to the real one */
+  { to: '/mygarage', label: 'My Garage' },
   { to: '/contact', label: 'Contact' },
 ]
 

@@ -1,0 +1,446 @@
+/**
+ * GarageStorefront — "Cinema Scroll" layout.
+ *
+ * One product per full screen, snapping as you scroll, with the accent colour
+ * shifting per category. Everything here is scoped under `.sf`; the only global
+ * rule is `html.sf-snap`, which the page adds on mount and removes on unmount
+ * so scroll snapping never leaks into the rest of the site.
+ *
+ * The page can't use inline styles for this: it needs media queries, snap
+ * alignment, hover states and keyframes.
+ */
+
+/* ── scroll snapping, only while this page is mounted ──────────────────
+   `proximity`, not `mandatory`: the site footer sits after the last slide
+   and isn't a snap point, so mandatory would snap you back off it. */
+html.sf-snap {
+  scroll-snap-type: y proximity;
+  /* Literal, not var(--sf-nav): that custom property lives on `.sf`, which is
+     a descendant, so it isn't in scope up here on the root element. */
+  scroll-padding-top: 72px;
+}
+@media (max-width: 520px) {
+  html.sf-snap { scroll-padding-top: 64px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html.sf-snap { scroll-snap-type: none; }
+  /* Safety net: never let a reveal leave display type parked outside its
+     clipping box. Beats framer-motion's inline transform. */
+  .sf-line > * { transform: none !important; }
+}
+
+.sf {
+  --sf-nav: 72px;
+  --sf-bg: #08090d;
+  --sf-off: #f4f5f8;
+  --sf-d1: rgba(244, 245, 248, 0.6);
+  --sf-d2: rgba(244, 245, 248, 0.36);
+  --sf-d3: rgba(244, 245, 248, 0.18);
+  --sf-bd: rgba(255, 255, 255, 0.09);
+  --sf-bd2: rgba(255, 255, 255, 0.18);
+  --sf-disp: 'Bebas Neue', 'Archivo Black', var(--sans);
+  --sf-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  /* --sf-acc is set inline by the component and eases as you change chapter */
+
+  position: relative;
+  background: var(--sf-bg);
+  color: var(--sf-d1);
+  font-family: var(--sans);
+  overflow-x: clip;
+}
+.sf ::selection { background: var(--sf-acc); color: #000; }
+
+/* ── ambient layers ─────────────────────────────────────────────────── */
+.sf-wash,
+.sf-vig,
+.sf-noise {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.sf-wash {
+  opacity: 0.5;
+  filter: blur(80px);
+  background: radial-gradient(70vw 70vw at 78% 26%, var(--sf-acc), transparent 66%);
+  transition: background 1.1s ease;
+}
+.sf-vig {
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.55), transparent 26%,
+                              transparent 72%, rgba(0, 0, 0, 0.7));
+}
+.sf-noise {
+  z-index: 3;
+  opacity: 0.18;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ── HUD: slide counter + breadcrumb, tucked under the site navbar ──── */
+.sf-hud {
+  position: fixed;
+  top: calc(var(--sf-nav) + 6px);
+  left: clamp(16px, 4vw, 44px);
+  z-index: 20;
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  font-family: var(--sf-disp);
+  letter-spacing: 0.06em;
+  pointer-events: none;
+}
+.sf-hud b { font-size: 1.9rem; line-height: 1; color: var(--sf-off); font-weight: 400; }
+.sf-hud i { width: 22px; height: 1px; background: var(--sf-d3); font-style: normal; }
+.sf-hud span { font-size: 0.86rem; color: var(--sf-d3); }
+.sf-hud u {
+  font-family: var(--sans);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--sf-acc);
+  transition: color 1.1s ease;
+  max-width: 34vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sf-crumb {
+  position: fixed;
+  top: calc(var(--sf-nav) + 12px);
+  right: clamp(16px, 4vw, 44px);
+  z-index: 20;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--sf-d2);
+  text-decoration: none;
+  transition: color 0.25s;
+}
+.sf-crumb:hover { color: var(--sf-off); }
+
+/* ── film strip: one mark per part, on the LEFT edge ───────────────────
+   The right edge is taken by the site's feedback button and social FAB. */
+.sf-strip {
+  position: fixed;
+  left: clamp(14px, 2vw, 26px);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  align-items: flex-start;
+}
+.sf-strip-head {
+  margin-top: 12px;
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--sf-d3);
+  padding-bottom: 2px;
+}
+.sf-strip-head:first-child { margin-top: 0; }
+.sf-dot {
+  width: 20px;
+  height: 3px;
+  padding: 0;
+  border: 0;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  transition: 0.4s var(--sf-ease);
+}
+.sf-dot:hover { background: rgba(255, 255, 255, 0.55); width: 28px; }
+.sf-dot.on { background: var(--sf-acc); width: 40px; }
+
+/* ── slides ─────────────────────────────────────────────────────────── */
+.sf-slide {
+  position: relative;
+  z-index: 2;
+  min-height: 100svh;
+  scroll-snap-align: start;
+  display: flex;
+  align-items: center;
+}
+
+/* opening title card */
+.sf-open {
+  flex-direction: column;
+  justify-content: center;
+  gap: 24px;
+  padding: calc(var(--sf-nav) + 40px) clamp(24px, 7vw, 110px) 60px;
+}
+.sf-kick {
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--sf-acc);
+  transition: color 1.1s ease;
+}
+.sf-title {
+  font-family: var(--sf-disp);
+  font-size: clamp(3.4rem, 14vw, 12rem);
+  line-height: 0.82;
+  letter-spacing: 0.01em;
+  color: var(--sf-off);
+  font-weight: 400;
+  margin: 0;
+}
+.sf-title em { font-style: normal; color: var(--sf-acc); transition: color 1.1s ease; }
+.sf-line { display: block; overflow: hidden; }
+.sf-lede { max-width: 430px; font-size: 1rem; line-height: 1.8; margin: 0; }
+.sf-figs { display: flex; gap: clamp(24px, 4vw, 42px); flex-wrap: wrap; }
+.sf-figs b {
+  display: block;
+  font-family: var(--sf-disp);
+  font-size: 2.4rem;
+  font-weight: 400;
+  color: var(--sf-off);
+  line-height: 1;
+}
+.sf-figs span {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--sf-d2);
+}
+.sf-cue {
+  position: absolute;
+  bottom: 34px;
+  left: clamp(24px, 7vw, 110px);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--sf-d2);
+}
+.sf-cue i {
+  display: block;
+  width: 1px;
+  height: 32px;
+  background: linear-gradient(var(--sf-acc), transparent);
+  animation: sf-drop 2s var(--sf-ease) infinite;
+}
+@keyframes sf-drop { 50% { transform: translateY(9px); } }
+
+/* chapter break */
+.sf-chapter {
+  justify-content: center;
+  text-align: center;
+  flex-direction: column;
+  gap: 16px;
+  padding: var(--sf-nav) 24px 0;
+}
+.sf-ch-ic { font-size: 2.4rem; }
+.sf-ch-sub {
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--sf-acc);
+  transition: color 1.1s ease;
+}
+.sf-ch-title {
+  font-family: var(--sf-disp);
+  font-size: clamp(2.8rem, 12vw, 9rem);
+  line-height: 0.86;
+  letter-spacing: 0.02em;
+  color: var(--sf-off);
+  font-weight: 400;
+  margin: 0;
+}
+/* Real width lives here so the element has area for the viewport observer;
+   the reveal scales it on the X axis instead of animating width. */
+.sf-ch-rule {
+  width: min(420px, 60vw);
+  height: 1px;
+  background: var(--sf-bd);
+  margin-top: 8px;
+}
+
+/* one product */
+.sf-item {
+  padding: calc(var(--sf-nav) + 34px) clamp(24px, 5vw, 80px) 56px;
+  gap: clamp(24px, 5vw, 72px);
+}
+.sf-item.rev { flex-direction: row-reverse; }
+
+.sf-stage {
+  flex: 1 1 52%;
+  min-width: 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1 / 1;
+  max-height: 72svh;
+}
+.sf-stage::before {
+  content: '';
+  position: absolute;
+  inset: 6%;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--sf-acc), transparent 66%);
+  opacity: 0.22;
+  filter: blur(52px);
+  transition: background 1.1s ease;
+}
+.sf-ghost {
+  position: absolute;
+  font-family: var(--sf-disp);
+  font-size: clamp(9rem, 28vw, 24rem);
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.032);
+  user-select: none;
+  pointer-events: none;
+  letter-spacing: -0.02em;
+}
+.sf-shot {
+  position: relative;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 40px 60px rgba(0, 0, 0, 0.6));
+  cursor: zoom-in;
+  transition: opacity 0.22s;
+}
+.sf-noshot { position: relative; font-size: 4.5rem; opacity: 0.14; }
+
+.sf-say { flex: 1 1 42%; min-width: 0; display: flex; flex-direction: column; gap: 18px; }
+.sf-no {
+  font-family: var(--sf-disp);
+  font-size: 0.95rem;
+  letter-spacing: 0.24em;
+  color: var(--sf-acc);
+  transition: color 1.1s ease;
+}
+.sf-name {
+  font-family: var(--sf-disp);
+  font-size: clamp(2rem, 5.6vw, 4.4rem);
+  line-height: 0.96;
+  letter-spacing: 0.015em;
+  color: var(--sf-off);
+  font-weight: 400;
+  margin: 0;
+}
+.sf-facts { display: flex; flex-direction: column; border-top: 1px solid var(--sf-bd); }
+.sf-fact {
+  display: flex;
+  gap: 18px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--sf-bd);
+  font-size: 0.8rem;
+}
+.sf-fact dt {
+  flex: 0 0 92px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--sf-d3);
+}
+.sf-fact dd { margin: 0; color: var(--sf-off); font-weight: 500; }
+
+.sf-reel { display: flex; gap: 8px; flex-wrap: wrap; }
+.sf-reel button {
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border-radius: 11px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid var(--sf-bd);
+  background: rgba(255, 255, 255, 0.03);
+  opacity: 0.45;
+  transition: 0.3s var(--sf-ease);
+}
+.sf-reel button:hover { opacity: 0.9; transform: translateY(-3px); }
+.sf-reel button.on { opacity: 1; border-color: var(--sf-acc); }
+.sf-reel img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.sf-acts { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+.sf-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 14px 26px;
+  border-radius: 999px;
+  text-decoration: none;
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  transition: all 0.35s var(--sf-ease);
+}
+.sf-go.p { background: var(--sf-off); color: #08090d; }
+.sf-go.p:hover { background: var(--sf-acc); color: #000; transform: translateY(-3px); }
+.sf-go.s { border: 1px solid var(--sf-bd2); color: var(--sf-off); }
+.sf-go.s:hover { border-color: var(--sf-acc); color: var(--sf-acc); transform: translateY(-3px); }
+.sf-soon { font-size: 0.78rem; color: var(--sf-d3); font-style: italic; }
+
+/* closing card */
+.sf-close {
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 22px;
+  padding: calc(var(--sf-nav) + 40px) clamp(24px, 6vw, 60px) 80px;
+}
+.sf-close h2 {
+  font-family: var(--sf-disp);
+  font-size: clamp(2.6rem, 10vw, 6.5rem);
+  line-height: 0.9;
+  color: var(--sf-off);
+  font-weight: 400;
+  margin: 0;
+}
+.sf-close p { max-width: 440px; font-size: 0.95rem; line-height: 1.8; margin: 0; }
+.sf-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  padding: 15px 30px;
+  border-radius: 999px;
+  border: 1px solid var(--sf-bd2);
+  color: var(--sf-off);
+  text-decoration: none;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: all 0.35s var(--sf-ease);
+}
+.sf-back:hover { background: var(--sf-off); color: #08090d; transform: translateY(-3px); }
+
+/* ── tablets and phones ─────────────────────────────────────────────── */
+@media (max-width: 860px) {
+  .sf-strip { display: none; }
+  .sf-slide { min-height: auto; padding-top: calc(var(--sf-nav) + 26px); padding-bottom: 56px; }
+  .sf-open, .sf-chapter, .sf-close { min-height: 100svh; }
+  /* the alternating direction is a class, so it has to be reset here too */
+  .sf-item, .sf-item.rev { flex-direction: column; gap: 22px; padding-left: 20px; padding-right: 20px; }
+  .sf-stage { width: 100%; flex: none; aspect-ratio: 4 / 3; max-height: 40svh; }
+  .sf-ghost { font-size: 34vw; }
+  .sf-cue { left: 20px; bottom: 26px; }
+  .sf-open { padding-left: 20px; padding-right: 20px; }
+}
+@media (max-width: 520px) {
+  .sf { --sf-nav: 64px; }
+  .sf-hud b { font-size: 1.5rem; }
+  .sf-hud u { font-size: 0.55rem; letter-spacing: 0.14em; }
+  .sf-crumb { font-size: 0.58rem; letter-spacing: 0.12em; }
+  .sf-fact { font-size: 0.75rem; gap: 12px; }
+  .sf-fact dt { flex: 0 0 76px; }
+  .sf-go { padding: 12px 20px; font-size: 0.74rem; }
+  .sf-reel button { width: 44px; height: 44px; }
+  .sf-close, .sf-open { padding-bottom: calc(56px + env(safe-area-inset-bottom)); }
+}

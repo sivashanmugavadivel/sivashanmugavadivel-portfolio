@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation } from 'react-router-dom'
+import { Routes, Route, useLocation, useNavigationType } from 'react-router-dom'
 import { useState, useEffect, lazy, Suspense } from 'react'
 import { useTheme } from './hooks/useTheme'
 import { usePageLoad } from './hooks/usePageLoad'
@@ -58,9 +58,48 @@ const DEV_GARAGE = import.meta.env.DEV
    Lazy-loaded so it's a separate chunk, fetched only when visited. */
 const GarageV8Preview = lazy(() => import('./pages/GarageV8'))
 
+/* My Garage — Bear 650 scroll-spin + showcase. This is what the "My Garage"
+   item in the navbar points at; /garage is the older variant and stays
+   Coming Soon on the live site.
+   The ride list and ride detail pages live under it, so they ship in
+   production too (the dev-only /garage/v7/* routes reuse the same
+   components — they read the root off the URL and link back accordingly). */
+const MyGarage = lazy(() => import('./pages/MyGarage'))
+const MyGarageRides = lazy(() =>
+  import('./pages/GarageV7RideDetail').then(m => ({ default: m.GarageV7AllRides })))
+const MyGarageRideDetail = lazy(() => import('./pages/GarageV7RideDetail'))
+const MyGarageStorefront = lazy(() => import('./pages/GarageStorefront'))
+
+/**
+ * Scroll behaviour on navigation:
+ *
+ *   back / forward  → leave it alone, so the browser restores where you were
+ *   #hash in the URL → scroll to that element
+ *   anything else   → top of the page
+ *
+ * Pages are lazy-loaded, so a hash target usually isn't mounted on the first
+ * pass; we retry for a short while rather than giving up on frame one.
+ */
 function ScrollToTop() {
-  const { pathname } = useLocation()
-  useEffect(() => { window.scrollTo(0, 0) }, [pathname])
+  const { pathname, hash } = useLocation()
+  const navType = useNavigationType()
+
+  useEffect(() => {
+    if (navType === 'POP') return          // browser handles back/forward
+
+    if (!hash) { window.scrollTo(0, 0); return }
+
+    let raf, tries = 0
+    const find = () => {
+      const el = document.getElementById(decodeURIComponent(hash.slice(1)))
+      if (el) { el.scrollIntoView({ block: 'start' }); return }
+      if (tries++ < 60) raf = requestAnimationFrame(find)   // ~1s of retries
+      else window.scrollTo(0, 0)
+    }
+    raf = requestAnimationFrame(find)
+    return () => cancelAnimationFrame(raf)
+  }, [pathname, hash, navType])
+
   return null
 }
 
@@ -86,6 +125,12 @@ function AppRoutes() {
 
           {/* Direct-address-only V8 preview (works in production too) */}
           <Route path="/garage/v8" element={<GarageV8Preview />} />
+
+          {/* My Garage: Bear 650 scroll-driven 360° parallax + showcase */}
+          <Route path="/mygarage" element={<MyGarage />} />
+          <Route path="/mygarage/rides" element={<MyGarageRides />} />
+          <Route path="/mygarage/rides/:id" element={<MyGarageRideDetail />} />
+          <Route path="/mygarage/storefront" element={<MyGarageStorefront />} />
 
           {/* Garage design variants — only registered in local dev */}
           {DEV_GARAGE && (

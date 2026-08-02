@@ -1,5 +1,5 @@
 /**
- * GarageV7RideDetail — /garage/v7/rides/:id
+ * GarageV7RideDetail — /mygarage/rides/:id (and /garage/v7/rides/:id in dev)
  * Full detail page for a single ride:
  *  - Hero with ride name, stats, mode badge
  *  - Real road-routed Leaflet map (OSRM)
@@ -13,11 +13,28 @@
  */
 
 import { useState, useRef, useEffect } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import Lightbox from 'yet-another-react-lightbox'
 import 'yet-another-react-lightbox/styles.css'
-import { routes } from '../data/garage'
+import { routes, ridesByMode, ridesInOrder, RIDE_MODES } from '../data/garage'
+
+/**
+ * These pages are mounted under two roots: /mygarage/rides (the real garage)
+ * and /garage/v7/rides (the dev-only V7 variant). Every internal link is
+ * built from whichever root the visitor actually arrived through, so a ride
+ * opened from My Garage never bounces them into the V7 variant.
+ */
+function useGarageRoot() {
+  const { pathname } = useLocation()
+  // Back goes to the rides block, not the top — that's where you came from
+  return pathname.startsWith('/mygarage')
+    ? { garage: '/mygarage#rides', rides: '/mygarage/rides', label: 'My Garage' }
+    : { garage: '/garage/v7', rides: '/garage/v7/rides', label: 'Garage' }
+}
+
+/** Badge colour per ride mode; `dream` has none and falls back to the ride's own. */
+const MODE_COLOR = Object.fromEntries(RIDE_MODES.map(m => [m.key, m.color]))
 
 // ─── Tokens ───────────────────────────────────────────────────────────────────
 const BG  = '#0d0b14'
@@ -178,12 +195,15 @@ function DetailMap({ ride }) {
 // ─── All Rides list page ───────────────────────────────────────────────────────
 export function GarageV7AllRides() {
   const navigate = useNavigate()
-  const completedRoutes = routes.filter(r => r.mode === 'completed')
-  const plannedRoutes   = routes.filter(r => r.mode === 'planned')
+  const root = useGarageRoot()
+  // One group per tier, empty ones dropped so the page never shows a bare heading
+  const groups = RIDE_MODES
+    .map(m => ({ ...m, rides: ridesByMode(m.key) }))
+    .filter(g => g.rides.length > 0)
 
   const RideCard = ({ r }) => (
     <motion.div
-      onClick={() => navigate(`/garage/v7/rides/${r.id}`)}
+      onClick={() => navigate(`${root.rides}/${r.id}`)}
       whileHover={{ y: -3 }}
       style={{ background: BG2, border: `1px solid ${BD}`, borderRadius: 14, overflow: 'hidden', cursor: 'pointer', borderTop: `3px solid ${r.color}` }}
     >
@@ -199,7 +219,7 @@ export function GarageV7AllRides() {
         )}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top,rgba(13,11,20,0.85) 0%,transparent 55%)' }} />
         <div style={{ position: 'absolute', top: 10, left: 10 }}>
-          <span style={{ fontSize: '0.62rem', fontWeight: 800, padding: '3px 9px', background: r.mode === 'completed' ? '#22c55e' : r.mode === 'planned' ? '#f59e0b' : r.color, color: '#fff', borderRadius: 4, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{r.mode}</span>
+          <span style={{ fontSize: '0.62rem', fontWeight: 800, padding: '3px 9px', background: MODE_COLOR[r.mode] || r.color, color: '#fff', borderRadius: 4, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{r.mode}</span>
         </div>
         <div style={{ position: 'absolute', top: 10, right: 10 }}>
           <span style={{ fontSize: '0.72rem', fontWeight: 700, color: OFF, background: 'rgba(0,0,0,0.7)', padding: '2px 8px', borderRadius: 4 }}>{r.distance}</span>
@@ -223,9 +243,9 @@ export function GarageV7AllRides() {
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: 'clamp(20px,4vw,48px)' }}>
         {/* Breadcrumb */}
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: '0.78rem', color: D3, marginBottom: 32 }}>
-          <Link to="/garage/v7" style={{ color: D3, textDecoration: 'none', transition: 'color 0.2s' }}
+          <Link to={root.garage} style={{ color: D3, textDecoration: 'none', transition: 'color 0.2s' }}
             onMouseEnter={e => e.currentTarget.style.color = OFF}
-            onMouseLeave={e => e.currentTarget.style.color = D3}>My Garage</Link>
+            onMouseLeave={e => e.currentTarget.style.color = D3}>{root.label}</Link>
           <span>›</span>
           <span style={{ color: OFF }}>All Rides</span>
         </div>
@@ -235,39 +255,25 @@ export function GarageV7AllRides() {
             Rides &amp; Journeys
           </h1>
           <p style={{ fontSize: '0.92rem', color: D2, margin: '0 0 40px', lineHeight: 1.7 }}>
-            Every road has a story. {completedRoutes.length} completed · {plannedRoutes.length} planned.
+            Every road has a story. {groups.map(g => `${g.rides.length} ${g.label.toLowerCase()}`).join(' · ')}.
           </p>
         </motion.div>
 
-        {/* Completed */}
-        <div style={{ marginBottom: 48 }}>
-          <div style={{ fontSize: '0.62rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#22c55e', fontWeight: 700, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', display: 'inline-block' }} />
-            Completed Rides
+        {groups.map((g, gi) => (
+          <div key={g.key} style={{ marginBottom: gi === groups.length - 1 ? 0 : 48 }}>
+            <div style={{ fontSize: '0.62rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: g.color, fontWeight: 700, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: g.color, display: 'inline-block' }} />
+              {g.plural}
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 18 }}>
+              {g.rides.map((r, i) => (
+                <motion.div key={r.id} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07, duration: 0.5 }}>
+                  <RideCard r={r} />
+                </motion.div>
+              ))}
+            </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 18 }}>
-            {completedRoutes.map((r, i) => (
-              <motion.div key={r.id} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07, duration: 0.5 }}>
-                <RideCard r={r} />
-              </motion.div>
-            ))}
-          </div>
-        </div>
-
-        {/* Planned */}
-        <div>
-          <div style={{ fontSize: '0.62rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#f59e0b', fontWeight: 700, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }} />
-            Planned Rides
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 18 }}>
-            {plannedRoutes.map((r, i) => (
-              <motion.div key={r.id} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07, duration: 0.5 }}>
-                <RideCard r={r} />
-              </motion.div>
-            ))}
-          </div>
-        </div>
+        ))}
       </div>
     </div>
   )
@@ -277,19 +283,22 @@ export function GarageV7AllRides() {
 export default function GarageV7RideDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const root = useGarageRoot()
   const ride = routes.find(r => r.id === id)
   const [lbOpen, setLbOpen] = useState(false)
   const [lbIdx,  setLbIdx]  = useState(0)
 
-  const otherRides = routes.filter(r => r.id !== id && r.mode === 'completed').slice(0, 4)
-  const modeColor  = { completed: '#22c55e', planned: '#f59e0b', dream: 'var(--accent)' }
+  // Completed → upcoming → planned, so the sidebar isn't empty while the list
+  // is still mostly plans
+  const otherRides = ridesInOrder().filter(r => r.id !== id).slice(0, 4)
+  const modeColor  = { ...MODE_COLOR, dream: 'var(--accent)' }
 
   if (!ride) {
     return (
       <div style={{ background: BG, minHeight: '100vh', paddingTop: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16 }}>
         <div style={{ fontSize: '3rem' }}>🏍️</div>
         <h2 style={{ color: OFF, margin: 0 }}>Ride not found</h2>
-        <Link to="/garage/v7/rides" style={{ color: 'var(--accent)', textDecoration: 'none' }}>← All Rides</Link>
+        <Link to={root.rides} style={{ color: 'var(--accent)', textDecoration: 'none' }}>← All Rides</Link>
       </div>
     )
   }
@@ -312,11 +321,11 @@ export default function GarageV7RideDetail() {
         <div style={{ position: 'relative', zIndex: 2, padding: 'clamp(28px,5vw,64px)' }}>
           {/* Breadcrumb */}
           <motion.div {...up()} style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: '0.75rem', color: D3, marginBottom: 24 }}>
-            <Link to="/garage/v7" style={{ color: D3, textDecoration: 'none', transition: 'color 0.2s' }}
+            <Link to={root.garage} style={{ color: D3, textDecoration: 'none', transition: 'color 0.2s' }}
               onMouseEnter={e => e.currentTarget.style.color = OFF}
-              onMouseLeave={e => e.currentTarget.style.color = D3}>My Garage</Link>
+              onMouseLeave={e => e.currentTarget.style.color = D3}>{root.label}</Link>
             <span>›</span>
-            <Link to="/garage/v7/rides" style={{ color: D3, textDecoration: 'none', transition: 'color 0.2s' }}
+            <Link to={root.rides} style={{ color: D3, textDecoration: 'none', transition: 'color 0.2s' }}
               onMouseEnter={e => e.currentTarget.style.color = OFF}
               onMouseLeave={e => e.currentTarget.style.color = D3}>All Rides</Link>
             <span>›</span>
@@ -496,7 +505,7 @@ export default function GarageV7RideDetail() {
           <div style={{ background: BG2, border: `1px solid ${BD}`, borderRadius: 14, overflow: 'hidden' }}>
             <div style={{ padding: '14px 18px', borderBottom: `1px solid ${BD}`, fontSize: '0.6rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: D3, fontWeight: 700 }}>More Rides</div>
             {otherRides.map((r, i) => (
-              <div key={r.id} onClick={() => navigate(`/garage/v7/rides/${r.id}`)}
+              <div key={r.id} onClick={() => navigate(`${root.rides}/${r.id}`)}
                 style={{ display: 'flex', gap: 10, padding: '12px 18px', borderBottom: `1px solid ${BD}`, cursor: 'pointer', transition: 'background 0.18s', alignItems: 'flex-start' }}
                 onMouseEnter={e => e.currentTarget.style.background = BG3}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
@@ -510,7 +519,7 @@ export default function GarageV7RideDetail() {
           </div>
 
           {/* Back button */}
-          <button onClick={() => navigate('/garage/v7/rides')}
+          <button onClick={() => navigate(root.rides)}
             style={{ padding: '11px', background: 'transparent', border: `1px solid ${BD}`, color: D2, fontFamily: 'var(--sans)', fontWeight: 600, fontSize: '0.78rem', cursor: 'pointer', borderRadius: 10, transition: 'all 0.2s' }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = BD2; e.currentTarget.style.color = OFF }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = BD;  e.currentTarget.style.color = D2 }}>
