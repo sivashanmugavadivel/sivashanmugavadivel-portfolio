@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Storefront · 12 · Vending Machine</title>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=DM+Sans:wght@400;500;700&family=VT323&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════
+   VENDING MACHINE — the parts sit behind glass on lettered
+   shelves. Punch a slot code on the keypad (or just tap the
+   glass) and the part drops into the tray at the bottom,
+   where the photo, specs and buy link appear. On a phone the
+   keypad tucks under the cabinet instead of beside it.
+   ══════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --room:#141118; --body:#c8342c; --body2:#a3261f; --trim:#f2ede4;
+  --glass:#0f1418; --glass2:#16202a; --shelf:#2a3038;
+  --off:#f4f1ea; --d1:rgba(244,241,234,0.62); --d2:rgba(244,241,234,0.38); --d3:rgba(244,241,234,0.2);
+  --bd:rgba(255,255,255,0.1); --bd2:rgba(255,255,255,0.2);
+  --led:#7dffb0; --amber:#ffc233;
+  --disp:'Bungee',sans-serif; --sans:'DM Sans',sans-serif; --seg:'VT323',monospace;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+html{scroll-behavior:smooth}
+body{background:var(--room);color:var(--d1);font-family:var(--sans);overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;user-select:none;
+  padding:clamp(14px,3vw,34px) clamp(10px,3vw,30px) calc(30px + env(safe-area-inset-bottom))}
+::selection{background:var(--amber);color:#241a00}
+.room{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(60vw 50vh at 50% 0%,rgba(255,194,51,0.09),transparent 66%),
+             repeating-linear-gradient(180deg,rgba(255,255,255,0.014) 0 1px,transparent 1px 4px)}
+
+.wrap{position:relative;z-index:2;max-width:1120px;margin:0 auto}
+
+/* ── header ── */
+.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:clamp(14px,2.4vw,22px)}
+.top .sign{font-family:var(--disp);font-size:clamp(1rem,3.2vw,1.5rem);color:var(--off);letter-spacing:0.01em}
+.top .sign em{font-style:normal;color:var(--amber)}
+.top .sub{font-size:0.72rem;color:var(--d3);letter-spacing:0.06em}
+.top .exit{margin-left:auto;padding:9px 16px;border:1px solid var(--bd);border-radius:999px;
+  color:var(--d2);text-decoration:none;font-size:0.72rem;transition:.25s;white-space:nowrap}
+.top .exit:hover{color:var(--off);border-color:var(--bd2)}
+
+/* ── the machine ── */
+.machine{display:grid;grid-template-columns:1fr 232px;gap:clamp(10px,1.6vw,18px);
+  background:linear-gradient(160deg,var(--body),var(--body2));
+  border-radius:22px;padding:clamp(12px,1.8vw,20px);
+  box-shadow:0 40px 80px -34px rgba(0,0,0,0.95),inset 0 1px 0 rgba(255,255,255,0.16);
+  animation:landing .9s var(--ease)}
+@keyframes landing{from{opacity:0;transform:translateY(26px)}}
+
+/* glass cabinet */
+.cabinet{background:var(--glass);border-radius:14px;padding:12px;position:relative;overflow:hidden;
+  border:1px solid rgba(0,0,0,0.4);box-shadow:inset 0 0 60px rgba(0,0,0,0.75)}
+/* reflection sweep across the glass */
+.cabinet::after{content:'';position:absolute;top:-30%;left:-40%;width:52%;height:170%;pointer-events:none;
+  background:linear-gradient(to right,transparent,rgba(255,255,255,0.07),transparent);
+  transform:rotate(16deg);animation:sheen 9s ease-in-out infinite;z-index:6}
+@keyframes sheen{0%,72%{transform:translateX(-40%) rotate(16deg)}92%,100%{transform:translateX(340%) rotate(16deg)}}
+
+.shelf{margin-bottom:10px}
+.shelf:last-child{margin-bottom:0}
+.shelf .rail{display:flex;align-items:center;gap:9px;margin-bottom:6px}
+.shelf .rail .row{font-family:var(--disp);font-size:0.72rem;color:var(--amber);
+  background:rgba(255,194,51,0.12);border:1px solid rgba(255,194,51,0.3);
+  border-radius:5px;padding:2px 8px;line-height:1.5}
+.shelf .rail .nm{font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--d2);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.shelf .rail .ln{flex:1;height:1px;background:var(--bd)}
+.shelf .slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:7px;
+  padding-bottom:11px;border-bottom:5px solid var(--shelf);
+  box-shadow:0 6px 10px -6px rgba(0,0,0,0.8)}
+
+.slot{position:relative;background:var(--glass2);border:1px solid var(--bd);border-radius:9px;
+  aspect-ratio:3/4;cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;
+  transition:.3s var(--ease)}
+.slot:hover{background:#1d2a36;border-color:var(--bd2);transform:translateY(-3px)}
+.slot.on{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber),0 0 22px rgba(255,194,51,0.35)}
+.slot.dropped{opacity:0.3}
+.slot img{width:100%;height:100%;object-fit:contain;padding:11px 9px 20px;
+  transition:transform .5s var(--ease)}
+.slot:hover img{transform:scale(1.07)}
+.slot .none{font-size:1.4rem;opacity:0.22;padding-bottom:16px}
+.slot .code{position:absolute;left:0;right:0;bottom:0;padding:3px 0;text-align:center;
+  font-family:var(--seg);font-size:0.9rem;letter-spacing:0.12em;color:var(--led);
+  background:rgba(6,10,13,0.9);border-top:1px solid var(--bd)}
+.slot.on .code{background:var(--amber);color:#241a00}
+.slot .fl{position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:var(--amber);
+  box-shadow:0 0 8px var(--amber)}
+.slot .spring{position:absolute;left:0;right:0;bottom:19px;height:5px;
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,0.13) 0 3px,transparent 3px 7px)}
+
+/* ── control panel ── */
+.panel{display:flex;flex-direction:column;gap:10px;min-width:0}
+.readout{background:#0a0f0c;border:1px solid rgba(125,255,176,0.25);border-radius:10px;padding:10px 12px;
+  box-shadow:inset 0 0 26px rgba(125,255,176,0.09)}
+.readout .line{font-family:var(--seg);font-size:1.5rem;line-height:1.15;color:var(--led);
+  letter-spacing:0.06em;text-shadow:0 0 10px rgba(125,255,176,0.5);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.readout .line.sm{font-size:1.05rem;color:rgba(125,255,176,0.6);text-shadow:none}
+.readout .entry{display:flex;align-items:center;gap:8px;margin-top:6px;padding-top:6px;
+  border-top:1px dashed rgba(125,255,176,0.22)}
+.readout .entry b{font-family:var(--seg);font-size:1.9rem;color:var(--amber);letter-spacing:0.14em;
+  text-shadow:0 0 12px rgba(255,194,51,0.5);min-width:2.6ch}
+.readout .entry span{font-family:var(--seg);font-size:0.95rem;color:rgba(125,255,176,0.45)}
+
+.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.keys button{aspect-ratio:1.35/1;border-radius:9px;border:1px solid rgba(0,0,0,0.35);
+  background:linear-gradient(180deg,#3b3a3e,#26262a);color:var(--off);font-family:var(--disp);
+  font-size:0.92rem;cursor:pointer;transition:.12s;
+  box-shadow:0 3px 0 rgba(0,0,0,0.45),inset 0 1px 0 rgba(255,255,255,0.12)}
+.keys button:active{transform:translateY(3px);box-shadow:0 0 0 rgba(0,0,0,0.45)}
+.keys button.act{background:linear-gradient(180deg,var(--amber),#d99b12);color:#241a00}
+.keys button.clr{background:linear-gradient(180deg,#4a4a50,#313136);font-size:0.72rem}
+
+.slotmeta{display:flex;gap:7px;flex-wrap:wrap}
+.slotmeta span{font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.55);
+  border:1px solid rgba(255,255,255,0.18);border-radius:99px;padding:4px 9px}
+
+/* ── the tray ── */
+.tray{margin-top:clamp(10px,1.6vw,16px);background:linear-gradient(160deg,var(--body2),#8e1f19);
+  border-radius:0 0 22px 22px;padding:clamp(12px,1.8vw,18px);
+  box-shadow:0 30px 60px -34px rgba(0,0,0,0.9)}
+.tray .mouth{background:#0b0d10;border-radius:12px;border:1px solid rgba(0,0,0,0.5);
+  box-shadow:inset 0 14px 26px rgba(0,0,0,0.85);min-height:150px;padding:14px;
+  display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.tray .idle{text-align:center;color:var(--d3);font-size:0.78rem;line-height:1.9}
+.tray .idle b{display:block;font-family:var(--disp);font-size:0.9rem;color:var(--d2);margin-bottom:6px}
+
+.item{display:grid;grid-template-columns:170px 1fr;gap:16px;width:100%;align-items:center;
+  animation:drop .62s cubic-bezier(.3,1.5,.5,1)}
+@keyframes drop{0%{opacity:0;transform:translateY(-120px) rotate(-7deg)}70%{transform:translateY(6px) rotate(1deg)}100%{opacity:1;transform:none}}
+.item .pic{aspect-ratio:1/1;border-radius:10px;background:#12171c;border:1px solid var(--bd);
+  display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:zoom-in}
+.item .pic img{width:100%;height:100%;object-fit:contain;padding:10px;transition:opacity .2s,transform .5s var(--ease)}
+.item .pic:hover img{transform:scale(1.06)}
+.item .pic .none{font-size:2rem;opacity:0.2}
+.item .info{min-width:0;display:flex;flex-direction:column;gap:8px}
+.item .info .code{font-family:var(--seg);font-size:1.1rem;color:var(--amber);letter-spacing:0.14em}
+.item .info h3{font-family:var(--disp);font-size:clamp(0.95rem,2.4vw,1.3rem);color:var(--off);line-height:1.2}
+.item .info .cat{font-size:0.68rem;letter-spacing:0.13em;text-transform:uppercase;color:var(--d3)}
+.item .info .reel{display:flex;gap:5px;flex-wrap:wrap}
+.item .info .reel button{width:38px;height:38px;padding:0;border-radius:7px;overflow:hidden;cursor:pointer;
+  border:1px solid var(--bd);background:#12171c;opacity:0.5;transition:.24s}
+.item .info .reel button.on{opacity:1;border-color:var(--amber)}
+.item .info .reel img{width:100%;height:100%;object-fit:cover}
+.item .info .buys{display:flex;gap:8px;flex-wrap:wrap;margin-top:2px}
+.buy{flex:1 1 auto;text-align:center;padding:11px 16px;border-radius:8px;text-decoration:none;
+  font-size:0.76rem;font-weight:700;transition:.28s var(--ease);white-space:nowrap}
+.buy.p{background:var(--amber);color:#241a00}
+.buy.p:hover{background:var(--off);transform:translateY(-2px)}
+.buy.s{border:1px solid var(--bd2);color:var(--off)}
+.buy.s:hover{border-color:var(--amber);color:var(--amber);transform:translateY(-2px)}
+.soon{font-size:0.74rem;color:var(--d3);font-style:italic}
+.item .info .nav{display:flex;gap:7px;margin-top:2px}
+.item .info .nav button{padding:8px 13px;border-radius:8px;border:1px solid var(--bd);background:transparent;
+  color:var(--d1);cursor:pointer;font-family:var(--sans);font-size:0.7rem;transition:.24s}
+.item .info .nav button:hover{background:rgba(255,255,255,0.08);color:var(--off)}
+
+.foot{margin-top:22px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;
+  padding-top:18px;border-top:1px solid var(--bd)}
+.back{display:inline-flex;align-items:center;gap:10px;padding:13px 24px;border-radius:999px;
+  border:1px solid var(--bd2);color:var(--off);text-decoration:none;font-size:0.78rem;font-weight:500;
+  transition:.3s var(--ease)}
+.back:hover{background:var(--amber);border-color:var(--amber);color:#241a00;transform:translateX(-4px)}
+.foot p{margin-left:auto;font-size:0.68rem;color:var(--d3)}
+
+/* lightbox */
+.lb{position:fixed;inset:0;z-index:99;background:rgba(12,9,16,0.97);backdrop-filter:blur(10px);
+  display:none;align-items:center;justify-content:center;padding:clamp(16px,6vw,56px)}
+.lb.on{display:flex;animation:fade .3s}
+@keyframes fade{from{opacity:0}}
+.lb img{max-width:90vw;max-height:74vh;object-fit:contain;border-radius:12px;animation:pop .4s var(--ease)}
+@keyframes pop{from{opacity:0;transform:scale(.94)}}
+.lb .cap{position:absolute;bottom:24px;left:0;right:0;text-align:center;font-family:var(--seg);
+  font-size:1.05rem;letter-spacing:0.1em;color:var(--amber);padding:0 16px}
+.lb button{position:absolute;width:42px;height:42px;border-radius:10px;border:1px solid var(--bd2);
+  background:rgba(30,26,36,0.92);color:var(--off);font-size:1rem;cursor:pointer;transition:.22s}
+.lb button:hover{background:var(--amber);color:#241a00}
+.lb .x{top:18px;right:18px}.lb .prev{left:14px;top:50%}.lb .next{right:14px;top:50%}
+
+/* ── phones: keypad slides under the cabinet ── */
+@media(max-width:820px){
+  .machine{grid-template-columns:1fr;border-radius:18px}
+  .panel{flex-direction:row;flex-wrap:wrap;align-items:stretch}
+  .readout{flex:1 1 100%}
+  .keys{flex:1 1 190px;grid-template-columns:repeat(6,1fr)}
+  .keys button{aspect-ratio:1/1;font-size:0.82rem}
+  .slotmeta{flex:1 1 100%}
+  .shelf .slots{grid-template-columns:repeat(auto-fill,minmax(80px,1fr))}
+  .tray{border-radius:0 0 18px 18px}
+  .item{grid-template-columns:1fr}
+  .item .pic{max-width:230px;margin:0 auto}
+}
+@media(max-width:420px){
+  .shelf .slots{grid-template-columns:repeat(3,1fr)}
+  .keys{grid-template-columns:repeat(4,1fr)}
+  .top .sub{display:none}
+}
+</style>
+</head>
+<body>
+<div class="room"></div>
+
+<div class="wrap">
+  <header class="top">
+    <div class="sign">GARAGE <em>VENDING</em></div>
+    <div class="sub" id="sub"></div>
+    <a class="exit" href="#">✕ Back to garage</a>
+  </header>
+
+  <div class="machine">
+    <div class="cabinet" id="cabinet"></div>
+
+    <aside class="panel">
+      <div class="readout">
+        <div class="line" id="rl1">SELECT A SLOT</div>
+        <div class="line sm" id="rl2">tap the glass or key a code</div>
+        <div class="entry"><span>&gt;</span><b id="entry">--</b></div>
+      </div>
+      <div class="keys" id="keys"></div>
+      <div class="slotmeta" id="slotmeta"></div>
+    </aside>
+  </div>
+
+  <div class="tray">
+    <div class="mouth" id="mouth">
+      <div class="idle"><b>COLLECTION TRAY</b>Nothing dispensed yet.<br />Punch a slot code, or tap a part behind the glass.</div>
+    </div>
+  </div>
+
+  <footer class="foot">
+    <a class="back" href="#">← Back to My Garage</a>
+    <p>Everything in the machine is already on the bike</p>
+  </footer>
+</div>
+
+<div class="lb" id="lb">
+  <button class="x" onclick="closeLb()">✕</button>
+  <button class="prev" onclick="stepLb(-1)">‹</button>
+  <button class="next" onclick="stepLb(1)">›</button>
+  <img id="lbImg" alt="" />
+  <div class="cap" id="lbCap"></div>
+</div>
+
+<script src="storefront-data.js"></script>
+<script>
+/* ── slot codes: one letter row per category, numbered along it ── */
+const ROW = 'ABCDEFGH'
+const ITEMS = []
+SF.cats.forEach((c, ci) => c.items.forEach((it, i) => {
+  ITEMS.push({ ...it, cat: c, code: ROW[ci] + (i + 1), imgs: it.imgs.map(f => SF.url(f)) })
+}))
+const byCode = code => ITEMS.find(i => i.code === code.toUpperCase())
+
+document.getElementById('sub').textContent =
+  `${SF.count} slots · ${SF.cats.length} shelves · ${SF.photoCount} photos`
+
+/* ── shelves behind the glass ── */
+document.getElementById('cabinet').innerHTML = SF.cats.map((c, ci) => `
+  <div class="shelf">
+    <div class="rail">
+      <span class="row">${ROW[ci]}</span>
+      <span class="nm">${c.icon} ${c.label}</span>
+      <span class="ln"></span>
+    </div>
+    <div class="slots">
+      ${ITEMS.filter(i => i.cat.id === c.id).map(it => `
+        <div class="slot" data-code="${it.code}" title="${it.name}">
+          ${it.featured ? '<span class="fl"></span>' : ''}
+          ${it.imgs.length ? `<img src="${it.imgs[0]}" alt="${it.name}" loading="lazy" />`
+                           : `<span class="none">${c.icon}</span>`}
+          <span class="spring"></span>
+          <span class="code">${it.code}</span>
+        </div>`).join('')}
+    </div>
+  </div>`).join('')
+
+document.getElementById('slotmeta').innerHTML = SF.cats.map((c, ci) =>
+  `<span>${ROW[ci]} · ${c.label.split(' ')[0]}</span>`).join('')
+
+/* ── keypad — built from the shelves, so every slot on the machine is
+      actually reachable (the safety shelf runs to 8) ── */
+const LETTERS = SF.cats.map((_, i) => ROW[i])
+const DIGITS = Array.from({ length: Math.max(...SF.cats.map(c => c.items.length)) }, (_, i) => String(i + 1))
+const KEYS = [...LETTERS, ...DIGITS, 'CLR', 'VEND']
+document.getElementById('keys').innerHTML = KEYS.map(k =>
+  `<button data-k="${k}" class="${k === 'VEND' ? 'act' : k === 'CLR' ? 'clr' : ''}">${k}</button>`).join('')
+
+let entry = ''
+const rl1 = document.getElementById('rl1'), rl2 = document.getElementById('rl2')
+const entryEl = document.getElementById('entry')
+
+function setEntry(v) {
+  entry = v
+  entryEl.textContent = entry || '--'
+  document.querySelectorAll('.slot').forEach(s =>
+    s.classList.toggle('on', !!entry && s.dataset.code.startsWith(entry)))
+}
+function keyIn(k) {
+  if (k === 'CLR') { setEntry(''); say('SELECT A SLOT', 'tap the glass or key a code'); return }
+  if (k === 'VEND') { vend(entry); return }
+  if (/[A-Z]/.test(k)) { setEntry(k); say('SHELF ' + k, 'now key a slot number'); return }
+  if (entry.length === 1) { setEntry(entry + k); vend(entry) }
+  else { setEntry(''); say('SHELF FIRST', 'pick a letter, then a number') }
+}
+document.getElementById('keys').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return
+  keyIn(b.dataset.k)
+})
+addEventListener('keydown', e => {
+  if (document.getElementById('lb').classList.contains('on')) return
+  const k = e.key.toUpperCase()
+  if (LETTERS.includes(k) || DIGITS.includes(k)) keyIn(k)
+  if (e.key === 'Enter') keyIn('VEND')
+  if (e.key === 'Escape' || e.key === 'Backspace') keyIn('CLR')
+})
+function say(a, b) { rl1.textContent = a; if (b !== undefined) rl2.textContent = b }
+
+/* ── dispensing ── */
+let cur = null, plateAt = 0
+document.getElementById('cabinet').addEventListener('click', e => {
+  const s = e.target.closest('.slot'); if (!s) return
+  setEntry(s.dataset.code)
+  vend(s.dataset.code)
+})
+
+function vend(code) {
+  const it = byCode(code || '')
+  if (!it) {
+    say('INVALID SLOT', code ? `no part in ${code}` : 'key a full code, e.g. A1')
+    return
+  }
+  cur = it; plateAt = 0
+  say(it.code + ' DISPENSING', it.name.toUpperCase())
+  document.querySelectorAll('.slot').forEach(s => {
+    s.classList.toggle('on', s.dataset.code === it.code)
+    s.classList.toggle('dropped', s.dataset.code === it.code)
+  })
+  paintTray()
+  document.getElementById('mouth').scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+}
+
+function paintTray() {
+  const it = cur
+  document.getElementById('mouth').innerHTML = `
+    <div class="item">
+      <div class="pic" id="pic">
+        ${it.imgs.length ? `<img src="${it.imgs[plateAt]}" alt="${it.name}" />` : `<span class="none">${it.cat.icon}</span>`}
+      </div>
+      <div class="info">
+        <div class="code">SLOT ${it.code}</div>
+        <h3>${it.name}</h3>
+        <div class="cat">${it.cat.icon} ${it.cat.label} · ${it.imgs.length || 'no'} ${it.imgs.length === 1 ? 'photo' : 'photos'}${it.featured ? ' · headline pick' : ''}</div>
+        ${it.imgs.length > 1 ? `<div class="reel">${it.imgs.map((s, k) =>
+          `<button class="${k === plateAt ? 'on' : ''}" data-k="${k}"><img src="${s}" alt="" /></button>`).join('')}</div>` : ''}
+        <div class="buys">
+          ${it.links.length ? it.links.map(([v, u], k) =>
+            `<a class="buy ${k === 0 ? 'p' : 's'}" href="${u}" target="_blank" rel="noopener noreferrer">${k === 0 ? 'BUY · ' + v.toUpperCase() : v}</a>`).join('')
+            : '<span class="soon">Link coming soon</span>'}
+        </div>
+        <div class="nav">
+          <button data-step="-1">‹ Previous slot</button>
+          <button data-step="1">Next slot ›</button>
+        </div>
+      </div>
+    </div>`
+}
+
+document.getElementById('mouth').addEventListener('click', e => {
+  const step = e.target.closest('[data-step]')
+  if (step) {
+    const i = ITEMS.indexOf(cur)
+    const next = ITEMS[(i + +step.dataset.step + ITEMS.length) % ITEMS.length]
+    setEntry(next.code); vend(next.code); return
+  }
+  const reel = e.target.closest('.reel button')
+  if (reel) {
+    plateAt = +reel.dataset.k
+    const img = document.querySelector('#pic img')
+    img.style.opacity = 0
+    setTimeout(() => { img.src = cur.imgs[plateAt]; img.style.opacity = 1 }, 140)
+    document.querySelectorAll('.reel button').forEach((x, j) => x.classList.toggle('on', j === plateAt))
+    return
+  }
+  if (e.target.closest('#pic') && cur && cur.imgs.length) openLb()
+})
+
+/* lightbox */
+let at = 0
+function openLb() { at = plateAt; paint(); document.getElementById('lb').classList.add('on') }
+function paint() {
+  document.getElementById('lbImg').src = cur.imgs[at]
+  document.getElementById('lbCap').textContent = `SLOT ${cur.code} — ${cur.name} — ${at + 1}/${cur.imgs.length}`
+}
+function stepLb(d) { at = (at + d + cur.imgs.length) % cur.imgs.length; paint() }
+function closeLb() { document.getElementById('lb').classList.remove('on') }
+document.getElementById('lb').addEventListener('click', e => { if (e.target.id === 'lb') closeLb() })
+addEventListener('keydown', e => {
+  if (!document.getElementById('lb').classList.contains('on')) return
+  if (e.key === 'Escape') closeLb()
+  if (e.key === 'ArrowRight') stepLb(1)
+  if (e.key === 'ArrowLeft') stepLb(-1)
+})
+</script>
+</body>
+</html>

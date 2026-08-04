@@ -40,7 +40,7 @@ export const LOOPS = 1          // full 360° rotations across the scroll track
 
 /* Leader length for `len: 1`, as a fraction of the box on both axes.
    Equal fractions on a 800 × 501 box draw the line at roughly 32°. */
-export const LEADER = 0.062
+const LEADER = 0.062
 
 /* How long a stop stays up, in frames of spin either side of its own
    frame: HOLD is the fully-opaque plateau, FADE the ramp on each end.
@@ -181,7 +181,7 @@ export const SPEC_STOPS = [
    is on screen. Inverse of the page's frame picker, which counts the
    spin down from 37, so frame 37 sits at the very top of the track and
    frame 01 at the very bottom. */
-export const progressOfFrame = (frame) =>
+const progressOfFrame = (frame) =>
   (FRAME_COUNT - frame + 0.5) / (FRAME_COUNT * LOOPS)
 
 /* Frame aspect. A leader runs diagonally, but its two components are
@@ -197,7 +197,7 @@ const ASPECT = 501 / 800
    instead, which is what keeps it inside the frame. */
 const DETAIL_W = 0.25
 
-export function pinGeometry({ x, y, dir, len = 1 }) {
+function pinGeometry({ x, y, dir, len = 1 }) {
   const d = LEADER * len
   const dx = dir.includes('l') ? -d : d
   const dy = dir.includes('u') ? -d : d

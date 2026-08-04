@@ -61,8 +61,8 @@ const rand = (a, b) => a + Math.random() * (b - a)
    side by side: both form in the same place above the bike, so the
    second only goes up once the first has fallen. */
 const TEXT_SHOWS = [
-  { at: 400, text: 'BEAR 650' },
-  { at: 4200, text: 'Aug 3rd' },
+  { at: 400, text: 'Interceptor' },
+  { at: 4200, text: 'Bear 650' },
 ]
 
 /* Rocket gravity, px/frame². Climb time is sqrt(2·distance/g), so this is

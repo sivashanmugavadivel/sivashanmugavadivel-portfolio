@@ -1,0 +1,41 @@
+{
+  "_comment": "Copy me, rename after the ride, fill in. Files starting with _ never render. Full field notes live in src/data/rides.js.",
+
+  "order": 100,
+  "id": "r9",
+
+  "name": "Ride Name",
+  "subtitle": "The one-line hook under the title",
+  "mode": "planned",
+
+  "distance": "0 KM",
+  "_time": "What the ride ACTUALLY took. Clock, H:MM, QUOTED — \"1:45\" shows as \"1hr 45mins\", \"0:45\" as \"45mins\". Unquoted 1:45 is invalid JSON and breaks the whole garage. null until ridden.",
+  "time": null,
+  "_estimateTime": "What the route SHOULD take. Leave null — the detail page works it out from the router for the stops below. Set it (same format) only to override.",
+  "estimateTime": null,
+  "date": "Planned",
+  "rating": null,
+
+  "fromCity": "Start",
+  "toCity": "End",
+  "states": [],
+  "color": "#a78bfa",
+
+  "description": "The short blurb on the ride card.",
+  "story": "The write-up on the detail page.",
+  "highlights": [],
+  "via": [],
+
+  "mapCenter": [11.5, 78.8],
+  "mapZoom": 8,
+
+  "videoId": null,
+  "photos": [],
+  "stats": null,
+
+  "_stops": "Start → any stops to route through → end. Two or more puts the ride on both maps; fewer means no route to draw. `dir` is which side the pin's label sits on. `icon` is what kind of place it is — temple, home, office, showroom, restaurant, hotel, shop, beach, fuel, waterfall, fort, station… (full list: PLACE_ICONS in pages/GarageV7RideDetail.jsx). An emoji works verbatim. Omit it and the stop gets a lettered pin instead.",
+  "stops": [
+    { "id": "start", "label": "Start", "icon": "", "lat": 0, "lng": 0, "dir": "left" },
+    { "id": "end", "label": "End", "icon": "", "lat": 0, "lng": 0, "dir": "right" }
+  ]
+}

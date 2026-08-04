@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Vlogs · 5 · Tape Deck</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600;700&family=Permanent+Marker&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════
+   TAPE DECK — the vlogs are cassettes on a shelf and the section
+   is the deck they go into. Pick a tape and it flies out of the
+   shelf, into the slot, the reels start turning and the tube
+   warms up: a white line that opens out into the picture, with
+   the tracking still settling for the first second.
+   ══════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08070e; --card:#141220; --card2:#1a1828;
+  --bd:rgba(255,255,255,0.07); --bd2:rgba(255,255,255,0.13);
+  --off:#f0eef6; --d1:rgba(240,238,246,0.65); --d2:rgba(240,238,246,0.4); --d3:rgba(240,238,246,0.22);
+  --acc:#8b5cf6; --acc2:#a78bfa;
+  --tape:#221d33; --tape2:#191527; --spine:#e8e3d5;    /* the sticker on the spine */
+  --ink:#16121f; --amber:#ffb347;
+  --sans:'Inter',sans-serif; --mono:'JetBrains Mono',monospace; --hand:'Permanent Marker',cursive;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+body{background:var(--bg);color:var(--d1);font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--amber);color:var(--ink)}
+.page{width:90%;max-width:1240px;margin:0 auto;padding:64px 0 90px;
+  display:flex;flex-direction:column;gap:clamp(40px,7vh,76px)}
+.stub{border:1px dashed var(--bd);border-radius:16px;padding:26px;color:var(--d3);
+  font-size:0.7rem;letter-spacing:0.16em;text-transform:uppercase;text-align:center}
+
+.sec{position:relative;background:var(--card);border:1px solid var(--bd);border-radius:16px;
+  padding:26px clamp(16px,3vw,28px) 28px;overflow:hidden;
+  opacity:0;transform:translateY(32px);animation:rise .8s var(--ease) .1s forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+
+.head{display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;margin-bottom:20px}
+.kick{font-family:var(--mono);font-size:0.58rem;letter-spacing:0.24em;text-transform:uppercase;
+  color:var(--amber);display:block;margin-bottom:7px}
+.head h2{font-size:clamp(1.3rem,3.4vw,1.9rem);font-weight:800;color:var(--off);letter-spacing:-0.02em;line-height:1.1}
+.head .note{font-size:0.76rem;color:var(--d2);line-height:1.65;max-width:400px;margin-top:8px}
+.head .all{margin-left:auto;font-size:0.7rem;color:var(--acc2);text-decoration:none;padding:7px 15px;
+  border-radius:999px;border:1px solid rgba(167,139,250,0.28);transition:.3s var(--ease);white-space:nowrap}
+.head .all:hover{background:var(--acc);color:#fff;border-color:var(--acc);transform:translateY(-2px)}
+
+/* ══ the deck ══ */
+.deck{position:relative;border-radius:12px;overflow:hidden;margin-bottom:22px;
+  background:linear-gradient(180deg,#1c1828,#100d19);border:1px solid var(--bd2);
+  box-shadow:0 30px 60px -34px #000,inset 0 1px 0 rgba(255,255,255,.05);
+  display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr)}
+
+/* ── the tube ── */
+.crt{position:relative;aspect-ratio:16/9;background:#05050a;overflow:hidden;
+  border-right:1px solid var(--bd2)}
+.crt video,.crt img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  opacity:0;transition:opacity .5s ease .35s;filter:saturate(.9) contrast(1.06)}
+.crt.on video,.crt.on img{opacity:1}
+/* the phosphor grid and the curve of the glass */
+.crt .glass{position:absolute;inset:0;z-index:4;pointer-events:none;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,.24) 0 1px,transparent 1px 3px),
+             radial-gradient(120% 120% at 50% 50%,transparent 58%,rgba(0,0,0,.65))}
+/* power-on: a white line that opens into the picture */
+.crt .bolt{position:absolute;left:0;right:0;top:50%;height:2px;background:#fff;z-index:5;
+  transform:scaleX(0);opacity:0;box-shadow:0 0 24px 4px rgba(255,255,255,.8)}
+.crt.warm .bolt{animation:bolt .55s var(--ease) forwards}
+@keyframes bolt{
+  0%{transform:scaleX(0) scaleY(1);opacity:1}
+  38%{transform:scaleX(1) scaleY(1);opacity:1}
+  100%{transform:scaleX(1) scaleY(90);opacity:0}
+}
+/* tracking bar that drifts up the picture until it settles */
+.crt .track{position:absolute;left:0;right:0;height:26px;z-index:5;pointer-events:none;opacity:0;
+  background:linear-gradient(180deg,transparent,rgba(255,255,255,.16),transparent);
+  filter:blur(1px)}
+.crt.on .track{animation:trk 2.6s linear 3}
+@keyframes trk{0%{top:110%;opacity:.9}100%{top:-30%;opacity:0}}
+.crt .off{position:absolute;inset:0;z-index:6;display:grid;place-items:center;gap:8px;
+  background:#05050a;text-align:center;padding:20px;transition:opacity .35s ease}
+.crt.on .off{opacity:0;pointer-events:none}
+.crt .off .snow{position:absolute;inset:0;opacity:.14;
+  background:repeating-linear-gradient(0deg,#fff 0 1px,transparent 1px 2px),
+             repeating-linear-gradient(90deg,#fff 0 1px,transparent 1px 3px);
+  animation:snow .12s steps(2) infinite}
+@keyframes snow{50%{transform:translate(1px,-1px)}}
+.crt .off b{position:relative;font-family:var(--mono);font-size:0.66rem;letter-spacing:0.24em;
+  text-transform:uppercase;color:var(--d2)}
+.crt .osd{position:absolute;left:14px;top:12px;z-index:7;font-family:var(--mono);font-size:0.62rem;
+  letter-spacing:0.2em;color:var(--amber);text-shadow:0 0 10px rgba(255,179,71,.7);
+  display:flex;align-items:center;gap:8px;opacity:0;transition:opacity .3s}
+.crt.on .osd{opacity:1}
+.crt .osd i{width:0;height:0;border-left:7px solid var(--amber);border-top:5px solid transparent;
+  border-bottom:5px solid transparent;font-style:normal}
+.crt .tc{position:absolute;right:14px;top:12px;z-index:7;font-family:var(--mono);font-size:0.62rem;
+  letter-spacing:0.14em;color:rgba(255,255,255,.7);opacity:0;transition:opacity .3s}
+.crt.on .tc{opacity:1}
+
+/* ── the mechanism beside it ── */
+.mech{padding:18px;display:flex;flex-direction:column;gap:14px;min-width:0;
+  background:linear-gradient(180deg,#191428,#0e0b16)}
+.slot{position:relative;height:56px;border-radius:6px;background:#0a0810;
+  border:1px solid rgba(255,255,255,.09);box-shadow:inset 0 4px 14px rgba(0,0,0,.85);
+  display:grid;place-items:center;overflow:hidden}
+.slot .mouth{position:absolute;left:9px;right:9px;top:50%;height:9px;margin-top:-4px;border-radius:2px;
+  background:#000;box-shadow:inset 0 2px 5px rgba(0,0,0,.9),0 1px 0 rgba(255,255,255,.06)}
+/* the loaded tape rides up out of the slot */
+.slot .loaded{position:absolute;left:12px;right:12px;top:9px;bottom:9px;border-radius:4px;
+  background:linear-gradient(160deg,var(--tape),var(--tape2));border:1px solid rgba(255,255,255,.11);
+  display:flex;align-items:center;gap:12px;padding:0 14px;
+  transform:translateY(120%);transition:transform .6s var(--ease);z-index:2}
+.slot.in .loaded{transform:none}
+.slot .loaded .name{flex:1;min-width:0;font-family:var(--hand);font-size:0.84rem;color:var(--spine);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.02em}
+.reel{width:19px;height:19px;border-radius:50%;border:2px solid rgba(232,227,213,.75);
+  position:relative;flex:none}
+.reel::before,.reel::after{content:'';position:absolute;left:50%;top:50%;width:2px;height:100%;
+  background:rgba(232,227,213,.55);transform:translate(-50%,-50%)}
+.reel::after{transform:translate(-50%,-50%) rotate(90deg)}
+.slot.in.rolling .reel{animation:spin 1.6s linear infinite}
+.slot.in.rolling .reel:last-of-type{animation-duration:2.4s}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.mech .meta{flex:1;min-width:0;display:flex;flex-direction:column;gap:7px}
+.mech .meta h3{font-size:0.98rem;font-weight:700;color:var(--off);line-height:1.3;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mech .meta p{font-size:0.76rem;line-height:1.6;color:var(--d2);
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.mech .meta .row{display:flex;gap:8px;flex-wrap:wrap;font-family:var(--mono);font-size:0.53rem;
+  letter-spacing:0.14em;text-transform:uppercase;color:var(--d3)}
+.mech .meta .row u{text-decoration:none;color:var(--amber)}
+.mech .btns{display:flex;gap:7px;flex-wrap:wrap}
+.mech .btns button,.mech .btns a{display:inline-flex;align-items:center;gap:7px;padding:9px 14px;
+  border-radius:5px;border:1px solid var(--bd2);background:#0f0c19;color:var(--d1);cursor:pointer;
+  font-family:var(--mono);font-size:0.56rem;letter-spacing:0.16em;text-transform:uppercase;
+  text-decoration:none;transition:.28s var(--ease)}
+.mech .btns button:hover,.mech .btns a:hover{border-color:var(--amber);color:var(--amber);
+  background:rgba(255,179,71,.08);transform:translateY(-2px)}
+.mech .btns a.pri{background:var(--amber);border-color:var(--amber);color:var(--ink);font-weight:700}
+.mech .btns a.pri:hover{color:var(--ink);filter:brightness(1.08)}
+
+/* ══ the shelf ══ */
+.shelfhead{display:flex;align-items:center;gap:10px;margin-bottom:10px;
+  font-family:var(--mono);font-size:0.56rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--d2)}
+.shelfhead s{margin-left:auto;text-decoration:none;color:var(--d3)}
+.shelf{position:relative;display:flex;gap:7px;overflow-x:auto;padding:14px 4px 20px;
+  scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.14) transparent;
+  border-radius:10px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.35));
+  box-shadow:inset 0 -1px 0 rgba(255,255,255,.06)}
+.shelf::-webkit-scrollbar{height:6px}
+.shelf::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:9px}
+
+/* a cassette standing on its spine */
+.tape{position:relative;flex:0 0 62px;height:186px;border-radius:4px;cursor:pointer;padding:0;
+  background:linear-gradient(100deg,var(--tape),var(--tape2));
+  border:1px solid rgba(255,255,255,.1);border-bottom:3px solid rgba(0,0,0,.6);
+  transform-origin:50% 100%;transition:transform .42s var(--ease),box-shadow .42s var(--ease),filter .3s;
+  box-shadow:0 12px 22px -14px #000;
+  animation:stand .6s var(--ease) backwards;animation-delay:calc(var(--k) * .05s)}
+@keyframes stand{from{opacity:0;transform:translateY(22px) rotate(-6deg)}}
+.tape:hover,.tape:focus-visible{outline:0;transform:translateY(-14px) rotate(-2.5deg);
+  box-shadow:0 26px 34px -16px #000,0 0 0 1px var(--amber)}
+.tape.out{opacity:0;transform:translateY(-40px) scale(.9)}
+.tape.on{box-shadow:0 0 0 1px var(--amber),0 18px 30px -16px #000}
+/* the spine sticker */
+.tape .sticker{position:absolute;left:5px;right:5px;top:12px;bottom:34px;border-radius:2px;
+  background:linear-gradient(180deg,var(--spine),#d8d2c1);color:var(--ink);
+  display:flex;align-items:center;justify-content:center;overflow:hidden;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
+.tape .sticker span{font-family:var(--hand);font-size:0.72rem;line-height:1.15;
+  writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;
+  max-height:100%;overflow:hidden;text-overflow:ellipsis;padding:6px 0;letter-spacing:.02em}
+/* the two windows at the foot, where the tape shows through */
+.tape .win{position:absolute;left:8px;right:8px;bottom:9px;height:18px;border-radius:2px;
+  background:#0b0812;border:1px solid rgba(255,255,255,.08);display:flex;align-items:center;
+  justify-content:space-around;padding:0 4px}
+.tape .win i{width:9px;height:9px;border-radius:50%;border:1.5px solid rgba(232,227,213,.45)}
+.tape:hover .win i{border-color:var(--amber)}
+.tape .no{position:absolute;top:2px;left:0;right:0;text-align:center;font-family:var(--mono);
+  font-size:0.44rem;letter-spacing:0.1em;color:rgba(255,255,255,.35)}
+
+/* ── the end of the shelf ──
+   Five tapes sit out; the rest are still in the box, which is the way through
+   to the vlog page. */
+.tape.more{flex:0 0 76px;background:linear-gradient(100deg,#241f37,#151122);
+  border-color:rgba(167,139,250,.32);border-bottom-color:rgba(0,0,0,.6);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+  text-decoration:none;padding:12px 6px}
+.tape.more:hover{transform:translateY(-14px) rotate(2deg);
+  box-shadow:0 26px 34px -16px #000,0 0 0 1px var(--acc2)}
+.tape.more .big{font-family:var(--mono);font-size:1.15rem;font-weight:700;color:var(--off);line-height:1}
+.tape.more .cap{font-family:var(--mono);font-size:0.44rem;letter-spacing:0.14em;text-transform:uppercase;
+  color:var(--acc2);text-align:center;line-height:1.8}
+.tape.more .arrow{margin-top:auto;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;
+  border:1px solid rgba(167,139,250,.42);color:var(--acc2);font-size:0.8rem;transition:.3s var(--ease)}
+.tape.more:hover .arrow{background:var(--acc);border-color:var(--acc);color:#fff;transform:translateX(2px)}
+/* a stack of spines behind it, hinting at the box it came from */
+.tape.more::before{content:'';position:absolute;inset:6px 4px 30px;border-radius:3px;
+  background:repeating-linear-gradient(90deg,rgba(232,227,213,.16) 0 3px,transparent 3px 9px);
+  opacity:.5}
+
+/* the tape in flight, between the shelf and the slot */
+.flier{position:fixed;z-index:80;pointer-events:none;border-radius:4px;
+  background:linear-gradient(100deg,var(--tape),var(--tape2));border:1px solid rgba(255,255,255,.14);
+  box-shadow:0 24px 44px -18px #000;
+  transition:transform .62s cubic-bezier(.62,-0.1,.3,1.2),opacity .2s ease .5s}
+
+/* ── empty state ── */
+.empty{position:relative;border:1px dashed var(--bd2);border-radius:12px;background:var(--card2);
+  padding:clamp(34px,6vw,58px) 24px;text-align:center;display:flex;flex-direction:column;
+  align-items:center;gap:11px;overflow:hidden}
+.empty .snowbg{position:absolute;inset:0;opacity:.09;pointer-events:none;
+  background:repeating-linear-gradient(0deg,#fff 0 1px,transparent 1px 2px);animation:snow .12s steps(2) infinite}
+.empty > *:not(.snowbg){position:relative;z-index:2}
+.empty .ico{font-size:1.9rem;animation:bob 2.6s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.empty .lab{font-size:0.6rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--amber);font-weight:700}
+.empty p{font-size:0.8rem;color:var(--d2);max-width:420px;line-height:1.65}
+
+@media(max-width:860px){
+  .deck{grid-template-columns:1fr}
+  .crt{border-right:0;border-bottom:1px solid var(--bd2)}
+}
+@media(max-width:760px){.page{width:94%;padding:40px 0 60px}.head .all{margin-left:0}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.001s!important}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="stub">↑ Accessories &amp; Add-ons</div>
+
+  <section class="sec">
+    <div class="head">
+      <div>
+        <span class="kick" id="kick"></span>
+        <h2 id="h2"></h2>
+        <div class="note" id="note"></div>
+      </div>
+      <a class="all" id="all" target="_blank" rel="noopener">View all →</a>
+    </div>
+    <div id="body"></div>
+  </section>
+
+  <div class="stub">↓ Ride Gallery</div>
+</div>
+
+<script src="vlog-data.js"></script>
+<script>
+const V = window.VLOG
+document.getElementById('kick').textContent = V.kicker
+document.getElementById('h2').textContent   = V.heading
+document.getElementById('note').textContent = V.note
+document.getElementById('all').href         = V.page
+
+if (V.isEmpty) {
+  document.getElementById('body').innerHTML = `
+    <div class="empty">
+      <div class="snowbg"></div>
+      <div class="ico">📼</div>
+      <div class="lab">Shelf empty · deck idle</div>
+      <p>Nothing recorded yet. The first ride that gets cut goes on this shelf, and
+         the deck plays it right here.</p>
+    </div>`
+} else {
+  build()
+}
+
+function build() {
+  document.getElementById('body').innerHTML = `
+    <div class="deck">
+      <div class="crt" id="crt">
+        <div class="off"><span class="snow"></span><b>Insert a tape</b></div>
+        <span class="bolt"></span>
+        <span class="track"></span>
+        <span class="glass"></span>
+        <span class="osd"><i></i><span id="osd">PLAY</span></span>
+        <span class="tc" id="tc">00:00</span>
+      </div>
+      <div class="mech">
+        <div class="slot" id="slot">
+          <span class="mouth"></span>
+          <span class="loaded">
+            <span class="reel"></span>
+            <span class="name" id="loadname"></span>
+            <span class="reel"></span>
+          </span>
+        </div>
+        <div class="meta">
+          <h3 id="mt">Nothing loaded</h3>
+          <p id="mp">Pick a tape off the shelf below. It goes in, the reels start turning,
+             and the tube warms up.</p>
+          <div class="row" id="mr"></div>
+        </div>
+        <div class="btns">
+          <button id="eject">⏏ Eject</button>
+          <button id="rew">⏮ Prev</button>
+          <button id="ff">⏭ Next</button>
+          <a id="go" class="pri" target="_blank" rel="noopener">▶ Watch full</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="shelfhead"><span>The shelf</span><s>${V.LIMIT} of ${V.count} tapes · click one to load</s></div>
+    <div class="shelf" id="shelf"></div>`
+
+  document.getElementById('shelf').innerHTML = V.shown.map((v, k) => `
+    <button class="tape" data-i="${v.i}" style="--k:${k}" title="${v.title}">
+      <span class="no">${String(v.n).padStart(2, '0')}</span>
+      <span class="sticker"><span>${v.title}</span></span>
+      <span class="win"><i></i><i></i></span>
+    </button>`).join('') + `
+    <a class="tape more" href="${V.page}" style="--k:${V.shown.length}" title="All vlogs">
+      <span class="big">+${V.more}</span>
+      <span class="cap">still<br />in the box</span>
+      <span class="arrow">→</span>
+    </a>`
+
+  wire()
+}
+
+function wire() {
+  const shelf = document.getElementById('shelf')
+  const slot  = document.getElementById('slot')
+  const crt   = document.getElementById('crt')
+  let at = -1, tcTimer = 0
+
+  /* ══ load a tape ══
+     The chosen cassette is cloned into a fixed-position flier that travels
+     from where it stood on the shelf to the mouth of the slot; when it lands
+     the real slot tape rises, the reels start, and the tube warms up. */
+  function load(i) {
+    if (i === at) return
+    const v = V.all[i]
+    const el = shelf.querySelector(`.tape[data-i="${i}"]`)
+
+    /* the tape that was in comes out first */
+    if (at >= 0) {
+      slot.classList.remove('in', 'rolling')
+      shelf.querySelector(`.tape[data-i="${at}"]`)?.classList.remove('out', 'on')
+    }
+    at = i
+
+    shelf.querySelectorAll('.tape').forEach(t => t.classList.toggle('on', +t.dataset.i === i))
+
+    const fly = () => {
+      if (!el) return finish()
+      const a = el.getBoundingClientRect()
+      const b = slot.getBoundingClientRect()
+      const f = el.cloneNode(true)
+      f.className = 'flier'
+      Object.assign(f.style, {
+        left: a.left + 'px', top: a.top + 'px',
+        width: a.width + 'px', height: a.height + 'px',
+      })
+      document.body.appendChild(f)
+      el.classList.add('out')
+
+      /* land flat across the mouth of the slot */
+      const sx = (b.width - 26) / a.width
+      const sy = 34 / a.height
+      requestAnimationFrame(() => {
+        f.style.transform =
+          `translate(${b.left + 13 - a.left}px, ${b.top + 11 - a.top}px) scale(${sx}, ${sy})`
+        f.style.opacity = '0'
+      })
+      setTimeout(() => { f.remove(); finish() }, 640)
+    }
+
+    function finish() {
+      document.getElementById('loadname').textContent = v.title
+      slot.classList.add('in')
+      setTimeout(() => slot.classList.add('rolling'), 320)
+
+      document.getElementById('mt').textContent = v.title
+      document.getElementById('mp').textContent = v.blurb
+      document.getElementById('mr').innerHTML =
+        `<u>${v.cat}</u><span>${v.type === 'short' ? 'Short' : 'Full film'}</span>` +
+        `<span>${v.when.label}</span><span>${v.duration}</span><span>${v.views} views</span>`
+      document.getElementById('go').href = v.url
+
+      /* the tube: bolt of light, then the picture, then the tracking settles */
+      crt.classList.remove('on', 'warm')
+      crt.querySelectorAll('video,img').forEach(n => n.remove())
+      void crt.offsetWidth
+      crt.classList.add('warm')
+
+      const media = v.clip
+        ? Object.assign(document.createElement('video'),
+            { src: v.clip, autoplay: true, muted: true, loop: true, playsInline: true })
+        : Object.assign(document.createElement('img'), { src: v.posterBig, alt: v.title })
+      if (!v.clip) media.onerror = () => { media.onerror = null; media.src = v.still }
+      crt.prepend(media)
+      setTimeout(() => crt.classList.add('on'), 240)
+
+      /* counter on the deck — a tape that is playing has to be counting */
+      clearInterval(tcTimer)
+      let s = 0
+      document.getElementById('tc').textContent = '00:00'
+      tcTimer = setInterval(() => {
+        s++
+        document.getElementById('tc').textContent =
+          `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
+      }, 1000)
+      document.getElementById('osd').textContent = 'PLAY'
+    }
+
+    fly()
+  }
+
+  function eject() {
+    if (at < 0) return
+    slot.classList.remove('in', 'rolling')
+    shelf.querySelector(`.tape[data-i="${at}"]`)?.classList.remove('out', 'on')
+    crt.classList.remove('on', 'warm')
+    clearInterval(tcTimer)
+    document.getElementById('osd').textContent = 'STOP'
+    setTimeout(() => crt.querySelectorAll('video,img').forEach(n => n.remove()), 400)
+    document.getElementById('mt').textContent = 'Nothing loaded'
+    document.getElementById('mp').textContent =
+      'Pick a tape off the shelf below. It goes in, the reels start turning, and the tube warms up.'
+    document.getElementById('mr').innerHTML = ''
+    at = -1
+  }
+
+  /* the last thing on the shelf is a link to the rest, not a tape */
+  shelf.addEventListener('click', e => {
+    const t = e.target.closest('.tape'); if (!t?.dataset.i) return
+    load(+t.dataset.i)
+  })
+  const N = V.shown.length
+  document.getElementById('eject').onclick = eject
+  document.getElementById('rew').onclick = () => load(((at < 0 ? 0 : at) - 1 + N) % N)
+  document.getElementById('ff').onclick  = () => load(((at < 0 ? -1 : at) + 1) % N)
+
+  window.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') document.getElementById('ff').click()
+    if (e.key === 'ArrowLeft')  document.getElementById('rew').click()
+    if (e.key === 'Escape')     eject()
+  })
+
+  /* start with the newest tape already in the deck, so the section is never
+     a dead grey rectangle on arrival */
+  load(0)
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Vlog detail · 6 · Terminal Log</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   TERMINAL LOG — the vlog as a machine record.
+
+   Everything is a monospaced readout on a phosphor screen. The page
+   types itself in on load, line by line, the way a log actually
+   arrives. Sections are commands and their output; chapters are
+   timestamped log rows; the route is plotted as coordinates with the
+   line drawn between them; the feeds are directory listings.
+
+   The motion here is deliberately mechanical — typing, blinking,
+   stepping — as a counterweight to the cinematic designs.
+   ══════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#07090a; --panel:#0c1012; --panel2:#111719; --line:rgba(255,176,60,0.14);
+  --line2:rgba(255,176,60,0.28);
+  --amb:#ffb03c; --amb2:#ffd08a; --grn:#4ade80; --red:#ff6b6b; --cyan:#4dd4e0;
+  --off:#e8ece9; --d1:rgba(232,236,233,0.66); --d2:rgba(232,236,233,0.4);
+  --d3:rgba(232,236,233,0.2);
+  --mono:'IBM Plex Mono',monospace; --sans:'IBM Plex Sans',sans-serif;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--d1);font-family:var(--mono);font-size:13px;
+  overflow-x:hidden;-webkit-font-smoothing:antialiased}
+::selection{background:var(--amb);color:#07090a}
+img,video{display:block;max-width:100%}
+
+/* phosphor: scanlines, a faint bloom, and a slow flicker */
+.scan{position:fixed;inset:0;z-index:58;pointer-events:none;opacity:.055;
+  background:repeating-linear-gradient(180deg,#fff 0 1px,transparent 1px 3px)}
+.bloom{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;filter:blur(90px);
+  background:radial-gradient(52vw 40vh at 50% 0%,rgba(255,176,60,.12),transparent 70%)}
+.flick{position:fixed;inset:0;z-index:57;pointer-events:none;background:rgba(255,176,60,.02);
+  animation:flick 5.5s steps(30) infinite}
+@keyframes flick{0%,96%{opacity:0}97%{opacity:.5}98%{opacity:0}99%{opacity:.35}}
+
+/* ── title bar ── */
+.tb{position:sticky;top:0;z-index:50;background:rgba(7,9,10,.94);border-bottom:1px solid var(--line);
+  backdrop-filter:blur(10px)}
+.tb .in{max-width:1160px;margin:0 auto;padding:8px clamp(12px,3vw,28px);
+  display:flex;align-items:center;gap:12px}
+.tb .dots{display:flex;gap:6px;flex-shrink:0}
+.tb .dots i{width:9px;height:9px;border-radius:50%;display:block}
+.tb .dots i:nth-child(1){background:var(--red)}
+.tb .dots i:nth-child(2){background:var(--amb)}
+.tb .dots i:nth-child(3){background:var(--grn)}
+.tb .path{font-size:.72rem;color:var(--d2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb .path em{font-style:normal;color:var(--amb)}
+.tb a.x{margin-left:auto;font-size:.68rem;color:var(--d2);text-decoration:none;flex-shrink:0;
+  border:1px solid var(--line);padding:3px 9px;border-radius:3px;transition:.3s}
+.tb a.x:hover{color:var(--amb);border-color:var(--line2)}
+.tb .pc{font-size:.68rem;color:var(--amb);font-variant-numeric:tabular-nums;flex-shrink:0}
+.pbar{position:sticky;top:0;height:2px;background:var(--amb);width:0;z-index:51;
+  box-shadow:0 0 8px var(--amb)}
+
+/* ── the console ── */
+.console{max-width:1160px;margin:0 auto;padding:clamp(18px,4vw,40px) clamp(12px,3vw,28px) 80px;
+  position:relative;z-index:5}
+
+/* a command line, typed in */
+.cmd{display:flex;gap:9px;align-items:baseline;margin:clamp(26px,4vw,46px) 0 14px;flex-wrap:wrap}
+.cmd:first-child{margin-top:0}
+.cmd .ps{color:var(--grn);flex-shrink:0;font-weight:600}
+.cmd .tx{color:var(--off);font-weight:500}
+.cmd .tx b{color:var(--amb);font-weight:600}
+.cmd .cur{display:inline-block;width:7px;height:1em;background:var(--amb);
+  vertical-align:text-bottom;animation:blink 1.05s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+.cmd .ok{margin-left:auto;font-size:.66rem;color:var(--d3);flex-shrink:0}
+
+/* output blocks */
+.out{border-left:1px solid var(--line);padding-left:clamp(12px,2.4vw,22px);margin-bottom:8px}
+.rv{opacity:0;transform:translateY(16px);transition:opacity .6s var(--ease),transform .6s var(--ease)}
+.rv.in{opacity:1;transform:none}
+
+/* ── the header block: a key/value dump ── */
+.kvdump{display:grid;grid-template-columns:auto 1fr;gap:3px clamp(14px,3vw,30px);
+  font-size:.78rem;margin-bottom:18px}
+.kvdump dt{color:var(--d3);white-space:nowrap}
+.kvdump dd{color:var(--off)}
+.kvdump dd em{font-style:normal;color:var(--amb)}
+h1{font-family:var(--sans);font-size:clamp(1.25rem,3.4vw,2.2rem);font-weight:700;color:var(--off);
+  line-height:1.16;letter-spacing:-.02em;margin-bottom:12px;max-width:26ch}
+.blurb{font-size:.82rem;line-height:1.8;max-width:66ch;color:var(--d1);margin-bottom:18px}
+.badges{display:flex;gap:7px;flex-wrap:wrap}
+.badges span{font-size:.62rem;padding:3px 9px;border:1px solid var(--line);border-radius:3px;
+  color:var(--amb);background:rgba(255,176,60,.05)}
+
+/* ── the player, framed like a device window ── */
+.dev{border:1px solid var(--line2);border-radius:5px;overflow:hidden;background:#000;
+  max-width:820px}
+.dev .hd{display:flex;align-items:center;gap:9px;padding:5px 10px;background:var(--panel2);
+  border-bottom:1px solid var(--line);font-size:.66rem;color:var(--d2)}
+.dev .hd i{width:7px;height:7px;border-radius:50%;background:var(--red);display:block;flex-shrink:0;
+  animation:rec 1.6s ease-in-out infinite}
+@keyframes rec{50%{opacity:.25}}
+.dev .hd em{font-style:normal;margin-left:auto;color:var(--amb)}
+.dev .sc2{position:relative;aspect-ratio:16/9}
+.dev .sc2 img.p{width:100%;height:100%;object-fit:cover;filter:brightness(.66) sepia(.12)}
+.dev .sc2 video.c{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;
+  transition:opacity 1s var(--ease)}
+.dev .sc2 video.c.on{opacity:.9}
+.dev .sc2 iframe{position:absolute;inset:0;width:100%;height:100%;border:0;z-index:5}
+.dev .go{position:absolute;inset:0;z-index:3;border:0;background:transparent;cursor:pointer;
+  display:grid;place-items:center;font-family:var(--mono)}
+.dev .go i{font-style:normal;padding:9px 20px;border:1px solid var(--amb);color:var(--amb);
+  background:rgba(7,9,10,.7);font-size:.74rem;letter-spacing:.12em;transition:.35s var(--ease)}
+.dev .go:hover i{background:var(--amb);color:#07090a}
+.dev .ft{display:flex;align-items:center;gap:10px;padding:7px 10px;background:var(--panel2);
+  border-top:1px solid var(--line);font-size:.66rem;flex-wrap:wrap}
+.dev .ft .t{color:var(--amb);font-variant-numeric:tabular-nums;flex-shrink:0}
+.dev .ft .rail{flex:1;min-width:100px;height:8px;border:1px solid var(--line);position:relative;
+  background:var(--bg)}
+/* the progress bar is drawn as blocks, because this is a terminal */
+.dev .ft .rail b{position:absolute;left:0;top:0;bottom:0;width:0;
+  background:repeating-linear-gradient(90deg,var(--amb) 0 4px,transparent 4px 6px);
+  transition:width .45s var(--ease)}
+.dev .ft .rail s{position:absolute;top:-3px;bottom:-3px;width:1px;background:var(--d3);
+  text-decoration:none;cursor:pointer;transition:.25s}
+.dev .ft .rail s:hover{background:var(--amb);width:2px}
+
+/* ── chapters: timestamped log rows ── */
+.log{font-size:.78rem}
+.log .hdr{display:grid;grid-template-columns:64px 78px 1fr 68px;gap:12px;padding:6px 0;
+  border-bottom:1px solid var(--line);color:var(--d3);font-size:.66rem;letter-spacing:.08em}
+.log .row{display:grid;grid-template-columns:64px 78px 1fr 68px;gap:12px;padding:9px 0;
+  border-bottom:1px solid rgba(255,255,255,.045);cursor:pointer;transition:.28s var(--ease);
+  align-items:center}
+.log .row:hover{background:rgba(255,176,60,.06);padding-left:8px}
+.log .row.on{background:rgba(255,176,60,.09)}
+.log .row .ix{color:var(--d3)}
+.log .row .at{color:var(--amb);font-weight:600}
+.log .row .ms b{display:block;color:var(--off);font-weight:600;font-family:var(--sans);font-size:.84rem}
+.log .row .ms span{display:block;color:var(--d1);margin-top:2px;font-size:.74rem;line-height:1.55}
+.log .row .th{width:68px;aspect-ratio:4/3;overflow:hidden;border:1px solid var(--line)}
+.log .row .th img{width:100%;height:100%;object-fit:cover;filter:grayscale(1) brightness(.62) sepia(.2);
+  transition:.45s var(--ease)}
+.log .row:hover .th img{filter:sepia(.1);transform:scale(1.08)}
+@media(max-width:720px){
+  .log .hdr,.log .row{grid-template-columns:52px 1fr}
+  .log .hdr span:nth-child(2),.log .row .at{display:none}
+  .log .row .th{display:none}
+  .log .row .ms b::before{content:attr(data-at) '  ';color:var(--amb)}
+}
+
+/* ── contact sheet ── */
+.sheet{display:grid;grid-template-columns:repeat(auto-fit,minmax(126px,1fr));gap:8px}
+.sheet figure{border:1px solid var(--line);background:var(--panel);padding:5px;position:relative;
+  cursor:zoom-in;transition:.35s var(--ease)}
+.sheet figure:hover{border-color:var(--line2);transform:translateY(-4px)}
+.sheet img{width:100%;aspect-ratio:4/3;object-fit:cover;filter:sepia(.22) brightness(.8);
+  transition:.5s var(--ease)}
+.sheet figure:hover img{filter:none}
+.sheet figcaption{display:flex;justify-content:space-between;gap:6px;margin-top:5px;font-size:.6rem;
+  color:var(--d2)}
+.sheet figcaption em{font-style:normal;color:var(--amb)}
+
+/* ── route: coordinates plotted, line drawn ── */
+.plotwrap{display:grid;grid-template-columns:1fr 300px;gap:clamp(14px,2.6vw,26px)}
+@media(max-width:880px){.plotwrap{grid-template-columns:1fr}}
+.plot{position:relative;aspect-ratio:4/3;border:1px solid var(--line2);background:var(--panel)}
+.plot::before{content:'';position:absolute;inset:0;opacity:.6;
+  background-image:linear-gradient(rgba(255,176,60,.06) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(255,176,60,.06) 1px,transparent 1px);
+  background-size:24px 24px}
+/* axis labels, because it is a plot */
+.plot .ax{position:absolute;font-size:.56rem;color:var(--d3);letter-spacing:.08em}
+.plot .ax.x{bottom:4px;right:7px}
+.plot .ax.y{top:6px;left:7px}
+.plot svg{position:absolute;inset:0;width:100%;height:100%;z-index:2;overflow:visible}
+.plot .gh{fill:none;stroke:rgba(255,176,60,.2);stroke-width:1.4;stroke-dasharray:3 4}
+.plot .ln{fill:none;stroke:var(--amb);stroke-width:2.2;stroke-linecap:round;
+  filter:drop-shadow(0 0 7px rgba(255,176,60,.6));
+  stroke-dasharray:var(--len);stroke-dashoffset:var(--len);
+  transition:stroke-dashoffset 2.3s var(--ease) .2s}
+.plot.in .ln{stroke-dashoffset:0}
+.plot .dot{r:5;fill:var(--amb);filter:drop-shadow(0 0 10px var(--amb))}
+.plot .pin{position:absolute;transform:translate(-50%,-50%);z-index:3;display:flex;align-items:center;
+  gap:6px;opacity:0;transition:opacity .6s var(--ease)}
+.plot.in .pin{opacity:1}
+.plot .pin b{width:7px;height:7px;background:var(--off);box-shadow:0 0 0 2px var(--panel)}
+.plot .pin.edge b{width:10px;height:10px;background:var(--amb);
+  box-shadow:0 0 0 2px var(--panel),0 0 10px var(--amb)}
+.plot .pin s{text-decoration:none;font-size:.58rem;color:var(--off);background:rgba(7,9,10,.9);
+  padding:2px 6px;border:1px solid var(--line);white-space:nowrap}
+.rtable{font-size:.76rem}
+.rtable .t{color:var(--amb);margin-bottom:9px;font-weight:600}
+.rtable table{width:100%;border-collapse:collapse}
+.rtable td{padding:5px 0;border-bottom:1px dotted var(--line);vertical-align:top}
+.rtable td:first-child{color:var(--d3);white-space:nowrap;padding-right:14px;width:1%}
+.rtable td:last-child{color:var(--off);text-align:right}
+.rtable .note{margin-top:12px;font-size:.74rem;line-height:1.7;color:var(--d1)}
+
+/* ── feeds as directory listings ── */
+.ls{font-size:.76rem}
+.ls a{display:grid;grid-template-columns:16px 1fr auto;gap:11px;align-items:center;
+  padding:7px 0;border-bottom:1px solid rgba(255,255,255,.045);text-decoration:none;
+  transition:.28s var(--ease)}
+.ls a:hover{background:rgba(255,176,60,.06);padding-left:8px}
+.ls a .fl{color:var(--amb)}
+.ls a .nm{color:var(--off);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ls a .nm em{font-style:normal;color:var(--d2);margin-left:8px}
+.ls a .sz{color:var(--d3);font-size:.66rem;white-space:nowrap}
+
+/* Instagram: thumbnails in a monospaced strip, embed on click */
+.igls{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:9px}
+.igb{border:1px solid var(--line);background:var(--panel);padding:5px;cursor:pointer;
+  transition:.35s var(--ease)}
+.igb:hover{border-color:var(--line2);transform:translateY(-4px)}
+.igb .im{position:relative;aspect-ratio:9/14;overflow:hidden;background:#000}
+.igb .im img{width:100%;height:100%;object-fit:cover;filter:sepia(.2) brightness(.62);
+  transition:.5s var(--ease)}
+.igb:hover .im img{filter:brightness(.86)}
+.igb .im iframe{position:absolute;inset:0;width:100%;height:100%;border:0;z-index:5;background:#000}
+.igb .im .pp{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:3;
+  font-size:.66rem;color:var(--amb);border:1px solid var(--amb);background:rgba(7,9,10,.72);
+  padding:4px 10px;transition:.35s var(--ease)}
+.igb:hover .im .pp{background:var(--amb);color:#07090a}
+.igb .mt{margin-top:5px;font-size:.62rem;line-height:1.45}
+.igb .mt b{display:block;color:var(--off);font-weight:500;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap}
+.igb .mt span{display:block;color:var(--amb);margin-top:2px;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap}
+
+/* video listing with hover clips */
+.vls{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:9px}
+.vb{border:1px solid var(--line);background:var(--panel);padding:5px;text-decoration:none;display:block;
+  transition:.35s var(--ease)}
+.vb:hover{border-color:var(--line2);transform:translateY(-4px)}
+.vb .im{position:relative;aspect-ratio:16/9;overflow:hidden;background:#000}
+.vb .im img{width:100%;height:100%;object-fit:cover;filter:sepia(.18) brightness(.7);
+  transition:.5s var(--ease)}
+.vb:hover .im img{filter:none}
+.vb .im video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;
+  transition:opacity .4s}
+.vb:hover .im video{opacity:1}
+.vb .im .d{position:absolute;bottom:4px;right:5px;z-index:2;background:rgba(7,9,10,.9);color:var(--amb);
+  font-size:.58rem;padding:1px 5px;border:1px solid var(--line)}
+.vb .mt{margin-top:5px;font-size:.64rem;line-height:1.5}
+.vb .mt b{display:block;color:var(--off);font-weight:500;font-family:var(--sans);font-size:.76rem}
+.vb .mt span{display:block;color:var(--d2);margin-top:2px}
+
+/* ── sign-off ── */
+.signoff{margin-top:clamp(30px,5vw,52px);border-top:1px solid var(--line);padding-top:20px;
+  display:flex;align-items:center;gap:13px;flex-wrap:wrap;font-size:.76rem}
+.signoff img{width:38px;height:38px;border-radius:2px;object-fit:cover;border:1px solid var(--line);
+  filter:sepia(.2)}
+.signoff .w b{display:block;color:var(--off);font-weight:600}
+.signoff .w span{color:var(--d2);font-size:.7rem}
+.signoff .bt{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.signoff .bt a{text-decoration:none;font-size:.68rem;padding:8px 16px;border:1px solid var(--line2);
+  transition:.35s var(--ease)}
+.signoff .bt a.p{background:var(--amb);color:#07090a;border-color:var(--amb);font-weight:600}
+.signoff .bt a.s{color:var(--amb)}
+.signoff .bt a:hover{transform:translateY(-2px)}
+.signoff .bt a.s:hover{background:rgba(255,176,60,.1)}
+@media(max-width:620px){.signoff .bt{margin-left:0;width:100%}.signoff .bt a{flex:1;text-align:center}}
+
+/* ── empty state ── */
+.empty{padding:clamp(50px,12vh,120px) 0;max-width:620px}
+.empty .l{margin-bottom:7px;font-size:.8rem}
+.empty .l .ps{color:var(--grn)}
+.empty .l.w{color:var(--amb)}
+.empty h2{font-family:var(--sans);font-size:clamp(1.2rem,3.4vw,1.9rem);font-weight:700;color:var(--off);
+  line-height:1.2;margin:18px 0 12px}
+.empty p{font-size:.8rem;line-height:1.82;color:var(--d1)}
+</style>
+</head>
+<body>
+<div class="bloom"></div>
+<div class="scan"></div>
+<div class="flick"></div>
+<div class="tb">
+  <div class="in">
+    <div class="dots"><i></i><i></i><i></i></div>
+    <span class="path" id="tpath"></span>
+    <span class="pc" id="tpc">0%</span>
+    <a class="x" href="vlog-data-design-preview.html">← designs</a>
+  </div>
+</div>
+<div class="pbar" id="pbar"></div>
+<div class="console" id="app"></div>
+
+<script src="vlog-data.js"></script>
+<script>
+const D = window.VLOG
+const app = document.getElementById('app')
+const $ = s => document.querySelector(s)
+
+if (D.isEmpty) {
+  $('#tpath').textContent = '~/garage/vlogs $'
+  app.innerHTML = `
+    <div class="empty">
+      <div class="l"><span class="ps">siva@garage</span>:<span style="color:var(--cyan)">~/vlogs</span>$ ls -1 rides/*.mp4</div>
+      <div class="l w">ls: no matches found</div>
+      <div class="l"><span class="ps">siva@garage</span>:<span style="color:var(--cyan)">~/vlogs</span>$ cat status</div>
+      <h2>rig: mounted · routes: ${D.routes.length} plotted · footage: none</h2>
+      <p>Nothing has been filmed off the Bear 650 yet. The first ride that is, gets logged here —
+         chapters as timestamped rows, the route plotted from its coordinates, and the reels and
+         posts from the same day listed underneath.</p>
+      <div class="l" style="margin-top:18px"><span class="ps">siva@garage</span>:<span style="color:var(--cyan)">~/vlogs</span>$ <span class="cur" style="display:inline-block;width:7px;height:1em;background:var(--amb);animation:blink 1.05s steps(2) infinite"></span></div>
+    </div>`
+} else {
+  render(D.current())
+}
+
+function render(V) {
+  $('#tpath').textContent = `~/garage/vlogs/${V.yt} $`
+  const slug = V.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+
+  /* Each block is a command and its output. `cmd()` also carries the text the
+     typing pass will reveal, so the markup and the animation stay in sync. */
+  const cmd = (text, ok) => `
+    <div class="cmd rv">
+      <span class="ps">siva@garage:~$</span>
+      <span class="tx" data-type="${text.replace(/"/g, '&quot;')}"></span>
+      ${ok ? `<span class="ok">${ok}</span>` : ''}
+    </div>`
+
+  app.innerHTML = `
+  ${cmd('cat <b>' + slug + '.meta</b>', 'exit 0')}
+  <div class="out rv">
+    <h1>${V.title}</h1>
+    <p class="blurb">${V.blurb}</p>
+    <dl class="kvdump">
+      <dt>id</dt>          <dd><em>${V.yt}</em></dd>
+      <dt>index</dt>       <dd>${String(V.n).padStart(2, '0')} of ${D.count}</dd>
+      <dt>category</dt>    <dd>${V.cat}</dd>
+      <dt>kind</dt>        <dd>${V.kind}</dd>
+      <dt>runtime</dt>     <dd>${V.duration} <em>(${V.totalSec}s)</em></dd>
+      <dt>filmed</dt>      <dd>${V.when.label}</dd>
+      <dt>views</dt>       <dd>${V.views}</dd>
+      <dt>chapters</dt>    <dd>${V.chapters.length}</dd>
+      <dt>frames kept</dt> <dd>${V.stills.length}</dd>
+      <dt>route</dt>       <dd>${V.route.name} <em>(${V.route.distance})</em></dd>
+      <dt>url</dt>         <dd><em>${V.url}</em></dd>
+    </dl>
+    <div class="badges">
+      ${[V.cat, V.kind, V.when.short, ...(V.fav ? ['starred'] : []), V.clip ? 'local-clip' : 'no-clip']
+        .map(b => `<span>${b}</span>`).join('')}
+    </div>
+  </div>
+
+  ${cmd('play <b>' + V.yt + '</b> --from 0', 'streaming')}
+  <div class="out rv">
+    <div class="dev">
+      <div class="hd"><i></i> ${V.yt}.mp4 · ${V.duration}<em>${V.kind}</em></div>
+      <div class="sc2" id="sc2">
+        <img class="p" src="${V.posterBig}" alt="" onerror="this.src='${V.still}'" />
+        ${V.clip ? `<video class="c" id="cl" src="${V.clip}" muted loop playsinline preload="metadata"></video>` : ''}
+        <button class="go" id="go" aria-label="Play"><i>▶ PLAY</i></button>
+      </div>
+      <div class="ft">
+        <span class="t" id="now">0:00</span>
+        <div class="rail" id="rail"><b id="fill"></b>
+          ${V.chapters.map(c => `<s data-seek="${c.sec}" style="left:${c.pct}%" title="${c.title}"></s>`).join('')}
+        </div>
+        <span class="t">${V.duration}</span>
+      </div>
+    </div>
+  </div>
+
+  ${cmd('tail -n ' + V.chapters.length + ' <b>chapters.log</b>', V.chapters.length + ' rows')}
+  <div class="out rv">
+    <div class="log">
+      <div class="hdr"><span>#</span><span>TIME</span><span>EVENT</span><span>FRAME</span></div>
+      <div id="rows">
+        ${V.chapters.map((c, i) => `
+          <div class="row" data-seek="${c.sec}" data-i="${i}">
+            <span class="ix">[${String(i + 1).padStart(2, '0')}]</span>
+            <span class="at">${c.at}</span>
+            <span class="ms"><b data-at="${c.at}">${c.title}</b><span>${c.blurb}</span></span>
+            <span class="th"><img src="${c.photo}" alt="" loading="lazy" /></span>
+          </div>`).join('')}
+      </div>
+    </div>
+  </div>
+
+  ${cmd('ls <b>frames/</b> --sheet', V.stills.length + ' files')}
+  <div class="out rv">
+    <div class="sheet">
+      ${V.stills.map((s, i) => `
+        <figure><img src="${s.src}" alt="" loading="lazy" />
+          <figcaption><span>f${String(i + 1).padStart(3, '0')}</span><em>${s.at}</em></figcaption>
+        </figure>`).join('')}
+    </div>
+  </div>
+
+  ${cmd('plot <b>route</b> --id ' + V.route.id, V.route.stops.length + ' waypoints')}
+  <div class="out rv">
+    <div class="plotwrap">
+      <div class="plot" id="plot">
+        <span class="ax y">LAT ↑</span><span class="ax x">LNG →</span>
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          <path class="gh" id="gh" d="" vector-effect="non-scaling-stroke" />
+          <path class="ln" id="ln" d="" vector-effect="non-scaling-stroke" />
+          <circle class="dot" id="dot" cx="0" cy="0" />
+        </svg>
+        ${V.route.stops.map(s => `
+          <div class="pin${s.first || s.last ? ' edge' : ''}"
+               style="left:${s.x}%;top:${s.y}%"><b></b><s>${s.label}</s></div>`).join('')}
+      </div>
+      <div class="rtable">
+        <div class="t">route ${V.route.id} · ${V.route.mode}</div>
+        <table>
+          ${V.route.points.map((p, i) => `
+            <tr><td>${i === 0 ? 'start' : i === V.route.points.length - 1 ? 'end' : 'via ' + i}</td>
+              <td>${p[2]}<br /><span style="color:var(--d3);font-size:.66rem">${p[1].toFixed(4)}, ${p[0].toFixed(4)}</span></td></tr>`).join('')}
+          <tr><td>dist</td><td>${V.route.distance}</td></tr>
+          <tr><td>when</td><td>${V.route.date}</td></tr>
+          <tr><td>states</td><td>${V.route.states.join(', ')}</td></tr>
+        </table>
+        <p class="note">${V.route.story}</p>
+      </div>
+    </div>
+  </div>
+
+  ${cmd('ls <b>instagram/</b>', V.insta.length + ' reels')}
+  <div class="out rv">
+    <div class="igls">
+      ${V.insta.map(r => `
+        <div class="igb" data-embed="${r.embed}">
+          <div class="im"><img src="${r.still}" alt="" loading="lazy" />
+            <span class="pp">▶ reel</span></div>
+          <div class="mt"><b>${r.caption}</b><span>${r.tags.slice(0, 2).join(' ')}</span></div>
+        </div>`).join('')}
+    </div>
+  </div>
+
+  ${cmd('ls <b>blog/</b> -lh', D.posts.length + ' posts')}
+  <div class="out rv">
+    <div class="ls">
+      ${V.posts.map(p => `
+        <a href="${p.href}">
+          <span class="fl">${p.icon}</span>
+          <span class="nm">${p.slug}.json <em>${p.title}</em></span>
+          <span class="sz">${p.cat} · ${p.when.short}</span></a>`).join('')}
+    </div>
+  </div>
+
+  ${cmd('ls <b>vlogs/</b> --related', V.related.length + ' matches')}
+  <div class="out rv">
+    <div class="vls">
+      ${V.related.map(r => `
+        <a class="vb" href="?v=${r.yt}">
+          <div class="im"><img src="${r.poster}" alt="" loading="lazy" onerror="this.src='${r.still}'" />
+            ${r.clip ? `<video src="${r.clip}" muted loop playsinline preload="none"></video>` : ''}
+            <span class="d">${r.duration}</span></div>
+          <div class="mt"><b>${r.title}</b><span>${r.cat} · ${r.when.short} · ${r.views}</span></div>
+        </a>`).join('')}
+    </div>
+  </div>
+
+  ${cmd('whoami', 'exit 0')}
+  <div class="out rv">
+    <div class="signoff">
+      <img src="public/avatar.jpg" alt="" />
+      <div class="w"><b>${D.channelName}</b>
+        <span>${D.count} videos · ${D.insta.length} reels · ${D.posts.length} posts · ${D.routes.length} rides plotted</span></div>
+      <div class="bt">
+        <a class="p" href="${V.url}" target="_blank" rel="noopener">▶ youtube</a>
+        <a class="s" href="${D.social.instagram}" target="_blank" rel="noopener">◙ instagram</a>
+      </div>
+    </div>
+  </div>`
+
+  wire(V)
+}
+
+function wire(V) {
+  const clamp01 = n => Math.min(1, Math.max(0, n))
+
+  /* ══ the typing pass ══
+     A command types itself out the first time it scrolls into view, with a
+     blinking cursor parked at the end while it runs. Nothing types twice. */
+  function type(el) {
+    const html = el.dataset.type
+    /* the text carries <b> markup, so type over the plain text and put the
+       markup back at the end rather than trying to type inside tags */
+    const tmp = document.createElement('span')
+    tmp.innerHTML = html
+    const plain = tmp.textContent
+    const cur = document.createElement('span')
+    cur.className = 'cur'
+    el.after(cur)
+    let i = 0
+    const step = () => {
+      el.textContent = plain.slice(0, ++i)
+      if (i < plain.length) {
+        setTimeout(step, 12 + Math.random() * 26)
+      } else {
+        el.innerHTML = html          // restore the highlighted argument
+        setTimeout(() => cur.remove(), 700)
+      }
+    }
+    step()
+  }
+
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return
+    io.unobserve(e.target)
+    e.target.classList.add('in')
+    const t = e.target.querySelector('.tx[data-type]')
+    if (t && !t.dataset.done) { t.dataset.done = '1'; type(t) }
+  }), { threshold: 0.2 })
+  document.querySelectorAll('.rv').forEach(el => io.observe(el))
+
+  /* ── the player ── */
+  const sc = $('#sc2'), cl = $('#cl')
+  if (cl) cl.play().then(() => cl.classList.add('on')).catch(() => {})
+  function seek(sec) {
+    let f = sc.querySelector('iframe')
+    if (!f) {
+      f = document.createElement('iframe')
+      f.allow = 'autoplay; encrypted-media; picture-in-picture'
+      f.allowFullscreen = true
+      sc.appendChild(f)
+    }
+    f.src = `${V.embed}?autoplay=1&start=${sec}&rel=0&modestbranding=1`
+    $('#go').style.display = 'none'
+    if (cl) cl.style.display = 'none'
+    const c = V.chapters.reduce((a, b) => (b.sec <= sec ? b : a), V.chapters[0])
+    $('#fill').style.width = c.pct + '%'
+    $('#now').textContent = c.at
+    rows.forEach((r, j) => r.classList.toggle('on', V.chapters[j].sec === c.sec))
+  }
+  $('#go').addEventListener('click', () => seek(0))
+
+  const rows = [...document.querySelectorAll('.log .row')]
+  document.querySelectorAll('[data-seek]').forEach(el => el.addEventListener('click', () => {
+    seek(+el.dataset.seek)
+    if (!el.classList.contains('row')) sc.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }))
+  rows.forEach((r, i) => r.addEventListener('mouseenter', () =>
+    rows.forEach((o, j) => o.classList.toggle('on', j === i))))
+
+  /* ── the route plot ── */
+  const ln = $('#ln'), gh = $('#gh'), dot = $('#dot'), plot = $('#plot')
+  const stops = V.route.stops
+  /* straight segments here, not curves — a plot, not a drawing */
+  const path = stops.map((s, i) => `${i ? 'L' : 'M'} ${s.x} ${s.y}`).join(' ')
+  ln.setAttribute('d', path); gh.setAttribute('d', path)
+  const len = ln.getTotalLength()
+  ln.style.setProperty('--len', len)
+  const plotIO = new IntersectionObserver(es => es.forEach(e => {
+    if (e.isIntersecting) { plot.classList.add('in'); plotIO.unobserve(e.target) }
+  }), { threshold: 0.3 })
+  plotIO.observe(plot)
+  function ride() {
+    const r = plot.getBoundingClientRect()
+    const p = clamp01((innerHeight * 0.85 - r.top) / (r.height + innerHeight * 0.45))
+    const pt = ln.getPointAtLength(len * p)
+    dot.setAttribute('cx', pt.x); dot.setAttribute('cy', pt.y)
+  }
+
+  /* ── Instagram embeds on click ── */
+  document.querySelectorAll('.igb').forEach(b => b.addEventListener('click', () => {
+    const im = b.querySelector('.im')
+    if (im.querySelector('iframe')) return
+    const f = document.createElement('iframe')
+    f.src = b.dataset.embed; f.loading = 'lazy'; f.allowFullscreen = true
+    f.setAttribute('scrolling', 'no')
+    im.appendChild(f)
+  }))
+
+  /* ── related clips on hover ── */
+  document.querySelectorAll('.vb video').forEach(v => {
+    const a = v.closest('a')
+    a.addEventListener('mouseenter', () => { v.currentTime = 0; v.play().catch(() => {}) })
+    a.addEventListener('mouseleave', () => v.pause())
+  })
+
+  function prog() {
+    const max = document.documentElement.scrollHeight - innerHeight
+    const p = clamp01(scrollY / Math.max(1, max))
+    $('#pbar').style.width = p * 100 + '%'
+    $('#tpc').textContent = Math.round(p * 100) + '%'
+  }
+
+  let raf = null
+  addEventListener('scroll', () => {
+    if (raf) return
+    raf = requestAnimationFrame(() => { prog(); ride(); raf = null })
+  }, { passive: true })
+  addEventListener('resize', ride)
+  prog(); ride()
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Storefront · 8 · The Receipt</title>
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════
+   THE RECEIPT — the entire storefront printed as one long
+   till receipt lying on a workbench. Line items, category
+   subtotals, a torn edge and a barcode. Tapping a line
+   unrolls the photo strip and the buy links in place.
+   Naturally narrow, so it reads identically on a phone.
+   ══════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --desk:#1a1713; --desk2:#221e19; --paper:#f7f4ec; --paper2:#ebe6da;
+  --ink:#1d1a15; --d1:rgba(29,26,21,0.68); --d2:rgba(29,26,21,0.46); --d3:rgba(29,26,21,0.26);
+  --dash:rgba(29,26,21,0.28); --red:#c0392b;
+  --mono:'Courier Prime',ui-monospace,monospace; --sans:'Inter',sans-serif;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+html{scroll-behavior:smooth}
+body{background:var(--desk);color:var(--d1);font-family:var(--mono);
+  -webkit-font-smoothing:antialiased;min-height:100vh;padding:clamp(0px,4vw,54px) 0 0}
+::selection{background:var(--ink);color:var(--paper)}
+/* workbench grain */
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.5;
+  background:radial-gradient(80vw 60vw at 50% -10%,rgba(255,220,160,0.07),transparent 70%),
+             repeating-linear-gradient(96deg,rgba(255,255,255,0.014) 0 2px,transparent 2px 7px)}
+
+/* ── the paper ── */
+.roll{position:relative;z-index:2;width:min(560px,100%);margin:0 auto;background:var(--paper);
+  color:var(--d1);padding:0 clamp(16px,5vw,34px);
+  box-shadow:0 30px 70px -24px rgba(0,0,0,0.8),0 0 0 1px rgba(0,0,0,0.25);
+  animation:slide 1s var(--ease)}
+@keyframes slide{from{opacity:0;transform:translateY(-26px)}}
+/* torn top and bottom edges */
+.tear{height:14px;background:var(--paper);position:relative;z-index:2;
+  -webkit-mask:radial-gradient(7px 12px at 8px -3px,transparent 98%,#000) repeat-x 0 0/16px 14px;
+          mask:radial-gradient(7px 12px at 8px -3px,transparent 98%,#000) repeat-x 0 0/16px 14px}
+.tear.bot{transform:rotate(180deg)}
+.roll::after{content:'';position:absolute;inset:0;pointer-events:none;opacity:0.35;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E")}
+
+/* ── header block ── */
+.head{text-align:center;padding:26px 0 18px}
+.head .shop{font-size:1.35rem;font-weight:700;letter-spacing:0.22em;color:var(--ink);text-transform:uppercase;
+  line-height:1.3}
+.head .shop span{display:block;font-size:0.62rem;letter-spacing:0.34em;margin-top:8px;color:var(--d2)}
+.head .addr{margin-top:16px;font-size:0.7rem;line-height:1.85;color:var(--d2)}
+.head .addr b{color:var(--d1);font-weight:400}
+.stamp{display:inline-block;margin-top:16px;padding:7px 16px;border:2px solid var(--red);color:var(--red);
+  font-size:0.66rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;
+  transform:rotate(-3.5deg);opacity:0.85}
+
+.rule{border:0;border-top:1px dashed var(--dash);margin:14px 0}
+.rule.solid{border-top:1px solid var(--dash)}
+.rule.dbl{border-top:3px double var(--dash)}
+
+.meta{display:flex;flex-wrap:wrap;gap:2px 0;font-size:0.7rem;line-height:1.9}
+.meta div{display:flex;width:100%;gap:8px}
+.meta k{color:var(--d3);flex:0 0 auto}
+.meta .dots{flex:1;border-bottom:1px dotted var(--dash);margin-bottom:5px}
+.meta v{color:var(--d1);white-space:nowrap}
+
+.colhead{display:grid;grid-template-columns:34px 1fr 74px;gap:8px;font-size:0.62rem;
+  letter-spacing:0.14em;text-transform:uppercase;color:var(--d3);padding:6px 0}
+
+.group{margin-top:4px}
+.group .gname{font-size:0.72rem;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;
+  color:var(--ink);padding:12px 0 6px;display:flex;justify-content:space-between;gap:10px}
+.group .gname u{text-decoration:none;color:var(--d3);font-weight:400;letter-spacing:0.08em}
+
+/* ── line item ── */
+.li{display:grid;grid-template-columns:34px 1fr 74px;gap:8px;padding:8px 4px;cursor:pointer;
+  border-radius:3px;transition:background .22s;position:relative;align-items:start}
+.li:hover{background:var(--paper2)}
+.li.open{background:var(--paper2)}
+.li .no{font-size:0.74rem;color:var(--d3)}
+.li .nm{font-size:0.82rem;color:var(--ink);line-height:1.4;word-break:break-word}
+.li .nm em{font-style:normal;display:block;font-size:0.66rem;color:var(--d2);margin-top:3px}
+.li .nm .fl{color:var(--red);font-size:0.6rem;letter-spacing:0.1em}
+.li .rt{font-size:0.72rem;color:var(--d1);text-align:right;white-space:nowrap;line-height:1.5}
+.li .rt b{display:block;font-weight:400;color:var(--d3);font-size:0.62rem}
+.li .carets{position:absolute;left:-2px;top:10px;font-size:0.62rem;color:var(--d3);transition:transform .25s}
+.li.open .carets{transform:rotate(90deg)}
+
+/* unrolled detail */
+.det{max-height:0;overflow:hidden;transition:max-height .55s var(--ease)}
+.det.open{max-height:760px}
+.det-in{padding:6px 4px 16px;border-bottom:1px dashed var(--dash);margin-bottom:2px}
+.strip{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
+.strip::-webkit-scrollbar{display:none}
+.strip figure{flex-shrink:0;width:98px;height:98px;border:1px solid var(--dash);background:#fff;
+  display:flex;align-items:center;justify-content:center;cursor:zoom-in;overflow:hidden;
+  transition:transform .35s var(--ease)}
+.strip figure:hover{transform:translateY(-3px)}
+.strip img{width:100%;height:100%;object-fit:contain;padding:6px;mix-blend-mode:multiply}
+.strip .none{font-size:0.62rem;color:var(--d3);text-align:center;padding:8px}
+.det .keys{margin-top:11px;font-size:0.7rem;line-height:1.95}
+.det .keys div{display:flex;gap:8px}
+.det .keys k{color:var(--d3)}
+.det .keys .dots{flex:1;border-bottom:1px dotted var(--dash);margin-bottom:5px}
+.det .keys v{color:var(--d1)}
+.det .buys{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
+.buy{flex:1 1 auto;text-align:center;padding:11px 14px;text-decoration:none;font-family:var(--mono);
+  font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;transition:.28s var(--ease);
+  white-space:nowrap}
+.buy.p{background:var(--ink);color:var(--paper)}
+.buy.p:hover{background:var(--red)}
+.buy.s{border:1px dashed var(--dash);color:var(--ink)}
+.buy.s:hover{border-style:solid;background:var(--paper2)}
+.soon{font-size:0.68rem;color:var(--d3);font-style:italic}
+
+/* subtotal + totals */
+.sub{display:flex;justify-content:space-between;font-size:0.7rem;color:var(--d2);padding:6px 4px 2px}
+.totals{padding:6px 0}
+.totals div{display:flex;gap:8px;font-size:0.76rem;padding:3px 0}
+.totals k{color:var(--d2)}
+.totals .dots{flex:1;border-bottom:1px dotted var(--dash);margin-bottom:6px}
+.totals v{color:var(--ink)}
+.grand{display:flex;gap:8px;font-size:1rem;font-weight:700;color:var(--ink);padding:10px 0;
+  text-transform:uppercase;letter-spacing:0.08em}
+.grand .dots{flex:1;border-bottom:2px solid var(--dash);margin-bottom:7px}
+
+/* footer of the receipt */
+.thanks{text-align:center;padding:16px 0 6px}
+.thanks p{font-size:0.74rem;line-height:1.9;color:var(--d1)}
+.thanks .big{font-size:0.9rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--ink);margin-bottom:10px}
+.barcode{display:flex;justify-content:center;gap:2px;height:56px;margin:20px 0 8px;align-items:flex-end}
+.barcode i{display:block;background:var(--ink);width:2px;height:100%}
+.barnum{text-align:center;font-size:0.68rem;letter-spacing:0.42em;color:var(--d2);margin-bottom:18px}
+.back{display:block;text-align:center;margin:0 0 26px;padding:13px;background:var(--ink);color:var(--paper);
+  text-decoration:none;font-size:0.72rem;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;
+  transition:.3s var(--ease)}
+.back:hover{background:var(--red);letter-spacing:0.22em}
+
+/* floating jump chips, off the paper */
+.jump{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);
+  z-index:40;display:flex;gap:6px;padding:7px;border-radius:999px;background:rgba(34,30,25,0.92);
+  border:1px solid rgba(255,255,255,0.1);backdrop-filter:blur(10px);max-width:calc(100vw - 24px);
+  overflow-x:auto;scrollbar-width:none}
+.jump::-webkit-scrollbar{display:none}
+.jump a{flex-shrink:0;padding:7px 13px;border-radius:999px;text-decoration:none;font-family:var(--sans);
+  font-size:0.68rem;font-weight:500;color:rgba(247,244,236,0.6);transition:.25s;white-space:nowrap}
+.jump a:hover{color:var(--paper);background:rgba(255,255,255,0.08)}
+.jump a.on{background:var(--paper);color:var(--ink)}
+
+/* lightbox */
+.lb{position:fixed;inset:0;z-index:99;background:rgba(20,17,13,0.97);display:none;
+  align-items:center;justify-content:center;padding:clamp(16px,6vw,56px)}
+.lb.on{display:flex;animation:fade .3s}
+@keyframes fade{from{opacity:0}}
+.lb img{max-width:90vw;max-height:74vh;object-fit:contain;background:var(--paper);padding:12px;
+  animation:pop .42s var(--ease)}
+@keyframes pop{from{opacity:0;transform:scale(.94)}}
+.lb .cap{position:absolute;bottom:24px;left:0;right:0;text-align:center;font-size:0.7rem;
+  letter-spacing:0.16em;text-transform:uppercase;color:var(--paper);padding:0 16px}
+.lb button{position:absolute;width:42px;height:42px;border:1px solid rgba(247,244,236,0.3);
+  background:rgba(34,30,25,0.9);color:var(--paper);font-size:1rem;cursor:pointer;transition:.22s}
+.lb button:hover{background:var(--paper);color:var(--ink)}
+.lb .x{top:18px;right:18px}.lb .prev{left:14px;top:50%}.lb .next{right:14px;top:50%}
+
+@media(max-width:520px){
+  body{padding-top:0}
+  .roll{width:100%;box-shadow:none;padding:0 15px}
+  .head .shop{font-size:1.1rem;letter-spacing:0.16em}
+  .li{grid-template-columns:26px 1fr;gap:7px}
+  .li .rt{grid-column:2;text-align:left;margin-top:5px;font-size:0.68rem}
+  .colhead{grid-template-columns:26px 1fr;gap:7px}
+  .colhead span:last-child{display:none}
+  .strip figure{width:84px;height:84px}
+  .roll{padding-bottom:70px}
+}
+</style>
+</head>
+<body>
+
+<div class="tear"></div>
+<div class="roll">
+  <header class="head">
+    <div class="shop">The Garage<span>Parts & Accessories</span></div>
+    <div class="addr">
+      Royal Enfield <b>Bear 650</b> · Wild Honey<br />
+      Kangayam, Tamil Nadu<br />
+      <b>mygarage / storefront</b>
+    </div>
+    <div class="stamp">Paid in full · no sponsors</div>
+  </header>
+
+  <hr class="rule dbl" />
+  <div class="meta" id="meta"></div>
+  <hr class="rule" />
+  <div class="colhead"><span>#</span><span>Item</span><span style="text-align:right">Plates</span></div>
+  <hr class="rule" />
+
+  <main id="lines"></main>
+
+  <hr class="rule dbl" />
+  <div class="totals" id="totals"></div>
+  <div class="grand"><k>Total fitted</k><span class="dots"></span><v id="grand"></v></div>
+  <hr class="rule dbl" />
+
+  <div class="thanks">
+    <p class="big">Thank you for riding</p>
+    <p id="note"></p>
+    <p style="margin-top:12px;color:var(--d2)">Every line above was bought at full price.<br />No item was gifted, loaned or sponsored.</p>
+  </div>
+  <div class="barcode" id="barcode"></div>
+  <div class="barnum" id="barnum"></div>
+  <a class="back" href="#">← Back to My Garage</a>
+</div>
+<div class="tear bot"></div>
+
+<nav class="jump" id="jump"></nav>
+
+<div class="lb" id="lb">
+  <button class="x" onclick="closeLb()">✕</button>
+  <button class="prev" onclick="stepLb(-1)">‹</button>
+  <button class="next" onclick="stepLb(1)">›</button>
+  <img id="lbImg" alt="" />
+  <div class="cap" id="lbCap"></div>
+</div>
+
+<script src="storefront-data.js"></script>
+<script>
+document.getElementById('note').textContent = SF.note
+
+/* receipt header block — a fixed date so the page reads the same every visit */
+document.getElementById('meta').innerHTML = [
+  ['Receipt', 'RE-BEAR650-001'],
+  ['Register', 'garage / storefront'],
+  ['Lines', String(SF.count).padStart(2, '0')],
+  ['Sections', String(SF.cats.length).padStart(2, '0')],
+  ['Suppliers', SF.vendors.length],
+].map(([k, v]) => `<div><k>${k}</k><span class="dots"></span><v>${v}</v></div>`).join('')
+
+/* line items, grouped like a till roll */
+let seq = 0
+document.getElementById('lines').innerHTML = SF.cats.map(c => `
+  <section class="group" id="g-${c.id}">
+    <div class="gname"><span>${c.icon} ${c.label}</span><u>${String(c.items.length).padStart(2, '0')} ln</u></div>
+    <hr class="rule" />
+    ${c.items.map(it => line(it, c, ++seq)).join('')}
+    <div class="sub"><span>Section subtotal</span><span>${c.items.length} item${c.items.length === 1 ? '' : 's'} · ${c.items.reduce((n, i) => n + i.imgs.length, 0)} plates</span></div>
+  </section>`).join('')
+
+function line(it, c, n) {
+  const imgs = it.imgs.map(f => SF.url(f))
+  return `<div class="li" data-n="${n}" data-imgs='${JSON.stringify(imgs)}' data-name="${it.name}">
+    <span class="carets">▸</span>
+    <span class="no">${String(n).padStart(2, '0')}</span>
+    <span class="nm">${it.name}${it.featured ? ' <span class="fl">★ PICK</span>' : ''}
+      <em>${it.links.map(l => l[0]).join(' / ') || 'source pending'}</em></span>
+    <span class="rt">${imgs.length ? String(imgs.length).padStart(2, '0') : '--'}<b>${imgs.length === 1 ? 'plate' : 'plates'}</b></span>
+  </div>
+  <div class="det"><div class="det-in">
+    <div class="strip">
+      ${imgs.length ? imgs.map((s, k) =>
+        `<figure onclick="openLb(this,${k})"><img src="${s}" alt="${it.name}" loading="lazy" /></figure>`).join('')
+        : '<div class="none">[ no photo<br />on file ]</div>'}
+    </div>
+    <div class="keys">
+      <div><k>Section</k><span class="dots"></span><v>${c.label}</v></div>
+      <div><k>Plates on file</k><span class="dots"></span><v>${String(imgs.length).padStart(2, '0')}</v></div>
+      <div><k>Bought from</k><span class="dots"></span><v>${it.links.map(l => l[0]).join(', ') || '—'}</v></div>
+      <div><k>Status</k><span class="dots"></span><v>${it.featured ? 'Fitted · headline' : 'Fitted'}</v></div>
+    </div>
+    <div class="buys">
+      ${it.links.length ? it.links.map(([v, u], k) =>
+        `<a class="buy ${k === 0 ? 'p' : 's'}" href="${u}" target="_blank" rel="noopener noreferrer">Buy · ${v}</a>`).join('')
+        : '<span class="soon">Link coming soon</span>'}
+    </div>
+  </div></div>`
+}
+
+/* totals */
+document.getElementById('totals').innerHTML = SF.cats.map(c =>
+  `<div><k>${c.label}</k><span class="dots"></span><v>${String(c.items.length).padStart(2, '0')} item${c.items.length === 1 ? '' : 's'}</v></div>`).join('')
+  + `<div><k>Photo plates</k><span class="dots"></span><v>${SF.photoCount}</v></div>`
+document.getElementById('grand').textContent = `${SF.count} items`
+
+/* barcode — deterministic bar widths so it looks printed, not random */
+document.getElementById('barcode').innerHTML = Array.from({ length: 62 }, (_, i) => {
+  const w = [1, 2, 3, 2, 1, 4, 2, 1][(i * 5 + 3) % 8]
+  const h = 70 + ((i * 37) % 31)
+  return `<i style="width:${w}px;height:${h}%"></i>`
+}).join('')
+document.getElementById('barnum').textContent = `BEAR650 ${String(SF.count).padStart(2, '0')} ${String(SF.photoCount).padStart(3, '0')}`
+
+/* unroll a line */
+document.getElementById('lines').addEventListener('click', e => {
+  if (e.target.closest('.strip') || e.target.closest('a')) return
+  const li = e.target.closest('.li'); if (!li) return
+  const det = li.nextElementSibling
+  const isOpen = li.classList.contains('open')
+  li.classList.toggle('open', !isOpen)
+  det.classList.toggle('open', !isOpen)
+})
+
+/* jump chips */
+document.getElementById('jump').innerHTML = SF.cats.map(c =>
+  `<a href="#g-${c.id}" data-for="g-${c.id}">${c.icon} ${c.label.split(' ')[0]}</a>`).join('')
+const links = [...document.querySelectorAll('.jump a')]
+const spy = new IntersectionObserver(es => es.forEach(e => {
+  if (e.isIntersecting) links.forEach(a => a.classList.toggle('on', a.dataset.for === e.target.id))
+}), { rootMargin: '-30% 0px -55% 0px' })
+document.querySelectorAll('.group').forEach(g => spy.observe(g))
+
+/* lightbox */
+let set = [], at = 0, who = ''
+function openLb(fig, k) {
+  const det = fig.closest('.det')
+  const li = det.previousElementSibling
+  set = JSON.parse(li.dataset.imgs); if (!set.length) return
+  at = k; who = li.dataset.name
+  paint(); document.getElementById('lb').classList.add('on')
+}
+function paint() {
+  document.getElementById('lbImg').src = set[at]
+  document.getElementById('lbCap').textContent = `${who} — plate ${at + 1} of ${set.length}`
+}
+function stepLb(d) { at = (at + d + set.length) % set.length; paint() }
+function closeLb() { document.getElementById('lb').classList.remove('on') }
+document.getElementById('lb').addEventListener('click', e => { if (e.target.id === 'lb') closeLb() })
+addEventListener('keydown', e => {
+  if (!document.getElementById('lb').classList.contains('on')) return
+  if (e.key === 'Escape') closeLb()
+  if (e.key === 'ArrowRight') stepLb(1)
+  if (e.key === 'ArrowLeft') stepLb(-1)
+})
+</script>
+</body>
+</html>

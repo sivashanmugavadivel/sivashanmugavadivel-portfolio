@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Vlogs · 11 · Spin Ring</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════
+   SPIN RING — the vlogs stood on a carousel you turn. Nothing
+   scrolls: drag it, throw it, wheel it or arrow it, and it eases
+   round to face whichever card you land nearest. The card at the
+   front plays; the ones going round the back dim and fall away.
+   The sixth panel on the ring is the door to the rest.
+   ══════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08070e; --card:#141220; --card2:#1a1828;
+  --bd:rgba(255,255,255,0.07); --bd2:rgba(255,255,255,0.13);
+  --off:#f0eef6; --d1:rgba(240,238,246,0.65); --d2:rgba(240,238,246,0.4); --d3:rgba(240,238,246,0.22);
+  --acc:#8b5cf6; --acc2:#a78bfa;
+  --sans:'Inter',sans-serif; --serif:'Playfair Display',serif; --mono:'JetBrains Mono',monospace;
+  --ease:cubic-bezier(.22,1,.36,1);
+  --cw:clamp(180px,24vw,248px);      /* card width  */
+  --chh:clamp(250px,33vw,330px);     /* card height */
+}
+body{background:var(--bg);color:var(--d1);font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--acc);color:#fff}
+.page{width:90%;max-width:1180px;margin:0 auto;padding:64px 0 90px;
+  display:flex;flex-direction:column;gap:clamp(40px,7vh,76px)}
+.stub{border:1px dashed var(--bd);border-radius:16px;padding:26px;color:var(--d3);
+  font-size:0.7rem;letter-spacing:0.16em;text-transform:uppercase;text-align:center}
+
+.sec{position:relative;background:var(--card);border:1px solid var(--bd);border-radius:16px;
+  padding:26px clamp(16px,3vw,28px) 30px;overflow:hidden;
+  opacity:0;transform:translateY(32px);animation:rise .8s var(--ease) .1s forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+.sec::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(58% 50% at 50% 42%,rgba(139,92,246,0.13),transparent 66%)}
+
+.head{position:relative;z-index:3;display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;margin-bottom:6px}
+.kick{font-family:var(--mono);font-size:0.58rem;letter-spacing:0.24em;text-transform:uppercase;
+  color:var(--acc2);display:block;margin-bottom:7px}
+.head h2{font-family:var(--serif);font-size:clamp(1.3rem,3.4vw,1.85rem);font-weight:700;color:var(--off);line-height:1.1}
+.head .note{font-size:0.75rem;color:var(--d2);line-height:1.6;max-width:380px;margin-top:8px}
+.head .all{margin-left:auto;font-size:0.7rem;color:var(--acc2);text-decoration:none;padding:7px 15px;
+  border-radius:999px;border:1px solid rgba(167,139,250,0.28);transition:.3s var(--ease);white-space:nowrap}
+.head .all:hover{background:var(--acc);color:#fff;border-color:var(--acc);transform:translateY(-2px)}
+
+/* ══ the carousel ══ */
+.dial{position:relative;z-index:3;height:calc(var(--chh) + 74px);perspective:1250px;
+  perspective-origin:50% 44%;cursor:grab;touch-action:pan-y;user-select:none;margin-top:6px}
+.dial.grab{cursor:grabbing}
+.ring{position:absolute;left:50%;top:26px;width:var(--cw);height:var(--chh);margin-left:calc(var(--cw) / -2);
+  transform-style:preserve-3d;will-change:transform}
+.ring.snap{transition:transform .72s var(--ease)}
+
+.c{position:absolute;inset:0;border-radius:16px;overflow:hidden;background:#000;
+  border:1px solid var(--bd2);backface-visibility:hidden;
+  box-shadow:0 30px 50px -30px #000;text-align:left;
+  transition:filter .45s ease,box-shadow .45s var(--ease),opacity .4s ease}
+.c img,.c video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.c video{opacity:0;transition:opacity .55s ease}
+.c.live video{opacity:1}
+.c .veil{position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(0,0,0,.42) 0%,transparent 30%,transparent 44%,rgba(0,0,0,.9))}
+/* everything not at the front falls back, dims and softens */
+.c:not(.front){filter:brightness(.42) saturate(.6) blur(1.4px)}
+.c.front{box-shadow:0 40px 66px -30px #000,0 0 0 1px rgba(167,139,250,.42),
+  0 0 46px -10px rgba(139,92,246,.55)}
+
+.c .n{position:absolute;top:12px;left:13px;font-family:var(--mono);font-size:0.5rem;letter-spacing:0.16em;
+  color:rgba(255,255,255,.68);text-shadow:0 1px 6px #000}
+.c .dur{position:absolute;top:11px;right:12px;font-family:var(--mono);font-size:0.5rem;padding:3px 8px;
+  border-radius:999px;background:rgba(0,0,0,.62);color:#fff;border:1px solid rgba(255,255,255,.16)}
+.c .cap{position:absolute;left:0;right:0;bottom:0;padding:14px;display:flex;flex-direction:column;gap:5px}
+.c .cap b{font-size:0.84rem;font-weight:700;color:#fff;line-height:1.3;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  text-shadow:0 1px 10px rgba(0,0,0,.85)}
+.c .cap s{text-decoration:none;font-family:var(--mono);font-size:0.48rem;letter-spacing:0.14em;
+  text-transform:uppercase;color:var(--acc2)}
+
+/* the panel on the ring that is not a vlog */
+.c.door{background:linear-gradient(160deg,#1e1936,#0e0c18);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:11px;text-align:center;padding:22px;text-decoration:none}
+.c.door .big{font-family:var(--serif);font-size:2.6rem;font-weight:700;color:var(--off);line-height:1}
+.c.door p{font-size:0.76rem;color:var(--d2);line-height:1.65;max-width:22ch}
+.c.door .go{margin-top:3px;display:inline-flex;align-items:center;gap:8px;padding:10px 18px;
+  border-radius:999px;background:var(--acc);color:#fff;text-decoration:none;font-size:0.72rem;
+  font-weight:600;transition:.3s var(--ease)}
+.c.door .go:hover{transform:translateY(-2px);box-shadow:0 14px 30px -12px rgba(139,92,246,.9)}
+
+/* the floor the ring stands on */
+.floor{position:absolute;left:50%;bottom:6px;width:min(520px,86%);height:56px;transform:translateX(-50%);
+  background:radial-gradient(ellipse at 50% 0%,rgba(139,92,246,.24),transparent 68%);
+  filter:blur(9px);pointer-events:none}
+.floor::after{content:'';position:absolute;left:50%;top:8px;width:66%;height:12px;margin-left:-33%;
+  border-radius:50%;background:radial-gradient(ellipse,rgba(0,0,0,.7),transparent 72%);filter:blur(5px)}
+
+/* ══ under the ring ══ */
+.deck{position:relative;z-index:3;margin-top:12px;display:grid;
+  grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:end}
+.blurb{min-width:0}
+.blurb .line{font-family:var(--mono);font-size:0.52rem;letter-spacing:0.18em;text-transform:uppercase;
+  color:var(--d3);margin-bottom:6px}
+.blurb h3{font-family:var(--serif);font-size:clamp(1.05rem,2.5vw,1.5rem);font-weight:700;color:var(--off);
+  line-height:1.2;margin-bottom:6px}
+.blurb p{font-size:0.8rem;line-height:1.68;color:var(--d2);max-width:52ch}
+/* the words change with the card, so they are swapped with a small lift */
+.blurb.turn h3,.blurb.turn p,.blurb.turn .line{animation:swap .5s var(--ease)}
+@keyframes swap{from{opacity:0;transform:translateY(9px)}}
+.ctl{display:flex;align-items:center;gap:8px}
+.ctl button{width:38px;height:38px;border-radius:50%;border:1px solid var(--bd2);background:var(--card2);
+  color:var(--d1);cursor:pointer;transition:.3s var(--ease);font-size:0.9rem}
+.ctl button:hover{border-color:var(--acc2);color:var(--acc2);background:rgba(139,92,246,.14);transform:scale(1.08)}
+.ctl a{display:inline-flex;align-items:center;gap:9px;padding:11px 20px;border-radius:999px;
+  background:var(--acc);color:#fff;text-decoration:none;font-size:0.74rem;font-weight:600;
+  transition:.3s var(--ease);white-space:nowrap}
+.ctl a:hover{transform:translateY(-2px);box-shadow:0 14px 30px -12px rgba(139,92,246,.9)}
+
+.pips{position:relative;z-index:3;display:flex;justify-content:center;gap:7px;margin-top:14px}
+.pips button{width:7px;height:7px;border-radius:50%;border:0;padding:0;background:var(--bd2);cursor:pointer;
+  transition:.35s var(--ease)}
+.pips button.on{background:var(--acc2);transform:scale(1.7);box-shadow:0 0 0 4px rgba(167,139,250,.15)}
+.pips button.door{background:transparent;border:1px dashed var(--acc2)}
+.tip{position:relative;z-index:3;text-align:center;margin-top:10px;font-family:var(--mono);
+  font-size:0.52rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--d3)}
+
+/* ── empty state ── */
+.empty{position:relative;border:1px dashed var(--bd2);border-radius:14px;background:var(--card2);
+  padding:clamp(36px,7vw,62px) 24px;text-align:center;display:flex;flex-direction:column;
+  align-items:center;gap:12px;overflow:hidden}
+.empty .orbit{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
+.empty .orbit i{position:absolute;width:170px;height:60px;border:1px dashed var(--bd);border-radius:50%;
+  animation:tilt 7s linear infinite}
+.empty .orbit i:nth-child(2){width:230px;height:80px;animation-duration:9s;animation-direction:reverse}
+@keyframes tilt{to{transform:rotate(360deg)}}
+.empty > *:not(.orbit){position:relative;z-index:2}
+.empty .ico{font-size:2rem;animation:bob 2.7s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.empty .lab{font-size:0.62rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--acc2);font-weight:700}
+.empty p{font-size:0.83rem;color:var(--d2);max-width:420px;line-height:1.7}
+
+@media(max-width:720px){
+  .deck{grid-template-columns:1fr}
+  .ctl{justify-content:space-between}
+  .page{width:94%;padding:40px 0 60px}
+  .head .all{margin-left:0}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important}
+  .ring.snap{transition-duration:.001s}
+  .c:not(.front){filter:brightness(.6)}
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="stub">↑ Accessories &amp; Add-ons</div>
+
+  <section class="sec">
+    <div class="head">
+      <div>
+        <span class="kick" id="kick"></span>
+        <h2 id="h2"></h2>
+        <div class="note" id="note"></div>
+      </div>
+      <a class="all" id="all">All vlogs →</a>
+    </div>
+    <div id="body"></div>
+  </section>
+
+  <div class="stub">↓ Ride Gallery</div>
+</div>
+
+<script src="vlog-data.js"></script>
+<script>
+const V = window.VLOG
+document.getElementById('kick').textContent = V.kicker
+document.getElementById('h2').textContent   = V.heading
+document.getElementById('note').textContent = V.note
+document.getElementById('all').href         = V.page
+
+if (V.isEmpty) {
+  document.getElementById('body').innerHTML = `
+    <div class="empty">
+      <div class="orbit"><i></i><i></i></div>
+      <div class="ico">🎠</div>
+      <div class="lab">Nothing on the ring</div>
+      <p>The carousel needs something to carry. The first ride video that is cut
+         takes the front panel.</p>
+    </div>`
+} else {
+  build()
+}
+
+/* five cards plus the door — six panels, so the ring turns in clean sixths */
+const N = V.shown.length + 1
+const STEP = 360 / N
+const DOOR = N - 1
+
+function build() {
+  document.getElementById('body').innerHTML = `
+    <div class="dial" id="dial">
+      <div class="ring" id="ring"></div>
+      <div class="floor"></div>
+    </div>
+
+    <div class="deck">
+      <div class="blurb" id="blurb">
+        <div class="line" id="bline"></div>
+        <h3 id="bh"></h3>
+        <p id="bp"></p>
+      </div>
+      <div class="ctl">
+        <button id="prev" aria-label="Turn left">‹</button>
+        <button id="next" aria-label="Turn right">›</button>
+        <a id="go" target="_blank" rel="noopener">▶ Watch</a>
+      </div>
+    </div>
+
+    <div class="pips" id="pips"></div>
+    <div class="tip">Drag the ring · wheel · ← →</div>`
+
+  document.getElementById('ring').innerHTML = V.shown.map(v => `
+    <article class="c" data-k="${v.i}">
+      <img src="${v.poster}" alt="${v.title}" loading="lazy"
+           onerror="this.onerror=null;this.src='${v.still}'" />
+      ${v.clip ? `<video src="${v.clip}" muted loop playsinline preload="none"></video>` : ''}
+      <span class="veil"></span>
+      <span class="n">${String(v.n).padStart(2, '0')}</span>
+      <span class="dur">${v.duration}</span>
+      <span class="cap"><s>${v.cat}</s><b>${v.title}</b></span>
+    </article>`).join('') + `
+    <a class="c door" data-k="${DOOR}" href="${V.page}">
+      <span class="big">+${V.more}</span>
+      <p>The rest of the reel is off the ring, on the vlog page.</p>
+      <span class="go">See them all →</span>
+    </a>`
+
+  document.getElementById('pips').innerHTML =
+    V.shown.map((v, k) => `<button data-k="${k}" aria-label="${v.title}"></button>`).join('') +
+    `<button class="door" data-k="${DOOR}" aria-label="All vlogs"></button>`
+
+  wire()
+}
+
+function wire() {
+  const dial = document.getElementById('dial')
+  const ring = document.getElementById('ring')
+  const cards = [...ring.children]
+  const blurb = document.getElementById('blurb')
+  let rot = 0, at = -1
+
+  /* ── stand the panels up around the ring ──
+     The radius comes from the card's own width, so the six panels sit edge to
+     edge whatever the breakpoint has sized them to. */
+  function radius() {
+    const w = cards[0].offsetWidth
+    return (w / 2) / Math.tan(Math.PI / N)
+  }
+  function layout() {
+    const r = radius()
+    cards.forEach((c, k) => {
+      c.style.transform = `rotateY(${k * STEP}deg) translateZ(${r}px)`
+    })
+    turn(false)
+  }
+
+  /* ── turn the ring to `rot` and work out which panel is facing you ── */
+  function turn(animate = true) {
+    ring.classList.toggle('snap', animate)
+    ring.style.transform = `translateZ(${-radius()}px) rotateY(${rot}deg)`
+    const k = ((Math.round(-rot / STEP) % N) + N) % N
+    if (k !== at) front(k)
+  }
+
+  function front(k) {
+    at = k
+    cards.forEach((c, j) => c.classList.toggle('front', j === k))
+    document.querySelectorAll('.pips button').forEach((b, j) => b.classList.toggle('on', j === k))
+
+    /* only the panel facing you rolls */
+    cards.forEach((c, j) => {
+      const vid = c.querySelector('video'); if (!vid) return
+      if (j === k) vid.play().then(() => c.classList.add('live')).catch(() => {})
+      else { c.classList.remove('live'); vid.pause(); vid.currentTime = 0 }
+    })
+
+    const v = V.shown[k]
+    if (v) {
+      document.getElementById('bline').textContent =
+        `${v.cat} · ${v.type === 'short' ? 'Short' : 'Full film'} · ${v.duration} · ${v.when.label}`
+      document.getElementById('bh').textContent = v.title
+      document.getElementById('bp').textContent = v.blurb
+      document.getElementById('go').href = v.url
+      document.getElementById('go').textContent = '▶ Watch'
+    } else {
+      document.getElementById('bline').textContent = `${V.count} vlogs in total`
+      document.getElementById('bh').textContent = `+${V.more} more`
+      document.getElementById('bp').textContent =
+        'This section carries five. Everything else — the older trips, the rest of the shorts — is on the vlog page.'
+      document.getElementById('go').href = V.page
+      document.getElementById('go').textContent = 'Open vlogs →'
+    }
+
+    blurb.classList.remove('turn')
+    void blurb.offsetWidth
+    blurb.classList.add('turn')
+  }
+
+  const step = d => { rot -= d * STEP; turn() }
+  document.getElementById('next').onclick = () => step(1)
+  document.getElementById('prev').onclick = () => step(-1)
+  document.getElementById('pips').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return
+    /* take the shortest way round rather than unwinding the whole ring */
+    const want = +b.dataset.k
+    let d = (want - at + N) % N
+    if (d > N / 2) d -= N
+    step(d)
+  })
+
+  /* wheel, throttled to one panel per flick */
+  let lock = 0
+  dial.addEventListener('wheel', e => {
+    e.preventDefault()
+    const now = performance.now()
+    if (now - lock < 380) return
+    lock = now
+    step(e.deltaY > 0 ? 1 : -1)
+  }, { passive: false })
+
+  /* drag: the ring follows the finger degree for degree, then snaps to the
+     nearest panel — with a throw carrying it a panel further */
+  const drag = { on: false, x: 0, r0: 0, last: 0, v: 0, moved: 0 }
+  dial.addEventListener('pointerdown', e => {
+    /* the door panel is a link, but it also spends time at the front of the
+       ring — so it has to be draggable too, and the click is suppressed below
+       if the pointer actually travelled */
+    drag.on = true; drag.x = e.clientX; drag.r0 = rot; drag.v = 0; drag.last = e.clientX; drag.moved = 0
+    dial.classList.add('grab'); dial.setPointerCapture(e.pointerId)
+    ring.classList.remove('snap')
+  })
+  dial.addEventListener('pointermove', e => {
+    if (!drag.on) return
+    drag.v = e.clientX - drag.last
+    drag.last = e.clientX
+    drag.moved = Math.max(drag.moved, Math.abs(e.clientX - drag.x))
+    rot = drag.r0 + (e.clientX - drag.x) * 0.32
+    turn(false)
+  })
+  const drop = e => {
+    if (!drag.on) return
+    drag.on = false
+    dial.classList.remove('grab')
+    try { dial.releasePointerCapture(e.pointerId) } catch {}
+    const throwing = Math.abs(drag.v) > 7 ? Math.sign(drag.v) : 0
+    rot = (Math.round(rot / STEP) + throwing) * STEP
+    turn()
+  }
+  dial.addEventListener('pointerup', drop)
+  dial.addEventListener('pointercancel', drop)
+  /* a spin that happened to start on the door must not follow it */
+  dial.addEventListener('click', e => { if (drag.moved > 6) e.preventDefault() })
+
+  window.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') step(1)
+    if (e.key === 'ArrowLeft')  step(-1)
+  })
+
+  addEventListener('resize', layout)
+  layout()
+}
+</script>
+</body>
+</html>

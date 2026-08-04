@@ -15,12 +15,12 @@
 
 import { Fragment, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
-// import RidePassDeck from '../components/garage/RidePassDeck'   // hidden — see below
 import MaintenanceLog from '../components/garage/MaintenanceLog'
 import FollowTheJourney from '../components/garage/FollowTheJourney'
 import BearFireworks from '../components/garage/BearFireworks'
+import RouteReel from '../components/garage/RouteReel'
 import {
-  RecommendedAccessories, LatestVlogs, RideGallery, RidesAndRoutes, DreamGarageJourney,
+  RecommendedAccessories, RideGallery, RidesAndRoutes, DreamGarageJourney,
 } from '../components/garage/ShowcaseSections'
 import {
   FRAME_COUNT, LOOPS, HOLD, FADE, SPEC_LAYOUT, SPEC_STOPS,
@@ -759,11 +759,11 @@ export default function MyGarage() {
           gap: 'clamp(40px, 7vh, 76px)',
         }}
       >
-        {/* "What's On My Bike?" — hidden for now. Uncomment this line and its
-            import above to bring the Ride Pass deck back. */}
-        {/* <RevealRow id="ridepass"><RidePassDeck titleColor="var(--text-h)" /></RevealRow> */}
         <RevealRow id="accessories"><RecommendedAccessories title="Accessories & Add-ons" /></RevealRow>
-        <RevealRow id="vlogs"><LatestVlogs /></RevealRow>
+        {/* The vlogs as stops on a road — see RouteReel. It drives its own
+            scroll loop, so it wants the reveal's transform to have settled;
+            the component repaints across that first second itself. */}
+        <RevealRow id="vlogs"><RouteReel /></RevealRow>
         <RevealRow id="gallery"><RideGallery /></RevealRow>
         <RevealRow id="rides"><RidesAndRoutes /></RevealRow>
         <RevealRow id="journey"><DreamGarageJourney /></RevealRow>

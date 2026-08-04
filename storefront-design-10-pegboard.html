@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Storefront · 10 · Pegboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════
+   PEGBOARD — the garage wall. One column per category, each
+   scrolling on its own, parts hanging as tickets on hooks.
+   A board, not a page: the columns sit side by side and you
+   read across. On a phone the columns become swipeable
+   full-width panes with a tab strip.
+   ══════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --wall:#20242a; --wall2:#262b32; --board:#2c323a; --tile:#333a44; --tile2:#3b434f;
+  --off:#eef1f5; --d1:rgba(238,241,245,0.62); --d2:rgba(238,241,245,0.4); --d3:rgba(238,241,245,0.22);
+  --bd:rgba(255,255,255,0.09); --bd2:rgba(255,255,255,0.18);
+  --steel:#93a3b5; --safety:#ffb703; --tape:#f2e8c9;
+  --disp:'Bricolage Grotesque',sans-serif; --sans:'Inter',sans-serif;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+html,body{height:100%}
+body{background:var(--wall);color:var(--d1);font-family:var(--sans);overflow:hidden;
+  -webkit-font-smoothing:antialiased}
+::selection{background:var(--safety);color:#20242a}
+
+/* the perforated board itself */
+.holes{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.5;
+  background-image:radial-gradient(circle,rgba(0,0,0,0.5) 1.6px,transparent 1.7px);
+  background-size:26px 26px;background-position:13px 13px}
+.lightfall{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(70vw 50vh at 50% -8%,rgba(255,183,3,0.09),transparent 66%)}
+
+.app{position:relative;z-index:2;height:100%;display:flex;flex-direction:column}
+
+/* ── board header ── */
+.top{flex-shrink:0;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  padding:14px clamp(14px,3vw,26px);border-bottom:1px solid var(--bd);background:rgba(32,36,42,0.85);
+  backdrop-filter:blur(10px)}
+.plate{display:flex;align-items:center;gap:10px;padding:7px 14px;background:var(--safety);color:#221b00;
+  font-family:var(--disp);font-weight:800;font-size:0.82rem;letter-spacing:0.02em;
+  clip-path:polygon(0 0,100% 0,96% 100%,4% 100%)}
+.plate i{width:7px;height:7px;border-radius:50%;background:#221b00}
+.top .sub{font-size:0.7rem;color:var(--d2);letter-spacing:0.04em}
+.top .tools{margin-left:auto;display:flex;gap:8px;align-items:center}
+.top .search{display:flex;align-items:center;gap:8px;padding:8px 13px;border-radius:9px;
+  border:1px solid var(--bd);background:var(--board);min-width:0}
+.top .search input{border:0;outline:0;background:transparent;color:var(--off);font-family:var(--sans);
+  font-size:0.76rem;width:clamp(90px,15vw,180px)}
+.top .search input::placeholder{color:var(--d3)}
+.top .search span{color:var(--d3);font-size:0.8rem}
+.top .exit{padding:8px 14px;border:1px solid var(--bd);border-radius:9px;color:var(--d2);
+  text-decoration:none;font-size:0.72rem;transition:.25s;white-space:nowrap}
+.top .exit:hover{color:var(--off);border-color:var(--bd2)}
+
+/* ── phone tab strip (hidden on desktop) ── */
+.tabs{display:none;flex-shrink:0;gap:6px;padding:10px 12px;overflow-x:auto;scrollbar-width:none;
+  border-bottom:1px solid var(--bd)}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex-shrink:0;padding:8px 14px;border-radius:999px;border:1px solid var(--bd);
+  background:var(--board);color:var(--d2);font-family:var(--sans);font-size:0.72rem;cursor:pointer;
+  white-space:nowrap;transition:.25s}
+.tabs button.on{background:var(--safety);border-color:var(--safety);color:#221b00;font-weight:600}
+
+/* ── the board: columns side by side ── */
+.board{flex:1;display:flex;gap:clamp(10px,1.4vw,18px);padding:clamp(10px,1.6vw,20px);
+  overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;min-height:0}
+.board::-webkit-scrollbar{height:9px}
+.board::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.14);border-radius:9px}
+
+.col{flex:0 0 clamp(264px,23vw,320px);display:flex;flex-direction:column;min-height:0;
+  background:var(--board);border:1px solid var(--bd);border-radius:14px;overflow:hidden;
+  opacity:0;transform:translateY(20px);animation:colIn .7s var(--ease) forwards}
+@keyframes colIn{to{opacity:1;transform:none}}
+.col .ch{flex-shrink:0;display:flex;align-items:center;gap:10px;padding:13px 14px;
+  border-bottom:1px solid var(--bd);background:var(--wall2)}
+.col .ch .ic{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-size:0.95rem;
+  background:var(--tile);border:1px solid var(--bd)}
+.col .ch .t{flex:1;min-width:0}
+.col .ch h2{font-family:var(--disp);font-weight:700;font-size:0.86rem;color:var(--off);
+  letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.col .ch .n{font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--d3);margin-top:2px}
+.col .ch .bar{flex-shrink:0;width:34px;height:4px;border-radius:99px;background:var(--tile);overflow:hidden}
+.col .ch .bar i{display:block;height:100%;background:var(--safety)}
+.col .body{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:9px;
+  scrollbar-width:thin}
+.col .body::-webkit-scrollbar{width:7px}
+.col .body::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.12);border-radius:9px}
+.col .foot{flex-shrink:0;padding:9px 14px;border-top:1px solid var(--bd);font-size:0.62rem;
+  letter-spacing:0.1em;color:var(--d3);display:flex;justify-content:space-between}
+
+/* ── a hanging ticket ── */
+.tag{position:relative;background:var(--tile);border:1px solid var(--bd);border-radius:10px;
+  padding:11px 11px 12px;cursor:pointer;transition:.3s var(--ease);
+  display:flex;flex-direction:column;gap:9px}
+.tag::before{content:'';position:absolute;top:-1px;left:50%;transform:translateX(-50%);
+  width:26px;height:5px;border-radius:0 0 8px 8px;background:var(--steel);opacity:0.45}
+.tag:hover{background:var(--tile2);border-color:var(--bd2);transform:translateY(-3px)}
+.tag.on{border-color:var(--safety);background:var(--tile2)}
+.tag.hidden{display:none}
+.tag .thumb{aspect-ratio:5/4;border-radius:7px;overflow:hidden;background:#272c33;
+  display:flex;align-items:center;justify-content:center;position:relative}
+.tag .thumb img{width:100%;height:100%;object-fit:contain;padding:8px;transition:transform .55s var(--ease)}
+.tag:hover .thumb img{transform:scale(1.06)}
+.tag .thumb .none{font-size:1.5rem;opacity:0.22}
+.tag .thumb .cnt{position:absolute;bottom:6px;right:7px;padding:3px 7px;border-radius:99px;
+  background:rgba(23,26,31,0.8);font-size:0.55rem;color:var(--d1);backdrop-filter:blur(5px)}
+.tag .thumb .fl{position:absolute;top:6px;left:7px;padding:3px 8px;border-radius:99px;
+  background:var(--safety);color:#221b00;font-size:0.52rem;font-weight:700;letter-spacing:0.1em;
+  text-transform:uppercase}
+.tag .nm{font-size:0.8rem;font-weight:500;color:var(--off);line-height:1.3}
+.tag .rowmeta{display:flex;align-items:center;gap:7px;font-size:0.6rem;color:var(--d3);letter-spacing:0.06em}
+.tag .rowmeta em{font-style:normal;padding:2px 7px;border-radius:99px;border:1px solid var(--bd);color:var(--d2)}
+
+/* ── inspector: right drawer on desktop, bottom sheet on phone ── */
+.scrim{position:fixed;inset:0;z-index:55;background:rgba(15,17,21,0.62);opacity:0;visibility:hidden;
+  transition:.4s var(--ease)}
+.scrim.on{opacity:1;visibility:visible}
+.insp{position:fixed;top:0;right:0;bottom:0;width:min(400px,88vw);z-index:60;background:var(--wall2);
+  border-left:1px solid var(--bd2);display:flex;flex-direction:column;
+  transform:translateX(102%);transition:transform .5s var(--ease);
+  box-shadow:-30px 0 70px -30px rgba(0,0,0,0.9)}
+.insp.on{transform:none}
+.insp .grab{display:none}
+.insp .ih{display:flex;align-items:flex-start;gap:12px;padding:18px 18px 14px;border-bottom:1px solid var(--bd)}
+.insp .ih .t{flex:1;min-width:0}
+.insp .ih h3{font-family:var(--disp);font-weight:700;font-size:1.02rem;color:var(--off);line-height:1.25}
+.insp .ih .c{margin-top:5px;font-size:0.64rem;letter-spacing:0.13em;text-transform:uppercase;color:var(--safety)}
+.insp .x{flex-shrink:0;width:32px;height:32px;border-radius:9px;border:1px solid var(--bd);
+  background:transparent;color:var(--d1);cursor:pointer;transition:.25s}
+.insp .x:hover{background:var(--off);color:var(--wall)}
+.insp .ib{flex:1;overflow-y:auto;padding:16px 18px calc(20px + env(safe-area-inset-bottom));
+  display:flex;flex-direction:column;gap:14px}
+.insp .big{aspect-ratio:4/3;border-radius:12px;border:1px solid var(--bd);background:#272c33;
+  display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:zoom-in;flex-shrink:0}
+.insp .big img{width:100%;height:100%;object-fit:contain;padding:14px;transition:opacity .2s}
+.insp .big .none{font-size:2.2rem;opacity:0.2}
+.insp .reel{display:flex;gap:6px;flex-wrap:wrap}
+.insp .reel button{width:50px;height:50px;padding:0;border-radius:8px;overflow:hidden;cursor:pointer;
+  border:1px solid var(--bd);background:#272c33;opacity:0.5;transition:.26s}
+.insp .reel button.on{opacity:1;border-color:var(--safety)}
+.insp .reel img{width:100%;height:100%;object-fit:cover}
+.insp .facts{border-top:1px solid var(--bd)}
+.insp .facts div{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--bd);font-size:0.78rem}
+.insp .facts k{flex:0 0 80px;font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--d3)}
+.insp .facts v{color:var(--off)}
+.insp .buys{display:flex;gap:9px;flex-wrap:wrap}
+.buy{flex:1 1 auto;text-align:center;padding:12px 16px;border-radius:9px;text-decoration:none;
+  font-size:0.76rem;font-weight:500;transition:.3s var(--ease);white-space:nowrap}
+.buy.p{background:var(--safety);color:#221b00;font-weight:600}
+.buy.p:hover{background:var(--off);color:var(--wall)}
+.buy.s{border:1px solid var(--bd2);color:var(--off)}
+.buy.s:hover{border-color:var(--safety);color:var(--safety)}
+.soon{font-size:0.76rem;color:var(--d3);font-style:italic}
+
+.empty{padding:26px 12px;text-align:center;font-size:0.72rem;color:var(--d3)}
+
+/* lightbox */
+.lb{position:fixed;inset:0;z-index:99;background:rgba(18,20,24,0.97);backdrop-filter:blur(8px);
+  display:none;align-items:center;justify-content:center;padding:clamp(16px,6vw,56px)}
+.lb.on{display:flex;animation:fade .3s}
+@keyframes fade{from{opacity:0}}
+.lb img{max-width:90vw;max-height:74vh;object-fit:contain;border-radius:12px;animation:pop .42s var(--ease)}
+@keyframes pop{from{opacity:0;transform:scale(.94)}}
+.lb .cap{position:absolute;bottom:24px;left:0;right:0;text-align:center;font-size:0.7rem;
+  letter-spacing:0.13em;color:var(--safety);padding:0 16px}
+.lb button{position:absolute;width:42px;height:42px;border-radius:9px;border:1px solid var(--bd2);
+  background:var(--board);color:var(--off);font-size:1rem;cursor:pointer;transition:.22s}
+.lb button:hover{background:var(--off);color:var(--wall)}
+.lb .x{top:18px;right:18px}.lb .prev{left:14px;top:50%}.lb .next{right:14px;top:50%}
+
+/* ── phones: one column at a time, driven by the tab strip ── */
+@media(max-width:760px){
+  .top{padding:10px 12px;gap:9px}
+  .top .sub{display:none}
+  .top .tools{width:100%;order:3;margin-left:0}
+  .top .search{flex:1}
+  .top .search input{width:100%}
+  .tabs{display:flex}
+  .board{padding:10px;gap:0;scroll-snap-type:x mandatory}
+  .col{flex:0 0 100%;scroll-snap-align:center}
+  .col:not(.live){display:none}
+  .insp{top:auto;left:0;right:0;bottom:0;width:auto;max-height:84svh;border-left:0;
+    border-top:1px solid var(--bd2);border-radius:18px 18px 0 0;transform:translateY(102%);
+    box-shadow:0 -30px 70px -30px rgba(0,0,0,0.9)}
+  .insp.on{transform:none}
+  .insp .grab{display:block;width:40px;height:4px;border-radius:99px;background:var(--bd2);
+    margin:9px auto 0;flex-shrink:0}
+  .insp .ih{padding:12px 15px}
+  .insp .ib{padding:14px 15px calc(18px + env(safe-area-inset-bottom))}
+}
+</style>
+</head>
+<body>
+<div class="holes"></div><div class="lightfall"></div>
+
+<div class="app">
+  <header class="top">
+    <div class="plate"><i></i>THE GARAGE · PARTS BOARD</div>
+    <div class="sub" id="sub"></div>
+    <div class="tools">
+      <label class="search"><span>⌕</span><input id="q" placeholder="Filter parts…" aria-label="filter parts" /></label>
+      <a class="exit" href="#">✕ Garage</a>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs"></nav>
+  <div class="board" id="board"></div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="insp" id="insp">
+  <div class="grab"></div>
+  <div class="ih">
+    <div class="t"><h3 id="iName">—</h3><div class="c" id="iCat"></div></div>
+    <button class="x" id="iClose">✕</button>
+  </div>
+  <div class="ib">
+    <div class="big" id="iBig"></div>
+    <div class="reel" id="iReel"></div>
+    <div class="facts" id="iFacts"></div>
+    <div class="buys" id="iBuys"></div>
+  </div>
+</aside>
+
+<div class="lb" id="lb">
+  <button class="x" onclick="closeLb()">✕</button>
+  <button class="prev" onclick="stepLb(-1)">‹</button>
+  <button class="next" onclick="stepLb(1)">›</button>
+  <img id="lbImg" alt="" />
+  <div class="cap" id="lbCap"></div>
+</div>
+
+<script src="storefront-data.js"></script>
+<script>
+const ITEMS = SF.all.map((it, i) => ({ ...it, no: i + 1, imgs: it.imgs.map(f => SF.url(f)) }))
+document.getElementById('sub').textContent =
+  `${SF.count} parts · ${SF.cats.length} sections · ${SF.photoCount} photos`
+
+/* ── columns ── */
+document.getElementById('board').innerHTML = SF.cats.map((c, ci) => {
+  const mine = ITEMS.filter(i => i.cat.id === c.id)
+  const shot = mine.filter(i => i.imgs.length).length
+  return `<section class="col ${ci === 0 ? 'live' : ''}" data-cat="${c.id}" style="animation-delay:${ci * 80}ms">
+    <div class="ch">
+      <span class="ic">${c.icon}</span>
+      <div class="t"><h2>${c.label}</h2><div class="n">${mine.length} ${mine.length === 1 ? 'part' : 'parts'} · ${shot} shot</div></div>
+      <span class="bar"><i style="width:${Math.round(shot / mine.length * 100)}%"></i></span>
+    </div>
+    <div class="body">${mine.map(tag).join('')}<div class="empty" style="display:none">No match in this section</div></div>
+    <div class="foot"><span>${c.id}</span><span>${mine.reduce((n, i) => n + i.imgs.length, 0)} plates</span></div>
+  </section>`
+}).join('')
+
+function tag(it) {
+  return `<article class="tag" data-no="${it.no}" data-search="${(it.name + ' ' + it.cat.label + ' ' + it.links.map(l => l[0]).join(' ')).toLowerCase()}">
+    <div class="thumb">
+      ${it.featured ? '<span class="fl">Pick</span>' : ''}
+      ${it.imgs.length ? `<img src="${it.imgs[0]}" alt="${it.name}" loading="lazy" />` : `<span class="none">${it.cat.icon}</span>`}
+      ${it.imgs.length > 1 ? `<span class="cnt">${it.imgs.length} shots</span>` : ''}
+    </div>
+    <div class="nm">${it.name}</div>
+    <div class="rowmeta"><span>#${String(it.no).padStart(2, '0')}</span><em>${it.links.map(l => l[0]).join(' · ') || 'pending'}</em></div>
+  </article>`
+}
+
+/* ── phone tabs pick which column is on screen ── */
+document.getElementById('tabs').innerHTML = SF.cats.map((c, i) =>
+  `<button class="${i === 0 ? 'on' : ''}" data-cat="${c.id}">${c.icon} ${c.label}</button>`).join('')
+document.getElementById('tabs').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return
+  document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b))
+  document.querySelectorAll('.col').forEach(c => c.classList.toggle('live', c.dataset.cat === b.dataset.cat))
+})
+
+/* ── filter ── */
+document.getElementById('q').addEventListener('input', e => {
+  const q = e.target.value.trim().toLowerCase()
+  document.querySelectorAll('.col').forEach(col => {
+    let n = 0
+    col.querySelectorAll('.tag').forEach(t => {
+      const hit = !q || t.dataset.search.includes(q)
+      t.classList.toggle('hidden', !hit)
+      if (hit) n++
+    })
+    col.querySelector('.empty').style.display = n ? 'none' : 'block'
+    col.querySelector('.ch .n').textContent = q
+      ? `${n} match${n === 1 ? '' : 'es'}`
+      : `${col.querySelectorAll('.tag').length} parts`
+  })
+})
+
+/* ── inspector ── */
+const insp = document.getElementById('insp'), scrim = document.getElementById('scrim')
+let cur = null, plateAt = 0
+
+document.getElementById('board').addEventListener('click', e => {
+  const t = e.target.closest('.tag'); if (!t) return
+  document.querySelectorAll('.tag').forEach(x => x.classList.toggle('on', x === t))
+  open(+t.dataset.no)
+})
+
+function open(no) {
+  cur = ITEMS.find(i => i.no === no); if (!cur) return
+  plateAt = 0
+  document.getElementById('iName').textContent = cur.name
+  document.getElementById('iCat').textContent = `${cur.cat.icon} ${cur.cat.label} · #${String(cur.no).padStart(2, '0')}`
+  document.getElementById('iBig').innerHTML = cur.imgs.length
+    ? `<img src="${cur.imgs[0]}" alt="${cur.name}" />` : `<span class="none">${cur.cat.icon}</span>`
+  document.getElementById('iReel').innerHTML = cur.imgs.length > 1
+    ? cur.imgs.map((s, k) => `<button class="${k === 0 ? 'on' : ''}" data-k="${k}"><img src="${s}" alt="" /></button>`).join('') : ''
+  document.getElementById('iFacts').innerHTML = [
+    ['Section', `${cur.cat.icon} ${cur.cat.label}`],
+    ['Plates', String(cur.imgs.length).padStart(2, '0')],
+    ['Source', cur.links.map(l => l[0]).join(', ') || '—'],
+    ['Status', cur.featured ? 'Fitted · headline pick' : 'Fitted'],
+  ].map(([k, v]) => `<div><k>${k}</k><v>${v}</v></div>`).join('')
+  document.getElementById('iBuys').innerHTML = cur.links.length
+    ? cur.links.map(([v, u], k) => `<a class="buy ${k === 0 ? 'p' : 's'}" href="${u}" target="_blank" rel="noopener noreferrer">${k === 0 ? 'Buy on ' + v : v} ↗</a>`).join('')
+    : '<span class="soon">Link coming soon</span>'
+  insp.classList.add('on'); scrim.classList.add('on')
+}
+function close() {
+  insp.classList.remove('on'); scrim.classList.remove('on')
+  document.querySelectorAll('.tag').forEach(x => x.classList.remove('on'))
+}
+document.getElementById('iClose').addEventListener('click', close)
+scrim.addEventListener('click', close)
+document.getElementById('iReel').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return
+  plateAt = +b.dataset.k
+  const img = document.querySelector('#iBig img')
+  img.style.opacity = 0
+  setTimeout(() => { img.src = cur.imgs[plateAt]; img.style.opacity = 1 }, 140)
+  document.querySelectorAll('#iReel button').forEach((x, j) => x.classList.toggle('on', j === plateAt))
+})
+document.getElementById('iBig').addEventListener('click', () => { if (cur && cur.imgs.length) openLb() })
+addEventListener('keydown', e => {
+  if (e.key === 'Escape' && !document.getElementById('lb').classList.contains('on')) close()
+})
+
+/* lightbox */
+let at = 0
+function openLb() { at = plateAt; paint(); document.getElementById('lb').classList.add('on') }
+function paint() {
+  document.getElementById('lbImg').src = cur.imgs[at]
+  document.getElementById('lbCap').textContent = `${cur.name} — plate ${at + 1} of ${cur.imgs.length}`
+}
+function stepLb(d) { at = (at + d + cur.imgs.length) % cur.imgs.length; paint() }
+function closeLb() { document.getElementById('lb').classList.remove('on') }
+document.getElementById('lb').addEventListener('click', e => { if (e.target.id === 'lb') closeLb() })
+addEventListener('keydown', e => {
+  if (!document.getElementById('lb').classList.contains('on')) return
+  if (e.key === 'Escape') closeLb()
+  if (e.key === 'ArrowRight') stepLb(1)
+  if (e.key === 'ArrowLeft') stepLb(-1)
+})
+</script>
+</body>
+</html>

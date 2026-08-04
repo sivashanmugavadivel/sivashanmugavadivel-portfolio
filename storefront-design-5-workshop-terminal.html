@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Storefront · 5 · Workshop Terminal</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════
+   WORKSHOP TERMINAL — the storefront as a program you drive.
+   No page, no scroll-and-browse: a window, a boot sequence,
+   and a prompt. Typing `ls`, `open safety`, `show 07` prints
+   the catalogue as output. Photos render inside the frames.
+   ══════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --void:#05070a; --win:#0a0e12; --chrome:#12181e; --line:rgba(51,255,138,0.14);
+  --grn:#33ff8a; --grn2:#1fd46e; --amb:#ffb000; --cyn:#4fd8ff; --red:#ff5f56;
+  --txt:rgba(220,240,228,0.78); --dim:rgba(220,240,228,0.4); --dim2:rgba(220,240,228,0.22);
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+}
+html,body{height:100%}
+body{background:var(--void);color:var(--txt);font-family:var(--mono);font-size:13.5px;
+  display:flex;align-items:center;justify-content:center;padding:clamp(0px,2.4vw,28px);overflow:hidden}
+::selection{background:var(--grn);color:#05070a}
+
+/* glow behind the window */
+body::before{content:'';position:fixed;inset:0;pointer-events:none;
+  background:radial-gradient(60vw 60vw at 50% 34%,rgba(51,255,138,0.06),transparent 68%)}
+
+/* ── window chrome ── */
+.win{position:relative;width:min(1180px,100%);height:100%;max-height:940px;background:var(--win);
+  border:1px solid var(--line);border-radius:11px;display:flex;flex-direction:column;overflow:hidden;
+  box-shadow:0 40px 90px -30px rgba(0,0,0,0.9),0 0 0 1px rgba(255,255,255,0.03);
+  animation:boot .8s cubic-bezier(.16,1,.3,1)}
+@keyframes boot{from{opacity:0;transform:scale(0.985) translateY(14px)}}
+.bar{display:flex;align-items:center;gap:11px;padding:9px 14px;background:var(--chrome);
+  border-bottom:1px solid var(--line);flex-shrink:0}
+.lights{display:flex;gap:7px}
+.lights i{width:11px;height:11px;border-radius:50%;display:block}
+.lights i:nth-child(1){background:var(--red)}
+.lights i:nth-child(2){background:var(--amb)}
+.lights i:nth-child(3){background:var(--grn2)}
+.bar .title{flex:1;text-align:center;font-size:0.72rem;color:var(--dim);letter-spacing:0.05em}
+.bar .title b{color:var(--txt);font-weight:500}
+.bar .badge{font-size:0.62rem;letter-spacing:0.1em;color:var(--grn);border:1px solid var(--line);
+  padding:2px 8px;border-radius:4px}
+
+/* tab strip = the categories, doubling as commands */
+.tabs{display:flex;gap:1px;background:var(--line);border-bottom:1px solid var(--line);
+  overflow-x:auto;scrollbar-width:none;flex-shrink:0}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex-shrink:0;padding:9px 16px;background:var(--win);border:0;cursor:pointer;
+  font-family:var(--mono);font-size:0.72rem;color:var(--dim);transition:.22s;white-space:nowrap;
+  border-bottom:2px solid transparent}
+.tab:hover{color:var(--txt);background:#0d1218}
+.tab.on{color:var(--grn);border-bottom-color:var(--grn);background:#0d1218}
+.tab u{text-decoration:none;color:var(--dim2);margin-left:7px}
+
+/* ── output log ── */
+.log{flex:1;overflow-y:auto;padding:20px 22px 8px;scroll-behavior:smooth;position:relative}
+.log::-webkit-scrollbar{width:9px}
+.log::-webkit-scrollbar-thumb{background:rgba(51,255,138,0.18);border-radius:9px}
+.scan{position:absolute;inset:0;pointer-events:none;z-index:5;
+  background:repeating-linear-gradient(to bottom,rgba(255,255,255,0.018) 0 1px,transparent 1px 3px)}
+
+.blk{margin-bottom:16px;opacity:0;transform:translateY(6px);animation:in .32s ease forwards}
+@keyframes in{to{opacity:1;transform:none}}
+.echo{color:var(--dim);margin-bottom:9px}
+.echo b{color:var(--grn);font-weight:500}
+.echo i{font-style:normal;color:var(--txt)}
+.sys{color:var(--dim);line-height:1.85}
+.sys .ok{color:var(--grn)}
+.sys .warn{color:var(--amb)}
+.sys .k{color:var(--cyn)}
+.hr{color:var(--dim2);letter-spacing:-0.5px;white-space:pre;overflow-x:auto}
+
+/* banner */
+.banner{color:var(--grn);white-space:pre;line-height:1.15;font-size:clamp(6px,1.35vw,13px);
+  text-shadow:0 0 14px rgba(51,255,138,0.35);overflow-x:auto}
+
+/* table output — tables never widen the window, they scroll inside it */
+.blk{max-width:100%}
+table{width:100%;border-collapse:collapse;font-size:0.76rem;table-layout:auto}
+thead th{text-align:left;padding:6px 10px;color:var(--dim2);font-weight:500;letter-spacing:0.12em;
+  text-transform:uppercase;font-size:0.62rem;border-bottom:1px solid var(--line)}
+tbody tr{border-bottom:1px dashed rgba(51,255,138,0.09);cursor:pointer;transition:background .18s}
+tbody tr:hover{background:rgba(51,255,138,0.05)}
+tbody tr.open{background:rgba(51,255,138,0.07)}
+tbody td{padding:8px 10px;vertical-align:top}
+td.id{color:var(--amb);white-space:nowrap;width:1%}
+td.nm{color:var(--txt)}
+td.nm b{color:#e6fff0;font-weight:500}
+td.st{color:var(--dim);white-space:nowrap;width:1%;text-align:right}
+td.st .f{color:var(--grn)}
+tr .caret{color:var(--grn);display:inline-block;transition:transform .25s}
+tr.open .caret{transform:rotate(90deg)}
+
+/* expanded detail: a framed plate plus keys */
+tr.detail > td{padding:0}
+.detail-in{display:grid;grid-template-columns:minmax(160px,300px) 1fr;gap:18px;padding:14px 10px 20px}
+.plateframe{border:1px solid var(--line);background:#06090c;padding:8px;position:relative}
+.plateframe::before{content:'';position:absolute;inset:3px;border:1px dashed rgba(51,255,138,0.12);pointer-events:none}
+.plateframe .img{aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;cursor:zoom-in;overflow:hidden}
+.plateframe img{max-width:100%;max-height:100%;object-fit:contain;transition:opacity .2s,transform .5s ease}
+.plateframe .img:hover img{transform:scale(1.05)}
+.plateframe .none{color:var(--dim2);font-size:0.7rem}
+.plateframe .lbl{margin-top:7px;font-size:0.6rem;color:var(--dim2);letter-spacing:0.1em;
+  display:flex;justify-content:space-between}
+.plateframe .lbl b{color:var(--grn);font-weight:500}
+.reel{display:flex;gap:4px;margin-top:7px}
+.reel button{flex:1;height:28px;padding:0;border:1px solid var(--line);background:#06090c;cursor:pointer;
+  overflow:hidden;opacity:0.45;transition:.22s}
+.reel button:hover{opacity:0.85}
+.reel button.on{opacity:1;border-color:var(--grn)}
+.reel img{width:100%;height:100%;object-fit:cover}
+
+.keys{font-size:0.76rem;line-height:1.95}
+.keys div{display:flex;gap:12px}
+.keys k{color:var(--dim2);width:104px;flex-shrink:0}
+.keys k::after{content:' ...........'; color:rgba(220,240,228,0.1)}
+.keys v{color:var(--txt)}
+.keys v.g{color:var(--grn)}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.acts a{padding:8px 15px;border:1px solid var(--line);text-decoration:none;font-size:0.7rem;
+  color:var(--grn);transition:.22s;letter-spacing:0.04em}
+.acts a:hover{background:var(--grn);color:#05070a;border-color:var(--grn)}
+.acts a.s{color:var(--amb);border-color:rgba(255,176,0,0.3)}
+.acts a.s:hover{background:var(--amb);color:#1a1000}
+.acts .soon{font-size:0.7rem;color:var(--dim2)}
+
+/* suggestion chips */
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}
+.chips button{padding:5px 11px;border:1px solid var(--line);background:transparent;color:var(--dim);
+  font-family:var(--mono);font-size:0.68rem;cursor:pointer;border-radius:4px;transition:.22s}
+.chips button:hover{color:var(--grn);border-color:var(--grn);background:rgba(51,255,138,0.07)}
+
+/* ── prompt ── */
+.prompt{flex-shrink:0;display:flex;align-items:center;gap:9px;padding:12px 22px 14px;
+  border-top:1px solid var(--line);background:#080c10}
+.prompt .ps1{color:var(--grn);white-space:nowrap;font-size:0.82rem}
+.prompt .ps1 i{font-style:normal;color:var(--cyn)}
+.prompt input{flex:1;background:transparent;border:0;outline:0;color:var(--txt);
+  font-family:var(--mono);font-size:0.86rem;caret-color:transparent}
+.prompt .caret{width:8px;height:16px;background:var(--grn);animation:bk 1.05s steps(1) infinite}
+@keyframes bk{50%{opacity:0}}
+.prompt .tipp{font-size:0.62rem;color:var(--dim2);white-space:nowrap}
+
+/* lightbox */
+.lb{position:fixed;inset:0;z-index:999;background:rgba(3,5,7,0.97);display:none;
+  align-items:center;justify-content:center;padding:56px;
+  background-image:repeating-linear-gradient(to bottom,rgba(255,255,255,0.02) 0 1px,transparent 1px 3px)}
+.lb.on{display:flex;animation:fade .28s}
+@keyframes fade{from{opacity:0}}
+.lb img{max-width:86vw;max-height:76vh;object-fit:contain;border:1px solid var(--line);
+  animation:pop .38s cubic-bezier(.16,1,.3,1)}
+@keyframes pop{from{opacity:0;transform:scale(.94)}}
+.lb .cap{position:absolute;bottom:28px;left:0;right:0;text-align:center;font-size:0.72rem;
+  letter-spacing:0.14em;color:var(--grn)}
+.lb button{position:absolute;width:40px;height:40px;border:1px solid var(--line);background:var(--win);
+  color:var(--grn);font-size:1rem;cursor:pointer;transition:.2s}
+.lb button:hover{background:var(--grn);color:#05070a}
+.lb .x{top:22px;right:22px}.lb .prev{left:20px;top:50%}.lb .next{right:20px;top:50%}
+
+@media(max-width:760px){
+  body{padding:0;font-size:13px}
+  .win{border-radius:0;border:0;max-height:none;height:100dvh}
+  .detail-in{grid-template-columns:1fr;padding:12px 6px 16px}
+  .bar .title{display:none}
+  .log{padding:14px 13px 6px}
+  /* the source column is the first to go, then the whole right-hand column */
+  td.st{white-space:normal;font-size:0.68rem}
+  .keys k{width:88px}
+  .keys k::after{content:' .....'}
+  .prompt{padding:10px 13px calc(12px + env(safe-area-inset-bottom))}
+  .prompt .tipp{display:none}
+  .prompt input{font-size:16px}   /* 16px stops iOS zooming the page on focus */
+  .acts a{flex:1 1 auto;text-align:center}
+  .acts{gap:7px}
+}
+@media(max-width:520px){
+  thead th:nth-child(4),tbody td:nth-child(4){display:none}
+  tbody td{padding:7px 6px}
+  .hr{font-size:0.6rem}
+  .banner{font-size:5px;line-height:1.1}
+  .tab{padding:8px 12px;font-size:0.68rem}
+  .plateframe .img{aspect-ratio:16/11}
+}
+</style>
+</head>
+<body>
+
+<div class="win">
+  <div class="bar">
+    <div class="lights"><i></i><i></i><i></i></div>
+    <div class="title">sivashanmugavadivel@garage: <b>~/mygarage/storefront</b></div>
+    <div class="badge">bear650 · as-built</div>
+  </div>
+  <div class="tabs" id="tabs"></div>
+  <div class="log" id="log"><div class="scan"></div></div>
+  <form class="prompt" id="form" autocomplete="off">
+    <span class="ps1">garage<i>@</i>bear650:~$</span>
+    <input id="input" spellcheck="false" aria-label="terminal input" />
+    <span class="caret"></span>
+    <span class="tipp">try: help · ls · open safety · show 07</span>
+  </form>
+</div>
+
+<div class="lb" id="lb">
+  <button class="x" onclick="closeLb()">✕</button>
+  <button class="prev" onclick="stepLb(-1)">‹</button>
+  <button class="next" onclick="stepLb(1)">›</button>
+  <img id="lbImg" alt="" />
+  <div class="cap" id="lbCap"></div>
+</div>
+
+<script src="storefront-data.js"></script>
+<script>
+const log = document.getElementById('log')
+const input = document.getElementById('input')
+
+/* stable 1-based ids across the whole catalogue, so `show 07` always means the same part */
+const INDEX = SF.all.map((it, i) => ({ ...it, no: i + 1, id: String(i + 1).padStart(2, '0') }))
+const find = tok => INDEX.find(i =>
+  i.id === String(tok).padStart(2, '0') || i.name.toLowerCase().includes(String(tok).toLowerCase()))
+
+function print(html, cls = 'blk') {
+  const el = document.createElement('div')
+  el.className = cls
+  el.innerHTML = html
+  log.appendChild(el)
+  log.scrollTop = log.scrollHeight
+  return el
+}
+const rule = (n = 78) => `<div class="hr">${'─'.repeat(n)}</div>`
+
+/* ── boot sequence, typed out one line at a time ── */
+const BANNER = String.raw`
+ ██████╗  █████╗ ██████╗  █████╗  ██████╗ ███████╗
+██╔════╝ ██╔══██╗██╔══██╗██╔══██╗██╔════╝ ██╔════╝
+██║  ███╗███████║██████╔╝███████║██║  ███╗█████╗
+██║   ██║██╔══██║██╔══██╗██╔══██║██║   ██║██╔══╝
+╚██████╔╝██║  ██║██║  ██║██║  ██║╚██████╔╝███████╗
+ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝`
+
+const BOOT = [
+  `<span class="ok">✓</span> mounting <span class="k">/mygarage</span>`,
+  `<span class="ok">✓</span> reading manifest <span class="k">accessories.json</span>`,
+  `<span class="ok">✓</span> indexed <span class="k">${SF.count}</span> parts across <span class="k">${SF.cats.length}</span> categories`,
+  `<span class="ok">✓</span> located <span class="k">${SF.photoCount}</span> photo plates`,
+  `<span class="warn">!</span> ${SF.count - SF.withPhotos} part(s) awaiting photography`,
+  `<span class="ok">✓</span> suppliers: <span class="k">${SF.vendors.join(', ')}</span>`,
+]
+
+;(async function bootUp() {
+  print(`<div class="banner">${BANNER}</div>`)
+  print(`<div class="sys">${SF.note}</div>`)
+  print(rule())
+  const box = print(`<div class="sys"></div>`).firstChild
+  for (const line of BOOT) {
+    await new Promise(r => setTimeout(r, 190))
+    box.insertAdjacentHTML('beforeend', line + '<br />')
+    log.scrollTop = log.scrollHeight
+  }
+  await new Promise(r => setTimeout(r, 220))
+  print(`<div class="sys">ready. type <span class="k">help</span> for commands, or pick a category above.</div>
+    <div class="chips">
+      <button data-cmd="ls">ls</button>
+      <button data-cmd="all">all</button>
+      ${SF.cats.map(c => `<button data-cmd="open ${c.id}">open ${c.id}</button>`).join('')}
+      <button data-cmd="help">help</button>
+    </div>`)
+})()
+
+/* ── category tabs ── */
+document.getElementById('tabs').innerHTML =
+  `<button class="tab on" data-cmd="all" data-cat="*">~/all<u>${SF.count}</u></button>` +
+  SF.cats.map(c => `<button class="tab" data-cmd="open ${c.id}" data-cat="${c.id}">${c.icon} ${c.label}<u>${c.items.length}</u></button>`).join('')
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-cmd]')
+  if (b) run(b.dataset.cmd)
+})
+
+/* ── command handling ── */
+document.getElementById('form').addEventListener('submit', e => {
+  e.preventDefault()
+  const v = input.value.trim()
+  input.value = ''
+  if (v) run(v)
+})
+addEventListener('keydown', e => {
+  if (document.getElementById('lb').classList.contains('on')) return
+  if (e.key.length === 1 || e.key === 'Backspace') input.focus()
+})
+input.focus()
+
+function run(raw) {
+  const cmd = raw.trim()
+  const [verb, ...rest] = cmd.split(/\s+/)
+  const arg = rest.join(' ')
+  print(`<div class="echo">garage<i>@</i>bear650:~$ <b>${escapeHtml(cmd)}</b></div>`, 'blk')
+
+  switch ((verb || '').toLowerCase()) {
+    case 'help': return help()
+    case 'ls': case 'cats': return listCats()
+    case 'all': return table(INDEX, 'all parts', '*')
+    case 'open': case 'cat': case 'cd': return openCat(arg)
+    case 'show': case 'view': return showOne(arg)
+    case 'featured': return table(INDEX.filter(i => i.featured), 'headline picks', null)
+    case 'clear': log.innerHTML = '<div class="scan"></div>'; return
+    case '': return
+    default: {
+      const hit = find(cmd)
+      if (hit) return showOne(cmd)
+      print(`<div class="sys"><span class="warn">?</span> unknown command <span class="k">${escapeHtml(verb)}</span> — try <span class="k">help</span></div>`)
+    }
+  }
+}
+
+function help() {
+  print(`<div class="sys">
+    <span class="k">ls</span>                list every category<br />
+    <span class="k">all</span>               print the whole catalogue<br />
+    <span class="k">open &lt;category&gt;</span>  e.g. <span class="k">open safety</span>, <span class="k">open camera</span><br />
+    <span class="k">show &lt;id|name&gt;</span>   e.g. <span class="k">show 07</span>, <span class="k">show sena</span><br />
+    <span class="k">featured</span>          only the headline picks<br />
+    <span class="k">clear</span>             wipe the screen<br />
+    <br />rows in any table are clickable — that expands the plate and the buy links.
+  </div>`)
+}
+
+function listCats() {
+  print(`${rule()}<table>
+    <thead><tr><th>id</th><th>category</th><th style="text-align:right">parts</th></tr></thead>
+    <tbody>${SF.cats.map(c => `<tr data-cmd="open ${c.id}">
+      <td class="id">${c.icon}</td>
+      <td class="nm"><b>${c.label}</b> <span style="color:var(--dim2)">— ${c.id}</span></td>
+      <td class="st">${String(c.items.length).padStart(2, '0')}</td></tr>`).join('')}
+    </tbody></table>`)
+}
+
+function openCat(arg) {
+  const c = SF.cats.find(x => x.id === arg.toLowerCase() || x.label.toLowerCase().includes(arg.toLowerCase()))
+  if (!c) return print(`<div class="sys"><span class="warn">?</span> no category <span class="k">${escapeHtml(arg)}</span> — try <span class="k">ls</span></div>`)
+  table(INDEX.filter(i => i.cat.id === c.id), `${c.icon} ${c.label}`, c.id)
+}
+
+function table(rows, title, tabId) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.cat === tabId))
+  print(`<div class="sys">${rows.length} result${rows.length === 1 ? '' : 's'} — <span class="k">${title}</span></div>
+  ${rule()}
+  <table><thead><tr><th></th><th>id</th><th>part</th><th style="text-align:right">plates / source</th></tr></thead>
+  <tbody>
+    ${rows.map(it => `<tr data-show="${it.id}">
+      <td class="id"><span class="caret">▸</span></td>
+      <td class="id">${it.id}</td>
+      <td class="nm"><b>${it.name}</b><br /><span style="color:var(--dim2)">${it.cat.icon} ${it.cat.label}</span></td>
+      <td class="st">${it.imgs.length ? String(it.imgs.length).padStart(2, '0') + ' plate' + (it.imgs.length === 1 ? '' : 's') : '<span style="color:var(--amb)">none</span>'}
+        · ${it.links.map(l => l[0]).join(' / ') || '—'}${it.featured ? ' <span class="f">★</span>' : ''}</td>
+    </tr>`).join('')}
+  </tbody></table>`)
+}
+
+/* clicking a row expands a detail row underneath it */
+log.addEventListener('click', e => {
+  const tr = e.target.closest('tr[data-show]')
+  if (!tr) return
+  const next = tr.nextElementSibling
+  if (next && next.classList.contains('detail')) {
+    next.remove(); tr.classList.remove('open'); return
+  }
+  tr.classList.add('open')
+  tr.insertAdjacentHTML('afterend', detailRow(find(tr.dataset.show)))
+})
+
+function detailRow(it) {
+  const imgs = it.imgs.map(f => SF.url(f))
+  return `<tr class="detail"><td colspan="4"><div class="detail-in" data-imgs='${JSON.stringify(imgs)}' data-name="${it.name}">
+    <div class="plateframe">
+      <div class="img" onclick="openLb(this)">
+        ${imgs.length ? `<img src="${imgs[0]}" alt="${it.name}" loading="lazy" />` : `<span class="none">[ no plate on file ]</span>`}
+      </div>
+      <div class="lbl"><span>plate <b class="pn">${imgs.length ? '01' : '--'}</b>/${String(imgs.length).padStart(2, '0')}</span><span>${it.id}</span></div>
+      ${imgs.length > 1 ? `<div class="reel">${imgs.map((s, k) =>
+        `<button class="${k === 0 ? 'on' : ''}" onclick="pick(this,${k})"><img src="${s}" alt="" loading="lazy" /></button>`).join('')}</div>` : ''}
+    </div>
+    <div>
+      <div class="keys">
+        <div><k>part</k><v>${it.name}</v></div>
+        <div><k>category</k><v>${it.cat.icon} ${it.cat.label}</v></div>
+        <div><k>plates</k><v>${String(imgs.length).padStart(2, '0')}</v></div>
+        <div><k>supplier</k><v>${it.links.map(l => l[0]).join(', ') || '—'}</v></div>
+        <div><k>status</k><v class="g">${it.featured ? 'fitted · headline pick' : 'fitted'}</v></div>
+      </div>
+      <div class="acts">
+        ${it.links.length ? it.links.map(([v, u], k) =>
+          `<a class="${k === 0 ? '' : 's'}" href="${u}" target="_blank" rel="noopener noreferrer">→ buy on ${v}</a>`).join('')
+          : '<span class="soon">// link coming soon</span>'}
+      </div>
+    </div>
+  </div></td></tr>`
+}
+
+function showOne(arg) {
+  const it = find(arg)
+  if (!it) return print(`<div class="sys"><span class="warn">?</span> nothing matches <span class="k">${escapeHtml(arg)}</span></div>`)
+  print(`<div class="sys">→ <span class="k">${it.name}</span></div>${rule()}
+    <table><tbody>${detailRow(it)}</tbody></table>`)
+}
+
+function pick(btn, k) {
+  const box = btn.closest('.detail-in')
+  const imgs = JSON.parse(box.dataset.imgs)
+  const img = box.querySelector('.plateframe img')
+  img.style.opacity = 0
+  setTimeout(() => { img.src = imgs[k]; img.style.opacity = 1 }, 130)
+  box.querySelectorAll('.reel button').forEach((b, j) => b.classList.toggle('on', j === k))
+  box.querySelector('.pn').textContent = String(k + 1).padStart(2, '0')
+  box.dataset.at = k
+}
+
+const escapeHtml = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
+
+/* lightbox */
+let set = [], at = 0, who = ''
+function openLb(frame) {
+  const box = frame.closest('.detail-in')
+  set = JSON.parse(box.dataset.imgs); if (!set.length) return
+  at = +(box.dataset.at || 0); who = box.dataset.name
+  paint(); document.getElementById('lb').classList.add('on')
+}
+function paint() {
+  document.getElementById('lbImg').src = set[at]
+  document.getElementById('lbCap').textContent = `${who} — plate ${at + 1} / ${set.length}`
+}
+function stepLb(d) { at = (at + d + set.length) % set.length; paint() }
+function closeLb() { document.getElementById('lb').classList.remove('on'); input.focus() }
+document.getElementById('lb').addEventListener('click', e => { if (e.target.id === 'lb') closeLb() })
+addEventListener('keydown', e => {
+  if (!document.getElementById('lb').classList.contains('on')) return
+  if (e.key === 'Escape') closeLb()
+  if (e.key === 'ArrowRight') stepLb(1)
+  if (e.key === 'ArrowLeft') stepLb(-1)
+})
+</script>
+</body>
+</html>

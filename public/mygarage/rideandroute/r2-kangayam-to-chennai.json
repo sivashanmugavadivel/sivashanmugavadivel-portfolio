@@ -1,0 +1,35 @@
+{
+  "order": 30,
+  "id": "r2",
+
+  "name": "Kangayam to Chennai",
+  "subtitle": "Home to the City",
+  "mode": "planned",
+
+  "distance": "450 KM",
+  "time": null,
+  "date": "Planned",
+  "rating": null,
+
+  "fromCity": "Kangayam",
+  "toCity": "Chennai",
+  "states": ["Tamil Nadu"],
+  "color": "#f97316",
+
+  "description": "The long haul from home to Chennai.",
+  "story": "Not ridden yet. The full stretch from home to Chennai in one go — the longest planned so far.",
+  "highlights": ["Longest Planned Ride", "Salem Highway", "One-day Attempt"],
+  "via": ["Erode", "Salem", "Ulundurpet"],
+
+  "mapCenter": [12.0, 79.0],
+  "mapZoom": 8,
+
+  "videoId": null,
+  "photos": [],
+  "stats": null,
+
+  "stops": [
+    { "id": "kangayam", "label": "Kariya Kattu Valasu", "lat": 11.035075, "lng": 77.618430, "home": true, "dir": "left" },
+    { "id": "chennai", "label": "Chennai", "lat": 13.0827, "lng": 80.2707, "dir": "right" }
+  ]
+}

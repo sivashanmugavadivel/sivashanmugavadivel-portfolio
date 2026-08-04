@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Storefront · 2 · Cinema Scroll</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════
+   CINEMA SCROLL — one product per full screen, snap by snap.
+   No card grid and no header. The page's accent colour shifts
+   as you move between categories, so the whole screen changes
+   mood rather than just a badge.
+   ══════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08090d; --panel:#0e1017; --off:#f4f5f8;
+  --d1:rgba(244,245,248,0.6); --d2:rgba(244,245,248,0.36); --d3:rgba(244,245,248,0.18);
+  --bd:rgba(255,255,255,0.09);
+  --acc:#5ec8ff;               /* animated per category */
+  --disp:'Bebas Neue',sans-serif; --sans:'Manrope',sans-serif;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+html{scroll-snap-type:y mandatory;scroll-behavior:smooth}
+body{background:var(--bg);color:var(--d1);font-family:var(--sans);overflow-x:hidden;
+  transition:background 1.1s ease;-webkit-font-smoothing:antialiased}
+::selection{background:var(--acc);color:#000}
+
+/* the accent wash sits behind everything and eases between hues */
+.wash{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.5;
+  background:radial-gradient(70vw 70vw at 78% 26%,var(--acc),transparent 66%);
+  filter:blur(80px);transition:background 1.1s ease}
+.vig{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:linear-gradient(to bottom,rgba(0,0,0,0.55),transparent 26%,transparent 72%,rgba(0,0,0,0.7))}
+.noise{position:fixed;inset:0;z-index:9;pointer-events:none;opacity:0.2;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* ── the only fixed chrome: a corner counter and a film strip of dots ── */
+.hud{position:fixed;top:26px;left:30px;z-index:40;display:flex;align-items:baseline;gap:9px;
+  font-family:var(--disp);letter-spacing:0.06em}
+.hud b{font-size:2.1rem;color:var(--off);line-height:1;transition:color .5s}
+.hud span{font-size:0.9rem;color:var(--d3)}
+.hud i{display:block;width:26px;height:1px;background:var(--d3);margin:0 4px}
+.hud u{text-decoration:none;font-family:var(--sans);font-size:0.62rem;font-weight:700;
+  letter-spacing:0.2em;text-transform:uppercase;color:var(--acc);transition:color 1.1s ease}
+.exitlink{position:fixed;top:28px;right:30px;z-index:40;font-size:0.66rem;font-weight:700;
+  letter-spacing:0.18em;text-transform:uppercase;color:var(--d2);text-decoration:none;transition:.3s}
+.exitlink:hover{color:var(--off)}
+
+.strip{position:fixed;right:26px;top:50%;transform:translateY(-50%);z-index:40;
+  display:flex;flex-direction:column;gap:7px;align-items:flex-end}
+.sd{width:22px;height:3px;border:0;padding:0;border-radius:99px;background:rgba(255,255,255,0.2);
+  cursor:pointer;transition:.4s var(--ease);position:relative}
+.sd:hover{background:rgba(255,255,255,0.55);width:30px}
+.sd.on{background:var(--acc);width:44px}
+.sd.head{background:transparent;width:auto;height:auto;font-family:var(--sans);font-size:0.55rem;
+  font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--d3);
+  margin-top:12px;padding-bottom:3px;cursor:default}
+.sd.head:first-child{margin-top:0}
+
+/* ── slides ── */
+section{min-height:100vh;scroll-snap-align:start;position:relative;z-index:2;
+  display:flex;align-items:center}
+
+/* opening title card */
+.open{flex-direction:column;justify-content:center;gap:26px;padding:0 clamp(28px,7vw,110px);text-align:left}
+.open .kick{font-size:0.66rem;font-weight:800;letter-spacing:0.3em;text-transform:uppercase;color:var(--acc);
+  opacity:0;animation:fade .9s var(--ease) .2s forwards}
+h1{font-family:var(--disp);font-size:clamp(3.6rem,15vw,13rem);line-height:0.82;letter-spacing:0.01em;
+  color:var(--off)}
+h1 .w{display:block;overflow:hidden}
+h1 .w span{display:block;transform:translateY(104%);animation:rise 1.15s var(--ease) forwards}
+h1 em{font-style:normal;color:var(--acc);transition:color 1.1s ease}
+@keyframes rise{to{transform:none}}
+@keyframes fade{to{opacity:1}}
+.open p{max-width:430px;font-size:1rem;line-height:1.8;
+  opacity:0;transform:translateY(16px);animation:up 1s var(--ease) .85s forwards}
+@keyframes up{to{opacity:1;transform:none}}
+.open .figs{display:flex;gap:42px;flex-wrap:wrap;
+  opacity:0;transform:translateY(16px);animation:up 1s var(--ease) 1s forwards}
+.figs div b{display:block;font-family:var(--disp);font-size:2.6rem;color:var(--off);line-height:1}
+.figs div span{font-size:0.6rem;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--d2)}
+.scrollcue{position:absolute;bottom:34px;left:clamp(28px,7vw,110px);display:flex;align-items:center;gap:12px;
+  font-size:0.62rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--d2);
+  opacity:0;animation:fade 1s var(--ease) 1.3s forwards}
+.scrollcue i{display:block;width:1px;height:34px;background:linear-gradient(var(--acc),transparent);
+  animation:drop 2s var(--ease) infinite}
+@keyframes drop{50%{transform:translateY(9px)}}
+
+/* category card — a full-screen chapter break */
+.chapter{justify-content:center;text-align:center;flex-direction:column;gap:16px}
+.chapter .ic{font-size:2.6rem;opacity:0;transform:scale(0.5);transition:.9s var(--ease)}
+.chapter.seen .ic{opacity:1;transform:none}
+.chapter h2{font-family:var(--disp);font-size:clamp(3rem,13vw,10rem);line-height:0.85;color:var(--off);
+  letter-spacing:0.02em;opacity:0;transform:translateY(40px);transition:1s var(--ease) .1s}
+.chapter.seen h2{opacity:1;transform:none}
+.chapter .sub{font-size:0.66rem;font-weight:800;letter-spacing:0.32em;text-transform:uppercase;color:var(--acc);
+  opacity:0;transition:1s var(--ease) .3s;transition-property:opacity}
+.chapter.seen .sub{opacity:1}
+.chapter .line{width:0;height:1px;background:var(--bd);margin-top:8px;transition:width 1.2s var(--ease) .35s}
+.chapter.seen .line{width:min(420px,60vw)}
+
+/* product slide: giant plate one side, plain type the other */
+.item{padding:96px clamp(24px,5vw,80px) 60px;gap:clamp(24px,5vw,72px)}
+.item .stage{flex:1 1 52%;min-width:0;position:relative;display:flex;align-items:center;justify-content:center;
+  aspect-ratio:1/1;max-height:76vh}
+.item .stage::before{content:'';position:absolute;inset:6%;border-radius:50%;
+  background:radial-gradient(circle,var(--acc),transparent 66%);opacity:0.24;filter:blur(52px);
+  transition:background 1.1s ease}
+.item .stage img{position:relative;max-width:100%;max-height:100%;object-fit:contain;
+  opacity:0;transform:scale(0.9) translateY(30px);transition:opacity 1s var(--ease),transform 1.15s var(--ease);
+  filter:drop-shadow(0 40px 60px rgba(0,0,0,0.6))}
+.item.seen .stage img{opacity:1;transform:none}
+.item .stage .none{font-size:5rem;opacity:0.14}
+.item .ghost{position:absolute;font-family:var(--disp);font-size:clamp(9rem,30vw,26rem);line-height:1;
+  color:rgba(255,255,255,0.032);z-index:-1;user-select:none;letter-spacing:-0.02em}
+
+.item .say{flex:1 1 42%;min-width:0;display:flex;flex-direction:column;gap:18px}
+.item .say .no{font-family:var(--disp);font-size:0.95rem;letter-spacing:0.24em;color:var(--acc);
+  transition:color 1.1s ease;opacity:0;transform:translateX(-18px);transition:opacity .8s var(--ease),transform .8s var(--ease)}
+.item.seen .say .no{opacity:1;transform:none}
+.item .say h3{font-family:var(--disp);font-size:clamp(2.2rem,6vw,4.6rem);line-height:0.94;color:var(--off);
+  letter-spacing:0.015em}
+.item .say h3 .w{display:block;overflow:hidden}
+.item .say h3 .w span{display:block;transform:translateY(104%);transition:transform 1s var(--ease)}
+.item.seen .say h3 .w span{transform:none}
+.item .say .facts{display:flex;flex-direction:column;gap:0;border-top:1px solid var(--bd);
+  opacity:0;transition:opacity .9s var(--ease) .35s}
+.item.seen .say .facts{opacity:1}
+.fact{display:flex;gap:18px;padding:11px 0;border-bottom:1px solid var(--bd);font-size:0.8rem}
+.fact k{flex:0 0 92px;font-size:0.6rem;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--d3)}
+.fact v{color:var(--off);font-weight:500}
+.item .say .acts{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;
+  opacity:0;transform:translateY(14px);transition:.9s var(--ease) .5s}
+.item.seen .say .acts{opacity:1;transform:none}
+.go{display:inline-flex;align-items:center;gap:9px;padding:14px 26px;border-radius:999px;text-decoration:none;
+  font-size:0.78rem;font-weight:700;letter-spacing:0.04em;transition:all .35s var(--ease)}
+.go.p{background:var(--off);color:#08090d}
+.go.p:hover{background:var(--acc);color:#000;transform:translateY(-3px)}
+.go.s{border:1px solid var(--bd);color:var(--off)}
+.go.s:hover{border-color:var(--acc);color:var(--acc);transform:translateY(-3px)}
+.soon{font-size:0.78rem;color:var(--d3);font-style:italic}
+
+/* the plate reel under the copy */
+.reel{display:flex;gap:8px;margin-top:4px;opacity:0;transition:opacity .9s var(--ease) .6s}
+.item.seen .reel{opacity:1}
+.reel button{width:52px;height:52px;padding:0;border-radius:11px;overflow:hidden;cursor:pointer;
+  border:1px solid var(--bd);background:rgba(255,255,255,0.03);opacity:0.45;transition:.3s var(--ease)}
+.reel button:hover{opacity:0.9;transform:translateY(-3px)}
+.reel button.on{opacity:1;border-color:var(--acc)}
+.reel img{width:100%;height:100%;object-fit:cover}
+
+/* closing card */
+.close{flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:22px}
+.close h2{font-family:var(--disp);font-size:clamp(2.6rem,10vw,7rem);line-height:0.88;color:var(--off)}
+.close p{max-width:440px;font-size:0.95rem;line-height:1.8}
+.back{display:inline-flex;align-items:center;gap:11px;padding:15px 30px;border-radius:999px;
+  border:1px solid var(--bd);color:var(--off);text-decoration:none;font-size:0.78rem;font-weight:700;
+  letter-spacing:0.1em;text-transform:uppercase;transition:.35s var(--ease)}
+.back:hover{background:var(--off);color:#08090d;transform:translateY(-3px)}
+
+/* lightbox */
+.lb{position:fixed;inset:0;z-index:999;background:rgba(4,5,8,0.97);backdrop-filter:blur(10px);
+  display:none;align-items:center;justify-content:center;padding:58px}
+.lb.on{display:flex;animation:fade2 .3s}
+@keyframes fade2{from{opacity:0}}
+.lb img{max-width:86vw;max-height:78vh;object-fit:contain;animation:pop .45s var(--ease)}
+@keyframes pop{from{opacity:0;transform:scale(.94)}}
+.lb .cap{position:absolute;bottom:30px;left:0;right:0;text-align:center;font-family:var(--disp);
+  font-size:1.05rem;letter-spacing:0.16em;color:var(--acc)}
+.lb button{position:absolute;width:46px;height:46px;border-radius:50%;border:1px solid var(--bd);
+  background:rgba(20,22,30,0.9);color:var(--off);font-size:1.1rem;cursor:pointer;transition:.22s}
+.lb button:hover{background:var(--off);color:#08090d}
+.lb .x{top:24px;right:24px}.lb .prev{left:24px;top:50%}.lb .next{right:24px;top:50%}
+
+@media(max-width:860px){
+  html{scroll-snap-type:none}
+  /* the alternating row-reverse is set inline, so it has to be beaten with !important */
+  .item{flex-direction:column!important;padding:76px 20px 52px;text-align:left;gap:22px}
+  .item .stage{width:100%;max-height:40svh;aspect-ratio:4/3}
+  .item .ghost{font-size:34vw}
+  .strip{display:none}
+  section{min-height:auto;padding-top:64px;padding-bottom:64px}
+  .open,.chapter,.close{min-height:100svh}
+  .open{padding:0 20px}
+  .scrollcue{left:20px;bottom:26px}
+}
+@media(max-width:520px){
+  .hud{top:16px;left:16px;gap:6px}
+  .hud b{font-size:1.5rem}
+  .hud u{font-size:0.55rem;letter-spacing:0.14em;max-width:34vw;overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap}
+  .exitlink{top:20px;right:16px;font-size:0.6rem}
+  .item{padding-top:66px}
+  .fact{font-size:0.75rem;gap:12px}
+  .fact k{flex:0 0 76px}
+  .go{padding:12px 20px;font-size:0.74rem}
+  .reel button{width:44px;height:44px}
+  .close,.open{padding-bottom:calc(56px + env(safe-area-inset-bottom))}
+}
+</style>
+</head>
+<body>
+<div class="wash" id="wash"></div><div class="vig"></div><div class="noise"></div>
+
+<div class="hud"><b id="hudN">00</b><i></i><span id="hudT">17</span><u id="hudC">Opening</u></div>
+<a class="exitlink" href="#">✕ Garage</a>
+<div class="strip" id="strip"></div>
+
+<main id="main">
+  <section class="open" data-acc="#5ec8ff" data-cat="Opening">
+    <div class="kick">A reel of every part</div>
+    <h1>
+      <span class="w"><span style="animation-delay:.2s">The</span></span>
+      <span class="w"><span style="animation-delay:.34s"><em>Storefront</em></span></span>
+    </h1>
+    <p id="lede"></p>
+    <div class="figs" id="figs"></div>
+    <div class="scrollcue"><i></i>Scroll</div>
+  </section>
+  <!-- chapters + items injected -->
+  <section class="close" data-acc="#8b5cf6" data-cat="Fin">
+    <h2>That's the build.</h2>
+    <p>Everything above is bolted to the bike right now. Nothing sponsored, nothing staged, nothing sitting in a box.</p>
+    <a class="back" href="#">← Back to My Garage</a>
+  </section>
+</main>
+
+<div class="lb" id="lb">
+  <button class="x" onclick="closeLb()">✕</button>
+  <button class="prev" onclick="stepLb(-1)">‹</button>
+  <button class="next" onclick="stepLb(1)">›</button>
+  <img id="lbImg" alt="" />
+  <div class="cap" id="lbCap"></div>
+</div>
+
+<script src="storefront-data.js"></script>
+<script>
+document.getElementById('lede').textContent = SF.note
+document.getElementById('figs').innerHTML = [
+  ['Parts', SF.count], ['Chapters', SF.cats.length], ['Plates', SF.photoCount],
+].map(([l, v]) => `<div><b>${v}</b><span>${l}</span></div>`).join('')
+
+/* one hue per category — the whole screen takes it on */
+const HUE = {
+  camera: '#5ec8ff', lighting: '#ffcc3d', helmet: '#7c6cff',
+  safety: '#ff5f56', essentials: '#39d98a',
+}
+
+/* build chapter + item slides */
+let seq = 0
+const slides = SF.cats.map((c, ci) => {
+  const acc = HUE[c.id] || '#5ec8ff'
+  const chapter = `
+    <section class="chapter" data-acc="${acc}" data-cat="${c.label}" data-chapter="${c.id}">
+      <div class="ic">${c.icon}</div>
+      <div class="sub">Chapter ${String(ci + 1).padStart(2, '0')}</div>
+      <h2>${c.label}</h2>
+      <div class="line"></div>
+    </section>`
+  return chapter + c.items.map((it, i) => slide(it, c, acc, ++seq, i)).join('')
+}).join('')
+document.querySelector('.close').insertAdjacentHTML('beforebegin', slides)
+
+function slide(it, c, acc, n, i) {
+  const imgs = it.imgs.map(f => SF.url(f))
+  const flip = i % 2 === 1
+  return `<section class="item" data-acc="${acc}" data-cat="${c.label}" data-n="${n}"
+      style="flex-direction:${flip ? 'row-reverse' : 'row'}"
+      data-imgs='${JSON.stringify(imgs)}' data-name="${it.name}">
+    <div class="stage" onclick="openLb(this)" style="cursor:${imgs.length ? 'zoom-in' : 'default'}">
+      <span class="ghost">${String(n).padStart(2, '0')}</span>
+      ${imgs.length ? `<img src="${imgs[0]}" alt="${it.name}" loading="lazy" />` : `<span class="none">${c.icon}</span>`}
+    </div>
+    <div class="say">
+      <div class="no">${String(n).padStart(2, '0')} — ${c.label}</div>
+      <h3><span class="w"><span>${it.name}</span></span></h3>
+      <div class="facts">
+        <div class="fact"><k>Category</k><v>${c.icon} ${c.label}</v></div>
+        <div class="fact"><k>Sourced</k><v>${it.links.map(l => l[0]).join(' · ') || 'pending'}</v></div>
+        <div class="fact"><k>Plates</k><v>${imgs.length || '—'}</v></div>
+        <div class="fact"><k>Status</k><v>${it.featured ? 'Headline pick · fitted' : 'Fitted'}</v></div>
+      </div>
+      ${imgs.length > 1 ? `<div class="reel">${imgs.map((s, k) =>
+        `<button class="${k === 0 ? 'on' : ''}" onclick="pick(this,${k})"><img src="${s}" alt="" loading="lazy" /></button>`).join('')}</div>` : ''}
+      <div class="acts">
+        ${it.links.length ? it.links.map(([v, u], k) =>
+          `<a class="go ${k === 0 ? 'p' : 's'}" href="${u}" target="_blank" rel="noopener noreferrer">${k === 0 ? 'Buy on ' + v : v} ↗</a>`).join('')
+          : '<span class="soon">Link coming soon</span>'}
+      </div>
+    </div>
+  </section>`
+}
+
+function pick(btn, k) {
+  const s = btn.closest('.item')
+  const imgs = JSON.parse(s.dataset.imgs)
+  const img = s.querySelector('.stage img')
+  img.style.transition = 'opacity .22s'
+  img.style.opacity = 0
+  setTimeout(() => { img.src = imgs[k]; img.style.opacity = 1 }, 180)
+  s.querySelectorAll('.reel button').forEach((b, j) => b.classList.toggle('on', j === k))
+  s.dataset.at = k
+}
+
+/* film-strip navigator: a heading per chapter, a dot per item */
+const sections = [...document.querySelectorAll('section')]
+const items = [...document.querySelectorAll('.item')]
+let strip = ''
+SF.cats.forEach(c => {
+  strip += `<button class="sd head" disabled>${c.label.split(' ')[0]}</button>`
+  c.items.forEach(it => {
+    const idx = items.findIndex(s => s.dataset.name === it.name)
+    strip += `<button class="sd" data-i="${idx}" title="${it.name}"></button>`
+  })
+})
+document.getElementById('strip').innerHTML = strip
+document.querySelectorAll('.sd[data-i]').forEach(b => b.addEventListener('click', () =>
+  items[+b.dataset.i].scrollIntoView({ behavior: 'smooth' })))
+const dots = [...document.querySelectorAll('.sd[data-i]')]
+
+/* the active slide drives the accent, the HUD and the dots */
+const hudN = document.getElementById('hudN'), hudC = document.getElementById('hudC')
+document.getElementById('hudT').textContent = String(SF.count).padStart(2, '0')
+const spy = new IntersectionObserver(es => es.forEach(e => {
+  if (!e.isIntersecting) return
+  const s = e.target
+  s.classList.add('seen')
+  document.documentElement.style.setProperty('--acc', s.dataset.acc)
+  hudC.textContent = s.dataset.cat
+  hudN.textContent = s.dataset.n ? String(s.dataset.n).padStart(2, '0') : '00'
+  const i = items.indexOf(s)
+  dots.forEach((d, j) => d.classList.toggle('on', j === i))
+}), { threshold: 0.55 })
+sections.forEach(s => spy.observe(s))
+
+/* lightbox */
+let set = [], at = 0, who = ''
+function openLb(stage) {
+  const s = stage.closest('.item')
+  set = JSON.parse(s.dataset.imgs); if (!set.length) return
+  at = +(s.dataset.at || 0); who = s.dataset.name
+  paint(); document.getElementById('lb').classList.add('on')
+}
+function paint() {
+  document.getElementById('lbImg').src = set[at]
+  document.getElementById('lbCap').textContent = `${who} — ${at + 1} / ${set.length}`
+}
+function stepLb(d) { at = (at + d + set.length) % set.length; paint() }
+function closeLb() { document.getElementById('lb').classList.remove('on') }
+document.getElementById('lb').addEventListener('click', e => { if (e.target.id === 'lb') closeLb() })
+addEventListener('keydown', e => {
+  if (!document.getElementById('lb').classList.contains('on')) return
+  if (e.key === 'Escape') closeLb()
+  if (e.key === 'ArrowRight') stepLb(1)
+  if (e.key === 'ArrowLeft') stepLb(-1)
+})
+</script>
+</body>
+</html>

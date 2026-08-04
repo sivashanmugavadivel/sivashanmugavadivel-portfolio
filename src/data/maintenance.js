@@ -1,6 +1,6 @@
 /**
- * Service & maintenance records, read straight out of `config.json` →
- * `garage.maintenance`.
+ * Service & maintenance records, read straight out of `garage.config.json` →
+ * `maintenance`.
  *
  * Same idea as ./accessories.js and ./garageGallery.js: the content lives in
  * config so a service can be logged without opening a component. Rendered by
@@ -48,9 +48,9 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
-import cfg from './config.json'
+import garageCfg from './garage.config.json'
 
-const cfgMaint = cfg.garage?.maintenance ?? {}
+const cfgMaint = garageCfg.maintenance ?? {}
 
 const num = n => (Number.isFinite(+n) ? +n : 0)
 

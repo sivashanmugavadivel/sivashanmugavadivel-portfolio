@@ -402,7 +402,7 @@ export function RidesAndRoutes({ title = 'Rides & Routes', basePath = '/mygarage
             those panes would outrank the page's fixed buttons and paint the
             map over them. This keeps the whole map on one layer. */}
         <div className="ridemap-map" style={{ position: 'relative', background: BG, isolation: 'isolate', zIndex: 0 }}>
-          <ShowcaseMiniMap basePath={basePath} />
+          <ShowcaseMiniMap />
         </div>
         {/* List */}
         <div className="ridemap-list" style={{ borderLeft: `1px solid ${BD}`, display: 'flex', flexDirection: 'column' }}>

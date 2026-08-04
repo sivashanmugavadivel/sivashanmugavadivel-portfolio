@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Vlogs · 6 · Route Reel</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════
+   ROUTE REEL — the vlogs laid out as stops on a road running
+   down the section. The tarmac paints itself in as you scroll,
+   the bike rides down it at the head of the paint, and each stop
+   swings in from its own side as the bike reaches it. The counter
+   at the top runs up as the road fills.
+   ══════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08070e; --card:#141220; --card2:#1a1828;
+  --bd:rgba(255,255,255,0.07); --bd2:rgba(255,255,255,0.13);
+  --off:#f0eef6; --d1:rgba(240,238,246,0.65); --d2:rgba(240,238,246,0.4); --d3:rgba(240,238,246,0.22);
+  --acc:#8b5cf6; --acc2:#a78bfa;
+  --honey:#e0bb3c;          /* the tank yellow off the Bear 650 */
+  --road:#191527;
+  --sans:'Inter',sans-serif; --serif:'Playfair Display',serif; --mono:'JetBrains Mono',monospace;
+  --ease:cubic-bezier(.22,1,.36,1);
+  --lane:38px;
+}
+body{background:var(--bg);color:var(--d1);font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--honey);color:#161018}
+.page{width:90%;max-width:1180px;margin:0 auto;padding:64px 0 90px;
+  display:flex;flex-direction:column;gap:clamp(40px,7vh,76px)}
+.stub{border:1px dashed var(--bd);border-radius:16px;padding:26px;color:var(--d3);
+  font-size:0.7rem;letter-spacing:0.16em;text-transform:uppercase;text-align:center}
+
+.sec{position:relative;background:var(--card);border:1px solid var(--bd);border-radius:16px;
+  padding:26px clamp(14px,3vw,30px) 34px;overflow:hidden;
+  opacity:0;transform:translateY(32px);animation:rise .8s var(--ease) .1s forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+.sec::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(60% 40% at 50% 0%,rgba(224,187,60,0.07),transparent 70%)}
+
+.head{position:relative;z-index:2;display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;margin-bottom:8px}
+.kick{font-family:var(--mono);font-size:0.58rem;letter-spacing:0.24em;text-transform:uppercase;
+  color:var(--honey);display:block;margin-bottom:7px}
+.head h2{font-family:var(--serif);font-size:clamp(1.35rem,3.6vw,2rem);font-weight:700;color:var(--off);line-height:1.1}
+.head .note{font-size:0.76rem;color:var(--d2);line-height:1.65;max-width:400px;margin-top:8px}
+.head .all{margin-left:auto;font-size:0.7rem;color:var(--acc2);text-decoration:none;padding:7px 15px;
+  border-radius:999px;border:1px solid rgba(167,139,250,0.28);transition:.3s var(--ease);white-space:nowrap}
+.head .all:hover{background:var(--acc);color:#fff;border-color:var(--acc);transform:translateY(-2px)}
+
+/* ── the odometer, which runs up with the road ── */
+.odo{position:relative;z-index:2;display:flex;gap:0;flex-wrap:wrap;margin:18px 0 6px;
+  border:1px solid var(--bd);border-radius:10px;background:var(--card2);overflow:hidden}
+.odo div{flex:1 1 110px;padding:12px 16px;border-right:1px solid var(--bd)}
+.odo div:last-child{border-right:0}
+.odo b{display:block;font-family:var(--mono);font-size:1.15rem;font-weight:700;color:var(--off);
+  font-variant-numeric:tabular-nums;letter-spacing:-0.01em}
+.odo s{display:block;text-decoration:none;font-family:var(--mono);font-size:0.5rem;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--d3);margin-top:4px}
+
+/* ══ the road ══ */
+.route{position:relative;z-index:2;padding:30px 0 10px}
+.road{position:absolute;top:0;bottom:0;left:50%;width:var(--lane);margin-left:calc(var(--lane) / -2);
+  background:var(--road);border-left:1px solid var(--bd);border-right:1px solid var(--bd);
+  border-radius:3px;overflow:hidden}
+/* the centre dashes */
+.road .dash{position:absolute;left:50%;top:0;bottom:0;width:3px;margin-left:-1.5px;
+  background:repeating-linear-gradient(180deg,rgba(255,255,255,.34) 0 16px,transparent 16px 34px);
+  opacity:.35}
+/* the paint that fills in behind the bike */
+.road .paint{position:absolute;left:0;right:0;top:0;height:0;
+  background:linear-gradient(180deg,rgba(224,187,60,0.22),rgba(224,187,60,0.06));
+  box-shadow:0 0 26px 2px rgba(224,187,60,0.28)}
+.road .paint::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--honey);
+  box-shadow:0 0 14px 2px rgba(224,187,60,.8)}
+
+/* the bike, riding at the head of the paint */
+.bike{position:absolute;left:50%;top:0;width:110px;margin-left:-55px;z-index:6;pointer-events:none;
+  filter:drop-shadow(0 12px 16px rgba(0,0,0,.75));will-change:transform}
+.bike img{width:100%;display:block}
+.bike::after{content:'';position:absolute;left:50%;bottom:-6px;width:70px;height:12px;margin-left:-35px;
+  border-radius:50%;background:radial-gradient(ellipse,rgba(0,0,0,.55),transparent 70%);filter:blur(3px)}
+
+/* ── one stop ── */
+.stops{position:relative;display:flex;flex-direction:column;gap:clamp(22px,4vh,40px)}
+.stop{display:grid;grid-template-columns:1fr var(--lane) 1fr;align-items:center;gap:0}
+.stop .card{grid-column:1;margin-right:26px;
+  opacity:0;transform:translateX(-38px) rotate(-1deg);transition:opacity .7s var(--ease),transform .7s var(--ease)}
+.stop:nth-child(even) .card{grid-column:3;margin-right:0;margin-left:26px;transform:translateX(38px) rotate(1deg)}
+.stop.in .card{opacity:1;transform:none}
+
+/* the pin on the road */
+.pin{grid-column:2;justify-self:center;position:relative;z-index:5;width:var(--lane);height:var(--lane);
+  display:grid;place-items:center}
+.pin i{width:13px;height:13px;border-radius:50%;background:var(--card);border:2px solid var(--bd2);
+  transition:.45s var(--ease);font-style:normal}
+.stop.in .pin i{background:var(--honey);border-color:var(--honey);transform:scale(1.15);
+  box-shadow:0 0 0 5px rgba(224,187,60,.16),0 0 20px 2px rgba(224,187,60,.55)}
+.pin::after{content:'';position:absolute;inset:6px;border-radius:50%;border:1px solid var(--honey);
+  opacity:0}
+.stop.in .pin::after{animation:ping 2.6s var(--ease) infinite}
+@keyframes ping{0%{transform:scale(.7);opacity:.7}70%,100%{transform:scale(2.3);opacity:0}}
+/* the km marker beside the pin */
+.pin b{position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-family:var(--mono);
+  font-size:0.48rem;letter-spacing:0.12em;color:var(--d3);white-space:nowrap}
+
+/* ── the card ── */
+.card{position:relative;background:var(--card2);border:1px solid var(--bd);border-radius:12px;
+  overflow:hidden;display:grid;grid-template-columns:minmax(0,132px) minmax(0,1fr);
+  transition:border-color .35s,transform .45s var(--ease),box-shadow .45s var(--ease)}
+.stop.in .card:hover{border-color:rgba(224,187,60,.5);
+  box-shadow:0 22px 40px -22px #000,0 0 0 1px rgba(224,187,60,.28)}
+.stop:nth-child(even) .card{grid-template-columns:minmax(0,1fr) minmax(0,132px)}
+.stop:nth-child(even) .card .shot{order:2}
+.card .shot{position:relative;background:#000;min-height:112px;overflow:hidden}
+.card .shot img,.card .shot video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  transition:transform .7s var(--ease)}
+.card:hover .shot img{transform:scale(1.07)}
+.card .shot video{opacity:0;transition:opacity .45s ease}
+.card.roll .shot video{opacity:1}
+.card .shot .d{position:absolute;right:5px;bottom:5px;font-family:var(--mono);font-size:0.5rem;
+  padding:2px 6px;border-radius:3px;background:rgba(0,0,0,.8);color:#fff}
+.card .shot .pl{position:absolute;inset:0;display:grid;place-items:center;
+  background:linear-gradient(180deg,rgba(0,0,0,.1),rgba(0,0,0,.45));opacity:0;transition:.35s}
+.card:hover .shot .pl{opacity:1}
+.card .shot .pl svg{width:15px;height:15px;fill:#fff;filter:drop-shadow(0 2px 6px #000)}
+.card .tx{padding:13px 15px 14px;min-width:0;display:flex;flex-direction:column;gap:6px;justify-content:center}
+.card .tx .top{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:0.5rem;
+  letter-spacing:0.16em;text-transform:uppercase;color:var(--honey)}
+.card .tx .top s{text-decoration:none;color:var(--d3)}
+.card .tx h3{font-size:0.9rem;font-weight:700;color:var(--off);line-height:1.32}
+.card .tx p{font-size:0.73rem;line-height:1.6;color:var(--d2);
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card .tx .foot{display:flex;align-items:center;gap:9px;margin-top:2px;font-family:var(--mono);
+  font-size:0.5rem;letter-spacing:0.12em;color:var(--d3)}
+.card .tx .foot a{margin-left:auto;color:var(--acc2);text-decoration:none;font-size:0.62rem;
+  letter-spacing:0;font-family:var(--sans);font-weight:600;transition:.25s}
+.card .tx .foot a:hover{color:var(--honey)}
+
+/* ── the sign at the end of the road ──
+   The section only marks five stops; the board carries on to the rest. It sits
+   over the road so the tarmac visibly runs into it. */
+.finish{position:relative;z-index:2;margin-top:30px;display:flex;justify-content:center}
+.finish a{position:relative;display:flex;align-items:center;gap:14px;padding:14px 22px;border-radius:12px;
+  background:var(--card2);border:1px solid rgba(224,187,60,.28);text-decoration:none;overflow:hidden;
+  transition:.35s var(--ease)}
+.finish a:hover{transform:translateY(-3px);border-color:var(--honey);
+  box-shadow:0 22px 40px -20px #000,0 0 0 1px rgba(224,187,60,.4)}
+/* chequered edge, the way a finish board is marked */
+.finish a::before{content:'';position:absolute;left:0;top:0;bottom:0;width:9px;
+  background:repeating-conic-gradient(var(--off) 0 25%,#161018 0 50%) 0 0/9px 9px}
+.finish .n{font-family:var(--mono);font-size:1.2rem;font-weight:700;color:var(--honey);
+  padding-left:8px;line-height:1}
+.finish .tx b{display:block;font-size:0.84rem;font-weight:700;color:var(--off)}
+.finish .tx s{display:block;text-decoration:none;font-family:var(--mono);font-size:0.5rem;
+  letter-spacing:0.16em;text-transform:uppercase;color:var(--d3);margin-top:4px}
+.finish .arrow{font-size:1.05rem;color:var(--honey);transition:transform .35s var(--ease)}
+.finish a:hover .arrow{transform:translateX(5px)}
+
+/* ── empty state ── */
+.empty{position:relative;z-index:2;border:1px dashed var(--bd2);border-radius:12px;background:var(--card2);
+  padding:clamp(34px,6vw,58px) 24px;text-align:center;display:flex;flex-direction:column;
+  align-items:center;gap:11px;overflow:hidden;margin-top:18px}
+.empty .lane{position:absolute;left:50%;top:0;bottom:0;width:38px;margin-left:-19px;background:var(--road);
+  opacity:.55}
+.empty .lane i{position:absolute;left:50%;top:0;bottom:0;width:3px;margin-left:-1.5px;
+  background:repeating-linear-gradient(180deg,rgba(255,255,255,.3) 0 16px,transparent 16px 34px);
+  animation:run 1.4s linear infinite}
+@keyframes run{to{transform:translateY(34px)}}
+.empty > *:not(.lane){position:relative;z-index:2}
+.empty .ico{font-size:2rem;animation:bob 2.6s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.empty .lab{font-size:0.6rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--honey);font-weight:700}
+.empty p{font-size:0.8rem;color:var(--d2);max-width:420px;line-height:1.65}
+
+@media(max-width:820px){
+  :root{--lane:26px}
+  .route{padding-left:6px}
+  .road{left:20px;margin-left:0}
+  .bike{left:20px;width:74px;margin-left:-37px}
+  .stop{grid-template-columns:var(--lane) minmax(0,1fr)}
+  .pin{grid-column:1}
+  .stop .card,.stop:nth-child(even) .card{grid-column:2;margin:0 0 0 18px;transform:translateX(26px)}
+  .stop.in .card{transform:none}
+  .stop:nth-child(even) .card{grid-template-columns:minmax(0,110px) minmax(0,1fr)}
+  .stop:nth-child(even) .card .shot{order:0}
+  .card{grid-template-columns:minmax(0,110px) minmax(0,1fr)}
+}
+@media(max-width:760px){.page{width:94%;padding:40px 0 60px}.head .all{margin-left:0}}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition-duration:.001s!important}
+  .stop .card{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="stub">↑ Accessories &amp; Add-ons</div>
+
+  <section class="sec">
+    <div class="head">
+      <div>
+        <span class="kick" id="kick"></span>
+        <h2 id="h2"></h2>
+        <div class="note" id="note"></div>
+      </div>
+      <a class="all" id="all" target="_blank" rel="noopener">View all →</a>
+    </div>
+    <div id="body"></div>
+  </section>
+
+  <div class="stub">↓ Ride Gallery</div>
+</div>
+
+<script src="vlog-data.js"></script>
+<script>
+const V = window.VLOG
+document.getElementById('kick').textContent = V.kicker
+document.getElementById('h2').textContent   = V.heading
+document.getElementById('note').textContent = V.note
+document.getElementById('all').href         = V.page
+document.getElementById('all').textContent  = 'All vlogs →'
+
+const PLAY = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>'
+
+if (V.isEmpty) {
+  document.getElementById('body').innerHTML = `
+    <div class="empty">
+      <div class="lane"><i></i></div>
+      <div class="ico">🛣️</div>
+      <div class="lab">Road not ridden yet</div>
+      <p>Every ride that gets filmed becomes a stop on this road. Nothing to mark
+         until the first one is in the can.</p>
+    </div>`
+} else {
+  build()
+}
+
+function build() {
+  document.getElementById('body').innerHTML = `
+    <div class="odo">
+      <div><b id="oVid">0</b><s>Videos filmed</s></div>
+      <div><b id="oRun">0:00</b><s>Total runtime</s></div>
+      <div><b id="oCat">0</b><s>Kinds of ride</s></div>
+      <div><b id="oNew">—</b><s>Latest stop</s></div>
+    </div>
+
+    <div class="route" id="route">
+      <div class="road">
+        <span class="dash"></span>
+        <span class="paint" id="paint"></span>
+      </div>
+      <div class="bike" id="bike"><img alt="" src="${V.bike(28)}" /></div>
+      <div class="stops" id="stops"></div>
+    </div>
+    <div class="finish">
+      <a href="${V.page}">
+        <span class="n">+${V.more}</span>
+        <span class="tx"><b>The road carries on</b><s>${V.LIMIT} stops here · ${V.count} in total</s></span>
+        <span class="arrow">→</span>
+      </a>
+    </div>`
+
+  document.getElementById('stops').innerHTML = V.shown.map(v => `
+    <div class="stop" data-i="${v.i}">
+      <article class="card">
+        <div class="shot">
+          <img src="${v.poster}" alt="${v.title}" loading="lazy"
+               onerror="this.onerror=null;this.src='${v.still}'" />
+          ${v.clip ? `<video src="${v.clip}" muted loop playsinline preload="none"></video>` : ''}
+          <span class="d">${v.duration}</span>
+          <span class="pl">${PLAY}</span>
+        </div>
+        <div class="tx">
+          <div class="top">${v.cat}<s>·</s>${v.type === 'short' ? 'Short' : 'Full film'}${v.fav ? '<s>·</s>★' : ''}</div>
+          <h3>${v.title}</h3>
+          <p>${v.blurb}</p>
+          <div class="foot">
+            <span>${v.when.label}</span><span>${v.views} views</span>
+            <a href="${v.url}" target="_blank" rel="noopener">Watch →</a>
+          </div>
+        </div>
+      </article>
+      <div class="pin"><b>STOP ${String(v.n).padStart(2, '0')}</b><i></i></div>
+    </div>`).join('')
+
+  fillOdo()
+  wire()
+}
+
+/* the counters up top, run up once when the section first arrives */
+function fillOdo() {
+  const totalSec = V.all.reduce((n, v) => n + V.toSec(v.duration), 0)
+  const runLabel = `${Math.floor(totalSec / 60)}:${String(totalSec % 60).padStart(2, '0')}`
+  document.getElementById('oNew').textContent = V.all[0].when.short
+
+  const targets = [
+    [document.getElementById('oVid'), V.count, n => String(Math.round(n))],
+    [document.getElementById('oCat'), V.cats.length, n => String(Math.round(n))],
+    [document.getElementById('oRun'), totalSec, n =>
+      `${Math.floor(n / 60)}:${String(Math.round(n) % 60).padStart(2, '0')}`],
+  ]
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return
+    io.disconnect()
+    const t0 = performance.now()
+    const step = ts => {
+      const p = Math.min(1, (ts - t0) / 1200)
+      const e2 = 1 - Math.pow(1 - p, 3)
+      targets.forEach(([el, to, fmt]) => { el.textContent = fmt(to * e2) })
+      if (p < 1) requestAnimationFrame(step)
+      else document.getElementById('oRun').textContent = runLabel
+    }
+    requestAnimationFrame(step)
+  }), { threshold: 0.4 })
+  io.observe(document.querySelector('.odo'))
+}
+
+function wire() {
+  const route = document.getElementById('route')
+  const paint = document.getElementById('paint')
+  const bike  = document.getElementById('bike')
+  const bikeImg = bike.querySelector('img')
+  const stops = [...document.querySelectorAll('.stop')]
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches
+  let raf = 0, lastFrame = -1
+
+  /* The 360° frames are full-size product PNGs, so the handful this uses are
+     pulled into cache up front — swapping to one that has not downloaded yet
+     blanks the bike for a frame. */
+  const TURN = [28, 31, 34, 37, 3, 6, 9, 12, 15, 18, 21, 24]
+  TURN.forEach(n => { const im = new Image(); im.src = V.bike(n) })
+
+  /* ── scroll → how far down the road the bike has got ──
+     One number drives the paint height, the bike's position and which
+     stops have been passed, so a scroll frame costs three style writes. */
+  const paintRoad = () => {
+    raf = 0
+    const r = route.getBoundingClientRect()
+    const span = r.height + innerHeight * 0.45
+    const p = Math.max(0, Math.min(1, (innerHeight * 0.62 - r.top) / span))
+    const y = p * r.height
+
+    paint.style.height = y + 'px'
+    bike.style.transform = `translate3d(0, ${y - 34}px, 0)`
+
+    /* swap the 360° frame as it travels, so the bike is never a static
+       sticker being dragged down the page */
+    if (!reduce) {
+      const k = Math.min(TURN.length - 1, Math.floor(p * TURN.length))
+      if (k !== lastFrame) { lastFrame = k; bikeImg.src = V.bike(TURN[k]) }
+    }
+
+    stops.forEach(s => {
+      const m = s.getBoundingClientRect()
+      s.classList.toggle('in', m.top < innerHeight * 0.82)
+    })
+  }
+  const onScroll = () => { if (!raf) raf = requestAnimationFrame(paintRoad) }
+  addEventListener('scroll', onScroll, { passive: true })
+  addEventListener('resize', onScroll)
+  paintRoad()
+
+  /* hover a stop and its clip runs in the thumbnail */
+  document.getElementById('stops').addEventListener('pointerover', e => {
+    const c = e.target.closest('.card'); if (!c) return
+    const vid = c.querySelector('video'); if (!vid) return
+    vid.play().then(() => c.classList.add('roll')).catch(() => {})
+  })
+  document.getElementById('stops').addEventListener('pointerout', e => {
+    const c = e.target.closest('.card'); if (!c || c.contains(e.relatedTarget)) return
+    const vid = c.querySelector('video'); if (!vid) return
+    c.classList.remove('roll'); vid.pause(); vid.currentTime = 0
+  })
+}
+</script>
+</body>
+</html>

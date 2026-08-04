@@ -1,4 +1,4 @@
-export const TAG_COLORS = {
+const TAG_COLORS = {
   recipe: '#f59e0b',
   breakfast: '#10b981',
   'high-protein': '#3b82f6',
@@ -18,7 +18,7 @@ export const TAG_COLORS = {
   dinner: '#a855f7',
 }
 
-export const TAG_ICONS = {
+const TAG_ICONS = {
   recipe: '🍳',
   breakfast: '🌅',
   'high-protein': '💪',

@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Vlog detail · 7 · Collage</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,900;1,9..144,400&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   COLLAGE — the best section from each design, in one page.
+
+   Frame            Cinema Reel   — the hero that docks into a corner PiP
+   Description      Editorial Paper — cream inset, drop cap, pull quote
+   Frame grabs      Cinema Reel   — the drifting sprocket-hole reel
+   Route            the real ride page — Leaflet + OSRM road route
+   Instagram        Editorial Paper — taped-in polaroids
+   Up next          Cinema Reel   — the tilting video cards
+
+   Chapters are gone, so the docked player carries a plain runtime
+   readout instead of a chapter playhead, and the frame grabs run
+   straight after the write-up.
+
+   Each borrowed section keeps its own palette on purpose — the cream
+   panel and the white polaroids are meant to read as things laid on
+   top of a dark page, which is what makes it a collage rather than a
+   single flat theme.
+   ══════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  /* dark shell, from Cinema Reel */
+  --bg:#07070a; --panel:#0d0d12; --card:#13131b;
+  --off:#f4f3f7; --d1:rgba(244,243,247,0.62); --d2:rgba(244,243,247,0.38);
+  --d3:rgba(244,243,247,0.17); --bd:rgba(255,255,255,0.08);
+  --acc:#e0bb3c; --acc2:#ffd968;               /* Wild Honey */
+
+  /* paper, from Editorial Paper */
+  --paper:#f4f1ea; --paper2:#eae5da; --ink:#171410; --ink2:#3a352d;
+  --pd1:rgba(23,20,16,0.72); --pd2:rgba(23,20,16,0.5); --pd3:rgba(23,20,16,0.26);
+  --prule:rgba(23,20,16,0.16); --prule2:rgba(23,20,16,0.09); --red:#b5322a;
+
+  /* the ride page's own tokens, so the map section matches it exactly */
+  --rbg:#0d0b14; --rbg2:#13111c;
+  --rbd:rgba(255,255,255,0.07); --rbd2:rgba(255,255,255,0.12);
+  --roff:#f0eee8; --rd1:rgba(240,238,232,0.7); --rd2:rgba(240,238,232,0.4);
+  --rd3:rgba(240,238,232,0.2);
+
+  --disp:'Bebas Neue',sans-serif; --serif:'Fraunces',Georgia,serif;
+  --sans:'Manrope',sans-serif;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--d1);font-family:var(--sans);overflow-x:hidden;
+  -webkit-font-smoothing:antialiased}
+::selection{background:var(--acc);color:#000}
+img,video{display:block;max-width:100%}
+
+.grain{position:fixed;inset:0;z-index:60;pointer-events:none;opacity:.13;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation:grainshift .7s steps(3) infinite}
+@keyframes grainshift{0%{transform:translate(0,0)}33%{transform:translate(-2%,1%)}66%{transform:translate(1%,-2%)}}
+.bar{position:fixed;left:0;right:0;height:50vh;background:#000;z-index:70;pointer-events:none;
+  animation:openbar 1.5s var(--ease) .25s forwards}
+.bar.t{top:0;transform-origin:top}
+.bar.b{bottom:0;transform-origin:bottom}
+@keyframes openbar{to{transform:scaleY(0)}}
+.back{position:fixed;top:22px;left:26px;z-index:52;display:flex;align-items:center;gap:9px;
+  font-size:.64rem;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--d2);
+  text-decoration:none;transition:.3s}
+.back:hover{color:var(--acc)}
+.back i{font-style:normal;transition:transform .3s var(--ease)}
+.back:hover i{transform:translateX(-4px)}
+.readbar{position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,var(--acc),var(--acc2));
+  z-index:55;width:0;box-shadow:0 0 12px var(--acc)}
+
+/* ══ 1 · HERO — Cinema Reel's docking frame ══ */
+.reel{height:210vh;position:relative}
+.frame{position:fixed;z-index:40;overflow:hidden;background:#000;top:0;left:0;
+  width:100vw;height:100vh;will-change:transform,width,height,border-radius}
+.frame .plate{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  will-change:transform,filter}
+.frame .clip{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;
+  transition:opacity 1.4s var(--ease) .6s}
+.frame .clip.on{opacity:1}
+.frame .shade{position:absolute;inset:0;
+  background:linear-gradient(to top,rgba(7,7,10,.96) 2%,rgba(7,7,10,.34) 42%,rgba(7,7,10,.62))}
+.frame .honey{position:absolute;inset:0;opacity:.3;mix-blend-mode:soft-light;
+  background:radial-gradient(60vw 60vw at 72% 18%,var(--acc),transparent 68%)}
+.herotype{position:absolute;left:0;right:0;bottom:0;padding:0 clamp(24px,6vw,90px) clamp(52px,9vh,92px);
+  z-index:3;will-change:opacity,transform}
+.num{font-family:var(--disp);font-size:clamp(3.6rem,15vw,13rem);line-height:.74;color:transparent;
+  -webkit-text-stroke:1.5px rgba(224,187,60,.45);letter-spacing:.02em;
+  opacity:0;animation:fin 1.6s var(--ease) 1.15s forwards}
+.kick{display:flex;align-items:center;gap:13px;margin-bottom:15px;flex-wrap:wrap;
+  opacity:0;animation:fin 1s var(--ease) 1.1s forwards}
+.kick b{font-size:.62rem;font-weight:800;letter-spacing:.3em;text-transform:uppercase;color:var(--acc)}
+.kick i{font-style:normal;display:block;width:46px;height:1px;background:var(--acc);opacity:.5}
+.kick u{text-decoration:none;font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--d2)}
+h1{font-family:var(--disp);font-size:clamp(2.3rem,7.4vw,6.4rem);line-height:.88;letter-spacing:.01em;
+  color:var(--off);max-width:20ch}
+h1 .w{display:inline-block;overflow:hidden;vertical-align:bottom}
+h1 .w span{display:block;transform:translateY(105%);animation:rise 1.25s var(--ease) forwards}
+@keyframes rise{to{transform:none}}
+@keyframes fin{to{opacity:1}}
+.sub{margin-top:16px;max-width:56ch;font-size:clamp(.8rem,1.4vw,.98rem);line-height:1.7;color:var(--d1);
+  opacity:0;animation:up 1s var(--ease) 1.35s forwards}
+.figs{display:flex;gap:clamp(18px,4vw,44px);flex-wrap:wrap;margin-top:24px;
+  opacity:0;animation:up 1s var(--ease) 1.5s forwards}
+@keyframes up{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.figs div b{display:block;font-family:var(--disp);font-size:clamp(1.4rem,3vw,2.3rem);color:var(--off);
+  line-height:1}
+.figs div span{font-size:.55rem;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--d2)}
+.play{position:absolute;top:42%;left:50%;transform:translate(-50%,-50%);z-index:4;
+  width:clamp(68px,9vw,102px);aspect-ratio:1;border-radius:50%;border:1px solid rgba(224,187,60,.5);
+  background:rgba(224,187,60,.12);backdrop-filter:blur(7px);color:var(--acc2);cursor:pointer;
+  display:grid;place-items:center;font-size:1.45rem;padding-left:5px;
+  opacity:0;animation:fin .9s var(--ease) 1.7s forwards;transition:.4s var(--ease)}
+.play::after{content:'';position:absolute;inset:-1px;border-radius:50%;border:1px solid var(--acc);
+  animation:ping 2.6s var(--ease) infinite}
+@keyframes ping{0%{transform:scale(1);opacity:.7}100%{transform:scale(1.65);opacity:0}}
+.play:hover{background:var(--acc);color:#000;transform:translate(-50%,-50%) scale(1.09)}
+.frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0;z-index:6}
+.frame.docked{border-radius:12px;box-shadow:0 26px 60px -14px rgba(0,0,0,.92),0 0 0 1px var(--bd)}
+.frame.docked .honey{opacity:.1}
+.frame.docked .shade{opacity:0}
+/* no chapters here, so the dock carries a plain runtime readout */
+.dockbar{position:absolute;left:0;right:0;bottom:0;z-index:7;padding:22px 11px 9px;
+  background:linear-gradient(to top,rgba(0,0,0,.9),transparent);opacity:0;transition:opacity .4s;
+  pointer-events:none;display:flex;justify-content:space-between;gap:9px;align-items:baseline}
+.frame.docked .dockbar{opacity:1}
+.dockbar b{font-size:.56rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--acc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dockbar s{text-decoration:none;font-size:.54rem;color:rgba(255,255,255,.55);flex-shrink:0}
+
+/* ══ shell ══
+   90% of the viewport, centred, matching .mygarage-sections on the real
+   /mygarage page — and 92% on a phone, which is what that page does too,
+   because a phone has no side space to spare. */
+main{position:relative;z-index:10;background:var(--bg);padding-top:clamp(46px,8vw,90px)}
+.wrap{width:90%;margin:0 auto}
+@media(max-width:760px){.wrap{width:92%}}
+@media(min-width:1000px){.wrap.inset{padding-right:270px}}   /* clear of the PiP */
+.rv{opacity:0;transform:translateY(38px);transition:opacity 1s var(--ease),transform 1s var(--ease)}
+.rv.in{opacity:1;transform:none}
+.sechead{display:flex;align-items:baseline;gap:16px;margin-bottom:28px}
+.sechead h2{font-family:var(--disp);font-size:clamp(1.5rem,3.6vw,2.9rem);line-height:1;color:var(--off);
+  letter-spacing:.02em}
+.sechead i{font-style:normal;flex:1;height:1px;background:var(--bd)}
+.sechead u{text-decoration:none;font-size:.55rem;font-weight:800;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--acc);white-space:nowrap}
+
+/* ══ 2 · DESCRIPTION — Editorial Paper, laid on the dark page ══ */
+.paper{background:var(--paper);color:var(--pd1);border-radius:4px;
+  padding:clamp(26px,5vw,64px) clamp(20px,4vw,56px);
+  box-shadow:0 40px 80px -30px rgba(0,0,0,.9),0 0 0 1px rgba(255,255,255,.05);
+  position:relative;overflow:hidden;margin-bottom:clamp(46px,8vw,90px)}
+/* paper tooth, scoped to the panel */
+.paper::after{content:'';position:absolute;inset:0;pointer-events:none;opacity:.35;
+  mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4'/%3E%3C/filter%3E%3Crect width='150' height='150' filter='url(%23n)' opacity='0.45'/%3E%3C/svg%3E")}
+.paper .dek{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px;
+  position:relative;z-index:2}
+.paper .dek b{font-size:.6rem;font-weight:700;letter-spacing:.26em;text-transform:uppercase;
+  color:var(--red)}
+.paper .dek i{font-style:normal;width:38px;height:1px;background:var(--red)}
+.paper .dek s{text-decoration:none;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--pd2)}
+/* one column now the side panels are gone, held to a readable measure */
+.pbody{position:relative;z-index:2}
+.pcol{max-width:68ch}
+.pcol p{font-family:var(--sans);font-size:1rem;line-height:1.86;margin-bottom:1.35em;color:var(--ink2)}
+.pcol p.first::first-letter{font-family:var(--serif);font-weight:900;float:left;font-size:4.3em;
+  line-height:.78;margin:6px 12px 0 0;color:var(--red)}
+.pcol h3{font-family:var(--serif);font-weight:900;font-size:clamp(1.3rem,2.7vw,1.9rem);color:var(--ink);
+  letter-spacing:-.015em;margin:1.7em 0 .55em;line-height:1.15}
+.pcol h3 span{color:var(--red)}
+.pcol blockquote{margin:1.9em 0;padding-left:clamp(16px,3vw,28px);border-left:3px solid var(--red)}
+.pcol blockquote p{font-family:var(--serif);font-style:italic;font-weight:400;
+  font-size:clamp(1.1rem,2.3vw,1.5rem);line-height:1.5;color:var(--ink);margin:0}
+.pcol blockquote cite{display:block;margin-top:9px;font-family:var(--sans);font-style:normal;
+  font-size:.6rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--pd3)}
+
+/* ══ 3 · FRAME GRABS — Cinema Reel's drifting reel ══ */
+/* the drifting reel sits on the same 90% column as every other section, so
+   its sprocket edges line up with the panels above and below it */
+.reelstrip{width:90%;margin:0 auto clamp(46px,8vw,90px);overflow:hidden;padding:22px 0;
+  position:relative}
+@media(max-width:760px){.reelstrip{width:92%}}
+.reelstrip::before,.reelstrip::after{content:'';position:absolute;left:0;right:0;height:14px;z-index:2;
+  background-image:radial-gradient(circle,#000 42%,transparent 44%);background-size:26px 14px;opacity:.85}
+.reelstrip::before{top:0}.reelstrip::after{bottom:0}
+.reeltrack{display:flex;gap:14px;will-change:transform}
+.pl{flex:0 0 auto;width:clamp(176px,22vw,258px);border-radius:4px;overflow:hidden;position:relative;
+  border:1px solid var(--bd);background:#000;transition:.5s var(--ease)}
+.pl img{width:100%;aspect-ratio:3/2;object-fit:cover;filter:saturate(.85) contrast(1.05);
+  transition:.6s var(--ease)}
+.pl:hover{transform:translateY(-8px) scale(1.03);z-index:3;box-shadow:0 22px 44px -12px rgba(0,0,0,.9)}
+.pl:hover img{filter:none}
+.pl .cap{position:absolute;left:0;right:0;bottom:0;padding:22px 11px 9px;
+  background:linear-gradient(to top,rgba(0,0,0,.92),transparent);
+  font-size:.61rem;color:rgba(255,255,255,.82);display:flex;justify-content:space-between;gap:8px}
+.pl .cap em{font-style:normal;color:var(--acc);font-weight:800;font-size:.55rem}
+
+/* ══ 4 · ROUTE — lifted from /mygarage/rides/:id ══ */
+.ridewrap{display:grid;grid-template-columns:1fr 300px;gap:24px;align-items:start;
+  margin-bottom:clamp(46px,8vw,90px)}
+@media(max-width:900px){.ridewrap{grid-template-columns:1fr}}
+.mapcard{border-radius:16px;overflow:hidden;border:1px solid var(--rbd);height:460px;
+  background:var(--rbg)}
+.mapcard .hd{padding:16px 20px;background:var(--rbg2);border-bottom:1px solid var(--rbd);
+  display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.mapcard .hd .lb{font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;font-weight:700;
+  margin-bottom:2px}
+.mapcard .hd .rt{font-size:.85rem;font-weight:600;color:var(--roff)}
+.mapcard .hd .va{font-size:.68rem;color:var(--rd3);margin-top:2px}
+.mapcard .hd .pill{font-size:.65rem;padding:3px 10px;border-radius:999px;white-space:nowrap}
+.mapcard .hd .pill.real{background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.25)}
+.mapcard .hd .pill.plan{background:rgba(245,158,11,.12);color:#f59e0b;border:1px solid rgba(245,158,11,.25)}
+.mapcard .body{height:calc(100% - 68px);position:relative;min-height:392px}
+.mapcard .body .mount{position:absolute;inset:0}
+/* while Leaflet is still coming down the wire */
+.mapcard .loading{position:absolute;inset:0;display:grid;place-items:center;z-index:5;
+  font-size:.66rem;letter-spacing:.2em;text-transform:uppercase;color:var(--rd3)}
+/* the map is a static plate here — no panning, no zooming, so it must not
+   advertise itself as grabbable either */
+.leaflet-container{background:#0d0b14 !important;cursor:default !important}
+.mapcard .mount{pointer-events:none}
+.v7dtip{background:transparent !important;border:none !important;box-shadow:none !important;
+  padding:0 !important}
+.v7dtip::before{display:none !important}
+@keyframes v7dpulse{0%{transform:scale(1);opacity:.8}100%{transform:scale(2.6);opacity:0}}
+
+.rside{display:flex;flex-direction:column;gap:16px}
+@media(min-width:901px){.rside{position:sticky;top:24px}}
+.rcard{background:var(--rbg2);border:1px solid var(--rbd);border-radius:14px;overflow:hidden}
+.rcard .strip{height:4px}
+.rcard .pad{padding:18px}
+.rcard .ttl{font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--rd3);
+  margin-bottom:12px;font-weight:700}
+.rcard .row{display:flex;justify-content:space-between;gap:10px;padding:9px 0;
+  border-bottom:1px solid var(--rbd)}
+.rcard .row span{font-size:.68rem;color:var(--rd3);letter-spacing:.1em;text-transform:uppercase}
+.rcard .row b{font-size:.82rem;font-weight:600;color:var(--roff);text-transform:capitalize;
+  text-align:right}
+.rcard .vialist{margin-top:14px}
+.rcard .vialist .lb{font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--rd3);
+  margin-bottom:8px}
+.rcard .vialist div{display:flex;gap:8px;align-items:center;margin-bottom:5px}
+.rcard .vialist i{width:5px;height:5px;border-radius:50%;flex-shrink:0;display:block}
+.rcard .vialist s{text-decoration:none;font-size:.78rem;color:var(--rd2)}
+/* through to the ride's own page — /mygarage/rides/:id */
+.rcard .full{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  margin-top:18px;padding:12px 14px;border:1px solid var(--rbd);border-radius:10px;
+  text-decoration:none;font-size:.76rem;font-weight:600;color:var(--rd2);
+  transition:border-color .25s,color .25s,background .25s}
+.rcard .full:hover{color:var(--roff);background:rgba(255,255,255,.03)}
+.rcard .full i{font-style:normal;font-size:.95rem;transition:transform .3s var(--ease)}
+.rcard .full:hover i{transform:translateX(4px)}
+
+/* ══ 5 · INSTAGRAM — Editorial Paper's taped polaroids ══
+   auto-FILL, not auto-fit: auto-fit collapses the tracks it doesn't need and
+   the surviving 1fr columns swallow the space, so a vlog with two reels would
+   stretch each print to half the page. Keeping the empty tracks holds a print
+   at the size this was drawn at however many there are. */
+.tapewall{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+  gap:clamp(20px,3.4vw,36px);margin-bottom:clamp(46px,8vw,90px);padding-top:14px}
+.pola{position:relative;background:#fff;padding:9px 9px 34px;cursor:pointer;
+  box-shadow:0 14px 32px -12px rgba(0,0,0,.85);transition:.5s var(--ease)}
+.pola:nth-child(4n+1){transform:rotate(-2.2deg)}
+.pola:nth-child(4n+2){transform:rotate(1.6deg)}
+.pola:nth-child(4n+3){transform:rotate(-1.1deg)}
+.pola:nth-child(4n+4){transform:rotate(2.4deg)}
+.pola:hover{transform:rotate(0) translateY(-9px) scale(1.03);z-index:5;
+  box-shadow:0 30px 56px -16px rgba(0,0,0,.95)}
+.pola::before{content:'';position:absolute;top:-11px;left:50%;transform:translateX(-50%) rotate(-3deg);
+  width:64px;height:22px;background:rgba(214,197,160,.55);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}
+.pola .im{position:relative;aspect-ratio:9/12;overflow:hidden;background:#111}
+.pola .im img{width:100%;height:100%;object-fit:cover;filter:contrast(1.06) saturate(.95);
+  transition:.6s var(--ease)}
+.pola:hover .im img{transform:scale(1.06)}
+.pola .im iframe{position:absolute;inset:0;width:100%;height:100%;border:0;z-index:5;background:#000}
+.pola .im .pp{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:3;width:38px;
+  height:38px;border-radius:50%;display:grid;place-items:center;font-size:.72rem;padding-left:2px;
+  color:#fff;background:rgba(0,0,0,.42);border:1px solid rgba(255,255,255,.4);transition:.4s var(--ease)}
+.pola:hover .im .pp{background:var(--red);border-color:var(--red);
+  transform:translate(-50%,-50%) scale(1.14)}
+.pola .im .lg{position:absolute;top:7px;right:7px;z-index:3;font-size:.6rem;color:#fff;width:22px;
+  height:22px;border-radius:6px;display:grid;place-items:center;
+  background:linear-gradient(135deg,#f9ce34,#ee2a7b 55%,#6228d7)}
+.pola .cap{position:absolute;left:9px;right:9px;bottom:8px}
+.pola .cap b{display:block;font-family:var(--serif);font-weight:600;font-size:.72rem;color:var(--ink);
+  line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pola .cap s{text-decoration:none;display:block;font-size:.52rem;color:var(--pd3);margin-top:2px;
+  letter-spacing:.06em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ══ 6 · UP NEXT — Cinema Reel's video cards ══
+   auto-fill for the same reason as the polaroids above: with one related vlog,
+   auto-fit would hand it the full width of the page. */
+.next{display:grid;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:16px;
+  margin-bottom:clamp(46px,8vw,90px)}
+.nc{border-radius:14px;overflow:hidden;border:1px solid var(--bd);background:var(--card);
+  transition:transform .5s var(--ease),border-color .4s;text-decoration:none;display:block}
+.nc:hover{border-color:rgba(224,187,60,.45);transform:translateY(-6px)}
+.nc .th{position:relative;aspect-ratio:16/9;overflow:hidden;background:#000}
+.nc .th img{width:100%;height:100%;object-fit:cover;filter:brightness(.72);transition:.6s var(--ease)}
+.nc:hover .th img{filter:brightness(.95);transform:scale(1.07)}
+.nc .th video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;
+  transition:opacity .5s}
+.nc:hover .th video{opacity:1}
+.nc .badge{position:absolute;top:9px;left:10px;font-size:.5rem;font-weight:800;letter-spacing:.16em;
+  text-transform:uppercase;padding:3px 8px;border-radius:99px;background:rgba(0,0,0,.72);
+  color:var(--acc);border:1px solid rgba(224,187,60,.35);z-index:2}
+.nc .dur{position:absolute;bottom:9px;right:9px;background:rgba(0,0,0,.82);color:#fff;font-size:.57rem;
+  font-weight:700;padding:2px 7px;border-radius:4px;letter-spacing:.04em;z-index:2}
+.nc .tx{padding:13px 14px 16px}
+.nc .tx b{display:block;font-size:.85rem;font-weight:700;color:var(--off);line-height:1.35}
+.nc .tx span{display:block;font-size:.67rem;color:var(--d2);margin-top:4px;line-height:1.5}
+.nc .tx u{text-decoration:none;display:inline-block;margin-top:9px;font-size:.52rem;font-weight:800;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--acc)}
+
+/* ══ 7 · POSTS ══ */
+.posts{display:flex;flex-direction:column;gap:12px;margin-bottom:clamp(46px,8vw,90px)}
+.post{display:grid;grid-template-columns:132px 1fr auto;gap:clamp(14px,2.5vw,24px);align-items:center;
+  background:var(--card);border:1px solid var(--bd);border-radius:14px;overflow:hidden;
+  text-decoration:none;transition:.5s var(--ease);padding-right:clamp(14px,2.5vw,24px)}
+.post:hover{border-color:rgba(224,187,60,.42);transform:translateX(7px)}
+.post .cv{width:132px;aspect-ratio:4/3;overflow:hidden;background:#000;position:relative}
+.post .cv img{width:100%;height:100%;object-fit:cover;filter:brightness(.75);transition:.6s var(--ease)}
+.post:hover .cv img{filter:brightness(1);transform:scale(1.09)}
+.post .cv .ic{position:absolute;bottom:6px;left:7px;font-size:1rem;filter:drop-shadow(0 2px 6px #000)}
+.post .tx{padding:13px 0;min-width:0}
+.post .tx u{text-decoration:none;font-size:.52rem;font-weight:800;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--acc)}
+.post .tx b{display:block;font-size:.9rem;font-weight:700;color:var(--off);line-height:1.35;margin:5px 0}
+.post .tx span{display:block;font-size:.72rem;line-height:1.6;color:var(--d1)}
+.post .go{font-size:1.1rem;color:var(--d3);transition:.4s var(--ease);flex-shrink:0}
+.post:hover .go{color:var(--acc);transform:translateX(5px)}
+@media(max-width:700px){
+  .post{grid-template-columns:96px 1fr;padding-right:14px}
+  .post .cv{width:96px}
+  .post .go{display:none}
+}
+
+footer{border-top:1px solid var(--bd);padding:clamp(32px,6vw,58px) 0 clamp(46px,8vw,80px);
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+footer .av{width:46px;height:46px;border-radius:50%;object-fit:cover;border:1px solid var(--bd)}
+footer .who b{display:block;font-size:.85rem;font-weight:700;color:var(--off)}
+footer .who span{font-size:.65rem;color:var(--d2)}
+footer .cta{margin-left:auto;text-decoration:none;background:var(--acc);color:#000;padding:11px 22px;
+  border-radius:99px;font-size:.64rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;
+  transition:.35s var(--ease)}
+footer .cta:hover{background:var(--acc2);transform:translateY(-2px)}
+@media(max-width:520px){footer .cta{margin-left:0;width:100%;text-align:center}}
+
+/* ── empty state ── */
+.empty{min-height:100vh;display:grid;place-items:center;text-align:center;padding:40px 24px}
+.empty .in{max-width:480px}
+.empty .ic{font-size:3rem;margin-bottom:18px;animation:bob 3.4s var(--ease) infinite}
+@keyframes bob{50%{transform:translateY(-11px)}}
+.empty h2{font-family:var(--disp);font-size:clamp(2.2rem,7vw,4.4rem);color:var(--off);line-height:.92;
+  margin-bottom:14px}
+.empty b{display:block;font-size:.6rem;font-weight:800;letter-spacing:.3em;text-transform:uppercase;
+  color:var(--acc);margin-bottom:16px}
+.empty p{font-size:.9rem;line-height:1.8}
+.empty .rail{height:2px;background:var(--bd);margin:26px 0;position:relative;overflow:hidden}
+.empty .rail i{position:absolute;inset:0;width:40%;background:var(--acc);
+  animation:sweep 2.6s var(--ease) infinite}
+@keyframes sweep{0%{transform:translateX(-110%)}100%{transform:translateX(260%)}}
+</style>
+</head>
+<body>
+<div class="bar t"></div><div class="bar b"></div>
+<div class="grain"></div>
+<div class="readbar" id="readbar"></div>
+<a class="back" href="vlog-data-design-preview.html"><i>←</i> All Designs</a>
+<div id="app"></div>
+
+<script src="vlog-data.js"></script>
+<script>
+const D = window.VLOG
+const app = document.getElementById('app')
+const $ = s => document.querySelector(s)
+
+if (D.isEmpty) {
+  app.innerHTML = `
+    <div class="empty"><div class="in">
+      <div class="ic">🎬</div><b>Coming soon</b>
+      <h2>The reel is<br />still loading</h2>
+      <div class="rail"><i></i></div>
+      <p>The camera is mounted and ${D.routes.length} rides are already plotted. This page fills
+         itself in the moment a ride video lands in the garage — write-up, frame grabs, the real
+         road route, and the reels and posts from the same day.</p>
+    </div></div>`
+} else {
+  render(D.current())
+}
+
+function render(V) {
+  const R = V.route
+
+  app.innerHTML = `
+  <!-- ══ 1 · the frame that docks ══ -->
+  <div class="reel" id="reel">
+    <div class="frame" id="frame">
+      <img class="plate" id="plate" src="${V.posterBig}" alt="" onerror="this.src='${V.still}'" />
+      ${V.clip ? `<video class="clip" id="clip" src="${V.clip}" muted loop playsinline preload="metadata"></video>` : ''}
+      <div class="honey"></div><div class="shade"></div>
+      <button class="play" id="play" aria-label="Play">▶</button>
+      <div class="herotype" id="herotype">
+        <div class="num">${String(V.n).padStart(2, '0')}</div>
+        <div class="kick"><b>${V.cat}</b><i></i>
+          <u>${V.when.label} · ${V.kind} · ${V.duration}</u></div>
+        <h1>${V.title.split(' ').map((w, i) =>
+          `<span class="w"><span style="animation-delay:${0.55 + i * 0.055}s">${w}</span></span>`).join(' ')}</h1>
+        <p class="sub">${V.blurb}</p>
+        <div class="figs">
+          ${[[V.duration, 'Runtime'], [V.views, 'Views'], [R.distance, 'Route'],
+             [V.insta.length, 'Reels'], [V.when.year, 'Filmed']]
+            .map(([b, s]) => `<div><b>${b}</b><span>${s}</span></div>`).join('')}
+        </div>
+      </div>
+      <div class="dockbar"><b>${V.title}</b><s>${V.duration}</s></div>
+    </div>
+  </div>
+
+  <main>
+    <!-- ══ 2 · the write-up, on paper ══ -->
+    <div class="wrap inset">
+      <div class="rv"><div class="sechead"><h2>The Write-up</h2><i></i>
+        <u>${V.kind} · ${V.when.short}</u></div></div>
+      <article class="paper rv">
+        <div class="dek"><b>${V.cat}</b><i></i>
+          <s>${V.when.label} · ${V.duration} · ${V.views} views</s></div>
+        <div class="pbody">
+          <div class="pcol">
+            <p class="first">${V.blurb}</p>
+            <p>It is the kind of thing you would not normally point a camera at, which is exactly
+              why it was worth pointing a camera at. ${V.duration} of it survived the cut, out of a
+              day that was mostly waiting, walking and deciding where to eat.</p>
+            <h3>Getting <span>there</span></h3>
+            <p>The route is the part nobody films. It is also the part you remember — the wrong
+              turn, the stop that was not planned, the stretch where nobody said anything because
+              there was nothing to add. The map further down is the shape of it.</p>
+            <blockquote>
+              <p>The best twenty seconds of any trip are almost always the ones you nearly did
+                not film.</p>
+              <cite>${D.channelName}</cite>
+            </blockquote>
+            <h3>What made the <span>cut</span></h3>
+            <p>${V.stills.length} frames kept, and one long argument with the edit about which of
+              them earned their place. The strip below is the honest version: every one of them is
+              a moment I would stop for again.</p>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <!-- ══ 3 · frame grabs ══ -->
+    <div class="wrap inset">
+      <div class="rv"><div class="sechead"><h2>Frame Grabs</h2><i></i>
+        <u>${V.stills.length} kept</u></div></div>
+    </div>
+    <div class="reelstrip"><div class="reeltrack" id="reeltrack">
+      ${[...V.stills, ...V.stills].map(p => `
+        <figure class="pl"><img src="${p.src}" alt="" loading="lazy" />
+          <figcaption class="cap"><span>${p.cap}</span><em>${p.at}</em></figcaption></figure>`).join('')}
+    </div></div>
+
+    <!-- ══ 4 · the route, exactly as the ride page draws it ══ -->
+    <div class="wrap inset">
+      <div class="rv"><div class="sechead"><h2>The Route</h2><i></i>
+        <u>${R.distance} · ${R.mode}</u></div></div>
+      <div class="ridewrap">
+        <div class="mapcard rv" id="mapcard">
+            <div class="hd">
+              <div>
+                <div class="lb" style="color:${R.colour}">Route Map</div>
+                <div class="rt">${R.fromCity} → ${R.toCity}</div>
+                ${R.via.length ? `<div class="va">via ${R.via.join(' → ')}</div>` : ''}
+              </div>
+              <span class="pill ${R.osrm ? 'real' : 'plan'}">
+                ${R.osrm ? 'Real Road Route' : 'Planning Stage'}</span>
+            </div>
+            <div class="body">
+              <div class="mount" id="mount"></div>
+              <div class="loading" id="maploading">Loading map…</div>
+            </div>
+        </div>
+        <div class="rside rv">
+          <div class="rcard">
+            <div class="strip" style="background:${R.colour}"></div>
+            <div class="pad">
+              <div class="ttl">Ride Info</div>
+              ${[['Distance', R.distance], ['Duration', R.time || '—'], ['Date', R.date],
+                 ['Start', R.fromCity], ['End', R.toCity], ['Mode', R.mode]]
+                .map(([k, v]) => `<div class="row"><span>${k}</span><b>${v}</b></div>`).join('')}
+              ${R.via.length ? `
+                <div class="vialist">
+                  <div class="lb">Via</div>
+                  ${R.via.map(w =>
+                    `<div><i style="background:${R.colour}"></i><s>${w}</s></div>`).join('')}
+                </div>` : ''}
+              <a class="full" href="/mygarage/rides/${R.id}"
+                 onmouseenter="this.style.borderColor='${R.colour}'"
+                 onmouseleave="this.style.borderColor='var(--rbd)'">
+                Read the full ride <i>→</i></a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 5 · instagram, as taped prints ══ -->
+    <div class="wrap inset">
+      <div class="rv"><div class="sechead"><h2>On Instagram</h2><i></i>
+        <u>${D.social.handle} · tap a print</u></div></div>
+      <div class="tapewall rv">
+        ${V.insta.map(r => `
+          <div class="pola" data-embed="${r.embed}">
+            <div class="im"><img src="${r.still}" alt="" loading="lazy" />
+              <div class="lg">◙</div><div class="pp">▶</div></div>
+            <div class="cap"><b>${r.caption}</b><s>${r.tags.slice(0, 3).join(' ')}</s></div>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- ══ 6 · up next ══ -->
+    <div class="wrap inset">
+      <div class="rv"><div class="sechead"><h2>Up Next</h2><i></i>
+        <u>${D.count} in all</u></div></div>
+      <div class="next rv">
+        ${V.related.map(r => `
+          <a class="nc" href="?v=${r.yt}">
+            <div class="th">
+              <img src="${r.poster}" alt="" loading="lazy" onerror="this.src='${r.still}'" />
+              ${r.clip ? `<video src="${r.clip}" muted loop playsinline preload="none"></video>` : ''}
+              <div class="badge">${r.cat}</div><div class="dur">${r.duration}</div>
+            </div>
+            <div class="tx"><b>${r.title}</b><span>${r.blurb}</span>
+              <u>${r.when.short} · ${r.views} views</u></div></a>`).join('')}
+      </div>
+
+      <!-- ══ 7 · posts ══ -->
+      <div class="rv"><div class="sechead"><h2>Read More</h2><i></i>
+        <u>From the blog</u></div></div>
+      <div class="posts rv">
+        ${V.posts.map(p => `
+          <a class="post" href="${p.href}">
+            <div class="cv"><img src="${p.cover}" alt="" loading="lazy" />
+              <div class="ic">${p.icon}</div></div>
+            <div class="tx"><u>${p.cat} · ${p.when.short}</u><b>${p.title}</b>
+              <span>${p.excerpt}</span></div>
+            <div class="go">→</div></a>`).join('')}
+      </div>
+
+      <footer class="rv">
+        <img class="av" src="public/avatar.jpg" alt="" />
+        <div class="who"><b>${D.channelName}</b>
+          <span>${D.count} videos · ${D.insta.length} reels · ${D.posts.length} posts · ${D.routes.length} rides plotted</span></div>
+        <a class="cta" href="${V.url}" target="_blank" rel="noopener">Watch on YouTube</a>
+      </footer>
+    </div>
+  </main>`
+
+  wire(V)
+}
+
+/* ── Leaflet, loaded the same way the real ride page loads it ── */
+function loadLeaflet() {
+  return new Promise((resolve, reject) => {
+    if (window.L) { resolve(window.L); return }
+    if (!document.getElementById('lf-css')) {
+      const l = document.createElement('link')
+      l.id = 'lf-css'; l.rel = 'stylesheet'
+      l.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+      document.head.appendChild(l)
+    }
+    const s = document.createElement('script')
+    s.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+    s.onload = () => resolve(window.L)
+    s.onerror = reject
+    document.head.appendChild(s)
+  })
+}
+
+function wire(V) {
+  const R = V.route
+  const clamp01 = n => Math.min(1, Math.max(0, n))
+  const lerp = (a, b, t) => a + (b - a) * t
+  const easeIO = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2
+
+  /* ══ the hero shrink — Cinema Reel, minus the chapter playhead ══ */
+  const frame = $('#frame'), reel = $('#reel'), herotype = $('#herotype'), plate = $('#plate')
+  const play = $('#play'), clipEl = $('#clip')
+  let playing = false
+  if (clipEl) clipEl.play().then(() => clipEl.classList.add('on')).catch(() => {})
+
+  function layout() {
+    const phone = innerWidth < 1000
+    const runway = reel.offsetHeight - innerHeight
+    const p = clamp01(scrollY / Math.max(1, runway))
+    const t = easeIO(p)
+    const vw = innerWidth, vh = innerHeight
+    const dw = phone ? vw - 24 : Math.min(300, vw * 0.24)
+    const dh = dw * 9 / 16
+    const dx = phone ? 12 : vw - dw - 26
+    const dy = phone ? 12 : vh - dh - 26
+
+    frame.style.width = lerp(vw, dw, t) + 'px'
+    frame.style.height = lerp(vh, dh, t) + 'px'
+    frame.style.transform = `translate(${lerp(0, dx, t)}px,${lerp(0, dy, t)}px)`
+    frame.style.borderRadius = lerp(0, 12, t) + 'px'
+    frame.classList.toggle('docked', t > 0.72)
+
+    const gone = clamp01(p / 0.42)
+    herotype.style.opacity = 1 - gone
+    herotype.style.transform = `translateY(${gone * -60}px)`
+    herotype.style.pointerEvents = gone > .5 ? 'none' : 'auto'
+    if (!playing) {
+      play.style.opacity = 1 - gone
+      play.style.pointerEvents = gone > .5 ? 'none' : 'auto'
+    }
+    plate.style.transform = `scale(${lerp(1.14, 1, t)}) translateY(${lerp(0, -4, t)}%)`
+    plate.style.filter = `brightness(${lerp(.82, 1, t)})`
+
+    $('#readbar').style.width =
+      clamp01(scrollY / (document.documentElement.scrollHeight - vh)) * 100 + '%'
+  }
+
+  function seek(sec) {
+    playing = true
+    let f = frame.querySelector('iframe')
+    if (!f) {
+      f = document.createElement('iframe')
+      f.allow = 'autoplay; encrypted-media; picture-in-picture'
+      f.allowFullscreen = true
+      frame.appendChild(f)
+    }
+    f.src = `${V.embed}?autoplay=1&start=${sec}&rel=0&modestbranding=1`
+    play.style.opacity = 0
+    play.style.pointerEvents = 'none'
+    if (clipEl) clipEl.style.display = 'none'
+  }
+  play.addEventListener('click', () => seek(0))
+
+  /* ══ the frame-grab reel drifts sideways as it passes ══ */
+  const strip = document.querySelector('.reelstrip'), track = $('#reeltrack')
+  function reelDrift() {
+    const r = strip.getBoundingClientRect()
+    const p = clamp01((innerHeight - r.top) / (innerHeight + r.height))
+    track.style.transform = `translateX(${-p * (track.scrollWidth / 2)}px)`
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+     The map. Same construction as GarageV7RideDetail's DetailMap: dark
+     Carto tiles, the real OSRM road route drawn with a glow layer under
+     it and a dash-draw reveal, and A/B pins with pulsing rings.
+
+     It builds only once the card is actually on screen, so opening the
+     page does not pull Leaflet and a routing request you may never see.
+     ══════════════════════════════════════════════════════════════════ */
+  function buildMap() {
+    loadLeaflet().then(L => {
+      $('#maploading').style.display = 'none'
+      /* Static plate. Leaflet is still what draws it — the tiles, the routed
+         line and the pins are all real — but every way of moving it is off, so
+         it behaves like an image and never swallows a page scroll. */
+      const map = L.map($('#mount'), {
+        center: R.mapCenter, zoom: R.mapZoom,
+        zoomControl: false, attributionControl: false,
+        dragging: false, scrollWheelZoom: false, doubleClickZoom: false,
+        touchZoom: false, boxZoom: false, keyboard: false, tap: false,
+        /* fractional zoom, so fitBounds frames the route exactly rather than
+           snapping out to the nearest whole level */
+        zoomSnap: 0,
+      })
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+        { subdomains: 'abcd', maxZoom: 19 }).addTo(map)
+
+      const { fromLng, fromLat, toLng, toLat } = R.osrm
+      const url = `https://router.project-osrm.org/route/v1/driving/` +
+                  `${fromLng},${fromLat};${toLng},${toLat}?overview=full&geometries=geojson`
+      fetch(url).then(r => r.json()).then(data => {
+        if (!data.routes || !data.routes[0]) throw new Error('no route')
+        const coords = data.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng])
+        /* glow under the line */
+        L.polyline(coords, { color: R.colour, weight: 10, opacity: .15, smoothFactor: 1,
+          interactive: false }).addTo(map)
+        const poly = L.polyline(coords, { color: R.colour, weight: 4, opacity: .95,
+          smoothFactor: 1, lineCap: 'round' }).addTo(map)
+        map.fitBounds(poly.getBounds(), { padding: [40, 40] })
+        /* draw it on, via the SVG path Leaflet just made */
+        const el = poly.getElement()
+        if (el && el.getTotalLength) {
+          const len = el.getTotalLength()
+          el.style.strokeDasharray = len
+          el.style.strokeDashoffset = len
+          el.style.transition = 'stroke-dashoffset 1.4s ease-out'
+          requestAnimationFrame(() => { el.style.strokeDashoffset = '0' })
+        }
+      }).catch(() => {
+        /* OSRM unreachable (offline, or the ride is not routable) — straight line */
+        L.polyline([[fromLat, fromLng], [toLat, toLng]],
+          { color: R.colour, weight: 3, opacity: .85, dashArray: '6 8' }).addTo(map)
+        const pill = document.querySelector('.mapcard .pill')
+        pill.className = 'pill plan'
+        pill.textContent = 'Planning Stage'
+      })
+
+      const pin = (lat, lng, label, isFrom) => {
+        const icon = L.divIcon({
+          className: '',
+          html: `<div style="position:relative;display:flex;align-items:center;justify-content:center;width:30px;height:30px">
+            <div style="width:16px;height:16px;border-radius:50%;background:${R.colour};border:2.5px solid rgba(255,255,255,0.9);box-shadow:0 0 14px ${R.colour}99;position:relative;z-index:2;display:flex;align-items:center;justify-content:center">
+              <span style="font-size:8px;color:#fff;font-weight:900">${isFrom ? 'A' : 'B'}</span>
+            </div>
+            <div style="position:absolute;width:28px;height:28px;border-radius:50%;background:${R.colour}25;animation:v7dpulse 2.4s ease-out infinite;z-index:1"></div>
+          </div>`,
+          iconSize: [30, 30], iconAnchor: [15, 15],
+        })
+        L.marker([lat, lng], { icon, interactive: false, keyboard: false }).addTo(map).bindTooltip(
+          `<div style="background:rgba(13,11,20,0.95);border:1px solid ${R.colour}60;color:#f0eee8;font-family:system-ui,sans-serif;font-size:11px;font-weight:700;padding:4px 10px;border-radius:4px;white-space:nowrap">${label}</div>`,
+          { permanent: true, direction: 'right', offset: [12, 0], className: 'v7dtip' })
+      }
+      pin(fromLat, fromLng, R.fromCity, true)
+      pin(toLat, toLng, R.toCity, false)
+    }).catch(() => {
+      $('#maploading').textContent = 'Map needs a connection'
+    })
+  }
+  const mapIO = new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return
+    mapIO.unobserve(e.target)
+    buildMap()
+  }), { rootMargin: '200px' })
+  mapIO.observe($('#mapcard'))
+
+  /* ══ polaroids load their reel on tap ══ */
+  document.querySelectorAll('.pola').forEach(p => p.addEventListener('click', () => {
+    const im = p.querySelector('.im')
+    if (im.querySelector('iframe')) return
+    const f = document.createElement('iframe')
+    f.src = p.dataset.embed; f.loading = 'lazy'; f.allowFullscreen = true
+    f.setAttribute('scrolling', 'no')
+    im.appendChild(f)
+  }))
+
+  /* ══ related cards play their local clip on hover ══ */
+  document.querySelectorAll('.nc video').forEach(v => {
+    const c = v.closest('.nc')
+    c.addEventListener('mouseenter', () => { v.currentTime = 0; v.play().catch(() => {}) })
+    c.addEventListener('mouseleave', () => v.pause())
+  })
+
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target) }
+  }), { threshold: 0.12 })
+  document.querySelectorAll('.rv').forEach(el => io.observe(el))
+
+  let raf = null
+  addEventListener('scroll', () => {
+    if (raf) return
+    raf = requestAnimationFrame(() => { layout(); reelDrift(); raf = null })
+  }, { passive: true })
+  addEventListener('resize', () => { layout(); reelDrift() })
+  layout(); reelDrift()
+}
+</script>
+</body>
+</html>

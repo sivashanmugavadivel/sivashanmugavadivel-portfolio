@@ -34,41 +34,22 @@ import AboutSectionPicker from './pages/AboutSectionPicker'
 
 import './App.css'
 
-/* Garage design variants — DEV-ONLY. Defined behind import.meta.env.DEV and
-   lazy-loaded so they are completely excluded from the production build.
-   The public /garage route always shows the Coming Soon page. */
-const DEV_GARAGE = import.meta.env.DEV
-  ? {
-      Original:        lazy(() => import('./pages/Garage')),
-      New:             lazy(() => import('./pages/GarageNew')),
-      Premium:         lazy(() => import('./pages/GaragePremium')),
-      V3:              lazy(() => import('./pages/GarageV3')),
-      V4:              lazy(() => import('./pages/GarageV4')),
-      V5:              lazy(() => import('./pages/GarageV5')),
-      V6:              lazy(() => import('./pages/GarageV6')),
-      V7:              lazy(() => import('./pages/GarageV7')),
-      V7RideDetail:    lazy(() => import('./pages/GarageV7RideDetail')),
-      V7AllRides:      lazy(() => import('./pages/GarageV7RideDetail').then(m => ({ default: m.GarageV7AllRides }))),
-      AccessoryDetail: lazy(() => import('./pages/GarageAccessoryDetail')),
-    }
-  : null
-
-/* Garage V8 preview — reachable in production ONLY via the direct address
-   /garage/v8 (nothing links to it). /garage itself stays Coming Soon.
-   Lazy-loaded so it's a separate chunk, fetched only when visited. */
-const GarageV8Preview = lazy(() => import('./pages/GarageV8'))
-
 /* My Garage — Bear 650 scroll-spin + showcase. This is what the "My Garage"
-   item in the navbar points at; /garage is the older variant and stays
-   Coming Soon on the live site.
-   The ride list and ride detail pages live under it, so they ship in
-   production too (the dev-only /garage/v7/* routes reuse the same
-   components — they read the root off the URL and link back accordingly). */
+   item in the navbar points at, and the only garage there is: the earlier
+   design studies (Garage, GarageNew, GaragePremium, V3–V8) have been removed
+   now that this one is settled. /garage keeps showing Coming Soon.
+
+   The ride list, ride detail, storefront and vlog pages all live under it.
+   GarageV7RideDetail keeps its name for history's sake — it is what serves
+   /mygarage/rides and /mygarage/rides/:id. */
 const MyGarage = lazy(() => import('./pages/MyGarage'))
 const MyGarageRides = lazy(() =>
   import('./pages/GarageV7RideDetail').then(m => ({ default: m.GarageV7AllRides })))
 const MyGarageRideDetail = lazy(() => import('./pages/GarageV7RideDetail'))
 const MyGarageStorefront = lazy(() => import('./pages/GarageStorefront'))
+/* One vlog, at /mygarage/vlogs/<name>. Content comes from the per-vlog JSON
+   files in public/mygarage/vlog/config — see src/data/vlogs.js. */
+const MyGarageVlogDetail = lazy(() => import('./pages/MyGarageVlogDetail'))
 
 /**
  * Scroll behaviour on navigation:
@@ -117,38 +98,18 @@ function AppRoutes() {
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:slug" element={<BlogPost />} />
 
-          {/* /garage → real garage in dev, Coming Soon on the live/built site */}
-          <Route
-            path="/garage"
-            element={import.meta.env.DEV ? <DEV_GARAGE.Original /> : <GarageComingSoon />}
-          />
-
-          {/* Direct-address-only V8 preview (works in production too) */}
-          <Route path="/garage/v8" element={<GarageV8Preview />} />
+          {/* the old address — kept so any existing link still lands somewhere */}
+          <Route path="/garage" element={<GarageComingSoon />} />
 
           {/* My Garage: Bear 650 scroll-driven 360° parallax + showcase */}
           <Route path="/mygarage" element={<MyGarage />} />
           <Route path="/mygarage/rides" element={<MyGarageRides />} />
           <Route path="/mygarage/rides/:id" element={<MyGarageRideDetail />} />
           <Route path="/mygarage/storefront" element={<MyGarageStorefront />} />
-
-          {/* Garage design variants — only registered in local dev */}
-          {DEV_GARAGE && (
-            <>
-              <Route path="/garage/coming-soon" element={<GarageComingSoon />} />
-              <Route path="/garage/v1" element={<DEV_GARAGE.Original />} />
-              <Route path="/garage/new" element={<DEV_GARAGE.New />} />
-              <Route path="/garage/premium" element={<DEV_GARAGE.Premium />} />
-              <Route path="/garage/v3" element={<DEV_GARAGE.V3 />} />
-              <Route path="/garage/v4" element={<DEV_GARAGE.V4 />} />
-              <Route path="/garage/v5" element={<DEV_GARAGE.V5 />} />
-              <Route path="/garage/v6" element={<DEV_GARAGE.V6 />} />
-              <Route path="/garage/v7" element={<DEV_GARAGE.V7 />} />
-              <Route path="/garage/v7/rides" element={<DEV_GARAGE.V7AllRides />} />
-              <Route path="/garage/v7/rides/:id" element={<DEV_GARAGE.V7RideDetail />} />
-              <Route path="/garage/accessories/:id" element={<DEV_GARAGE.AccessoryDetail />} />
-            </>
-          )}
+          {/* The bare path opens the newest vlog; the "all vlogs" listing is
+              the section design still to come. */}
+          <Route path="/mygarage/vlogs" element={<MyGarageVlogDetail />} />
+          <Route path="/mygarage/vlogs/:id" element={<MyGarageVlogDetail />} />
 
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/blog-design-picker" element={<BlogDesignShowcase />} />

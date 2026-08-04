@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Vlogs · 10 · Edit Timeline</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════
+   EDIT TIMELINE — the section as the edit the vlogs came out of.
+   Five clips laid end to end on V1, their widths in proportion to
+   their real runtimes, an audio track under them, and a playhead
+   you can drag or let run. Whichever clip the head is over is the
+   one in the monitor. The bin at the end holds everything else.
+   ══════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08070e; --card:#141220; --card2:#1a1828; --panel:#100e18;
+  --bd:rgba(255,255,255,0.07); --bd2:rgba(255,255,255,0.13);
+  --off:#f0eef6; --d1:rgba(240,238,246,0.65); --d2:rgba(240,238,246,0.4); --d3:rgba(240,238,246,0.22);
+  --acc:#8b5cf6; --acc2:#a78bfa;
+  --head:#ff5f6d;              /* the playhead */
+  --wave:#4ad6b0;
+  --sans:'Inter',sans-serif; --mono:'JetBrains Mono',monospace;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+body{background:var(--bg);color:var(--d1);font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--acc);color:#fff}
+.page{width:90%;max-width:1240px;margin:0 auto;padding:64px 0 90px;
+  display:flex;flex-direction:column;gap:clamp(40px,7vh,76px)}
+.stub{border:1px dashed var(--bd);border-radius:16px;padding:26px;color:var(--d3);
+  font-size:0.7rem;letter-spacing:0.16em;text-transform:uppercase;text-align:center}
+
+.sec{position:relative;background:var(--card);border:1px solid var(--bd);border-radius:16px;
+  padding:22px clamp(14px,2.6vw,24px) 24px;overflow:hidden;
+  opacity:0;transform:translateY(32px);animation:rise .8s var(--ease) .1s forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+
+.head{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.kick{font-family:var(--mono);font-size:0.56rem;letter-spacing:0.24em;text-transform:uppercase;
+  color:var(--acc2);display:block;margin-bottom:7px}
+.head h2{font-size:clamp(1.25rem,3.3vw,1.8rem);font-weight:800;color:var(--off);letter-spacing:-0.02em;line-height:1.1}
+.head .note{font-size:0.73rem;color:var(--d2);line-height:1.6;max-width:380px;margin-top:7px}
+.head .all{margin-left:auto;font-size:0.68rem;color:var(--acc2);text-decoration:none;padding:7px 14px;
+  border-radius:999px;border:1px solid rgba(167,139,250,0.28);transition:.3s var(--ease);white-space:nowrap}
+.head .all:hover{background:var(--acc);color:#fff;border-color:var(--acc);transform:translateY(-2px)}
+
+/* ══ top half: monitor + inspector ══ */
+.top{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:12px;margin-bottom:12px}
+.monitor{position:relative;aspect-ratio:16/9;background:#000;border:1px solid var(--bd2);border-radius:10px;
+  overflow:hidden;box-shadow:0 26px 50px -32px #000}
+.monitor video,.monitor img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  opacity:0;transition:opacity .45s ease}
+.monitor.on video,.monitor.on img{opacity:1}
+/* a hard cut, the way a timeline edit lands */
+.monitor .flash{position:absolute;inset:0;background:#fff;opacity:0;z-index:4;pointer-events:none}
+.monitor.cut .flash{animation:flash .28s ease-out}
+@keyframes flash{0%{opacity:.5}100%{opacity:0}}
+.monitor .safe{position:absolute;inset:8%;border:1px dashed rgba(255,255,255,.14);border-radius:3px;z-index:3;
+  pointer-events:none;opacity:0;transition:opacity .3s}
+.monitor:hover .safe{opacity:1}
+.monitor .tcbig{position:absolute;left:11px;bottom:9px;z-index:5;font-family:var(--mono);font-size:0.72rem;
+  letter-spacing:0.1em;color:#fff;padding:3px 9px;border-radius:4px;background:rgba(0,0,0,.6);
+  backdrop-filter:blur(6px);font-variant-numeric:tabular-nums}
+.monitor .badge{position:absolute;right:11px;top:10px;z-index:5;font-family:var(--mono);font-size:0.5rem;
+  letter-spacing:0.16em;text-transform:uppercase;padding:3px 9px;border-radius:999px;
+  background:rgba(0,0,0,.6);color:var(--acc2);border:1px solid rgba(167,139,250,.32);backdrop-filter:blur(6px)}
+
+.insp{background:var(--panel);border:1px solid var(--bd);border-radius:10px;padding:15px 16px 16px;
+  display:flex;flex-direction:column;gap:9px;min-width:0}
+.insp .lab{font-family:var(--mono);font-size:0.5rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--d3)}
+.insp h3{font-size:0.98rem;font-weight:700;color:var(--off);line-height:1.32;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.insp p{font-size:0.76rem;line-height:1.65;color:var(--d2);
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.insp dl{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;margin-top:2px;
+  font-family:var(--mono);font-size:0.55rem;letter-spacing:0.08em}
+.insp dt{color:var(--d3);text-transform:uppercase;letter-spacing:0.14em;font-size:0.48rem;align-self:center}
+.insp dd{color:var(--d1);text-align:right}
+.insp .go{margin-top:auto;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:10px 16px;border-radius:7px;background:var(--acc);color:#fff;text-decoration:none;
+  font-size:0.72rem;font-weight:600;transition:.3s var(--ease)}
+.insp .go:hover{transform:translateY(-2px);box-shadow:0 14px 28px -12px rgba(139,92,246,.9)}
+
+/* ══ transport ══ */
+.transport{display:flex;align-items:center;gap:9px;padding:9px 12px;background:var(--panel);
+  border:1px solid var(--bd);border-radius:9px;margin-bottom:9px;flex-wrap:wrap}
+.transport button{width:32px;height:32px;border-radius:7px;border:1px solid var(--bd2);background:var(--card2);
+  color:var(--d1);cursor:pointer;display:grid;place-items:center;transition:.28s var(--ease);font-size:0.78rem}
+.transport button:hover{border-color:var(--acc2);color:var(--acc2);background:rgba(139,92,246,.12);transform:scale(1.07)}
+.transport button.play{background:var(--acc);border-color:var(--acc);color:#fff;width:38px}
+.transport .tc{font-family:var(--mono);font-size:0.72rem;color:var(--off);letter-spacing:0.08em;
+  font-variant-numeric:tabular-nums;padding:0 6px}
+.transport .of{font-family:var(--mono);font-size:0.55rem;color:var(--d3);letter-spacing:0.12em}
+.transport .hint{margin-left:auto;font-family:var(--mono);font-size:0.52rem;letter-spacing:0.16em;
+  text-transform:uppercase;color:var(--d3)}
+
+/* ══ the timeline ══ */
+.tl{position:relative;background:var(--panel);border:1px solid var(--bd);border-radius:10px;
+  padding:0 0 10px;overflow:hidden;user-select:none}
+.ruler{position:relative;height:24px;border-bottom:1px solid var(--bd);cursor:pointer;
+  background:linear-gradient(180deg,rgba(255,255,255,.03),transparent)}
+.ruler i{position:absolute;top:0;bottom:0;width:1px;background:var(--bd2)}
+.ruler i::after{content:attr(data-t);position:absolute;left:5px;top:5px;font-family:var(--mono);
+  font-size:0.46rem;letter-spacing:0.1em;color:var(--d3);white-space:nowrap}
+
+.track{position:relative;display:flex;padding:7px 0;cursor:pointer}
+.track .name{position:absolute;left:8px;top:-1px;font-family:var(--mono);font-size:0.44rem;
+  letter-spacing:0.18em;color:var(--d3);z-index:4;pointer-events:none}
+.v1{border-bottom:1px solid var(--bd)}
+/* the five clips butt up against each other, the way cuts do on a real
+   sequence; the bin sits outside them so their widths stay a clean 100% */
+.seq{flex:1;min-width:0;display:flex}
+
+.clip{position:relative;height:62px;overflow:hidden;background:#0b0912;
+  border-right:1px solid #000;min-width:0;flex:none;
+  transition:filter .3s,box-shadow .35s var(--ease),transform .35s var(--ease)}
+.clip:first-child{border-radius:5px 0 0 5px}
+.clip:last-child{border-radius:0 5px 5px 0;border-right:0}
+.clip img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  filter:brightness(.42) saturate(.7);transition:filter .35s}
+.clip .strip{position:absolute;left:0;right:0;bottom:0;height:4px;background:var(--acc)}
+.clip .cn{position:absolute;left:6px;top:5px;right:6px;font-size:0.6rem;font-weight:600;color:#fff;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 6px #000;z-index:2}
+.clip .cd{position:absolute;left:6px;bottom:8px;font-family:var(--mono);font-size:0.46rem;
+  letter-spacing:0.1em;color:rgba(255,255,255,.6);z-index:2}
+/* trim handles, the way a selected clip shows them */
+.clip::before,.clip::after{content:'';position:absolute;top:0;bottom:0;width:4px;background:var(--acc2);
+  opacity:0;transition:opacity .3s}
+.clip::before{left:0}
+.clip::after{right:0}
+.clip.on{box-shadow:0 0 0 1px var(--acc2),0 12px 24px -12px #000;transform:translateY(-2px)}
+.clip.on img{filter:brightness(.72) saturate(1)}
+.clip.on::before,.clip.on::after{opacity:1}
+.clip:hover img{filter:brightness(.62) saturate(.9)}
+
+/* the bin at the end of the sequence */
+.bin{position:relative;height:62px;flex:none;width:96px;margin-left:8px;border-radius:5px;text-decoration:none;
+  background:linear-gradient(140deg,#1d1834,#0f0c19);border:1px dashed rgba(167,139,250,.36);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  transition:.3s var(--ease)}
+.bin:hover{background:rgba(139,92,246,.18);border-style:solid;transform:translateY(-2px)}
+.bin b{font-family:var(--mono);font-size:0.78rem;color:var(--acc2);line-height:1}
+.bin s{text-decoration:none;font-family:var(--mono);font-size:0.42rem;letter-spacing:0.14em;
+  text-transform:uppercase;color:var(--d2)}
+
+/* the audio track — a waveform drawn from the clip's own shape */
+.a1 .aud{position:relative;height:34px;overflow:hidden;background:#0a0812;
+  border-right:1px solid #000;flex:none;display:flex;align-items:center;
+  justify-content:space-around;padding:0 3px;gap:1px}
+.a1 .aud:first-child{border-radius:4px 0 0 4px}
+.a1 .aud:last-child{border-radius:0 4px 4px 0;border-right:0}
+.a1 .aud i{flex:1;background:var(--wave);border-radius:1px;opacity:.55;min-width:1px;
+  transition:opacity .3s}
+.a1 .aud.on i{opacity:.95;animation:bounce .9s ease-in-out infinite;
+  animation-delay:calc(var(--b) * -.07s)}
+@keyframes bounce{0%,100%{transform:scaleY(1)}50%{transform:scaleY(.55)}}
+.a1 .gap{flex:none;width:96px;margin-left:8px}
+
+/* the playhead */
+.playhead{position:absolute;top:0;bottom:0;width:1px;background:var(--head);z-index:6;pointer-events:none;
+  box-shadow:0 0 10px 1px rgba(255,95,109,.7)}
+.playhead::before{content:'';position:absolute;top:0;left:-6px;width:13px;height:11px;background:var(--head);
+  border-radius:2px 2px 5px 5px}
+
+/* ── empty state ── */
+.empty{position:relative;border:1px dashed var(--bd2);border-radius:12px;background:var(--card2);
+  padding:clamp(34px,6vw,58px) 24px;text-align:center;display:flex;flex-direction:column;
+  align-items:center;gap:12px;overflow:hidden}
+.empty .lanes{position:absolute;left:14px;right:14px;top:50%;transform:translateY(-50%);
+  display:flex;flex-direction:column;gap:6px;opacity:.28;pointer-events:none}
+.empty .lanes i{height:26px;border:1px dashed var(--bd2);border-radius:5px}
+.empty .lanes i:last-child{height:16px}
+.empty .ph{position:absolute;top:12%;bottom:12%;width:1px;background:var(--head);opacity:.5;
+  animation:sweepx 4.4s var(--ease) infinite}
+@keyframes sweepx{0%{left:8%}50%{left:88%}100%{left:8%}}
+.empty > *:not(.lanes):not(.ph){position:relative;z-index:2}
+.empty .ico{font-size:2rem;animation:bob 2.6s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.empty .lab2{font-size:0.6rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--acc2);font-weight:700}
+.empty p{font-size:0.82rem;color:var(--d2);max-width:420px;line-height:1.7}
+
+@media(max-width:900px){
+  .top{grid-template-columns:1fr}
+  .insp{order:2}
+}
+@media(max-width:760px){
+  .page{width:94%;padding:40px 0 60px}
+  .head .all{margin-left:0}
+  .transport .hint{display:none}
+  .clip{height:52px}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.001s!important}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="stub">↑ Accessories &amp; Add-ons</div>
+
+  <section class="sec">
+    <div class="head">
+      <div>
+        <span class="kick" id="kick"></span>
+        <h2 id="h2"></h2>
+        <div class="note" id="note"></div>
+      </div>
+      <a class="all" id="all">All vlogs →</a>
+    </div>
+    <div id="body"></div>
+  </section>
+
+  <div class="stub">↓ Ride Gallery</div>
+</div>
+
+<script src="vlog-data.js"></script>
+<script>
+const V = window.VLOG
+document.getElementById('kick').textContent = V.kicker
+document.getElementById('h2').textContent   = V.heading
+document.getElementById('note').textContent = V.note
+document.getElementById('all').href         = V.page
+
+/** seconds → 00:00 */
+const tc = s => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(Math.floor(s) % 60).padStart(2, '0')}`
+
+if (V.isEmpty) {
+  document.getElementById('body').innerHTML = `
+    <div class="empty">
+      <div class="lanes"><i></i><i></i><i></i></div>
+      <div class="ph"></div>
+      <div class="ico">🎬</div>
+      <div class="lab2">Sequence is empty</div>
+      <p>V1 has nothing on it yet. Every ride that gets cut drops onto this
+         timeline and the playhead has somewhere to go.</p>
+    </div>`
+} else {
+  build()
+}
+
+/* ══ lay the sequence out ══
+   Each clip's width is its real share of the total runtime, floored so a
+   thirty-second short is still a target you can hit, then re-normalised so
+   the five together fill the track exactly. */
+const SEQ = (() => {
+  const secs = V.shown.map(v => V.toSec(v.duration))
+  const total = secs.reduce((a, b) => a + b, 0)
+  const FLOOR = 0.09
+  let w = secs.map(s => Math.max(FLOOR, s / total))
+  const sum = w.reduce((a, b) => a + b, 0)
+  w = w.map(x => x / sum)
+  let at = 0
+  return V.shown.map((v, k) => {
+    const clip = { v, sec: secs[k], w: w[k], x0: at, x1: at + w[k] }
+    at += w[k]
+    return clip
+  })
+})()
+const TOTAL = SEQ.reduce((n, c) => n + c.sec, 0)
+
+function build() {
+  document.getElementById('body').innerHTML = `
+    <div class="top">
+      <div class="monitor" id="mon">
+        <span class="flash"></span>
+        <span class="safe"></span>
+        <span class="badge" id="badge"></span>
+        <span class="tcbig" id="tcbig">00:00</span>
+      </div>
+      <div class="insp">
+        <span class="lab">Clip inspector</span>
+        <h3 id="it"></h3>
+        <p id="ip"></p>
+        <dl id="idl"></dl>
+        <a class="go" id="igo" target="_blank" rel="noopener">▶ Watch on YouTube</a>
+      </div>
+    </div>
+
+    <div class="transport">
+      <button id="prev" aria-label="Previous clip">⏮</button>
+      <button class="play" id="play" aria-label="Play">▶</button>
+      <button id="next" aria-label="Next clip">⏭</button>
+      <span class="tc" id="tcnow">00:00</span>
+      <span class="of">/ ${tc(TOTAL)} · ${V.LIMIT} clips</span>
+      <span class="hint">Drag the head · ← → · space</span>
+    </div>
+
+    <div class="tl" id="tl">
+      <div class="ruler" id="ruler"></div>
+      <div class="track v1" id="v1"><span class="name">V1</span></div>
+      <div class="track a1" id="a1"><span class="name">A1</span></div>
+      <div class="playhead" id="ph" style="left:0"></div>
+    </div>`
+
+  /* ruler: nine marks across the sequence, in real cumulative timecode */
+  document.getElementById('ruler').innerHTML = Array.from({ length: 9 }, (_, k) => {
+    const p = k / 8
+    return `<i style="left:${(p * 100).toFixed(2)}%" data-t="${tc(TOTAL * p)}"></i>`
+  }).join('')
+
+  document.getElementById('v1').insertAdjacentHTML('beforeend',
+    `<div class="seq" id="seq">` + SEQ.map((c, k) => `
+      <div class="clip" data-k="${k}" style="width:${(c.w * 100).toFixed(3)}%">
+        <img src="${c.v.poster}" alt="" loading="lazy"
+             onerror="this.onerror=null;this.src='${c.v.still}'" />
+        <span class="cn">${c.v.title}</span>
+        <span class="cd">${c.v.duration} · ${c.v.cat}</span>
+        <span class="strip"></span>
+      </div>`).join('') + `</div>
+      <a class="bin" href="${V.page}"><b>+${V.more}</b><s>in the bin</s></a>`)
+
+  /* the audio lane mirrors the video lane, bar heights seeded off the title so
+     each clip's waveform is its own shape rather than noise */
+  document.getElementById('a1').insertAdjacentHTML('beforeend',
+    `<div class="seq">` + SEQ.map((c, k) => {
+      const n = Math.max(6, Math.round(c.w * 120))
+      const bars = Array.from({ length: n }, (_, j) => {
+        const seed = (c.v.title.charCodeAt(j % c.v.title.length) * (j + 3)) % 100
+        const h = 22 + (seed % 74)
+        return `<i style="height:${h}%;--b:${j}"></i>`
+      }).join('')
+      return `<div class="aud" data-k="${k}" style="width:${(c.w * 100).toFixed(3)}%">${bars}</div>`
+    }).join('') + `</div><span class="gap"></span>`)
+
+  wire()
+}
+
+function wire() {
+  const tl   = document.getElementById('tl')
+  const v1   = document.getElementById('v1')
+  const seq  = document.getElementById('seq')
+  const ph   = document.getElementById('ph')
+  const mon  = document.getElementById('mon')
+  const clips = [...v1.querySelectorAll('.clip')]
+  const auds  = [...document.querySelectorAll('.aud')]
+  let p = 0, at = -1, playing = false, raf = 0, last = 0
+  const RUN = 26000     // ms for the head to cross the whole sequence
+
+  /* the bin sits past the end of the sequence, so the head only ever travels
+     the width of the five clips themselves */
+  const span = () => seq.offsetWidth
+
+  function head() {
+    ph.style.left = (seq.offsetLeft + p * span()) + 'px'
+    const t = p * TOTAL
+    document.getElementById('tcnow').textContent = tc(t)
+    document.getElementById('tcbig').textContent = tc(t)
+    const k = SEQ.findIndex(c => p >= c.x0 && p < c.x1)
+    select(k < 0 ? SEQ.length - 1 : k)
+  }
+
+  function select(k) {
+    if (k === at) return
+    at = k
+    const v = SEQ[k].v
+
+    clips.forEach((c, j) => c.classList.toggle('on', j === k))
+    auds.forEach((a, j) => a.classList.toggle('on', j === k))
+
+    mon.classList.remove('on'); mon.classList.add('cut')
+    setTimeout(() => {
+      mon.querySelectorAll('video,img').forEach(n => n.remove())
+      const media = v.clip
+        ? Object.assign(document.createElement('video'),
+            { src: v.clip, autoplay: true, muted: true, loop: true, playsInline: true })
+        : Object.assign(document.createElement('img'), { src: v.posterBig, alt: v.title })
+      if (!v.clip) media.onerror = () => { media.onerror = null; media.src = v.still }
+      mon.prepend(media)
+      mon.classList.add('on')
+    }, 110)
+    setTimeout(() => mon.classList.remove('cut'), 320)
+
+    document.getElementById('badge').textContent = `Clip ${String(v.n).padStart(2, '0')} / ${V.LIMIT}`
+    document.getElementById('it').textContent = v.title
+    document.getElementById('ip').textContent = v.blurb
+    document.getElementById('idl').innerHTML = `
+      <dt>Kind</dt><dd>${v.type === 'short' ? 'Short' : 'Full film'}</dd>
+      <dt>Runtime</dt><dd>${v.duration}</dd>
+      <dt>Filmed</dt><dd>${v.when.label}</dd>
+      <dt>Views</dt><dd>${v.views}</dd>
+      <dt>Bin</dt><dd>${v.cat}</dd>`
+    document.getElementById('igo').href = v.url
+  }
+
+  /* ── scrub: the ruler and both tracks are all scrub surfaces ── */
+  const seek = clientX => {
+    const r = seq.getBoundingClientRect()
+    p = Math.max(0, Math.min(0.9999, (clientX - r.left) / span()))
+    head()
+  }
+  let scrubbing = false
+  tl.addEventListener('pointerdown', e => {
+    if (e.target.closest('.bin')) return
+    scrubbing = true; stop()
+    tl.setPointerCapture(e.pointerId); seek(e.clientX)
+  })
+  tl.addEventListener('pointermove', e => { if (scrubbing) seek(e.clientX) })
+  const drop = e => {
+    if (!scrubbing) return
+    scrubbing = false
+    try { tl.releasePointerCapture(e.pointerId) } catch {}
+  }
+  tl.addEventListener('pointerup', drop)
+  tl.addEventListener('pointercancel', drop)
+
+  /* ── transport ── */
+  function tick(ts) {
+    raf = requestAnimationFrame(tick)
+    const dt = last ? ts - last : 0
+    last = ts
+    p += dt / RUN
+    if (p >= 1) p = 0
+    head()
+  }
+  function play() {
+    if (playing) return
+    playing = true; last = 0
+    document.getElementById('play').textContent = '⏸'
+    raf = requestAnimationFrame(tick)
+  }
+  function stop() {
+    if (!playing) return
+    playing = false
+    cancelAnimationFrame(raf)
+    document.getElementById('play').textContent = '▶'
+  }
+  document.getElementById('play').onclick = () => (playing ? stop() : play())
+  document.getElementById('prev').onclick = () => { stop(); p = SEQ[Math.max(0, at - 1)].x0 + 0.001; head() }
+  document.getElementById('next').onclick = () => { stop(); p = SEQ[Math.min(SEQ.length - 1, at + 1)].x0 + 0.001; head() }
+
+  /* clicking a clip parks the head at its head frame */
+  v1.addEventListener('click', e => {
+    const c = e.target.closest('.clip'); if (!c) return
+    stop(); p = SEQ[+c.dataset.k].x0 + 0.001; head()
+  })
+
+  window.addEventListener('keydown', e => {
+    if (e.key === ' ') { e.preventDefault(); playing ? stop() : play() }
+    if (e.key === 'ArrowRight') { e.preventDefault(); document.getElementById('next').click() }
+    if (e.key === 'ArrowLeft')  { e.preventDefault(); document.getElementById('prev').click() }
+  })
+
+  /* a timeline scrolled off screen should not keep running */
+  const io = new IntersectionObserver(es => es.forEach(e => { if (!e.isIntersecting) stop() }),
+    { threshold: 0 })
+  io.observe(tl)
+
+  addEventListener('resize', head)
+  head()
+}
+</script>
+</body>
+</html>

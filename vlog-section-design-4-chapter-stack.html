@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Vlogs · 4 · Chapter Stack</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════
+   CHAPTER STACK — every vlog is a full-width chapter that sticks
+   in place while the next one climbs over it, so scrolling the
+   section builds a physical pile. The card underneath shrinks,
+   dims and blurs as it is covered; the one in front is always
+   the one you are reading. A rail down the side keeps count.
+   ══════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08070e; --card:#141220; --card2:#1a1828;
+  --bd:rgba(255,255,255,0.07); --bd2:rgba(255,255,255,0.13);
+  --off:#f0eef6; --d1:rgba(240,238,246,0.65); --d2:rgba(240,238,246,0.4); --d3:rgba(240,238,246,0.22);
+  --acc:#8b5cf6; --acc2:#a78bfa;
+  --sans:'Inter',sans-serif; --serif:'Playfair Display',serif; --mono:'JetBrains Mono',monospace;
+  --ease:cubic-bezier(.22,1,.36,1);
+  --top:86px;            /* where a chapter parks — clears the fixed navbar */
+  --ch:min(460px,72vh);  /* chapter height */
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--d1);font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--acc);color:#fff}
+.page{width:90%;max-width:1180px;margin:0 auto;padding:64px 0 90px;
+  display:flex;flex-direction:column;gap:clamp(40px,7vh,76px)}
+.stub{border:1px dashed var(--bd);border-radius:16px;padding:26px;color:var(--d3);
+  font-size:0.7rem;letter-spacing:0.16em;text-transform:uppercase;text-align:center}
+
+.head{display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;
+  opacity:0;transform:translateY(26px);animation:rise .8s var(--ease) .1s forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+.head .kick{font-family:var(--mono);font-size:0.58rem;letter-spacing:0.24em;text-transform:uppercase;
+  color:var(--acc2);display:block;margin-bottom:8px}
+.head h2{font-family:var(--serif);font-size:clamp(1.5rem,4.4vw,2.5rem);font-weight:700;color:var(--off);line-height:1.05}
+.head .note{font-size:0.78rem;color:var(--d2);line-height:1.65;max-width:420px;margin-top:10px}
+.head .all{margin-left:auto;font-size:0.72rem;color:var(--acc2);text-decoration:none;padding:9px 18px;
+  border-radius:999px;border:1px solid rgba(167,139,250,0.28);transition:.3s var(--ease);white-space:nowrap}
+.head .all:hover{background:var(--acc);color:#fff;border-color:var(--acc);transform:translateY(-2px)}
+
+/* ══ the stack ══ */
+.stack{position:relative;display:grid;grid-template-columns:38px minmax(0,1fr);gap:20px;align-items:start}
+
+/* ── the rail ── */
+.rail{position:sticky;top:calc(var(--top) + 12px);display:flex;flex-direction:column;align-items:center;gap:0}
+.rail .line{position:absolute;top:6px;bottom:6px;left:50%;width:1px;background:var(--bd);transform:translateX(-.5px)}
+.rail .line i{position:absolute;top:0;left:0;right:0;height:0;background:var(--acc2);
+  transition:height .2s linear}
+.rail button{position:relative;z-index:2;width:38px;padding:7px 0;background:none;border:0;cursor:pointer;
+  font-family:var(--mono);font-size:0.56rem;letter-spacing:0.08em;color:var(--d3);transition:.3s var(--ease)}
+.rail button::before{content:'';display:block;width:7px;height:7px;margin:0 auto 5px;border-radius:50%;
+  background:var(--bd2);transition:.35s var(--ease)}
+.rail button:hover{color:var(--d1)}
+.rail button.on{color:var(--acc2)}
+.rail button.on::before{background:var(--acc2);transform:scale(1.6);box-shadow:0 0 0 4px rgba(167,139,250,0.16)}
+
+.chapters{min-width:0}
+/* the wrapper is the scroll length one chapter gets; the card inside sticks */
+.wrap{height:calc(var(--ch) + 190px)}
+.wrap:last-child{height:var(--ch)}
+
+.chap{position:sticky;top:var(--top);height:var(--ch);border-radius:16px;overflow:hidden;
+  background:var(--card);border:1px solid var(--bd);
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.08fr);
+  transform-origin:50% 0;will-change:transform,filter;
+  box-shadow:0 -18px 40px -26px rgba(0,0,0,.9)}
+
+/* ── left half: the words ── */
+.txt{position:relative;padding:clamp(20px,3.2vw,34px);display:flex;flex-direction:column;gap:11px;
+  justify-content:center;min-width:0;z-index:2}
+.txt .n{position:absolute;top:-10px;left:clamp(12px,2vw,22px);font-family:var(--serif);font-weight:900;
+  font-size:clamp(5rem,13vw,9rem);line-height:1;color:rgba(255,255,255,0.035);pointer-events:none;
+  letter-spacing:-0.04em}
+.txt .kickrow{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:0.55rem;
+  letter-spacing:0.2em;text-transform:uppercase;color:var(--acc2);position:relative}
+.txt .kickrow s{text-decoration:none;color:var(--d3)}
+.txt h3{position:relative;font-family:var(--serif);font-size:clamp(1.2rem,2.9vw,1.9rem);font-weight:700;
+  color:var(--off);line-height:1.16}
+.txt p{position:relative;font-size:0.86rem;line-height:1.72;color:var(--d1);max-width:44ch}
+.txt .facts{display:flex;gap:0;flex-wrap:wrap;margin-top:4px;border-top:1px solid var(--bd);padding-top:12px}
+.txt .facts div{padding-right:20px;margin-right:20px;border-right:1px solid var(--bd)}
+.txt .facts div:last-child{border-right:0;margin-right:0;padding-right:0}
+.txt .facts b{display:block;font-size:0.88rem;font-weight:700;color:var(--off)}
+.txt .facts s{display:block;text-decoration:none;font-family:var(--mono);font-size:0.5rem;
+  letter-spacing:0.16em;text-transform:uppercase;color:var(--d3);margin-top:3px}
+.txt .go{align-self:flex-start;margin-top:6px;display:inline-flex;align-items:center;gap:9px;
+  padding:10px 19px;border-radius:999px;background:var(--acc);color:#fff;text-decoration:none;
+  font-size:0.74rem;font-weight:600;transition:.3s var(--ease)}
+.txt .go:hover{transform:translateY(-2px);box-shadow:0 14px 30px -12px rgba(139,92,246,.85)}
+
+/* ── right half: the picture, drifting against the scroll ── */
+.pic{position:relative;overflow:hidden;background:#000}
+.pic img,.pic video{position:absolute;inset:-8% -2%;width:104%;height:116%;object-fit:cover;
+  will-change:transform}
+.pic video{opacity:0;transition:opacity .5s ease}
+.chap.rolling .pic video{opacity:1}
+.pic::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,var(--card) 0%,rgba(20,18,32,0.35) 26%,transparent 55%)}
+.pic .badge{position:absolute;top:14px;right:14px;z-index:3;font-family:var(--mono);font-size:0.53rem;
+  letter-spacing:0.14em;padding:5px 11px;border-radius:999px;background:rgba(8,7,14,.72);color:#fff;
+  border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(6px)}
+.pic .roll{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3;
+  width:56px;height:56px;border-radius:50%;display:grid;place-items:center;cursor:pointer;
+  background:rgba(8,7,14,.55);border:1px solid rgba(255,255,255,.28);backdrop-filter:blur(8px);
+  transition:.4s var(--ease)}
+.pic .roll:hover{background:var(--acc);border-color:var(--acc);transform:translate(-50%,-50%) scale(1.1)}
+.pic .roll svg{width:17px;height:17px;fill:#fff;margin-left:3px}
+.pic .roll::after{content:'';position:absolute;inset:-6px;border-radius:50%;border:1px solid rgba(255,255,255,.3);
+  animation:ping 2.6s var(--ease) infinite}
+@keyframes ping{0%{transform:scale(.85);opacity:.7}70%,100%{transform:scale(1.5);opacity:0}}
+
+/* ── the end card ──
+   The stack only ever holds five chapters; the last card in the pile is the
+   way through to the rest, and it is built like a chapter so the pile ends
+   on the same shape it is made of. */
+.chap.end{grid-template-columns:1fr;place-items:center;text-align:center;
+  background:linear-gradient(150deg,#1c1730,#100d19);border-color:rgba(167,139,250,.25)}
+.chap.end .inner{display:flex;flex-direction:column;align-items:center;gap:14px;padding:26px;position:relative;z-index:2}
+.chap.end .big{font-family:var(--serif);font-weight:900;font-size:clamp(3rem,9vw,5.5rem);line-height:.9;
+  color:var(--off);letter-spacing:-0.04em}
+.chap.end .big em{font-style:normal;color:var(--acc2)}
+.chap.end p{font-size:0.86rem;color:var(--d2);max-width:38ch;line-height:1.7}
+.chap.end .go{display:inline-flex;align-items:center;gap:10px;padding:13px 26px;border-radius:999px;
+  background:var(--acc);color:#fff;text-decoration:none;font-size:0.8rem;font-weight:600;
+  transition:.3s var(--ease)}
+.chap.end .go:hover{transform:translateY(-3px);box-shadow:0 18px 36px -14px rgba(139,92,246,.9)}
+/* the ghosts of the chapters that did not fit */
+.chap.end .ghosts{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.chap.end .ghosts i{position:absolute;left:50%;top:50%;width:min(70%,420px);height:56%;
+  margin:-28% 0 0 min(-35%,-210px);border:1px solid var(--bd);border-radius:14px;
+  animation:pile 5s var(--ease) infinite}
+.chap.end .ghosts i:nth-child(2){animation-delay:-1.7s}
+.chap.end .ghosts i:nth-child(3){animation-delay:-3.4s}
+@keyframes pile{0%{transform:translateY(42px) scale(.9);opacity:0}
+                30%,60%{transform:none;opacity:.45}
+                100%{transform:translateY(-30px) scale(1.05);opacity:0}}
+/* the rail's last mark stands for the rest, not for a chapter */
+.rail button.rest{color:var(--acc2);font-weight:700}
+.rail button.rest::before{background:transparent;border:1px dashed var(--acc2)}
+
+/* ── empty state ── */
+.empty{position:relative;border:1px dashed var(--bd2);border-radius:16px;background:var(--card);
+  padding:clamp(40px,8vw,72px) 24px;text-align:center;display:flex;flex-direction:column;
+  align-items:center;gap:12px;overflow:hidden}
+.empty .ghost{position:absolute;left:50%;top:50%;width:76%;height:70%;transform:translate(-50%,-50%);
+  pointer-events:none}
+.empty .ghost i{position:absolute;inset:0;border:1px solid var(--bd);border-radius:14px;
+  animation:pile 4.4s var(--ease) infinite}
+.empty .ghost i:nth-child(2){animation-delay:-1.45s}
+.empty .ghost i:nth-child(3){animation-delay:-2.9s}
+@keyframes pile{0%{transform:translateY(34px) scale(.9);opacity:0}
+                30%,60%{transform:none;opacity:.6}
+                100%{transform:translateY(-24px) scale(1.04);opacity:0}}
+.empty > *:not(.ghost){position:relative;z-index:2}
+.empty .ico{font-size:2rem;animation:bob 2.7s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.empty .lab{font-size:0.62rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--acc2);font-weight:700}
+.empty p{font-size:0.84rem;color:var(--d2);max-width:430px;line-height:1.7}
+
+@media(max-width:860px){
+  :root{--ch:min(620px,84vh)}
+  .chap{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto}
+  .pic{order:-1}
+  .pic::after{background:linear-gradient(180deg,transparent 30%,var(--card))}
+  .txt{gap:8px;padding:16px 18px 20px}
+  .txt p{display:none}
+  .stack{grid-template-columns:1fr}
+  .rail{display:none}
+}
+@media(max-width:760px){.page{width:94%;padding:40px 0 60px}.head .all{margin-left:0}}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition-duration:.001s!important}
+  .chap{position:relative;top:0;margin-bottom:16px}
+  .wrap{height:auto!important}
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="stub">↑ Accessories &amp; Add-ons</div>
+
+  <div class="head">
+    <div>
+      <span class="kick" id="kick"></span>
+      <h2 id="h2"></h2>
+      <div class="note" id="note"></div>
+    </div>
+    <a class="all" id="all" target="_blank" rel="noopener">View all →</a>
+  </div>
+
+  <div id="body"></div>
+
+  <div class="stub">↓ Ride Gallery</div>
+</div>
+
+<script src="vlog-data.js"></script>
+<script>
+const V = window.VLOG
+document.getElementById('kick').textContent = V.kicker
+document.getElementById('h2').textContent   = V.heading
+document.getElementById('note').textContent = V.note
+document.getElementById('all').href         = V.page
+
+const PLAY = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>'
+
+if (V.isEmpty) {
+  document.getElementById('body').innerHTML = `
+    <div class="empty">
+      <div class="ghost"><i></i><i></i><i></i></div>
+      <div class="ico">🎥</div>
+      <div class="lab">Chapter one, not filmed</div>
+      <p>Every ride that gets cut becomes a chapter in this stack. The first one lands
+         the day the camera comes back with something worth keeping.</p>
+    </div>`
+} else {
+  build()
+}
+
+function build() {
+  /* One chapter per vlog, newest first. Only the ones with a local clip get a
+     video element — the rest run on their still. */
+  document.getElementById('body').innerHTML = `
+    <div class="stack">
+      <nav class="rail" id="rail"><span class="line"><i id="railfill"></i></span></nav>
+      <div class="chapters" id="chapters"></div>
+    </div>`
+
+  document.getElementById('rail').insertAdjacentHTML('beforeend',
+    V.shown.map(v => `<button data-i="${v.i}">${String(v.n).padStart(2, '0')}</button>`).join('') +
+    `<button class="rest" data-i="end">+${V.more}</button>`)
+
+  document.getElementById('chapters').innerHTML = V.shown.map(v => `
+    <div class="wrap">
+      <article class="chap" id="chap-${v.i}" style="--k:${v.i}">
+        <div class="txt">
+          <span class="n">${String(v.n).padStart(2, '0')}</span>
+          <div class="kickrow">${v.cat}<s>·</s>${v.type === 'short' ? 'Short' : 'Full film'}${v.fav ? '<s>·</s>★ Pick' : ''}</div>
+          <h3>${v.title}</h3>
+          <p>${v.blurb}</p>
+          <div class="facts">
+            <div><b>${v.duration}</b><s>Runtime</s></div>
+            <div><b>${v.views}</b><s>Views</s></div>
+            <div><b>${v.when.short}</b><s>Filmed</s></div>
+          </div>
+          <a class="go" href="${v.url}" target="_blank" rel="noopener">▶ Watch on YouTube</a>
+        </div>
+        <div class="pic">
+          <img src="${v.poster}" alt="${v.title}" loading="lazy"
+               onerror="this.onerror=null;this.src='${v.still}'" />
+          ${v.clip ? `<video src="${v.clip}" muted loop playsinline preload="none"></video>` : ''}
+          <span class="badge">${v.when.label}</span>
+          ${v.clip ? `<button class="roll" aria-label="Preview">${PLAY}</button>` : ''}
+        </div>
+      </article>
+    </div>`).join('') + `
+    <div class="wrap">
+      <article class="chap end" id="chap-end">
+        <div class="ghosts"><i></i><i></i><i></i></div>
+        <div class="inner">
+          <div class="big">+<em>${V.more}</em></div>
+          <p>Five chapters fit here. The rest of the reel — the shorts, the older trips,
+             everything that did not make this pile — is on the vlog page.</p>
+          <a class="go" href="${V.page}">Read the whole reel →</a>
+        </div>
+      </article>
+    </div>`
+
+  wire()
+}
+
+function wire() {
+  const chaps = [...document.querySelectorAll('.chap')]
+  const rail  = document.getElementById('rail')
+  const fill  = document.getElementById('railfill')
+  const btns  = [...rail.querySelectorAll('button')]
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches
+
+  /* ── scroll → per-card cover factor ──
+     A card is "covered" by however far the next one has climbed over it.
+     Everything the pile does — shrink, dim, blur — hangs off that one
+     number, written straight to the node, so it costs no re-layout. */
+  let raf = 0
+  const paint = () => {
+    raf = 0
+    const top = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--top')) || 86
+    let active = 0
+
+    chaps.forEach((c, k) => {
+      const next = chaps[k + 1]
+      let cover = 0
+      if (next) {
+        const gap = next.getBoundingClientRect().top - c.getBoundingClientRect().top
+        cover = 1 - Math.max(0, Math.min(1, gap / c.offsetHeight))
+      }
+      if (!reduce) {
+        c.style.transform = `scale(${1 - cover * 0.075}) translateY(${cover * -14}px)`
+        c.style.filter = cover > 0.02 ? `brightness(${1 - cover * 0.42}) blur(${cover * 2.4}px)` : ''
+      }
+      /* whichever card is parked at the top and not yet covered is the one
+         being read */
+      const r = c.getBoundingClientRect()
+      if (r.top <= top + 4 && cover < 0.5) active = k
+
+      /* the picture drifts against the scroll while its card is on screen */
+      const media = c.querySelector('.pic img, .pic video')
+      if (media && !reduce) {
+        const mid = (r.top + r.height / 2 - innerHeight / 2) / innerHeight
+        media.style.transform = `translate3d(0, ${(-mid * 26).toFixed(1)}px, 0)`
+      }
+    })
+
+    btns.forEach((b, k) => b.classList.toggle('on', k === active))
+    if (btns.length > 1) {
+      const first = btns[0].getBoundingClientRect(), last = btns[btns.length - 1].getBoundingClientRect()
+      const span = last.top - first.top
+      fill.style.height = (span * (active / (btns.length - 1)) + 7) + 'px'
+    }
+  }
+  const onScroll = () => { if (!raf) raf = requestAnimationFrame(paint) }
+  addEventListener('scroll', onScroll, { passive: true })
+  addEventListener('resize', onScroll)
+  paint()
+
+  /* ── the rail jumps ── */
+  rail.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return
+    const wrap = document.getElementById('chap-' + b.dataset.i).parentElement
+    scrollTo({ top: wrap.offsetTop - 10, behavior: 'smooth' })
+  })
+
+  /* ── the play button rolls the clip in place ── */
+  document.querySelectorAll('.chap').forEach(c => {
+    const btn = c.querySelector('.roll'), vid = c.querySelector('video')
+    if (!btn || !vid) return
+    btn.addEventListener('click', () => {
+      const on = c.classList.toggle('rolling')
+      if (on) vid.play().catch(() => c.classList.remove('rolling'))
+      else { vid.pause(); vid.currentTime = 0 }
+    })
+  })
+
+  /* a chapter that scrolls away stops playing — no audio here, but a dozen
+     decoding video elements is still a dozen video elements */
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (e.isIntersecting) return
+    const c = e.target, vid = c.querySelector('video')
+    if (vid && c.classList.contains('rolling')) { c.classList.remove('rolling'); vid.pause() }
+  }), { threshold: 0 })
+  chaps.forEach(c => io.observe(c))
+}
+</script>
+</body>
+</html>

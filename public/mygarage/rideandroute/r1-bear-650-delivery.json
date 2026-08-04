@@ -1,0 +1,36 @@
+{
+  "order": 10,
+  "id": "bear-650-delivery",
+
+  "name": "Bear 650 Delivery",
+  "subtitle": "Royal Enfield - Senthur Motors, Dharapuram -- Vattamalai Murugan Temple -- Home",
+  "mode": "completed",
+
+  "distance": "34 KM",
+  "time": "0:45",
+  "date": "3 Aug 2026",
+  "rating": null,
+
+  "fromCity": "Dharapuram",
+  "toCity": "Kangayam",
+  "states": ["Tamil Nadu"],
+  "color": "#ef4444",
+
+  "description": "Off the showroom floor at Dharapuram, up to the Vattamalai hill temple, then home to Kangayam.",
+  "story": "The first ride on the Bear 650, and the one that brought it home. Out of Senthur Motors at Dharapuram, north to the Arulmigu Muthukumaraswamy temple at Vattamalai for the first blessing, then the last stretch into Kariyakattu Valasu. Short, familiar roads â€” but the first time the bike and these roads met.",
+  "highlights": ["Delivery Day", "Vattamalai Murugan Temple", "First Ride Home"],
+  "via": ["Vattamalai Murugan Temple"],
+
+  "mapCenter": [10.87, 77.54],
+  "mapZoom": 11,
+
+  "videoId": null,
+  "photos": [],
+  "stats": null,
+
+  "stops": [
+    { "id": "dharapuram", "label": "Royal Enfield, Dharapuram", "icon": "showroom", "lat": 10.73, "lng": 77.52, "dir": "left" },
+    { "id": "vattamalai", "label": "Vattamalai Murugan Temple", "icon": "temple", "lat": 10.9456, "lng": 77.5431, "dir": "right" },
+    { "id": "kangayam", "label": "Kariya Kattu Valasu", "icon": "home", "lat": 11.035075, "lng": 77.618430, "home": true, "dir": "left" }
+  ]
+}

@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Storefront · 11 · Contact Sheet</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Roboto+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════
+   CONTACT SHEET — a darkroom proof sheet. Every part is one
+   small frame on a strip, numbered in the rebate, grease-
+   pencil ringed if it made the cut. Tapping a frame blows it
+   up to a full plate over the sheet, and you step through the
+   whole roll from there. Fewer frames per strip on a phone.
+   ══════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --dark:#0c0c0d; --sheet:#141416; --film:#1b1b1e; --rebate:#08080a;
+  --off:#f2f2f0; --d1:rgba(242,242,240,0.6); --d2:rgba(242,242,240,0.36); --d3:rgba(242,242,240,0.2);
+  --bd:rgba(255,255,255,0.09); --bd2:rgba(255,255,255,0.2);
+  --pencil:#ff3b30; --amber:#ffb200;
+  --disp:'Anton',sans-serif; --mono:'Roboto Mono',monospace; --sans:'Inter',sans-serif;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+html{scroll-behavior:smooth}
+body{background:var(--dark);color:var(--d1);font-family:var(--sans);overflow-x:hidden;
+  -webkit-font-smoothing:antialiased}
+body.locked{overflow:hidden}
+::selection{background:var(--pencil);color:#fff}
+/* safelight */
+.safelight{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(70vw 50vh at 50% -6%,rgba(255,59,48,0.08),transparent 68%)}
+.dust{position:fixed;inset:0;z-index:9990;pointer-events:none;opacity:0.24;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='130' height='130'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='130' height='130' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+.wrap{position:relative;z-index:2;max-width:1180px;margin:0 auto;padding:0 clamp(12px,3.5vw,32px)}
+
+/* ── sheet header, written like a proof sheet label ── */
+.label{display:grid;grid-template-columns:1fr auto;gap:20px;align-items:end;
+  padding:clamp(48px,9vw,92px) 0 22px;border-bottom:2px solid var(--bd2)}
+.label .kick{font-family:var(--mono);font-size:0.62rem;letter-spacing:0.26em;text-transform:uppercase;
+  color:var(--pencil);margin-bottom:14px;opacity:0;animation:fade .8s var(--ease) .15s forwards}
+h1{font-family:var(--disp);font-size:clamp(2.6rem,12vw,8rem);line-height:0.85;letter-spacing:0.005em;
+  text-transform:uppercase;color:var(--off)}
+h1 .w{display:block;overflow:hidden}
+h1 .w span{display:block;transform:translateY(104%);animation:rise 1.05s var(--ease) forwards}
+h1 em{font-style:normal;color:transparent;-webkit-text-stroke:1.5px var(--off)}
+@keyframes rise{to{transform:none}}
+@keyframes fade{to{opacity:1}}
+.label .stamp{font-family:var(--mono);font-size:0.66rem;line-height:2;color:var(--d2);text-align:right;
+  white-space:nowrap;opacity:0;animation:fade .9s var(--ease) .8s forwards}
+.label .stamp b{color:var(--off);font-weight:400}
+.lede{max-width:520px;margin:20px 0 0;font-size:0.94rem;line-height:1.8;
+  opacity:0;transform:translateY(14px);animation:up .9s var(--ease) .9s forwards}
+@keyframes up{to{opacity:1;transform:none}}
+
+/* ── filter row, styled like a light-table strip ── */
+.filters{display:flex;gap:7px;padding:18px 0 6px;overflow-x:auto;scrollbar-width:none;
+  position:sticky;top:0;z-index:30;background:linear-gradient(to bottom,var(--dark) 74%,transparent)}
+.filters::-webkit-scrollbar{display:none}
+.filters button{flex-shrink:0;padding:8px 15px;border:1px solid var(--bd);background:var(--sheet);
+  color:var(--d2);cursor:pointer;font-family:var(--mono);font-size:0.68rem;letter-spacing:0.08em;
+  transition:.26s var(--ease);white-space:nowrap}
+.filters button:hover{color:var(--off);border-color:var(--bd2)}
+.filters button.on{background:var(--off);border-color:var(--off);color:var(--dark);font-weight:500}
+.filters .shown{margin-left:auto;flex-shrink:0;align-self:center;font-family:var(--mono);font-size:0.62rem;
+  letter-spacing:0.1em;color:var(--d3);padding-left:12px;white-space:nowrap}
+
+/* ── the strips ── */
+.roll{padding:14px 0 60px}
+.strip{background:var(--film);border-top:1px solid var(--bd);border-bottom:1px solid var(--bd);
+  margin-bottom:16px;position:relative;
+  opacity:0;transform:translateY(24px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
+.strip.in{opacity:1;transform:none}
+/* sprocket holes down both edges */
+.strip::before,.strip::after{content:'';position:absolute;left:0;right:0;height:15px;background:var(--rebate);
+  background-image:radial-gradient(circle,var(--film) 3.2px,transparent 3.4px);
+  background-size:22px 15px;background-position:6px center}
+.strip::before{top:0}.strip::after{bottom:0}
+.strip .edge{position:absolute;top:0;left:10px;height:15px;display:flex;align-items:center;
+  font-family:var(--mono);font-size:0.5rem;letter-spacing:0.22em;color:var(--amber);z-index:2;
+  text-transform:uppercase;pointer-events:none}
+.strip .frames{display:grid;grid-template-columns:repeat(var(--per),1fr);gap:1px;
+  padding:15px 0;background:var(--bd)}
+
+.fr{position:relative;background:var(--film);aspect-ratio:1/1;cursor:pointer;overflow:hidden;
+  transition:background .3s}
+.fr:hover{background:#232327}
+.fr img{width:100%;height:100%;object-fit:contain;padding:11%;
+  transition:transform .5s var(--ease),filter .4s}
+.fr:hover img{transform:scale(1.07)}
+.fr .none{position:absolute;inset:0;display:grid;place-items:center;font-size:1.4rem;opacity:0.2}
+.fr .no{position:absolute;top:5px;left:6px;font-family:var(--mono);font-size:0.52rem;color:var(--amber);
+  letter-spacing:0.06em;z-index:2}
+.fr .nm{position:absolute;left:0;right:0;bottom:0;padding:14px 6px 5px;z-index:2;
+  background:linear-gradient(to top,rgba(10,10,11,0.95),transparent);
+  font-size:0.56rem;line-height:1.25;color:var(--off);text-align:center;
+  opacity:0;transform:translateY(5px);transition:.3s var(--ease);
+  overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.fr:hover .nm{opacity:1;transform:none}
+/* grease-pencil ring on the picks */
+.fr.pick::after{content:'';position:absolute;inset:9%;border:2px solid var(--pencil);border-radius:50%;
+  opacity:0.85;transform:rotate(-6deg) scale(1.02);
+  clip-path:polygon(0 0,100% 0,100% 86%,92% 100%,0 100%)}
+.fr.pick .no{color:var(--pencil)}
+.fr.dim{opacity:0.16;pointer-events:none;filter:grayscale(1)}
+
+/* ── enlarger overlay ── */
+.enl{position:fixed;inset:0;z-index:80;background:rgba(8,8,9,0.96);backdrop-filter:blur(14px);
+  display:flex;flex-direction:column;opacity:0;visibility:hidden;transition:.42s var(--ease)}
+.enl.on{opacity:1;visibility:visible}
+.enl .ehead{flex-shrink:0;display:flex;align-items:center;gap:12px;
+  padding:14px clamp(14px,3.5vw,32px);border-bottom:1px solid var(--bd)}
+.enl .ehead .no{font-family:var(--disp);font-size:1.5rem;color:var(--pencil);line-height:1}
+.enl .ehead .t{flex:1;min-width:0}
+.enl .ehead h2{font-family:var(--disp);font-size:clamp(1.05rem,3.4vw,1.9rem);color:var(--off);
+  text-transform:uppercase;letter-spacing:0.01em;line-height:1.1;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.enl .ehead .c{font-family:var(--mono);font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;
+  color:var(--d3);margin-top:4px}
+.enl .ehead button{flex-shrink:0;width:38px;height:38px;border:1px solid var(--bd);background:transparent;
+  color:var(--d1);cursor:pointer;font-size:1rem;transition:.24s}
+.enl .ehead button:hover{background:var(--off);color:var(--dark)}
+
+.enl .ebody{flex:1;min-height:0;display:grid;grid-template-columns:1.35fr 1fr;gap:0}
+.enl .plate{position:relative;display:flex;align-items:center;justify-content:center;
+  padding:clamp(14px,3vw,40px);background:#0a0a0b;min-height:0}
+.enl .plate img{max-width:100%;max-height:100%;object-fit:contain;cursor:zoom-in;
+  transition:opacity .22s;animation:blowup .5s var(--ease)}
+@keyframes blowup{from{opacity:0;transform:scale(0.92)}}
+.enl .plate .none{font-size:3rem;opacity:0.16}
+.enl .plate .arrows{position:absolute;left:0;right:0;bottom:14px;display:flex;justify-content:center;gap:10px}
+.enl .plate .arrows button{width:40px;height:40px;border:1px solid var(--bd);background:rgba(20,20,22,0.85);
+  color:var(--off);cursor:pointer;font-size:1rem;transition:.22s;border-radius:50%}
+.enl .plate .arrows button:hover{background:var(--off);color:var(--dark)}
+
+.enl .side{border-left:1px solid var(--bd);padding:clamp(16px,2.5vw,28px);overflow-y:auto;
+  display:flex;flex-direction:column;gap:16px}
+.enl .side .reel{display:flex;gap:6px;flex-wrap:wrap}
+.enl .side .reel button{width:54px;height:54px;padding:0;border:1px solid var(--bd);background:#101012;
+  cursor:pointer;overflow:hidden;opacity:0.45;transition:.26s}
+.enl .side .reel button.on{opacity:1;border-color:var(--amber)}
+.enl .side .reel img{width:100%;height:100%;object-fit:cover}
+.enl .side .facts{border-top:1px solid var(--bd);font-family:var(--mono)}
+.enl .side .facts div{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--bd);font-size:0.72rem}
+.enl .side .facts k{flex:0 0 78px;font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--d3)}
+.enl .side .facts v{color:var(--off)}
+.enl .side .facts v.p{color:var(--pencil)}
+.enl .side .buys{display:flex;gap:9px;flex-wrap:wrap}
+.buy{flex:1 1 auto;text-align:center;padding:12px 18px;text-decoration:none;font-size:0.76rem;
+  font-weight:500;transition:.3s var(--ease);white-space:nowrap}
+.buy.p{background:var(--off);color:var(--dark)}
+.buy.p:hover{background:var(--pencil);color:#fff}
+.buy.s{border:1px solid var(--bd2);color:var(--off)}
+.buy.s:hover{border-color:var(--amber);color:var(--amber)}
+.soon{font-size:0.76rem;color:var(--d3);font-style:italic}
+.enl .side .step{margin-top:auto;display:flex;gap:8px;padding-top:8px}
+.enl .side .step button{flex:1;padding:11px;border:1px solid var(--bd);background:transparent;color:var(--d1);
+  cursor:pointer;font-family:var(--sans);font-size:0.72rem;transition:.24s}
+.enl .side .step button:hover{background:var(--sheet);color:var(--off)}
+
+/* footer */
+.foot{padding:0 0 calc(70px + env(safe-area-inset-bottom));display:flex;gap:18px;align-items:center;
+  flex-wrap:wrap;border-top:1px solid var(--bd);padding-top:26px}
+.back{display:inline-flex;align-items:center;gap:10px;padding:13px 24px;border:1px solid var(--bd2);
+  color:var(--off);text-decoration:none;font-family:var(--mono);font-size:0.7rem;letter-spacing:0.13em;
+  text-transform:uppercase;transition:.3s var(--ease)}
+.back:hover{background:var(--pencil);border-color:var(--pencil);color:#fff;transform:translateX(-4px)}
+.foot p{margin-left:auto;font-family:var(--mono);font-size:0.62rem;letter-spacing:0.1em;color:var(--d3)}
+
+/* full-bleed lightbox on top of the enlarger */
+.lb{position:fixed;inset:0;z-index:99;background:rgba(6,6,7,0.98);display:none;
+  align-items:center;justify-content:center;padding:clamp(14px,5vw,50px)}
+.lb.on{display:flex;animation:fade2 .3s}
+@keyframes fade2{from{opacity:0}}
+.lb img{max-width:92vw;max-height:78vh;object-fit:contain;animation:pop .4s var(--ease)}
+@keyframes pop{from{opacity:0;transform:scale(.94)}}
+.lb .cap{position:absolute;bottom:20px;left:0;right:0;text-align:center;font-family:var(--mono);
+  font-size:0.66rem;letter-spacing:0.14em;color:var(--amber);padding:0 14px}
+.lb button{position:absolute;width:42px;height:42px;border:1px solid var(--bd2);background:var(--sheet);
+  color:var(--off);font-size:1rem;cursor:pointer;transition:.22s}
+.lb button:hover{background:var(--off);color:var(--dark)}
+.lb .x{top:16px;right:16px}.lb .prev{left:12px;top:50%}.lb .next{right:12px;top:50%}
+
+@media(max-width:900px){
+  .label{grid-template-columns:1fr}
+  .label .stamp{text-align:left}
+  .enl .ebody{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto}
+  .enl .plate{min-height:38svh}
+  .enl .side{border-left:0;border-top:1px solid var(--bd);max-height:44svh;
+    padding:14px 15px calc(16px + env(safe-area-inset-bottom))}
+  .enl .side .reel button{width:46px;height:46px}
+}
+@media(max-width:560px){
+  .fr .nm{opacity:1;transform:none;font-size:0.5rem;padding:10px 4px 4px}
+  .strip .frames{gap:1px}
+  .filters .shown{display:none}
+}
+</style>
+</head>
+<body>
+<div class="safelight"></div><div class="dust"></div>
+
+<div class="wrap">
+  <header class="label">
+    <div>
+      <div class="kick">Proof sheet · roll 01 · Bear 650</div>
+      <h1>
+        <span class="w"><span style="animation-delay:.16s">Contact</span></span>
+        <span class="w"><span style="animation-delay:.3s"><em>Sheet</em></span></span>
+      </h1>
+      <p class="lede" id="lede"></p>
+    </div>
+    <div class="stamp" id="stamp"></div>
+  </header>
+
+  <nav class="filters" id="filters"></nav>
+  <main class="roll" id="roll"></main>
+
+  <footer class="foot">
+    <a class="back" href="#">◀ Back to My Garage</a>
+    <p>Ringed frames are the picks</p>
+  </footer>
+</div>
+
+<!-- enlarger -->
+<div class="enl" id="enl">
+  <div class="ehead">
+    <span class="no" id="eNo">01</span>
+    <div class="t"><h2 id="eName">—</h2><div class="c" id="eCat"></div></div>
+    <button id="eClose">✕</button>
+  </div>
+  <div class="ebody">
+    <div class="plate" id="ePlate">
+      <div class="arrows">
+        <button id="ePrev">‹</button>
+        <button id="eNext">›</button>
+      </div>
+    </div>
+    <div class="side">
+      <div class="reel" id="eReel"></div>
+      <div class="facts" id="eFacts"></div>
+      <div class="buys" id="eBuys"></div>
+      <div class="step">
+        <button id="sPrev">‹ Previous frame</button>
+        <button id="sNext">Next frame ›</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="lb" id="lb">
+  <button class="x" onclick="closeLb()">✕</button>
+  <button class="prev" onclick="stepLb(-1)">‹</button>
+  <button class="next" onclick="stepLb(1)">›</button>
+  <img id="lbImg" alt="" />
+  <div class="cap" id="lbCap"></div>
+</div>
+
+<script src="storefront-data.js"></script>
+<script>
+const ITEMS = SF.all.map((it, i) => ({ ...it, no: i + 1, imgs: it.imgs.map(f => SF.url(f)) }))
+const N = ITEMS.length
+
+document.getElementById('lede').textContent = SF.note
+document.getElementById('stamp').innerHTML = `
+  Roll <b>BEAR650-01</b><br />
+  Frames <b>${String(N).padStart(2, '0')}</b> · Plates <b>${SF.photoCount}</b><br />
+  Sections <b>${SF.cats.length}</b> · Picks <b>${SF.featured.length}</b><br />
+  Dev <b>as-built</b>`
+
+/* ── strips: 6 frames per strip on wide screens, fewer on small ── */
+function perStrip() {
+  if (innerWidth < 560) return 3
+  if (innerWidth < 900) return 4
+  return 6
+}
+function build() {
+  const per = perStrip()
+  const strips = []
+  for (let i = 0; i < N; i += per) strips.push(ITEMS.slice(i, i + per))
+  document.getElementById('roll').innerHTML = strips.map((row, si) => `
+    <section class="strip" style="--per:${per};transition-delay:${si * 70}ms">
+      <span class="edge">BEAR650 · 400ASA · strip ${String(si + 1).padStart(2, '0')}</span>
+      <div class="frames">
+        ${row.map(it => `
+          <figure class="fr ${it.featured ? 'pick' : ''}" data-no="${it.no}" data-cat="${it.cat.id}">
+            <span class="no">${String(it.no).padStart(2, '0')}${it.featured ? 'A' : ''}</span>
+            ${it.imgs.length ? `<img src="${it.imgs[0]}" alt="${it.name}" loading="lazy" />`
+                             : `<span class="none">${it.cat.icon}</span>`}
+            <figcaption class="nm">${it.name}</figcaption>
+          </figure>`).join('')}
+        ${Array.from({ length: per - row.length }, () => '<div class="fr" style="pointer-events:none;opacity:.28"></div>').join('')}
+      </div>
+    </section>`).join('')
+  observe()
+  applyFilter()
+}
+function observe() {
+  const rev = new IntersectionObserver(es => es.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('in'); rev.unobserve(e.target) }
+  }), { rootMargin: '-50px' })
+  document.querySelectorAll('.strip').forEach(s => rev.observe(s))
+}
+build()
+
+let rebuildTimer
+addEventListener('resize', () => {
+  clearTimeout(rebuildTimer)
+  rebuildTimer = setTimeout(() => { if (document.querySelector('.strip').style.getPropertyValue('--per') != perStrip()) build() }, 200)
+})
+
+/* ── filters dim the frames rather than removing them, so the strips stay intact ── */
+let filter = null
+document.getElementById('filters').innerHTML =
+  `<button class="on" data-cat="">All frames</button>` +
+  SF.cats.map(c => `<button data-cat="${c.id}">${c.icon} ${c.label}</button>`).join('') +
+  `<button data-cat="__pick">★ Picks only</button>` +
+  `<span class="shown" id="shown"></span>`
+
+document.getElementById('filters').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return
+  filter = b.dataset.cat || null
+  document.querySelectorAll('.filters button').forEach(x => x.classList.toggle('on', x === b))
+  applyFilter()
+})
+function applyFilter() {
+  let n = 0
+  document.querySelectorAll('.fr[data-no]').forEach(f => {
+    const it = ITEMS.find(i => i.no === +f.dataset.no)
+    const hit = !filter || (filter === '__pick' ? it.featured : f.dataset.cat === filter)
+    f.classList.toggle('dim', !hit)
+    if (hit) n++
+  })
+  const el = document.getElementById('shown')
+  if (el) el.textContent = `${n} / ${N} frames`
+}
+
+/* ── the enlarger ── */
+const enl = document.getElementById('enl')
+let cur = null, plateAt = 0
+
+document.getElementById('roll').addEventListener('click', e => {
+  const f = e.target.closest('.fr[data-no]'); if (!f) return
+  show(+f.dataset.no)
+})
+
+function show(no) {
+  cur = ITEMS.find(i => i.no === no); if (!cur) return
+  plateAt = 0
+  document.getElementById('eNo').textContent = String(cur.no).padStart(2, '0')
+  document.getElementById('eName').textContent = cur.name
+  document.getElementById('eCat').textContent = `${cur.cat.icon} ${cur.cat.label}${cur.featured ? ' · pick' : ''}`
+  paintPlate()
+  document.getElementById('eReel').innerHTML = cur.imgs.length > 1
+    ? cur.imgs.map((s, k) => `<button class="${k === 0 ? 'on' : ''}" data-k="${k}"><img src="${s}" alt="" /></button>`).join('') : ''
+  document.getElementById('eFacts').innerHTML = [
+    ['frame', String(cur.no).padStart(2, '0') + ' / ' + String(N).padStart(2, '0')],
+    ['section', cur.cat.label],
+    ['plates', String(cur.imgs.length).padStart(2, '0')],
+    ['source', cur.links.map(l => l[0]).join(', ') || '—'],
+    ['marked', cur.featured ? '<span class="p">✓ ringed</span>' : '—'],
+  ].map(([k, v]) => `<div><k>${k}</k><v>${v}</v></div>`).join('')
+  document.getElementById('eBuys').innerHTML = cur.links.length
+    ? cur.links.map(([v, u], k) => `<a class="buy ${k === 0 ? 'p' : 's'}" href="${u}" target="_blank" rel="noopener noreferrer">${k === 0 ? 'Buy on ' + v : v} ↗</a>`).join('')
+    : '<span class="soon">Link coming soon</span>'
+  enl.classList.add('on')
+  document.body.classList.add('locked')
+}
+function paintPlate() {
+  const p = document.getElementById('ePlate')
+  const arrows = p.querySelector('.arrows')
+  p.querySelectorAll('img,.none').forEach(n => n.remove())
+  if (cur.imgs.length) {
+    const img = document.createElement('img')
+    img.src = cur.imgs[plateAt]; img.alt = cur.name
+    img.addEventListener('click', openLb)
+    p.insertBefore(img, arrows)
+  } else {
+    const s = document.createElement('span')
+    s.className = 'none'; s.textContent = cur.cat.icon
+    p.insertBefore(s, arrows)
+  }
+  arrows.style.display = cur.imgs.length > 1 ? 'flex' : 'none'
+}
+function plate(d) {
+  if (!cur.imgs.length) return
+  plateAt = (plateAt + d + cur.imgs.length) % cur.imgs.length
+  paintPlate()
+  document.querySelectorAll('#eReel button').forEach((x, j) => x.classList.toggle('on', j === plateAt))
+}
+document.getElementById('ePrev').addEventListener('click', () => plate(-1))
+document.getElementById('eNext').addEventListener('click', () => plate(1))
+document.getElementById('eReel').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return
+  plateAt = +b.dataset.k; paintPlate()
+  document.querySelectorAll('#eReel button').forEach((x, j) => x.classList.toggle('on', j === plateAt))
+})
+document.getElementById('sPrev').addEventListener('click', () => show(cur.no === 1 ? N : cur.no - 1))
+document.getElementById('sNext').addEventListener('click', () => show(cur.no === N ? 1 : cur.no + 1))
+function closeEnl() { enl.classList.remove('on'); document.body.classList.remove('locked') }
+document.getElementById('eClose').addEventListener('click', closeEnl)
+
+addEventListener('keydown', e => {
+  if (document.getElementById('lb').classList.contains('on')) return
+  if (!enl.classList.contains('on')) return
+  if (e.key === 'Escape') closeEnl()
+  if (e.key === 'ArrowRight') show(cur.no === N ? 1 : cur.no + 1)
+  if (e.key === 'ArrowLeft') show(cur.no === 1 ? N : cur.no - 1)
+})
+
+/* lightbox */
+let at = 0
+function openLb() { at = plateAt; paint(); document.getElementById('lb').classList.add('on') }
+function paint() {
+  document.getElementById('lbImg').src = cur.imgs[at]
+  document.getElementById('lbCap').textContent = `${cur.name} — plate ${at + 1} / ${cur.imgs.length}`
+}
+function stepLb(d) { at = (at + d + cur.imgs.length) % cur.imgs.length; paint() }
+function closeLb() { document.getElementById('lb').classList.remove('on') }
+document.getElementById('lb').addEventListener('click', e => { if (e.target.id === 'lb') closeLb() })
+addEventListener('keydown', e => {
+  if (!document.getElementById('lb').classList.contains('on')) return
+  if (e.key === 'Escape') closeLb()
+  if (e.key === 'ArrowRight') stepLb(1)
+  if (e.key === 'ArrowLeft') stepLb(-1)
+})
+</script>
+</body>
+</html>

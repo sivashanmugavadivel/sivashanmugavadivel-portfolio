@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Vlog detail · 3 · Filmstrip Snap</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   FILMSTRIP SNAP — one act per screen.
+
+   No scrolling page: the whole detail is a strip of full-height
+   frames that snap into place one at a time, with sprocket holes
+   punched down both edges. Each act owns a hue, and the entire
+   screen eases to it as the act locks in, so moving through the
+   vlog changes the mood rather than just the content.
+
+   Every act's artwork sits behind its type at a different depth, so
+   the still drifts more slowly than the words in front of it.
+   ══════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08080b; --off:#f6f5f8;
+  --d1:rgba(246,245,248,0.62); --d2:rgba(246,245,248,0.38); --d3:rgba(246,245,248,0.16);
+  --bd:rgba(255,255,255,0.09);
+  --acc:#e0bb3c;                        /* eased per act, see ACTS below */
+  --disp:'Anton',sans-serif; --sans:'Inter',sans-serif;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+html,body{height:100%}
+html{scroll-snap-type:y mandatory;scroll-behavior:smooth}
+body{background:var(--bg);color:var(--d1);font-family:var(--sans);overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;transition:background 1s ease}
+::selection{background:var(--acc);color:#000}
+img,video{display:block;max-width:100%}
+
+/* the wash behind everything, eased between act hues */
+.wash{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.42;filter:blur(85px);
+  background:radial-gradient(64vw 64vw at 76% 22%,var(--acc),transparent 66%);
+  transition:background 1s ease}
+.vig{position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:linear-gradient(to bottom,rgba(0,0,0,.6),transparent 24%,transparent 74%,rgba(0,0,0,.72))}
+.grain{position:fixed;inset:0;z-index:9;pointer-events:none;opacity:.15;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='130' height='130'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.88' numOctaves='3'/%3E%3C/filter%3E%3Crect width='130' height='130' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* ── sprocket holes down both edges: this is a strip of film ── */
+.sprock{position:fixed;top:0;bottom:0;width:26px;z-index:8;pointer-events:none;opacity:.5;
+  background-image:radial-gradient(ellipse 7px 11px at 50% 50%,#000 60%,transparent 62%);
+  background-size:26px 40px;background-repeat:repeat-y;
+  animation:roll 1.6s linear infinite}
+.sprock.l{left:0;background-color:rgba(255,255,255,.055)}
+.sprock.r{right:0;background-color:rgba(255,255,255,.055)}
+@keyframes roll{to{background-position-y:40px}}
+
+/* ── fixed chrome ── */
+.back{position:fixed;top:22px;left:44px;z-index:40;display:flex;align-items:center;gap:9px;
+  font-size:0.62rem;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--d2);
+  text-decoration:none;transition:.3s}
+.back:hover{color:var(--acc)}
+.back i{font-style:normal;transition:transform .3s var(--ease)}
+.back:hover i{transform:translateX(-4px)}
+.hud{position:fixed;top:20px;right:44px;z-index:40;display:flex;align-items:baseline;gap:8px;
+  font-family:var(--disp);letter-spacing:.05em}
+.hud b{font-size:1.7rem;color:var(--off);line-height:1;transition:color .6s}
+.hud s{text-decoration:none;font-size:.8rem;color:var(--d3)}
+.hud u{text-decoration:none;font-family:var(--sans);font-size:.55rem;font-weight:800;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--acc);margin-left:6px;transition:color 1s ease}
+
+/* the act index, as a strip of marks */
+.marks{position:fixed;right:40px;top:50%;transform:translateY(-50%);z-index:40;
+  display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.marks button{border:0;padding:0;background:rgba(255,255,255,.2);width:20px;height:3px;
+  border-radius:99px;cursor:pointer;transition:.45s var(--ease);position:relative}
+.marks button:hover{background:rgba(255,255,255,.6);width:30px}
+.marks button.on{background:var(--acc);width:46px}
+.marks button::after{content:attr(data-lbl);position:absolute;right:calc(100% + 11px);top:-6px;
+  font-family:var(--sans);font-size:.53rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--acc);white-space:nowrap;opacity:0;transform:translateX(7px);
+  transition:.35s var(--ease);pointer-events:none}
+.marks button:hover::after,.marks button.on::after{opacity:1;transform:none}
+@media(max-width:820px){
+  .marks{right:14px;gap:6px}
+  .marks button::after{display:none}
+  .back{left:34px}.hud{right:34px}
+}
+
+/* ── the acts ── */
+section{min-height:100vh;scroll-snap-align:start;position:relative;z-index:3;
+  display:flex;align-items:center;padding:88px clamp(40px,7vw,110px) 72px}
+.inner{width:100%;max-width:1180px;margin:0 auto}
+
+/* the still behind an act, drifting slower than the type */
+.plate{position:absolute;inset:0;z-index:-1;overflow:hidden}
+.plate img{width:100%;height:100%;object-fit:cover;filter:brightness(.34) saturate(.85);
+  transform:scale(1.16);will-change:transform}
+.plate::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(to right,rgba(8,8,11,.92) 6%,rgba(8,8,11,.45) 52%,rgba(8,8,11,.8))}
+
+/* every act's contents rise as it locks in */
+.up{opacity:0;transform:translateY(34px);
+  transition:opacity .95s var(--ease),transform .95s var(--ease)}
+section.seen .up{opacity:1;transform:none}
+
+/* ── act: title card ── */
+.kick{display:flex;align-items:center;gap:13px;flex-wrap:wrap;margin-bottom:18px}
+.kick b{font-size:.62rem;font-weight:800;letter-spacing:.3em;text-transform:uppercase;color:var(--acc)}
+.kick i{font-style:normal;width:48px;height:1px;background:var(--acc);opacity:.5}
+.kick s{text-decoration:none;font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--d2)}
+h1{font-family:var(--disp);font-size:clamp(2.4rem,8vw,7rem);line-height:.92;letter-spacing:.005em;
+  color:var(--off);max-width:19ch;text-transform:uppercase}
+.lede{margin-top:20px;max-width:52ch;font-size:clamp(.86rem,1.5vw,1.02rem);line-height:1.8}
+.figs{display:flex;gap:clamp(20px,4vw,50px);flex-wrap:wrap;margin-top:30px}
+.figs div b{display:block;font-family:var(--disp);font-size:clamp(1.5rem,3.2vw,2.5rem);color:var(--off);
+  line-height:1}
+.figs div span{font-size:.53rem;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--d2)}
+.cue{position:absolute;bottom:32px;left:clamp(40px,7vw,110px);display:flex;align-items:center;gap:12px;
+  font-size:.58rem;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--d2)}
+.cue i{font-style:normal;width:1px;height:32px;background:linear-gradient(var(--acc),transparent);
+  animation:drop 2s var(--ease) infinite}
+@keyframes drop{50%{transform:translateY(9px)}}
+
+/* ── act: the player ── */
+.player{position:relative;border-radius:14px;overflow:hidden;background:#000;border:1px solid var(--bd);
+  aspect-ratio:16/9;max-height:66vh;margin:0 auto;width:min(100%,980px);
+  box-shadow:0 40px 90px -30px rgba(0,0,0,.95)}
+.player img.p{width:100%;height:100%;object-fit:cover;filter:brightness(.7);transition:.7s var(--ease)}
+.player:hover img.p{filter:brightness(.86);transform:scale(1.03)}
+.player video.c{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;
+  transition:opacity 1.1s var(--ease)}
+.player video.c.on{opacity:.92}
+.player iframe{position:absolute;inset:0;width:100%;height:100%;border:0;z-index:5}
+.player .go{position:absolute;inset:0;z-index:3;border:0;background:transparent;cursor:pointer;
+  display:grid;place-items:center}
+.player .go i{font-style:normal;width:clamp(60px,8vw,86px);aspect-ratio:1;border-radius:50%;display:grid;
+  place-items:center;font-size:1.25rem;padding-left:4px;color:#000;background:var(--acc);
+  transition:.4s var(--ease);box-shadow:0 0 40px rgba(224,187,60,.4)}
+.player .go:hover i{transform:scale(1.11)}
+.pbar{display:flex;align-items:center;gap:14px;margin-top:20px;flex-wrap:wrap;
+  width:min(100%,980px);margin-left:auto;margin-right:auto}
+.pbar .t{font-family:var(--disp);font-size:1.05rem;color:var(--acc)}
+.pbar .rail{flex:1;min-width:140px;height:3px;background:var(--bd);border-radius:99px;position:relative}
+.pbar .rail b{position:absolute;left:0;top:0;bottom:0;background:var(--acc);border-radius:99px;width:0;
+  transition:width .5s var(--ease)}
+.pbar .rail s{position:absolute;top:-4px;width:2px;height:11px;background:var(--d3);
+  transform:translateX(-50%);text-decoration:none;cursor:pointer;transition:.3s}
+.pbar .rail s:hover{background:var(--acc);height:17px;top:-7px}
+.pbar .chips{display:flex;gap:7px;flex-wrap:wrap}
+.pbar .chips u{text-decoration:none;font-size:.53rem;font-weight:800;letter-spacing:.14em;
+  text-transform:uppercase;padding:5px 11px;border-radius:99px;border:1px solid var(--bd);color:var(--d2)}
+
+/* ── act: a chapter ── */
+.chap .no{font-family:var(--disp);font-size:clamp(3.4rem,11vw,9rem);line-height:.8;color:transparent;
+  -webkit-text-stroke:1.4px rgba(255,255,255,.19);margin-bottom:-6px}
+.chap .at{display:inline-flex;align-items:center;gap:8px;font-family:var(--disp);font-size:1.25rem;
+  color:var(--acc);letter-spacing:.06em;margin-bottom:12px;cursor:pointer;
+  border:1px solid rgba(255,255,255,.14);padding:5px 14px;border-radius:99px;transition:.35s var(--ease)}
+.chap .at:hover{border-color:var(--acc);background:rgba(255,255,255,.05)}
+.chap h2{font-family:var(--disp);font-size:clamp(1.9rem,5.6vw,4.2rem);line-height:.98;color:var(--off);
+  text-transform:uppercase;max-width:18ch;letter-spacing:.005em}
+.chap p{margin-top:16px;max-width:46ch;font-size:clamp(.85rem,1.5vw,1rem);line-height:1.82}
+.chap .strip{display:flex;gap:9px;margin-top:28px;flex-wrap:wrap}
+.chap .strip img{width:clamp(74px,9vw,108px);aspect-ratio:4/3;object-fit:cover;border-radius:7px;
+  border:1px solid var(--bd);filter:grayscale(.9) brightness(.6);transition:.5s var(--ease);cursor:pointer}
+.chap .strip img:hover{filter:none;transform:translateY(-6px) scale(1.06)}
+
+/* ── act: the route ── */
+.mapact{display:grid;grid-template-columns:1.35fr 1fr;gap:clamp(20px,3.5vw,44px);align-items:center}
+@media(max-width:860px){.mapact{grid-template-columns:1fr;gap:22px}}
+.canvas{position:relative;aspect-ratio:4/3;max-height:56vh;border:1px solid var(--bd);border-radius:16px;
+  overflow:hidden;background:rgba(255,255,255,.02)}
+.canvas::before{content:'';position:absolute;inset:0;opacity:.4;
+  background-image:linear-gradient(var(--bd) 1px,transparent 1px),
+                   linear-gradient(90deg,var(--bd) 1px,transparent 1px);background-size:32px 32px}
+.canvas svg{position:absolute;inset:0;width:100%;height:100%;z-index:2;overflow:visible}
+.canvas .gh{fill:none;stroke:rgba(255,255,255,.15);stroke-width:2;stroke-dasharray:4 7}
+.canvas .ln{fill:none;stroke:var(--acc);stroke-width:2.8;stroke-linecap:round;
+  filter:drop-shadow(0 0 9px var(--acc));stroke-dasharray:var(--len);stroke-dashoffset:var(--len);
+  transition:stroke-dashoffset 2.4s var(--ease) .2s}
+section.seen .canvas .ln{stroke-dashoffset:0}
+.canvas .dot{r:6;fill:var(--acc);filter:drop-shadow(0 0 11px var(--acc))}
+.canvas .pin{position:absolute;transform:translate(-50%,-50%);z-index:3;display:flex;align-items:center;
+  gap:7px;opacity:0;transition:opacity .7s var(--ease)}
+section.seen .canvas .pin{opacity:1}
+.canvas .pin b{width:8px;height:8px;border-radius:50%;background:var(--off);
+  box-shadow:0 0 0 3px rgba(8,8,11,.9)}
+.canvas .pin.edge b{width:12px;height:12px;background:var(--acc);
+  box-shadow:0 0 0 3px rgba(8,8,11,.9),0 0 13px var(--acc)}
+.canvas .pin s{text-decoration:none;font-size:.55rem;font-weight:800;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--off);background:rgba(8,8,11,.85);padding:3px 8px;border-radius:5px;
+  border:1px solid var(--bd);white-space:nowrap}
+.rside h2{font-family:var(--disp);font-size:clamp(1.6rem,4vw,2.8rem);line-height:1;color:var(--off);
+  text-transform:uppercase;margin-bottom:12px}
+.rside .md{display:inline-block;font-size:.53rem;font-weight:800;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--acc);border:1px solid rgba(224,187,60,.35);padding:4px 11px;
+  border-radius:99px;margin-bottom:14px}
+.rside p{font-size:.86rem;line-height:1.8;margin-bottom:16px}
+.rside .kv{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--bd);
+  border:1px solid var(--bd);border-radius:12px;overflow:hidden}
+.rside .kv div{background:rgba(255,255,255,.025);padding:13px 15px}
+.rside .kv b{display:block;font-family:var(--disp);font-size:1.4rem;color:var(--off);line-height:1}
+.rside .kv span{display:block;font-size:.48rem;font-weight:800;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--d2);margin-top:5px}
+.rside .hl{display:flex;gap:7px;flex-wrap:wrap;margin-top:14px}
+.rside .hl u{text-decoration:none;font-size:.55rem;font-weight:700;padding:4px 10px;border-radius:99px;
+  background:rgba(255,255,255,.05);border:1px solid var(--bd);color:var(--d1)}
+
+/* ── act headers, shared by the feed acts ── */
+.ahead{display:flex;align-items:flex-end;gap:16px;margin-bottom:26px;flex-wrap:wrap}
+.ahead h2{font-family:var(--disp);font-size:clamp(1.7rem,4.6vw,3.4rem);line-height:.96;color:var(--off);
+  text-transform:uppercase}
+.ahead u{text-decoration:none;font-size:.55rem;font-weight:800;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--acc);padding-bottom:6px}
+.ahead i{font-style:normal;flex:1;height:1px;background:var(--bd);margin-bottom:9px;min-width:20px}
+
+/* ── act: instagram ── */
+.igrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(146px,1fr));gap:12px}
+.igc{position:relative;aspect-ratio:9/16;max-height:52vh;border-radius:13px;overflow:hidden;background:#000;
+  border:1px solid var(--bd);cursor:pointer;transition:.5s var(--ease)}
+.igc:hover{transform:translateY(-8px) rotate(-1deg);box-shadow:0 26px 48px -18px rgba(0,0,0,.92)}
+.igc img{width:100%;height:100%;object-fit:cover;filter:brightness(.58);transition:.65s var(--ease)}
+.igc:hover img{filter:brightness(.88);transform:scale(1.07)}
+.igc iframe{position:absolute;inset:0;width:100%;height:100%;border:0;z-index:5;background:#000}
+.igc .lg{position:absolute;top:9px;left:9px;z-index:3;width:24px;height:24px;border-radius:7px;
+  display:grid;place-items:center;font-size:.6rem;color:#fff;
+  background:linear-gradient(135deg,#f9ce34,#ee2a7b 55%,#6228d7)}
+.igc .pp{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:3;width:38px;
+  height:38px;border-radius:50%;display:grid;place-items:center;font-size:.7rem;padding-left:2px;color:#fff;
+  background:rgba(0,0,0,.42);border:1px solid rgba(255,255,255,.3);backdrop-filter:blur(5px);
+  transition:.4s var(--ease)}
+.igc:hover .pp{background:var(--acc);color:#000;border-color:var(--acc);
+  transform:translate(-50%,-50%) scale(1.14)}
+.igc .cp{position:absolute;left:0;right:0;bottom:0;z-index:3;padding:24px 11px 11px;
+  background:linear-gradient(to top,rgba(0,0,0,.94),transparent)}
+.igc .cp b{display:block;font-size:.68rem;font-weight:700;color:#fff;line-height:1.4}
+.igc .cp span{display:block;font-size:.52rem;color:var(--acc);margin-top:4px;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+
+/* ── act: posts ── */
+.pcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.pcard{text-decoration:none;border:1px solid var(--bd);border-radius:14px;overflow:hidden;
+  background:rgba(255,255,255,.025);transition:.5s var(--ease);display:block}
+.pcard:hover{transform:translateY(-8px);border-color:var(--acc)}
+.pcard .cv{position:relative;aspect-ratio:16/10;overflow:hidden;background:#000}
+.pcard .cv img{width:100%;height:100%;object-fit:cover;filter:brightness(.72);transition:.6s var(--ease)}
+.pcard:hover .cv img{filter:brightness(1);transform:scale(1.08)}
+.pcard .cv i{position:absolute;bottom:8px;left:10px;font-style:normal;font-size:1.15rem;
+  filter:drop-shadow(0 2px 7px #000)}
+.pcard .tx{padding:14px 15px 17px}
+.pcard .tx u{text-decoration:none;font-size:.5rem;font-weight:800;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--acc)}
+.pcard .tx b{display:block;font-size:.88rem;font-weight:700;color:var(--off);line-height:1.35;margin:6px 0}
+.pcard .tx span{display:block;font-size:.72rem;line-height:1.62}
+
+/* ── act: more videos ── */
+.vrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:13px}
+.vc{text-decoration:none;border:1px solid var(--bd);border-radius:13px;overflow:hidden;
+  background:rgba(255,255,255,.025);transition:.5s var(--ease);display:block}
+.vc:hover{transform:translateY(-7px);border-color:var(--acc)}
+.vc .th{position:relative;aspect-ratio:16/9;overflow:hidden;background:#000}
+.vc .th img{width:100%;height:100%;object-fit:cover;filter:brightness(.72);transition:.55s var(--ease)}
+.vc:hover .th img{filter:brightness(.96);transform:scale(1.07)}
+.vc .th video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;
+  transition:opacity .45s}
+.vc:hover .th video{opacity:1}
+.vc .th .d{position:absolute;bottom:7px;right:7px;z-index:2;background:rgba(0,0,0,.85);color:#fff;
+  font-size:.54rem;font-weight:700;padding:2px 6px;border-radius:4px}
+.vc .th .c{position:absolute;top:7px;left:8px;z-index:2;font-size:.45rem;font-weight:800;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--acc);padding:3px 8px;border-radius:99px;
+  background:rgba(8,8,11,.82);border:1px solid rgba(255,255,255,.15)}
+.vc .tx{padding:11px 13px 14px}
+.vc .tx b{display:block;font-size:.79rem;font-weight:700;color:var(--off);line-height:1.32}
+.vc .tx span{display:block;font-size:.62rem;color:var(--d2);margin-top:4px}
+
+/* ── act: outro ── */
+.outro{text-align:center;flex-direction:column;justify-content:center;gap:16px}
+.outro h2{font-family:var(--disp);font-size:clamp(2.4rem,10vw,7.5rem);line-height:.88;color:var(--off);
+  text-transform:uppercase}
+.outro p{max-width:44ch;margin:0 auto;font-size:.9rem;line-height:1.8}
+.outro .btns{display:flex;gap:11px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+.outro .btns a{text-decoration:none;font-size:.6rem;font-weight:800;letter-spacing:.18em;
+  text-transform:uppercase;padding:13px 26px;border-radius:99px;transition:.4s var(--ease)}
+.outro .btns a.y{background:var(--acc);color:#000}
+.outro .btns a.i{border:1px solid var(--bd);color:var(--off)}
+.outro .btns a:hover{transform:translateY(-3px)}
+.outro .btns a.i:hover{border-color:var(--acc);color:var(--acc)}
+
+/* ── empty state ── */
+.empty{flex-direction:column;justify-content:center;text-align:center;gap:14px}
+.empty .ic{font-size:3rem;animation:bob 3.4s var(--ease) infinite}
+@keyframes bob{50%{transform:translateY(-11px)}}
+.empty b{font-size:.58rem;font-weight:800;letter-spacing:.3em;text-transform:uppercase;color:var(--acc)}
+.empty h2{font-family:var(--disp);font-size:clamp(2rem,8vw,5.4rem);line-height:.9;color:var(--off);
+  text-transform:uppercase}
+.empty p{max-width:44ch;margin:0 auto;font-size:.9rem;line-height:1.8}
+.empty .rail3{width:min(320px,70vw);height:2px;background:var(--bd);margin:6px auto 0;position:relative;
+  overflow:hidden;border-radius:9px}
+.empty .rail3 i{position:absolute;inset:0;width:38%;background:var(--acc);
+  animation:sweep 2.6s var(--ease) infinite}
+@keyframes sweep{0%{transform:translateX(-110%)}100%{transform:translateX(270%)}}
+</style>
+</head>
+<body>
+<div class="wash" id="wash"></div>
+<div class="vig"></div>
+<div class="sprock l"></div><div class="sprock r"></div>
+<div class="grain"></div>
+<a class="back" href="vlog-data-design-preview.html"><i>←</i> Designs</a>
+<div class="hud"><b id="hn">01</b><s>/</s><s id="ht"></s><u id="hl"></u></div>
+<div class="marks" id="marks"></div>
+<div id="app"></div>
+
+<script src="vlog-data.js"></script>
+<script>
+const D = window.VLOG
+const app = document.getElementById('app')
+const $ = s => document.querySelector(s)
+
+/* Each act owns a hue. The whole screen eases to it as the act locks in,
+   so the strip changes mood rather than just content. */
+const HUES = {
+  title: '#e0bb3c', player: '#ff4d4d', chapter: '#e0bb3c',
+  route: '#22c55e', insta: '#ee2a7b', posts: '#a78bfa', videos: '#38bdf8', outro: '#e0bb3c',
+}
+
+if (D.isEmpty) {
+  $('#ht').textContent = '01'
+  $('#hl').textContent = 'Coming soon'
+  app.innerHTML = `
+    <section class="empty" data-lbl="Soon" data-kind="title">
+      <div class="ic">🎞</div><b>Coming soon</b>
+      <h2>Nothing<br />on the reel</h2>
+      <p>The rig is mounted and the rides are planned. The first ride video threads itself
+         onto this strip the moment it is cut.</p>
+      <div class="rail3"><i></i></div>
+    </section>`
+  boot()
+} else {
+  render(D.current())
+}
+
+function render(V) {
+  /* Shorts get three chapter acts, films seven — the strip's length follows
+     the video rather than a fixed layout. */
+  const chapterActs = V.chapters.map((c, i) => `
+    <section data-lbl="${c.at}" data-kind="chapter" class="chap">
+      <div class="plate"><img src="${c.photo}" alt="" loading="lazy" /></div>
+      <div class="inner">
+        <div class="no up">${String(i + 1).padStart(2, '0')}</div>
+        <div class="up"><span class="at" data-seek="${c.sec}">▶ ${c.at}</span></div>
+        <h2 class="up">${c.title}</h2>
+        <p class="up">${c.blurb}</p>
+        <div class="strip up">
+          ${V.stills.slice(i * 2, i * 2 + 4).map(s =>
+            `<img src="${s.src}" alt="" title="${s.cap}" loading="lazy" />`).join('')}
+        </div>
+      </div>
+    </section>`).join('')
+
+  app.innerHTML = `
+  <!-- ── title card ── -->
+  <section data-lbl="Title" data-kind="title">
+    <div class="plate"><img src="${V.still}" alt="" /></div>
+    <div class="inner">
+      <div class="kick up"><b>${V.cat}</b><i></i>
+        <s>${V.when.label} · ${V.kind} · ${V.duration}</s></div>
+      <h1 class="up">${V.title}</h1>
+      <p class="lede up">${V.blurb}</p>
+      <div class="figs up">
+        ${[[V.duration, 'Runtime'], [V.views, 'Views'], [V.chapters.length, 'Chapters'],
+           [V.route.distance, 'Route']]
+          .map(([b, s]) => `<div><b>${b}</b><span>${s}</span></div>`).join('')}
+      </div>
+    </div>
+    <div class="cue"><i></i> Scroll · one act per screen</div>
+  </section>
+
+  <!-- ── the player ── -->
+  <section data-lbl="Watch" data-kind="player">
+    <div class="inner">
+      <div class="player up" id="player">
+        <img class="p" src="${V.posterBig}" alt="" onerror="this.src='${V.still}'" />
+        ${V.clip ? `<video class="c" id="cl" src="${V.clip}" muted loop playsinline preload="metadata"></video>` : ''}
+        <button class="go" id="go" aria-label="Play"><i>▶</i></button>
+      </div>
+      <div class="pbar up">
+        <span class="t" id="now">0:00</span>
+        <div class="rail" id="rail"><b id="fill"></b>
+          ${V.chapters.map(c => `<s data-seek="${c.sec}" style="left:${c.pct}%" title="${c.title}"></s>`).join('')}
+        </div>
+        <span class="t">${V.duration}</span>
+        <div class="chips">
+          <u>${V.kind}</u><u>${V.views} views</u><u>${V.when.short}</u>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  ${chapterActs}
+
+  <!-- ── the route ── -->
+  <section data-lbl="Route" data-kind="route">
+    <div class="inner mapact">
+      <div class="canvas up" id="canvas">
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          <path class="gh" id="gh" d="" vector-effect="non-scaling-stroke" />
+          <path class="ln" id="ln" d="" vector-effect="non-scaling-stroke" />
+          <circle class="dot" id="dot" cx="0" cy="0" />
+        </svg>
+        ${V.route.stops.map(s => `
+          <div class="pin${s.first || s.last ? ' edge' : ''}"
+               style="left:${s.x}%;top:${s.y}%"><b></b><s>${s.label}</s></div>`).join('')}
+      </div>
+      <div class="rside">
+        <span class="md up">${V.route.mode} · ${V.route.date}</span>
+        <h2 class="up">${V.route.name}</h2>
+        <p class="up">${V.route.story}</p>
+        <div class="kv up">
+          <div><b>${V.route.km || '—'}</b><span>Kilometres</span></div>
+          <div><b>${V.route.stops.length}</b><span>Stops</span></div>
+        </div>
+        <div class="hl up">${V.route.highlights.map(h => `<u>${h}</u>`).join('')}</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── instagram ── -->
+  <section data-lbl="Reels" data-kind="insta">
+    <div class="inner">
+      <div class="ahead up"><h2>On Instagram</h2><i></i><u>${D.social.handle}</u></div>
+      <div class="igrow up">
+        ${V.insta.map(r => `
+          <div class="igc" data-embed="${r.embed}">
+            <img src="${r.still}" alt="" loading="lazy" />
+            <div class="lg">◙</div><div class="pp">▶</div>
+            <div class="cp"><b>${r.caption}</b><span>${r.tags.slice(0, 3).join(' ')}</span></div>
+          </div>`).join('')}
+      </div>
+    </div>
+  </section>
+
+  <!-- ── posts ── -->
+  <section data-lbl="Read" data-kind="posts">
+    <div class="inner">
+      <div class="ahead up"><h2>Read More</h2><i></i><u>From the blog</u></div>
+      <div class="pcols up">
+        ${V.posts.map(p => `
+          <a class="pcard" href="${p.href}">
+            <div class="cv"><img src="${p.cover}" alt="" loading="lazy" /><i>${p.icon}</i></div>
+            <div class="tx"><u>${p.cat} · ${p.when.short}</u><b>${p.title}</b>
+              <span>${p.excerpt}</span></div></a>`).join('')}
+      </div>
+    </div>
+  </section>
+
+  <!-- ── more videos ── -->
+  <section data-lbl="Next" data-kind="videos">
+    <div class="inner">
+      <div class="ahead up"><h2>More Videos</h2><i></i><u>${D.count} on the channel</u></div>
+      <div class="vrow up">
+        ${V.related.slice(0, 4).map(r => `
+          <a class="vc" href="?v=${r.yt}">
+            <div class="th">
+              <img src="${r.poster}" alt="" loading="lazy" onerror="this.src='${r.still}'" />
+              ${r.clip ? `<video src="${r.clip}" muted loop playsinline preload="none"></video>` : ''}
+              <span class="c">${r.cat}</span><span class="d">${r.duration}</span>
+            </div>
+            <div class="tx"><b>${r.title}</b><span>${r.when.short} · ${r.views} views</span></div>
+          </a>`).join('')}
+      </div>
+    </div>
+  </section>
+
+  <!-- ── outro ── -->
+  <section class="outro" data-lbl="End" data-kind="outro">
+    <div class="inner">
+      <h2 class="up">That's<br />the reel</h2>
+      <p class="up">${D.count} videos, ${D.insta.length} reels and ${D.posts.length} posts so far —
+         and a Bear 650 with ${D.routes.length} rides already planned.</p>
+      <div class="btns up">
+        <a class="y" href="${V.url}" target="_blank" rel="noopener">Watch on YouTube</a>
+        <a class="i" href="${D.social.instagram}" target="_blank" rel="noopener">Follow on Instagram</a>
+      </div>
+    </div>
+  </section>`
+
+  boot(V)
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   One observer runs the strip: it marks the act on screen, moves the
+   index, and eases the page hue. A separate scroll loop handles the
+   per-act parallax, because that has to update continuously rather
+   than only at the moment an act locks in.
+   ══════════════════════════════════════════════════════════════════ */
+function boot(V) {
+  const acts = [...document.querySelectorAll('section')]
+  const clamp01 = n => Math.min(1, Math.max(0, n))
+
+  $('#ht').textContent = String(acts.length).padStart(2, '0')
+  $('#marks').innerHTML = acts.map((s, i) =>
+    `<button data-i="${i}" data-lbl="${s.dataset.lbl}"></button>`).join('')
+  const marks = [...document.querySelectorAll('.marks button')]
+  marks.forEach((b, i) => b.addEventListener('click', () =>
+    acts[i].scrollIntoView({ behavior: 'smooth' })))
+
+  /* the act nearest the middle of the screen is the current one */
+  let cur = -1
+  function spy() {
+    const mid = innerHeight / 2
+    let best = 0, bestD = Infinity
+    acts.forEach((s, i) => {
+      const r = s.getBoundingClientRect()
+      const d = Math.abs(r.top + r.height / 2 - mid)
+      if (d < bestD) { bestD = d; best = i }
+    })
+    if (best !== cur) {
+      cur = best
+      const s = acts[best]
+      marks.forEach((m, j) => m.classList.toggle('on', j === best))
+      $('#hn').textContent = String(best + 1).padStart(2, '0')
+      $('#hl').textContent = s.dataset.lbl
+      const hue = HUES[s.dataset.kind] || '#e0bb3c'
+      document.documentElement.style.setProperty('--acc', hue)
+      /* a whisper of the hue in the page background too */
+      document.body.style.background =
+        `color-mix(in srgb, ${hue} 5%, #08080b)`
+    }
+  }
+
+  /* acts reveal once, and their plate drifts for as long as they're visible */
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return
+    e.target.classList.add('seen')
+    e.target.querySelectorAll('.up').forEach((u, i) => {
+      u.style.transitionDelay = (i * 0.09) + 's'
+    })
+  }), { threshold: 0.22 })
+  acts.forEach(s => io.observe(s))
+
+  function parallax() {
+    acts.forEach(s => {
+      const img = s.querySelector('.plate img')
+      if (!img) return
+      const r = s.getBoundingClientRect()
+      if (r.bottom < -200 || r.top > innerHeight + 200) return
+      /* -1 above the fold … +1 below it */
+      const p = (r.top + r.height / 2 - innerHeight / 2) / innerHeight
+      img.style.transform = `scale(1.16) translateY(${p * -9}%)`
+    })
+  }
+
+  if (!V) { spy(); parallax(); addEventListener('scroll', () => { spy(); parallax() }, { passive: true }); return }
+
+  /* ── the player ── */
+  const player = $('#player'), cl = $('#cl')
+  if (cl) cl.play().then(() => cl.classList.add('on')).catch(() => {})
+  function seek(sec) {
+    let f = player.querySelector('iframe')
+    if (!f) {
+      f = document.createElement('iframe')
+      f.allow = 'autoplay; encrypted-media; picture-in-picture'
+      f.allowFullscreen = true
+      player.appendChild(f)
+    }
+    f.src = `${V.embed}?autoplay=1&start=${sec}&rel=0&modestbranding=1`
+    $('#go').style.display = 'none'
+    if (cl) cl.style.display = 'none'
+    const c = V.chapters.reduce((a, b) => (b.sec <= sec ? b : a), V.chapters[0])
+    $('#fill').style.width = c.pct + '%'
+    $('#now').textContent = c.at
+  }
+  $('#go').addEventListener('click', () => seek(0))
+  /* every timestamp on the page seeks, and jumps to the player act */
+  document.querySelectorAll('[data-seek]').forEach(el => el.addEventListener('click', () => {
+    seek(+el.dataset.seek)
+    document.querySelector('[data-kind="player"]').scrollIntoView({ behavior: 'smooth' })
+  }))
+
+  /* ── the route line ── */
+  const ln = $('#ln'), gh = $('#gh'), dot = $('#dot'), canvas = $('#canvas')
+  const stops = V.route.stops
+  const dPath = stops.map((s, i) => {
+    if (i === 0) return `M ${s.x} ${s.y}`
+    const p = stops[i - 1]
+    const cx = (p.x + s.x) / 2 + (s.y - p.y) * 0.16
+    const cy = (p.y + s.y) / 2 - (s.x - p.x) * 0.16
+    return `Q ${cx} ${cy} ${s.x} ${s.y}`
+  }).join(' ')
+  ln.setAttribute('d', dPath); gh.setAttribute('d', dPath)
+  const len = ln.getTotalLength()
+  ln.style.setProperty('--len', len)
+  function ride() {
+    const r = canvas.getBoundingClientRect()
+    const p = clamp01((innerHeight * 0.9 - r.top) / (r.height + innerHeight * 0.5))
+    const pt = ln.getPointAtLength(len * p)
+    dot.setAttribute('cx', pt.x); dot.setAttribute('cy', pt.y)
+  }
+
+  /* ── Instagram embeds on click ── */
+  document.querySelectorAll('.igc').forEach(c => c.addEventListener('click', () => {
+    if (c.querySelector('iframe')) return
+    const f = document.createElement('iframe')
+    f.src = c.dataset.embed; f.loading = 'lazy'; f.allowFullscreen = true
+    f.setAttribute('scrolling', 'no')
+    c.appendChild(f)
+  }))
+
+  /* ── related clips on hover ── */
+  document.querySelectorAll('.vc video').forEach(v => {
+    const c = v.closest('.vc')
+    c.addEventListener('mouseenter', () => { v.currentTime = 0; v.play().catch(() => {}) })
+    c.addEventListener('mouseleave', () => v.pause())
+  })
+
+  let raf = null
+  addEventListener('scroll', () => {
+    if (raf) return
+    raf = requestAnimationFrame(() => { spy(); parallax(); ride(); raf = null })
+  }, { passive: true })
+  addEventListener('resize', () => { parallax(); ride() })
+  spy(); parallax(); ride()
+}
+</script>
+</body>
+</html>

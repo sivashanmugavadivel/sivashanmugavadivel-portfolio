@@ -1,0 +1,1612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Follow the Journey — Design Picker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@500;700&family=JetBrains+Mono:wght@400;500;700&family=Bebas+Neue&display=swap" rel="stylesheet" />
+  <style>
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+    /* ── picker chrome (always dark, like the other preview files) ── */
+    :root{
+      --ui-bg:#08070e; --ui-panel:#0b0912; --ui-card:#141220;
+      --ui-text:rgba(240,238,246,0.65); --ui-text-h:#f0eef6; --ui-dim:rgba(240,238,246,0.4);
+      --ui-accent:#8b5cf6; --ui-accent2:#a78bfa; --ui-border:rgba(255,255,255,0.07); --ui-border2:rgba(255,255,255,0.12);
+      --sans:'Inter',system-ui,sans-serif; --heading:'Playfair Display',serif;
+      --mono:'JetBrains Mono',ui-monospace,monospace; --disp:'Bebas Neue',sans-serif;
+    }
+    body{background:var(--ui-bg);color:var(--ui-text);font-family:var(--sans);min-height:100vh}
+    .layout{display:flex;height:100vh}
+    .sidebar{width:252px;flex-shrink:0;background:var(--ui-panel);border-right:1px solid var(--ui-border);display:flex;flex-direction:column;padding:16px 0}
+    .sidebar-title{font-size:0.66rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--ui-accent2);padding:0 16px 14px;border-bottom:1px solid var(--ui-border)}
+    .design-list{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:6px}
+    .design-btn{padding:11px 12px;border-radius:10px;border:1px solid var(--ui-border);background:transparent;color:var(--ui-text);font-family:var(--sans);font-size:0.78rem;text-align:left;transition:all .2s;cursor:pointer}
+    .design-btn:hover{border-color:var(--ui-accent);color:var(--ui-text-h);background:rgba(139,92,246,0.06)}
+    .design-btn.active{border-color:var(--ui-accent);background:rgba(139,92,246,0.14);color:var(--ui-text-h)}
+    .btn-name{font-weight:700;display:block;margin-bottom:3px}
+    .btn-desc{font-size:0.64rem;opacity:.55;display:block;line-height:1.45}
+    .sidebar-foot{padding:12px 16px 0;border-top:1px solid var(--ui-border);font-size:0.6rem;line-height:1.6;color:var(--ui-dim)}
+
+    .preview{flex:1;overflow-y:auto;padding:34px 40px 90px}
+    .preview-inner{max-width:1180px;margin:0 auto}
+    .head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:22px;flex-wrap:wrap}
+    .head-name{font-family:var(--heading);font-size:1.7rem;color:var(--ui-text-h);line-height:1.1}
+    .head-sub{font-size:0.76rem;color:var(--ui-dim);margin-top:6px;max-width:620px;line-height:1.55}
+    .tools{display:flex;gap:8px;flex-shrink:0}
+    .tool{padding:9px 16px;border-radius:99px;border:1px solid var(--ui-border2);background:var(--ui-card);color:var(--ui-text-h);font-family:var(--sans);font-size:0.72rem;font-weight:600;cursor:pointer;transition:all .2s}
+    .tool:hover{border-color:var(--ui-accent);background:rgba(139,92,246,0.12);color:var(--ui-accent2)}
+    /* The section has to adapt to the space it is given, not to the
+       browser window — inside the site it sits in a 90%-wide column.
+       So every breakpoint below is a container query against the shell,
+       which is also what makes the Mobile toggle a truthful preview. */
+    .shell{border-radius:16px;overflow:hidden;border:1px solid var(--ui-border);
+      container-type:inline-size;container-name:sec;transition:max-width .35s cubic-bezier(.22,1,.36,1)}
+    .shell.is-mobile{max-width:390px;margin:0 auto;border-radius:30px;
+      box-shadow:0 0 0 9px #191821,0 26px 60px -22px #000}
+    .nav{display:flex;gap:8px;margin-top:26px;justify-content:center}
+    .nav button{padding:8px 18px;border-radius:99px;border:1px solid var(--ui-border2);background:transparent;color:var(--ui-text);font-family:var(--sans);font-size:0.72rem;cursor:pointer;transition:all .2s}
+    .nav button:hover{border-color:var(--ui-accent2);color:var(--ui-text-h)}
+    .notes{margin-top:18px;font-size:0.7rem;line-height:1.7;color:var(--ui-dim);border-left:2px solid var(--ui-border2);padding-left:14px}
+    .notes b{color:var(--ui-text-h);font-weight:600}
+
+    /* ══════════════════════════════════════════════════════════════
+       SHELL THEME — the site's own tokens, so every design can be
+       judged in both light and dark exactly as it will ship.
+       ══════════════════════════════════════════════════════════════ */
+    .shell[data-t="light"]{
+      --bg:#faf9f7; --bg2:#f0ede8; --card:#ffffff; --card2:#f7f5f1;
+      --text:#5c5349; --text-h:#1a1512; --dim:rgba(26,21,18,0.45);
+      --border:#e5e0d8; --border2:rgba(26,21,18,0.12);
+      --accent:#7c3aed; --shadow:rgba(26,21,18,0.14);
+    }
+    .shell[data-t="dark"]{
+      --bg:#16141a; --bg2:#1e1c24; --card:#1e1c24; --card2:#26232e;
+      --text:rgba(243,240,255,0.62); --text-h:#f3f0ff; --dim:rgba(243,240,255,0.38);
+      --border:#2e2a38; --border2:rgba(255,255,255,0.14);
+      --accent:#a78bfa; --shadow:rgba(0,0,0,0.5);
+    }
+    .shell{--honey:#e0bb3c;background:var(--bg);color:var(--text)}
+
+    /* shared entrance keyframes.
+       The -T variants animate the independent `translate` / `scale`
+       properties rather than `transform`, so a card can still be lifted
+       by :hover after its entrance has finished on `forwards` — a
+       transform keyframe would win the cascade and swallow the hover. */
+    @keyframes rise{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+    @keyframes riseT{from{opacity:0;translate:0 26px}to{opacity:1;translate:0 0}}
+    @keyframes fadein{from{opacity:0}to{opacity:1}}
+    @keyframes popInT{0%{opacity:0;translate:0 30px;scale:.86}60%{opacity:1}100%{opacity:1;translate:0 0;scale:1}}
+
+    /* section heading shared bits — each design restyles them */
+    .sec{padding:clamp(34px,5vw,64px) clamp(20px,4vw,48px)}
+    .eyebrow{font-family:var(--mono);font-size:0.6rem;letter-spacing:.28em;text-transform:uppercase}
+    .h2{font-family:var(--heading);color:var(--text-h);line-height:1.08;font-size:clamp(1.7rem,3.4vw,2.6rem)}
+    .sub{font-size:0.82rem;line-height:1.6;color:var(--dim);max-width:520px}
+
+    /* ═══════════════════════════════════════════════════════════════
+       A — INSTRUMENT CLUSTER
+       Each platform is a gauge on the bike's dash. Needles sweep up
+       from rest on entry; hovering revs that dial into the redline.
+       ═══════════════════════════════════════════════════════════════ */
+    .cl{background:
+        radial-gradient(120% 90% at 50% -10%,color-mix(in srgb,var(--honey) 12%,transparent),transparent 60%),
+        var(--bg)}
+    .cl-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;
+      padding-bottom:20px;margin-bottom:30px;border-bottom:1px solid var(--border)}
+    .cl-eyebrow{color:var(--honey)}
+    .cl-title{margin-top:8px}
+    .cl-odo{display:flex;gap:3px;align-items:center}
+    .cl-odo i{font-family:var(--mono);font-style:normal;font-size:1.25rem;font-weight:700;color:var(--honey);
+      background:linear-gradient(180deg,rgba(0,0,0,.22),transparent 45%,rgba(0,0,0,.22));
+      border:1px solid color-mix(in srgb,var(--honey) 30%,var(--border));border-radius:5px;padding:3px 7px;
+      box-shadow:inset 0 2px 5px var(--shadow)}
+    .cl-odo em{font-family:var(--mono);font-style:normal;font-size:0.54rem;letter-spacing:.18em;
+      text-transform:uppercase;color:var(--dim);margin-left:8px}
+
+    .cl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(142px,1fr));gap:14px}
+    .dial{position:relative;padding:16px 10px 14px;border-radius:14px;text-decoration:none;display:block;text-align:center;
+      background:var(--card);border:1px solid var(--border);opacity:0;animation:popInT .68s cubic-bezier(.34,1.4,.64,1) forwards;
+      transition:transform .3s cubic-bezier(.34,1.4,.64,1),border-color .3s,box-shadow .3s}
+    .dial:hover{transform:translateY(-8px);border-color:var(--pc);box-shadow:0 18px 40px -18px var(--pc)}
+    .dial-face{position:relative;width:96px;height:96px;margin:0 auto 12px}
+    .dial-face svg{position:absolute;inset:0;transform:rotate(135deg)}
+    .dial-track{fill:none;stroke:var(--border);stroke-width:5;stroke-linecap:round}
+    /* The sweep and the needle are driven by a transition off the `.go`
+       class rather than a keyframe, so :hover can still take them to the
+       redline once the entrance has settled. */
+    .dial-fill{fill:none;stroke:var(--pc);stroke-width:5;stroke-linecap:round;
+      stroke-dasharray:var(--len) 1000;stroke-dashoffset:var(--len);
+      transition:stroke-dashoffset 1.15s cubic-bezier(.22,1,.36,1) var(--del);
+      filter:drop-shadow(0 0 5px var(--pc))}
+    .dial.go .dial-fill{stroke-dashoffset:var(--rest)}
+    .dial.go:hover .dial-fill{stroke-dashoffset:var(--redline);
+      transition:stroke-dashoffset .5s cubic-bezier(.34,1.4,.64,1)}
+    /* needle — pinned at the dial centre, swings out of the peg */
+    .dial-needle{position:absolute;left:50%;top:50%;width:2px;height:38px;margin-left:-1px;
+      background:linear-gradient(180deg,var(--pc),transparent);transform-origin:50% 100%;
+      translate:0 -100%;rotate:-125deg;border-radius:2px;
+      transition:rotate 1.15s cubic-bezier(.22,1,.36,1) var(--del)}
+    .dial.go .dial-needle{rotate:var(--deg)}
+    .dial.go:hover .dial-needle{rotate:115deg;transition:rotate .5s cubic-bezier(.34,1.7,.64,1)}
+    .dial-hub{position:absolute;left:50%;top:50%;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;
+      background:var(--card2);border:1px solid var(--border2)}
+    .dial-icon{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:26px;height:26px;
+      color:var(--pc);transition:transform .35s cubic-bezier(.34,1.6,.64,1)}
+    .dial:hover .dial-icon{transform:translate(-50%,-50%) scale(1.18)}
+    .dial-icon svg{position:static;transform:none;width:100%;height:100%;fill:currentColor;display:block}
+    .dial-name{font-size:0.82rem;font-weight:700;color:var(--text-h)}
+    .dial-handle{font-family:var(--mono);font-size:0.56rem;letter-spacing:.05em;color:var(--dim);margin-top:4px;
+      overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .dial-lamp{position:absolute;top:11px;right:11px;width:6px;height:6px;border-radius:50%;background:var(--pc);
+      opacity:.35;transition:opacity .3s}
+    .dial:hover .dial-lamp{opacity:1;animation:lamp 1s ease-in-out infinite}
+    @keyframes lamp{50%{opacity:.25}}
+
+    /* ═══════════════════════════════════════════════════════════════
+       B — HIGHWAY EXIT SIGNS
+       A stretch of road with the lane marking marching past; every
+       platform is a gantry sign that drops in and swings on hover.
+       ═══════════════════════════════════════════════════════════════ */
+    .hw{position:relative;overflow:hidden;background:linear-gradient(180deg,var(--bg) 40%,var(--bg2))}
+    .hw-head{text-align:center;margin-bottom:38px}
+    .hw-eyebrow{color:var(--accent)}
+    .hw-title{margin-top:8px}
+    .hw-sub{margin:10px auto 0}
+    .hw-signs{display:grid;grid-template-columns:repeat(auto-fit,minmax(124px,1fr));gap:12px;align-items:end;
+      position:relative;z-index:2;perspective:900px}
+    .sign{text-decoration:none;display:block;opacity:0;animation:signDrop .8s cubic-bezier(.34,1.5,.64,1) forwards;
+      transform-style:preserve-3d}
+    @keyframes signDrop{0%{opacity:0;transform:translateY(-46px) rotateX(48deg)}70%{opacity:1}100%{opacity:1;transform:none}}
+    .sign-board{position:relative;overflow:hidden;border-radius:8px;padding:13px 10px 12px;text-align:center;
+      background:linear-gradient(165deg,#12603a,#0a4327);border:2px solid rgba(255,255,255,.82);
+      box-shadow:0 12px 26px -14px var(--shadow);transform-origin:50% 0;
+      transition:transform .45s cubic-bezier(.34,1.5,.64,1),box-shadow .35s}
+    .sign:hover .sign-board{transform:rotateX(-13deg) translateY(-3px);box-shadow:0 22px 40px -18px var(--shadow)}
+    /* reflective glint sweeping the retroreflective face */
+    .sign-board::after{content:'';position:absolute;top:-40%;bottom:-40%;width:38%;left:-60%;
+      background:linear-gradient(100deg,transparent,rgba(255,255,255,.34),transparent);transform:skewX(-18deg)}
+    .sign:hover .sign-board::after{animation:glint .75s ease-out}
+    @keyframes glint{to{left:130%}}
+    .sign-exit{font-family:var(--mono);font-size:0.5rem;letter-spacing:.2em;color:rgba(255,255,255,.62);
+      text-transform:uppercase}
+    .sign-icon{width:26px;height:26px;margin:8px auto 7px;color:#fff;transition:transform .4s cubic-bezier(.34,1.6,.64,1)}
+    .sign-icon svg{width:100%;height:100%;fill:currentColor;display:block}
+    .sign:hover .sign-icon{transform:scale(1.16) rotate(-6deg)}
+    .sign-name{font-family:var(--disp);font-size:1.12rem;letter-spacing:.05em;color:#fff;line-height:1}
+    .sign-arrow{margin-top:7px;font-size:0.9rem;color:rgba(255,255,255,.75);transition:transform .35s}
+    .sign:hover .sign-arrow{transform:translateX(5px);color:#fff}
+    .sign-post{height:34px;display:flex;justify-content:center;gap:26px}
+    .sign-post i{width:4px;background:linear-gradient(180deg,var(--border2),transparent);border-radius:2px}
+    /* the road */
+    .hw-road{position:relative;height:78px;margin-top:-8px;border-radius:10px;overflow:hidden;
+      background:linear-gradient(180deg,#2c2a31,#1a181d)}
+    .hw-road::before,.hw-road::after{content:'';position:absolute;left:0;right:0;height:2px;background:rgba(255,255,255,.28)}
+    .hw-road::before{top:12px}.hw-road::after{bottom:12px}
+    .hw-lane{position:absolute;left:0;right:0;top:50%;height:5px;margin-top:-2.5px;
+      background:repeating-linear-gradient(90deg,#f2c744 0 46px,transparent 46px 96px);
+      animation:lane 1.5s linear infinite}
+    @keyframes lane{to{background-position:-96px 0}}
+    .hw-rider{position:absolute;top:50%;left:-70px;font-size:1.6rem;transform:translateY(-58%) scaleX(-1);
+      animation:ride 9s linear infinite;filter:drop-shadow(0 3px 6px rgba(0,0,0,.5))}
+    @keyframes ride{to{left:110%}}
+
+    /* ═══════════════════════════════════════════════════════════════
+       C — GARAGE SHUTTER BAYS
+       Seven bays in the workshop wall. Each shutter teases open on
+       load, then rolls fully up on hover to a neon sign inside.
+       ═══════════════════════════════════════════════════════════════ */
+    .gb{background:
+        linear-gradient(180deg,var(--bg2),var(--bg)),
+        repeating-linear-gradient(90deg,transparent 0 78px,color-mix(in srgb,var(--text-h) 4%,transparent) 78px 80px)}
+    .gb-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:30px}
+    .gb-eyebrow{color:var(--honey)}
+    .gb-title{margin-top:8px}
+    .gb-key{font-family:var(--mono);font-size:0.58rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);
+      border:1px dashed var(--border2);border-radius:99px;padding:7px 14px}
+    .gb-bays{display:grid;grid-template-columns:repeat(auto-fit,minmax(126px,1fr));gap:12px}
+    .bay{position:relative;display:block;text-decoration:none;height:196px;border-radius:12px 12px 4px 4px;
+      overflow:hidden;background:#141218;border:1px solid var(--border);opacity:0;
+      animation:rise .6s cubic-bezier(.22,1,.36,1) forwards;transition:border-color .3s,box-shadow .35s}
+    .bay:hover{border-color:var(--pc);box-shadow:0 20px 48px -22px var(--pc)}
+    /* inside the bay — neon sign, lit only once the shutter is up */
+    .bay-in{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;
+      background:radial-gradient(80% 60% at 50% 42%,color-mix(in srgb,var(--pc) 22%,transparent),transparent 72%),#0e0c12}
+    .bay-neon{width:44px;height:44px;color:var(--pc);opacity:.28;transition:opacity .35s .12s,filter .35s .12s,transform .5s cubic-bezier(.34,1.5,.64,1) .1s}
+    .bay-neon svg{width:100%;height:100%;fill:currentColor;display:block}
+    .bay:hover .bay-neon{opacity:1;transform:scale(1.06);filter:drop-shadow(0 0 10px var(--pc)) drop-shadow(0 0 24px var(--pc));
+      animation:flicker .9s steps(1,end) .1s}
+    @keyframes flicker{0%,18%{opacity:.2}22%,40%{opacity:1}44%{opacity:.35}48%,100%{opacity:1}}
+    .bay-name{font-family:var(--disp);font-size:1.1rem;letter-spacing:.09em;color:#efeaf7;opacity:.35;transition:opacity .3s .2s}
+    .bay:hover .bay-name{opacity:1}
+    .bay-handle{font-family:var(--mono);font-size:0.53rem;color:rgba(239,234,247,.4);opacity:0;transform:translateY(6px);
+      transition:opacity .3s .28s,transform .3s .28s;padding:0 8px;text-align:center;max-width:100%;
+      overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .bay:hover .bay-handle{opacity:1;transform:none}
+    /* light spilling onto the floor */
+    .bay-spill{position:absolute;left:8%;right:8%;bottom:0;height:34px;opacity:0;transition:opacity .4s .15s;
+      background:linear-gradient(180deg,transparent,color-mix(in srgb,var(--pc) 42%,transparent));
+      filter:blur(7px)}
+    .bay:hover .bay-spill{opacity:1}
+    /* the roller shutter itself */
+    .bay-door{position:absolute;inset:0;transform-origin:50% 0;
+      background:repeating-linear-gradient(180deg,#3a3742 0 7px,#2a2833 7px 9px,#333039 9px 15px);
+      border-bottom:3px solid #4a4653;transition:transform .62s cubic-bezier(.72,0,.24,1);
+      animation:tease 1.5s cubic-bezier(.34,1.3,.64,1) .55s}
+    @keyframes tease{0%,100%{transform:translateY(0)}45%{transform:translateY(-14%)}}
+    .bay:hover .bay-door{transform:translateY(-100%)}
+    .bay-door::after{content:'';position:absolute;left:50%;bottom:12px;width:34px;height:5px;margin-left:-17px;
+      border-radius:3px;background:#565263}
+    .bay-no{position:absolute;top:12px;left:0;right:0;text-align:center;font-family:var(--mono);font-size:0.62rem;
+      letter-spacing:.22em;color:rgba(255,255,255,.34)}
+
+    /* ═══════════════════════════════════════════════════════════════
+       D — ROUTE MAP WAYPOINTS
+       The road draws itself across the panel, waypoints drop in along
+       it in order, and a rider dot keeps running the route.
+       ═══════════════════════════════════════════════════════════════ */
+    .rt{background:
+        radial-gradient(100% 80% at 20% 0%,color-mix(in srgb,var(--accent) 10%,transparent),transparent 60%),
+        var(--bg)}
+    .rt-head{margin-bottom:26px}
+    .rt-eyebrow{color:var(--accent)}
+    .rt-title{margin-top:8px}
+    .rt-sub{margin-top:10px}
+    .rt-map{position:relative;height:330px;border-radius:16px;border:1px solid var(--border);overflow:hidden;
+      background:var(--card);
+      background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);
+      background-size:44px 44px}
+    .rt-map svg{position:absolute;inset:0;width:100%;height:100%}
+    .rt-road{fill:none;stroke:var(--border2);stroke-width:14;stroke-linecap:round}
+    .rt-line{fill:none;stroke:var(--accent);stroke-width:2.5;stroke-linecap:round;stroke-dasharray:9 11;
+      animation:dash 1.1s linear infinite}
+    @keyframes dash{to{stroke-dashoffset:-20}}
+    .rt-draw{animation:draw 2s cubic-bezier(.4,0,.2,1) forwards}
+    @keyframes draw{to{stroke-dashoffset:0}}
+    /* waypoints */
+    .wp{position:absolute;transform:translate(-50%,-50%);text-decoration:none;opacity:0;
+      animation:wpPop .6s cubic-bezier(.34,1.6,.64,1) forwards}
+    @keyframes wpPop{0%{opacity:0;transform:translate(-50%,calc(-50% - 26px)) scale(.5)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+    .wp-pin{position:relative;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;
+      background:var(--card2);border:2px solid var(--pc);color:var(--pc);
+      box-shadow:0 8px 20px -8px var(--pc);transition:transform .32s cubic-bezier(.34,1.6,.64,1),background .3s,color .3s}
+    .wp:hover .wp-pin{transform:scale(1.22);background:var(--pc);color:#fff}
+    .wp-pin svg{width:20px;height:20px;fill:currentColor;display:block}
+    .wp-pin::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:1.5px solid var(--pc);
+      opacity:0;animation:ping 2.6s cubic-bezier(.22,1,.36,1) infinite}
+    @keyframes ping{0%{transform:scale(.72);opacity:.65}70%,100%{transform:scale(1.75);opacity:0}}
+    .wp-card{position:absolute;left:50%;bottom:calc(100% + 12px);transform:translate(-50%,8px);width:158px;
+      padding:9px 11px 10px;border-radius:10px;background:var(--card);border:1px solid var(--border);
+      box-shadow:0 16px 34px -14px var(--shadow);opacity:0;pointer-events:none;text-align:center;
+      transition:opacity .25s,transform .32s cubic-bezier(.22,1,.36,1)}
+    .wp:hover .wp-card{opacity:1;transform:translate(-50%,0)}
+    .wp-card b{display:block;font-size:0.78rem;color:var(--text-h)}
+    .wp-card span{display:block;font-family:var(--mono);font-size:0.55rem;color:var(--dim);margin-top:3px;
+      overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .wp-card em{display:block;font-style:normal;font-size:0.6rem;color:var(--pc);margin-top:6px;font-weight:600}
+    .wp-dist{position:absolute;left:50%;top:calc(100% + 8px);transform:translateX(-50%);white-space:nowrap;
+      font-family:var(--mono);font-size:0.5rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+    .rt-rider{position:absolute;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;
+      background:var(--honey);box-shadow:0 0 0 4px color-mix(in srgb,var(--honey) 22%,transparent),0 0 16px var(--honey)}
+    .rt-flag{position:absolute;transform:translate(-50%,-50%);font-family:var(--mono);font-size:0.54rem;
+      letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
+
+    /* ═══════════════════════════════════════════════════════════════
+       E — RIDE PASS STUBS
+       Perforated passes dealt out of a stack; hover tears the stub
+       and runs a scan line down the barcode.
+       ═══════════════════════════════════════════════════════════════ */
+    .rp{background:
+        radial-gradient(90% 70% at 80% 0%,color-mix(in srgb,var(--honey) 11%,transparent),transparent 60%),
+        var(--bg)}
+    .rp-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:34px}
+    .rp-eyebrow{color:var(--honey)}
+    .rp-title{margin-top:8px}
+    .rp-issue{text-align:right;font-family:var(--mono);font-size:0.56rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);line-height:1.9}
+    .rp-issue b{display:block;color:var(--text-h);font-size:0.82rem;letter-spacing:.06em}
+    .rp-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:14px;perspective:1100px}
+    .pass{position:relative;text-decoration:none;display:block;opacity:0;transform-style:preserve-3d;
+      animation:deal .75s cubic-bezier(.3,1.3,.5,1) forwards}
+    /* dealt off a stack in the middle of the row */
+    @keyframes deal{0%{opacity:0;transform:translate(var(--dx),34px) rotate(var(--dr)) scale(.82)}
+                    100%{opacity:1;transform:none}}
+    .pass-body{border-radius:12px;overflow:hidden;background:var(--card);border:1px solid var(--border);
+      box-shadow:0 12px 30px -18px var(--shadow);
+      transition:transform .38s cubic-bezier(.34,1.4,.64,1),box-shadow .35s,border-color .3s}
+    .pass:hover .pass-body{transform:translateY(-9px) rotate(-1.4deg);border-color:var(--pc);
+      box-shadow:0 26px 52px -22px var(--pc)}
+    .pass-top{position:relative;padding:15px 12px 13px;text-align:center;background:var(--pc);color:#fff;overflow:hidden}
+    .pass-top::after{content:'';position:absolute;inset:0;opacity:.22;
+      background:repeating-linear-gradient(135deg,rgba(255,255,255,.5) 0 2px,transparent 2px 9px)}
+    .pass-icon{width:30px;height:30px;margin:0 auto 8px;position:relative;z-index:1;
+      transition:transform .45s cubic-bezier(.34,1.6,.64,1)}
+    .pass-icon svg{width:100%;height:100%;fill:currentColor;display:block}
+    .pass:hover .pass-icon{transform:rotate(-10deg) scale(1.14)}
+    .pass-name{font-family:var(--disp);font-size:1.16rem;letter-spacing:.08em;line-height:1;position:relative;z-index:1}
+    /* the perforation — notches either side of a dashed tear line */
+    .pass-perf{position:relative;height:16px;background:var(--pc)}
+    .pass-perf::before,.pass-perf::after{content:'';position:absolute;top:50%;width:16px;height:16px;
+      margin-top:-8px;border-radius:50%;background:var(--bg)}
+    .pass-perf::before{left:-8px}.pass-perf::after{right:-8px}
+    .pass-tear{position:absolute;left:10px;right:10px;top:50%;height:0;border-top:2px dashed rgba(255,255,255,.55);
+      transition:border-color .3s}
+    .pass:hover .pass-tear{border-color:#fff}
+    .pass-bot{position:relative;padding:13px 12px 14px;text-align:center;overflow:hidden}
+    .pass-label{font-family:var(--mono);font-size:0.48rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
+    .pass-handle{font-size:0.7rem;font-weight:600;color:var(--text-h);margin-top:5px;
+      overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .pass-code{display:flex;gap:1.5px;justify-content:center;align-items:flex-end;height:26px;margin-top:11px}
+    .pass-code i{width:2px;background:var(--text-h);opacity:.32;transition:opacity .3s}
+    .pass:hover .pass-code i{opacity:.7}
+    /* scan line down the barcode */
+    .pass-scan{position:absolute;left:0;right:0;height:2px;bottom:-4px;opacity:0;
+      background:linear-gradient(90deg,transparent,var(--pc),transparent);box-shadow:0 0 10px var(--pc)}
+    .pass:hover .pass-scan{animation:scan 1.05s ease-in-out infinite}
+    @keyframes scan{0%{bottom:6px;opacity:0}12%{opacity:1}88%{opacity:1}100%{bottom:38px;opacity:0}}
+    .pass-seat{position:absolute;top:9px;right:10px;font-family:var(--mono);font-size:0.48rem;letter-spacing:.1em;
+      color:rgba(255,255,255,.72);z-index:1}
+
+    /* ═══════════════════════════════════════════════════════════════
+       F — NEON MARQUEE
+       Two handle ribbons running opposite ways, and tiles that light
+       up under the cursor with a colour wash that follows the pointer.
+       ═══════════════════════════════════════════════════════════════ */
+    .nm{position:relative;overflow:hidden;background:linear-gradient(180deg,var(--bg),var(--bg2) 70%,var(--bg))}
+    .nm-strip{position:relative;overflow:hidden;padding:9px 0;border-block:1px solid var(--border);
+      -webkit-mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent);
+      mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent)}
+    .nm-track{display:flex;gap:34px;width:max-content;font-family:var(--disp);font-size:1.05rem;letter-spacing:.14em;
+      color:var(--dim);white-space:nowrap;animation:marq 26s linear infinite}
+    .nm-strip.rev .nm-track{animation-direction:reverse}
+    .nm-strip:hover .nm-track{animation-play-state:paused}
+    @keyframes marq{to{transform:translateX(-50%)}}
+    .nm-track span{display:inline-flex;align-items:center;gap:34px}
+    .nm-track b{color:var(--text-h);font-weight:400}
+    .nm-mid{padding:clamp(30px,4.5vw,52px) clamp(20px,4vw,48px)}
+    .nm-head{text-align:center;margin-bottom:30px}
+    .nm-eyebrow{color:var(--accent)}
+    .nm-title{margin-top:9px}
+    .nm-sub{margin:11px auto 0}
+    .nm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(146px,1fr));gap:12px}
+    .tile{position:relative;overflow:hidden;display:block;text-decoration:none;padding:20px 16px 18px;border-radius:14px;
+      background:var(--card);border:1px solid var(--border);opacity:0;
+      animation:riseT .6s cubic-bezier(.22,1,.36,1) forwards;
+      transition:transform .32s cubic-bezier(.34,1.4,.64,1),border-color .3s,box-shadow .32s}
+    .tile:hover{transform:translateY(-6px);border-color:var(--pc);box-shadow:0 20px 44px -22px var(--pc)}
+    /* pointer-tracking wash — --mx/--my come from JS on mousemove */
+    .tile::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .3s;
+      background:radial-gradient(160px 160px at var(--mx,50%) var(--my,50%),color-mix(in srgb,var(--pc) 34%,transparent),transparent 70%)}
+    .tile:hover::before{opacity:1}
+    /* colour flooding up from the base */
+    .tile::after{content:'';position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--pc);
+      transform:scaleX(0);transform-origin:0 50%;transition:transform .4s cubic-bezier(.22,1,.36,1)}
+    .tile:hover::after{transform:scaleX(1)}
+    .tile-icon{position:relative;width:34px;height:34px;color:var(--pc);transition:transform .45s cubic-bezier(.34,1.6,.64,1)}
+    .tile-icon svg{width:100%;height:100%;fill:currentColor;display:block}
+    .tile:hover .tile-icon{transform:translateY(-2px) rotate(-8deg) scale(1.1)}
+    .tile-name{position:relative;margin-top:14px;font-size:0.92rem;font-weight:700;color:var(--text-h)}
+    .tile-handle{position:relative;font-family:var(--mono);font-size:0.55rem;color:var(--dim);margin-top:5px;
+      overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .tile-go{position:relative;display:flex;align-items:center;gap:6px;margin-top:13px;font-size:0.62rem;
+      font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--pc);
+      opacity:0;transform:translateY(6px);transition:opacity .3s,transform .3s}
+    .tile:hover .tile-go{opacity:1;transform:none}
+
+    /* ═══════════════════════════════════════════════════════════════
+       G — SPROCKET ORBIT
+       The platforms ride a chain ring around a turning sprocket. The
+       ring never stops until you reach into it, then the whole
+       drivetrain freezes so you can pick one off.
+       ═══════════════════════════════════════════════════════════════ */
+    .sp{position:relative;overflow:hidden;
+      background:radial-gradient(65% 65% at 50% 50%,color-mix(in srgb,var(--honey) 11%,transparent),transparent 70%),var(--bg)}
+    .sp-head{text-align:center}
+    .sp-eyebrow{color:var(--honey)}
+    .sp-title{margin-top:8px}
+    .sp-stage{position:relative;height:378px;display:grid;place-items:center;opacity:0;
+      animation:fadein .7s .1s forwards}
+    @keyframes spinF{to{rotate:360deg}}
+    @keyframes spinR{to{rotate:-360deg}}
+    /* hub */
+    .sp-hub{position:relative;width:150px;height:150px;display:grid;place-items:center;text-align:center;z-index:3}
+    .sp-hub svg{position:absolute;inset:0;width:100%;height:100%;fill:none;stroke:var(--border2);stroke-width:2;
+      animation:spinR 30s linear infinite}
+    .sp-hub-t{font-family:var(--disp);font-size:1.16rem;letter-spacing:.12em;color:var(--text-h);line-height:1.05;
+      position:relative;z-index:2}
+    .sp-hub-s{font-family:var(--mono);font-size:.48rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);
+      margin-top:5px;position:relative;z-index:2}
+    /* the chain the icons ride */
+    .sp-chain{position:absolute;left:50%;top:50%;width:296px;height:296px;margin:-148px 0 0 -148px;border-radius:50%;
+      border:2px dashed var(--border2);animation:spinF 44s linear infinite}
+    .sp-ring{position:absolute;inset:0;animation:spinF 44s linear infinite}
+    .sp-item{position:absolute;left:50%;top:50%;opacity:0;animation:fadein .5s forwards;
+      transform:translate(-50%,-50%) rotate(var(--a)) translateY(-148px) rotate(calc(-1 * var(--a)))}
+    /* counter-spins the ring so the label never ends up upside down */
+    .sp-btn{display:block;text-decoration:none;text-align:center;animation:spinR 44s linear infinite}
+    .sp-dot{width:58px;height:58px;border-radius:50%;display:grid;place-items:center;margin:0 auto;
+      background:var(--card);border:1px solid var(--border);color:var(--pc);
+      transition:transform .32s cubic-bezier(.34,1.6,.64,1),background .3s,color .3s,border-color .3s,box-shadow .3s}
+    .sp-btn:hover .sp-dot{transform:scale(1.24);background:var(--pc);color:#fff;border-color:var(--pc);
+      box-shadow:0 0 0 7px color-mix(in srgb,var(--pc) 16%,transparent),0 14px 30px -12px var(--pc)}
+    .sp-dot svg{width:24px;height:24px;fill:currentColor;display:block}
+    .sp-lab{display:block;margin-top:9px;font-size:.72rem;font-weight:700;color:var(--text-h);opacity:.5;
+      transition:opacity .3s}
+    .sp-btn:hover .sp-lab{opacity:1}
+    .sp-hand{display:block;font-family:var(--mono);font-size:.5rem;color:var(--dim);margin:3px auto 0;max-width:118px;
+      opacity:0;transform:translateY(-4px);transition:opacity .3s,transform .3s;
+      overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .sp-btn:hover .sp-hand{opacity:1;transform:none}
+    .sp-stage:hover .sp-ring,.sp-stage:hover .sp-btn,
+    .sp-stage:hover .sp-chain,.sp-stage:hover .sp-hub svg{animation-play-state:paused}
+
+    /* ═══════════════════════════════════════════════════════════════
+       H — SPLIT-FLAP BOARD
+       A departures board. Every name clatters into place one letter
+       at a time, then the row behaves like a live departure.
+       ═══════════════════════════════════════════════════════════════ */
+    .fb-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:24px}
+    .fb-eyebrow{color:var(--accent)}
+    .fb-title{margin-top:8px}
+    .fb-clock{font-family:var(--mono);font-size:.56rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);
+      text-align:right;line-height:1.9}
+    .fb-clock b{display:block;font-size:.95rem;color:var(--text-h);letter-spacing:.08em}
+    .fb-board{border-radius:14px;border:1px solid var(--border);background:var(--card2);overflow:hidden}
+    .fb-bar,.fb-row{display:grid;grid-template-columns:58px 1fr 176px 92px;gap:14px;align-items:center}
+    .fb-bar{padding:11px 18px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:.48rem;
+      letter-spacing:.22em;text-transform:uppercase;color:var(--dim)}
+    .fb-row{position:relative;overflow:hidden;padding:13px 18px;text-decoration:none;
+      border-bottom:1px solid var(--border);transition:background .28s,padding-left .3s}
+    .fb-row:last-child{border-bottom:none}
+    .fb-row:hover{background:color-mix(in srgb,var(--pc) 9%,transparent);padding-left:26px}
+    .fb-row::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--pc);
+      transform:scaleY(0);transform-origin:50% 100%;transition:transform .32s cubic-bezier(.22,1,.36,1)}
+    .fb-row:hover::before{transform:scaleY(1)}
+    .fb-row::after{content:'';position:absolute;top:0;bottom:0;width:130px;left:-150px;pointer-events:none;
+      background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--pc) 24%,transparent),transparent)}
+    .fb-row:hover::after{animation:sweep .95s ease-out}
+    @keyframes sweep{to{left:100%}}
+    .fb-gate{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:.62rem;color:var(--dim)}
+    .fb-lamp{width:7px;height:7px;border-radius:50%;background:var(--pc);opacity:.32;transition:opacity .3s,box-shadow .3s}
+    .fb-row:hover .fb-lamp{opacity:1;box-shadow:0 0 10px var(--pc)}
+    /* the flaps */
+    .fb-flaps{display:flex;gap:2px;perspective:460px}
+    .flap{position:relative;width:18px;height:25px;border-radius:3px;display:grid;place-items:center;
+      background:var(--card);border:1px solid var(--border);font-family:var(--mono);font-weight:700;
+      font-size:.76rem;color:var(--text-h);rotate:x -92deg;
+      animation:flap .44s cubic-bezier(.3,1.35,.5,1) var(--d) forwards}
+    @keyframes flap{60%{rotate:x 14deg}100%{rotate:x 0deg}}
+    .flap::after{content:'';position:absolute;left:0;right:0;top:50%;height:1px;background:var(--bg);opacity:.9}
+    .fb-handle{font-family:var(--mono);font-size:.6rem;color:var(--text);
+      overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .fb-cta{justify-self:end;display:flex;align-items:center;gap:6px;font-size:.6rem;font-weight:700;
+      letter-spacing:.1em;text-transform:uppercase;color:var(--pc);opacity:.5;
+      transition:opacity .3s,transform .3s}
+    .fb-row:hover .fb-cta{opacity:1;transform:translateX(5px)}
+
+    /* ═══════════════════════════════════════════════════════════════
+       I — HSRP NUMBER PLATES
+       Built to the current Indian High Security Registration Plate:
+       chromium Ashoka Chakra hologram top-left, hot-stamped blue IND
+       bottom-left, laser-etched PIN, colour-coded sticker, and two
+       non-reusable snap locks. The hologram never stops shifting.
+       ═══════════════════════════════════════════════════════════════ */
+    .np{background:linear-gradient(180deg,var(--bg),var(--bg2))}
+    .np-head{text-align:center;margin-bottom:30px}
+    .np-eyebrow{color:var(--honey)}
+    .np-title{margin-top:8px}
+    .np-sub{margin:10px auto 0}
+    .np-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(252px,1fr));gap:16px;perspective:1000px}
+    .plate{position:relative;display:flex;align-items:center;gap:11px;padding:11px 13px 15px;border-radius:7px;
+      text-decoration:none;overflow:hidden;opacity:0;transform-style:preserve-3d;
+      background:linear-gradient(180deg,#ffffff,#f2f2ee 55%,#e6e6df);border:2.5px solid #101010;
+      box-shadow:0 10px 24px -14px var(--shadow);
+      animation:boltIn .72s cubic-bezier(.34,1.5,.64,1) forwards;
+      transition:transform .42s cubic-bezier(.34,1.4,.64,1),box-shadow .35s}
+    @keyframes boltIn{0%{opacity:0;translate:0 24px;rotate:-7deg;scale:.9}
+                      60%{opacity:1}100%{opacity:1;translate:0 0;rotate:0deg;scale:1}}
+    .plate:hover{transform:rotateX(9deg) rotateY(-7deg) translateY(-4px);box-shadow:0 24px 42px -18px var(--shadow)}
+    /* the whole face catches the light as it tilts */
+    .plate::after{content:'';position:absolute;top:-50%;bottom:-50%;left:-70%;width:42%;transform:skewX(-16deg);
+      pointer-events:none;background:linear-gradient(100deg,transparent,rgba(255,255,255,.85),transparent)}
+    .plate:hover::after{animation:glint .8s ease-out}
+    /* snap locks — two per plate, as fitted */
+    .rivet{position:absolute;width:8px;height:8px;border-radius:50%;
+      background:radial-gradient(circle at 35% 30%,#fff,#8d8a80 55%,#4a473f);
+      box-shadow:inset 0 -1px 1px rgba(0,0,0,.45);transition:box-shadow .3s}
+    .plate:hover .rivet{box-shadow:inset 0 -1px 1px rgba(0,0,0,.45),0 0 9px rgba(255,255,255,.95)}
+    .r1{top:5px;left:50%;margin-left:-22px}
+    .r2{bottom:5px;left:50%;margin-left:14px}
+
+    .hsrp-left{display:flex;flex-direction:column;align-items:center;gap:5px;flex:none}
+    /* chromium Ashoka Chakra hologram */
+    .hsrp-holo{position:relative;width:34px;height:34px;border-radius:4px;overflow:hidden;
+      background:linear-gradient(135deg,#f6f9ff,#c9dcff 22%,#ffffff 41%,#bfe2ff 58%,#eef3ff 78%,#d7e5ff);
+      background-size:230% 230%;animation:holoShift 4.4s ease-in-out infinite;
+      box-shadow:inset 0 0 0 1px rgba(5,41,158,.28)}
+    @keyframes holoShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+    .hsrp-holo::after{content:'';position:absolute;inset:0;mix-blend-mode:screen;opacity:.5;pointer-events:none;
+      background:conic-gradient(from 0deg,rgba(255,0,140,.4),rgba(0,220,255,.4),rgba(170,255,0,.32),rgba(255,0,140,.4));
+      animation:spinF 7s linear infinite}
+    .hsrp-holo svg{position:absolute;inset:4px;width:calc(100% - 8px);height:calc(100% - 8px);
+      stroke:#05299e;fill:none;stroke-width:5}
+    .hsrp-holo svg circle.hub{fill:#05299e;stroke:none}
+    .plate:hover .hsrp-holo svg{animation:spinF 6s linear infinite}
+    /* hot-stamped IND */
+    .hsrp-ind{font-family:var(--sans);font-weight:900;font-size:.52rem;letter-spacing:.16em;color:#05299e;
+      text-shadow:0 1px 0 rgba(255,255,255,.9)}
+
+    .np-txt{display:block;min-width:0;flex:1}
+    .np-reg{display:block;font-family:var(--sans);font-weight:900;font-size:1.06rem;letter-spacing:.07em;
+      color:#0d0d0d;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .np-sm{display:block;font-family:var(--mono);font-size:.5rem;letter-spacing:.14em;text-transform:uppercase;
+      color:#57544c;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    /* laser-etched permanent identification number */
+    .hsrp-pin{position:absolute;right:13px;bottom:3px;font-family:var(--mono);font-size:.42rem;letter-spacing:.22em;
+      color:rgba(20,20,20,.42);text-shadow:0 1px 0 rgba(255,255,255,.8);
+      opacity:0;animation:etch .5s ease-out .55s forwards}
+    @keyframes etch{from{opacity:0;letter-spacing:.6em}to{opacity:1;letter-spacing:.22em}}
+    /* colour-coded sticker, the way a fuel-type sticker sits on the plate */
+    .hsrp-stick{position:relative;flex:none;width:34px;height:34px;border-radius:6px;display:grid;place-items:center;
+      background:var(--pc);color:#fff;
+      box-shadow:0 1px 2px rgba(0,0,0,.3),inset 0 0 0 1.5px rgba(255,255,255,.55);
+      transition:transform .35s cubic-bezier(.34,1.6,.64,1)}
+    .plate:hover .hsrp-stick{transform:scale(1.09) rotate(-4deg)}
+    .hsrp-stick svg{width:17px;height:17px;fill:currentColor;display:block}
+
+    /* ═══════════════════════════════════════════════════════════════
+       J — STICKER PEEL
+       Vinyl slapped on the top box. Reach for one and the corner
+       lifts off the case, the way a real sticker does.
+       ═══════════════════════════════════════════════════════════════ */
+    .st-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:24px}
+    .st-eyebrow{color:var(--accent)}
+    .st-title{margin-top:8px}
+    .st-hint{font-family:var(--mono);font-size:.55rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+    .st-case{position:relative;border-radius:20px;padding:42px 26px 34px;border:1px solid var(--border);
+      background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--text-h) 3.5%,transparent) 0 3px,transparent 3px 9px),
+        var(--card);box-shadow:inset 0 2px 24px var(--shadow)}
+    .st-case::before{content:'TOP BOX · 45 L';position:absolute;top:15px;left:22px;font-family:var(--mono);
+      font-size:.48rem;letter-spacing:.24em;color:var(--dim)}
+    .st-case::after{content:'';position:absolute;left:22px;right:22px;bottom:14px;height:1px;
+      background:repeating-linear-gradient(90deg,var(--border) 0 9px,transparent 9px 18px)}
+    .st-wrap{display:flex;flex-wrap:wrap;gap:18px;justify-content:center}
+    .stk{position:relative;display:block;text-decoration:none;opacity:0;
+      animation:slap .58s cubic-bezier(.3,1.5,.5,1) forwards;
+      transition:transform .38s cubic-bezier(.34,1.4,.64,1)}
+    @keyframes slap{0%{opacity:0;scale:1.45;rotate:calc(var(--rot) * 3.4)}
+                    60%{opacity:1}100%{opacity:1;scale:1;rotate:var(--rot)}}
+    /* straightens itself out of the slapped-on angle when reached for */
+    .stk:hover{transform:rotate(calc(-1 * var(--rot))) translateY(-5px)}
+    .stk-face{display:block;min-width:138px;padding:15px 17px 14px;text-align:center;border-radius:13px;
+      background:var(--pc);color:#fff;box-shadow:0 6px 14px -7px var(--shadow);
+      clip-path:polygon(0 0,100% 0,100% 0,100% 100%,0 100%);
+      transition:clip-path .4s cubic-bezier(.22,1,.36,1),box-shadow .38s}
+    .stk:hover .stk-face{clip-path:polygon(0 0,calc(100% - 32px) 0,100% 32px,100% 100%,0 100%);
+      box-shadow:0 18px 30px -12px var(--shadow)}
+    /* the peeled corner, drawn outside the clipped face so it survives */
+    .stk-peel{position:absolute;top:0;right:0;width:0;height:0;pointer-events:none;
+      background:linear-gradient(225deg,#ffffff,#cbc7bf);clip-path:polygon(0 0,100% 0,100% 100%);
+      border-radius:0 13px 0 0;filter:drop-shadow(-4px 4px 6px rgba(0,0,0,.35));
+      transition:width .4s cubic-bezier(.22,1,.36,1),height .4s cubic-bezier(.22,1,.36,1)}
+    .stk:hover .stk-peel{width:32px;height:32px}
+    .stk-ic{display:block;width:28px;height:28px;margin:0 auto 8px;transition:transform .4s cubic-bezier(.34,1.6,.64,1)}
+    .stk-ic svg{width:100%;height:100%;fill:currentColor;display:block}
+    .stk:hover .stk-ic{transform:rotate(-9deg) scale(1.1)}
+    .stk-nm{display:block;font-family:var(--disp);font-size:1.14rem;letter-spacing:.07em;line-height:1}
+    .stk-hd{display:block;font-family:var(--mono);font-size:.5rem;margin-top:5px;color:rgba(255,255,255,.82);
+      max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+    /* ═══════════════════════════════════════════════════════════════
+       K — GEAR SHIFT GATE
+       Seven channels, seven gate positions — 1 · N · 2 · 3 · 4 · 5 · 6.
+       The knob slides to whichever one you point at and rests in
+       neutral when you let go.
+       ═══════════════════════════════════════════════════════════════ */
+    .gs-head{margin-bottom:26px}
+    .gs-eyebrow{color:var(--honey)}
+    .gs-title{margin-top:8px}
+    .gs-sub{margin-top:10px}
+    .gs-body{display:grid;grid-template-columns:140px 1fr;gap:26px;align-items:stretch}
+    .gs-gate{position:relative;border-radius:16px;border:1px solid var(--border);background:var(--card);overflow:hidden}
+    .gs-slot{position:absolute;left:50%;top:22px;bottom:22px;width:15px;margin-left:-7.5px;border-radius:9px;
+      background:var(--bg2);box-shadow:inset 0 2px 7px var(--shadow);
+      scale:1 0;transform-origin:50% 100%;animation:slotGrow .75s cubic-bezier(.22,1,.36,1) .12s forwards}
+    @keyframes slotGrow{to{scale:1 1}}
+    .gs-det{position:absolute;left:50%;width:42px;height:2px;margin-left:-21px;background:var(--border2);
+      border-radius:2px;opacity:0;animation:fadein .4s forwards}
+    .gs-num{position:absolute;left:calc(50% + 28px);transform:translateY(-50%);font-family:var(--mono);
+      font-size:.62rem;color:var(--dim);opacity:0;animation:fadein .4s forwards}
+    .gs-knob{position:absolute;left:50%;top:var(--ky,50%);width:40px;height:40px;margin:-20px 0 0 -20px;
+      border-radius:50%;display:grid;place-items:center;z-index:2;
+      background:linear-gradient(160deg,var(--card2),var(--bg2));border:1px solid var(--border2);
+      box-shadow:0 9px 20px -8px var(--shadow);
+      transition:top .5s cubic-bezier(.34,1.4,.64,1),border-color .3s,box-shadow .3s}
+    .gs-knob::after{content:'';width:13px;height:13px;border-radius:50%;background:var(--kc,var(--honey));
+      box-shadow:0 0 12px var(--kc,var(--honey));transition:background .35s,box-shadow .35s}
+    .gs-rows{display:flex;flex-direction:column;gap:6px}
+    .gs-row{position:relative;display:flex;align-items:center;gap:13px;padding:11px 15px;border-radius:12px;
+      text-decoration:none;border:1px solid transparent;opacity:0;flex:1;
+      animation:riseT .5s cubic-bezier(.22,1,.36,1) forwards;
+      transition:background .28s,border-color .28s,transform .32s cubic-bezier(.34,1.4,.64,1)}
+    .gs-row:hover{background:color-mix(in srgb,var(--pc) 10%,transparent);transform:translateX(7px);
+      border-color:color-mix(in srgb,var(--pc) 42%,var(--border))}
+    .gs-g{font-family:var(--disp);font-size:1.3rem;width:26px;flex:none;text-align:center;color:var(--dim);
+      transition:color .3s,transform .3s cubic-bezier(.34,1.6,.64,1)}
+    .gs-row:hover .gs-g{color:var(--pc);transform:scale(1.18)}
+    .gs-ic{width:22px;height:22px;flex:none;color:var(--pc);transition:transform .35s cubic-bezier(.34,1.6,.64,1)}
+    .gs-ic svg{width:100%;height:100%;fill:currentColor;display:block}
+    .gs-row:hover .gs-ic{transform:rotate(-9deg) scale(1.16)}
+    .gs-tx{display:block;min-width:0}
+    .gs-nm{display:block;font-size:.88rem;font-weight:700;color:var(--text-h)}
+    .gs-hd{display:block;font-family:var(--mono);font-size:.54rem;color:var(--dim);margin-top:3px;
+      overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .gs-go{margin-left:auto;flex:none;font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+      color:var(--pc);opacity:0;transform:translateX(-7px);transition:opacity .3s,transform .3s}
+    .gs-row:hover .gs-go{opacity:1;transform:none}
+
+    /* ═══════════════════════════════════════════════════════════════
+       L — EXPANDING LANES
+       Seven closed lanes; the one you point at opens up and floods
+       with its own colour while the rest give way.
+       ═══════════════════════════════════════════════════════════════ */
+    .ln-head{text-align:center;margin-bottom:26px}
+    .ln-eyebrow{color:var(--accent)}
+    .ln-title{margin-top:8px}
+    .ln-sub{margin:10px auto 0}
+    .ln-row{display:flex;gap:8px;height:298px}
+    .lane{position:relative;flex:1 1 0;min-width:0;overflow:hidden;border-radius:14px;text-decoration:none;
+      background:var(--card);border:1px solid var(--border);opacity:0;
+      animation:laneIn .62s cubic-bezier(.22,1,.36,1) forwards;
+      transition:flex-grow .5s cubic-bezier(.22,1,.36,1),border-color .35s,box-shadow .35s}
+    @keyframes laneIn{from{opacity:0;translate:0 28px;scale:1 .92}to{opacity:1;translate:0 0;scale:1 1}}
+    .ln-row:hover .lane{flex-grow:.8}
+    .ln-row:hover .lane:hover{flex-grow:3.6;border-color:var(--pc);box-shadow:0 22px 46px -24px var(--pc)}
+    .lane-wash{position:absolute;inset:0;opacity:0;transition:opacity .45s;
+      background:linear-gradient(180deg,transparent 25%,color-mix(in srgb,var(--pc) 62%,transparent))}
+    .lane:hover .lane-wash{opacity:1}
+    .lane-ic{position:absolute;top:18px;left:50%;translate:-50% 0;width:26px;height:26px;color:var(--pc);
+      transition:transform .4s cubic-bezier(.34,1.6,.64,1),color .35s}
+    .lane-ic svg{width:100%;height:100%;fill:currentColor;display:block}
+    .lane:hover .lane-ic{transform:scale(1.18) rotate(-8deg)}
+    .lane-v{position:absolute;left:50%;bottom:18px;writing-mode:vertical-rl;transform:translateX(-50%) rotate(180deg);
+      font-family:var(--disp);font-size:1.05rem;letter-spacing:.18em;color:var(--text-h);opacity:.65;
+      transition:opacity .28s,transform .42s}
+    .lane:hover .lane-v{opacity:0;transform:translateX(-50%) rotate(180deg) translateY(-18px)}
+    .lane-in{position:absolute;left:0;right:0;bottom:0;padding:20px;white-space:nowrap;
+      opacity:0;transform:translateY(16px);transition:opacity .35s .08s,transform .42s .08s}
+    .lane:hover .lane-in{opacity:1;transform:none}
+    .lane-nm{display:block;font-family:var(--disp);font-size:1.55rem;letter-spacing:.05em;line-height:1;color:var(--text-h)}
+    .lane-hd{display:block;font-family:var(--mono);font-size:.57rem;color:var(--text);margin-top:7px}
+    .lane-go{display:inline-flex;align-items:center;gap:7px;margin-top:13px;padding:7px 14px;border-radius:99px;
+      background:var(--pc);color:#fff;font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+
+    /* ══════════════════════════════════════════════════════════════
+       RESPONSIVE — container queries, so each design reflows on the
+       width of the section itself.
+       ══════════════════════════════════════════════════════════════ */
+
+    /* ── tablet / narrow column ── */
+    @container sec (max-width:860px){
+      .cl-grid,.gb-bays,.rp-row,.nm-grid{grid-template-columns:repeat(3,1fr)}
+      .hw-signs{grid-template-columns:repeat(4,1fr)}
+      .np-grid{grid-template-columns:repeat(2,1fr)}
+      .gs-body{grid-template-columns:1fr}
+      .gs-gate{display:none}
+      .ln-row{height:250px}
+      .lane-nm{font-size:1.25rem}
+    }
+
+    /* ── phone ── */
+    @container sec (max-width:560px){
+      .sec{padding:30px 16px 34px}
+      .h2{font-size:1.5rem}
+      .sub{font-size:.78rem}
+      .eyebrow{font-size:.55rem;letter-spacing:.22em}
+
+      /* A — two dials per row, smaller faces */
+      .cl-head{gap:14px}
+      .cl-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+      .cl-odo i{font-size:.95rem;padding:2px 5px}
+      .cl-odo em{display:block;margin:6px 0 0}
+      .dial-face{width:76px;height:76px}
+      .dial-needle{height:30px}
+      .dial-icon{width:21px;height:21px}
+
+      /* B — three signs per row, shorter road */
+      .hw-signs{grid-template-columns:repeat(3,1fr);gap:8px}
+      .sign-board{padding:10px 6px 9px}
+      .sign-icon{width:20px;height:20px;margin:6px auto 5px}
+      .sign-name{font-size:.9rem}
+      .sign-exit{font-size:.44rem}
+      .sign-post{height:24px;gap:16px}
+      .hw-road{height:54px}
+      .hw-lane{background-size:auto;height:4px}
+
+      /* C — three shorter bays */
+      .gb-bays{grid-template-columns:repeat(3,1fr);gap:8px}
+      .bay{height:142px}
+      .bay-neon{width:32px;height:32px}
+      .bay-name{font-size:.86rem}
+      .bay-handle{display:none}
+      .gb-key{display:none}
+
+      /* D — the route stands up; the card sits under its pin */
+      .wp-pin{width:38px;height:38px}
+      .wp-pin svg{width:17px;height:17px}
+      .wp-dist,.rt-flag{display:none}
+      .wp-card{opacity:1;pointer-events:auto;width:132px;padding:7px 9px 8px;
+        left:50%;top:calc(100% + 9px);bottom:auto;transform:translate(-50%,0)}
+      .wp-card b{font-size:.72rem}
+      .wp-card em{margin-top:4px}
+
+      /* E — two passes per row */
+      .rp-row{grid-template-columns:repeat(2,1fr);gap:10px}
+      .rp-issue{text-align:left}
+      .pass-code{height:20px}
+      .pass-name{font-size:1.05rem}
+
+      /* F — two tiles per row, quieter ribbons */
+      .nm-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+      .nm-mid{padding:28px 16px 30px}
+      .nm-track{font-size:.85rem;gap:22px}
+      .nm-track span{gap:22px}
+
+      /* G — the orbit can't be touched, so it becomes a grid */
+      .sp-stage{height:auto;display:flex;flex-direction:column;gap:20px}
+      .sp-chain{display:none}
+      .sp-hub{order:-1;width:auto;height:auto;margin:0 auto}
+      .sp-hub svg{display:none}
+      .sp-ring{position:relative;inset:auto;animation:none;
+        display:grid;grid-template-columns:repeat(2,1fr);gap:12px;width:100%}
+      .sp-item{position:relative;left:auto;top:auto;transform:none}
+      .sp-btn{animation:none;padding:14px 8px;border-radius:14px;
+        background:var(--card);border:1px solid var(--border)}
+      .sp-hand{opacity:1;transform:none}
+      .sp-lab{opacity:1}
+
+      /* H — drop the handle column, tighten the flaps */
+      .fb-bar,.fb-row{grid-template-columns:40px 1fr 74px;gap:9px;padding-inline:12px}
+      .fb-row:hover{padding-left:18px}
+      .fb-handle{display:none}
+      .flap{width:15px;height:21px;font-size:.63rem}
+      .fb-clock{text-align:left}
+
+      /* I — one plate per row */
+      .np-grid{grid-template-columns:1fr}
+      .np-reg{font-size:.92rem}
+
+      /* J — two stickers per row */
+      .st-case{padding:36px 14px 28px}
+      .st-wrap{gap:12px}
+      .stk-face{min-width:0;padding:12px 10px 11px}
+      .stk-nm{font-size:1rem}
+      .stk-hd{font-size:.46rem;max-width:104px}
+      .st-hint{display:none}
+
+      /* K — gate is gone, rows carry the gear letter */
+      .gs-row{padding:10px 12px;gap:10px}
+      .gs-g{font-size:1.1rem;width:20px}
+      .gs-go{display:none}
+
+      /* L — lanes rotate: the open one grows in height instead */
+      .ln-row{flex-direction:column;height:auto;gap:7px}
+      .lane{height:70px;flex:none;transition:height .45s cubic-bezier(.22,1,.36,1),
+        border-color .35s,box-shadow .35s}
+      .ln-row:hover .lane,.ln-row:hover .lane:hover{flex-grow:0}
+      .lane:hover{height:172px}
+      .lane-v{writing-mode:horizontal-tb;transform:none;left:56px;bottom:auto;top:23px;
+        font-size:1.15rem}
+      .lane:hover .lane-v{opacity:0;transform:translateX(-8px)}
+      .lane-ic{left:20px;top:22px;translate:0 0}
+      .lane-in{padding:16px 20px}
+      .lane-nm{font-size:1.3rem}
+    }
+
+    /* ── very narrow ── */
+    @container sec (max-width:400px){
+      .cl-grid,.gb-bays,.rp-row,.nm-grid,.hw-signs,.sp-ring{grid-template-columns:repeat(2,1fr)}
+      .fb-cta span{display:none}
+      .fb-bar,.fb-row{grid-template-columns:34px 1fr 58px}
+    }
+
+    /* Touch — nothing important stays behind a hover it will never get.
+       The shutters open, and every CTA/handle that desktop reveals on
+       hover is simply always up. */
+    @media (hover:none){
+      .bay-door{transform:translateY(-100%)}
+      .bay-name,.bay-handle{opacity:1}
+      .bay-neon{opacity:1}
+      .bay-spill{opacity:1}
+      .tile-go,.gs-go,.sp-hand{opacity:1;transform:none}
+      .fb-cta,.dial-lamp,.sp-lab{opacity:1}
+    }
+
+    @media (max-width:900px){
+      .layout{flex-direction:column;height:auto}
+      .sidebar{width:100%;border-right:none;border-bottom:1px solid var(--ui-border)}
+      .design-list{flex-direction:row;overflow-x:auto}
+      .design-btn{min-width:190px}
+      .preview{padding:22px 16px 60px}
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-title">Follow the Journey · 12 designs</div>
+    <div class="design-list" id="list"></div>
+    <div class="sidebar-foot">
+      Section for the bottom of <b>/mygarage</b>.<br />
+      <b>Desktop / Mobile</b> resizes the section itself — every design
+      reflows on its own width, so this is the real phone layout.<br />
+      <b>Replay</b> re-runs the entrance.
+    </div>
+  </aside>
+
+  <main class="preview">
+    <div class="preview-inner">
+      <div class="head">
+        <div>
+          <div class="head-name" id="hName">—</div>
+          <div class="head-sub" id="hSub">—</div>
+        </div>
+        <div class="tools">
+          <button class="tool" id="deviceBtn">▭ Desktop</button>
+          <button class="tool" id="themeBtn">☾ Dark</button>
+          <button class="tool" id="replayBtn">↻ Replay</button>
+        </div>
+      </div>
+
+      <div class="shell" id="shell" data-t="dark"></div>
+
+      <div class="nav">
+        <button id="prevBtn">← Previous</button>
+        <button id="nextBtn">Next →</button>
+      </div>
+
+      <div class="notes" id="notes"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   Real links, straight out of src/data/config.json
+   ══════════════════════════════════════════════════════════════════ */
+const ICON = {
+  youtube:'<svg viewBox="0 0 24 24"><path d="M23.5 6.2a3 3 0 0 0-2.12-2.13C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.38.57A3 3 0 0 0 .5 6.2 31.3 31.3 0 0 0 0 12a31.3 31.3 0 0 0 .5 5.8 3 3 0 0 0 2.12 2.13C4.5 20.5 12 20.5 12 20.5s7.5 0 9.38-.57a3 3 0 0 0 2.12-2.13A31.3 31.3 0 0 0 24 12a31.3 31.3 0 0 0-.5-5.8ZM9.55 15.57V8.43L15.82 12l-6.27 3.57Z"/></svg>',
+  instagram:'<svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838a6.162 6.162 0 1 0 0 12.325 6.162 6.162 0 0 0 0-12.325zm0 10.162a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.88 1.44 1.44 0 0 0 0-2.88z"/></svg>',
+  facebook:'<svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>',
+  x:'<svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>',
+  linkedin:'<svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>',
+  whatsapp:'<svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>',
+};
+
+const SOCIALS = [
+  { key:'youtube',   name:'YouTube',   short:'YouTube',   color:'#FF0033',
+    handle:'SIVA SHANMUGA VADIVEL', href:'https://www.youtube.com/c/SIVASHANMUGAVADIVEL?sub_confirmation=1',
+    cta:'Subscribe', role:'Ride films', gauge:0.92 },
+  { key:'instagram', name:'Instagram', short:'Instagram', color:'#E4405F',
+    handle:'@sivashanmugavadivel', href:'https://www.instagram.com/sivashanmugavadivel/',
+    cta:'Follow', role:'Daily frames', gauge:0.86 },
+  { key:'x',         name:'X',         short:'X',         color:'#1D9BF0',
+    handle:'@vadivel97', href:'https://x.com/vadivel97',
+    cta:'Follow', role:'Quick takes', gauge:0.6 },
+  { key:'facebook',  name:'Facebook',  short:'Facebook',  color:'#1877F2',
+    handle:'Siva Shanmuga Vadivel', href:'https://www.facebook.com/siva.shanmugavadivel.18',
+    cta:'Add', role:'Long posts', gauge:0.7 },
+  { key:'linkedin',  name:'LinkedIn',  short:'LinkedIn',  color:'#0A66C2',
+    handle:'in/sivashanmugavadivel', href:'https://in.linkedin.com/in/sivashanmugavadivel',
+    cta:'Connect', role:'Work side', gauge:0.78 },
+  { key:'whatsapp',  name:'WhatsApp',  short:'WhatsApp',  color:'#25D366',
+    handle:'+91 86674 51118', href:'https://wa.me/918667451118',
+    cta:'Message', role:'Straight to me', gauge:1 },
+];
+
+/* Several designs count the channels in their own copy — derive it, so
+   adding or dropping a platform never leaves the wording behind. */
+const N = SOCIALS.length;
+const WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
+const NWORD = WORDS[N] || String(N);
+const NWORD_C = NWORD.charAt(0).toUpperCase() + NWORD.slice(1);
+
+const A_ATTR = 'target="_blank" rel="noopener noreferrer"';
+const esc = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+/* teardown for anything a design attaches outside its own markup */
+let cleanups = [];
+const onCleanup = (fn) => cleanups.push(fn);
+
+/* Designs that measure their own layout re-measure when the section
+   changes width — the Mobile toggle and a window resize both go
+   through here. */
+function onWidthChange(el, fn) {
+  const ro = new ResizeObserver(() => fn(el.clientWidth));
+  ro.observe(el);
+  onCleanup(() => ro.disconnect());
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   A — INSTRUMENT CLUSTER
+   ══════════════════════════════════════════════════════════════════ */
+function designCluster(shell) {
+  const R = 43, LEN = 2 * Math.PI * R * 0.75;   // 270° of sweep
+  shell.innerHTML = `
+    <div class="sec cl">
+      <div class="cl-head">
+        <div>
+          <div class="eyebrow cl-eyebrow">Instrument cluster</div>
+          <h2 class="h2 cl-title">Follow the Journey</h2>
+        </div>
+        <div>
+          <div class="cl-odo">
+            ${'FOLLOW'.split('').map((c) => `<i>${c}</i>`).join('')}
+            <em>${N} channels live</em>
+          </div>
+        </div>
+      </div>
+      <div class="cl-grid">
+        ${SOCIALS.map((s, i) => {
+          const rest = LEN * (1 - s.gauge);
+          return `
+          <a class="dial" href="${s.href}" ${A_ATTR} aria-label="${esc(s.name)}"
+             style="--pc:${s.color};--len:${LEN.toFixed(1)};--rest:${rest.toFixed(1)};--redline:0;
+                    --deg:${(-125 + 250 * s.gauge).toFixed(1)}deg;
+                    --del:${(0.25 + i * 0.075).toFixed(2)}s;animation-delay:${(i * 0.075).toFixed(2)}s">
+            <span class="dial-lamp"></span>
+            <div class="dial-face">
+              <svg viewBox="0 0 100 100" aria-hidden="true">
+                <circle class="dial-track" cx="50" cy="50" r="${R}"
+                        stroke-dasharray="${LEN.toFixed(1)} ${(2 * Math.PI * R).toFixed(1)}"></circle>
+                <circle class="dial-fill" cx="50" cy="50" r="${R}"></circle>
+              </svg>
+              <span class="dial-needle"></span>
+              <span class="dial-hub"></span>
+              <span class="dial-icon">${ICON[s.key]}</span>
+            </div>
+            <div class="dial-name">${esc(s.name)}</div>
+            <div class="dial-handle">${esc(s.handle)}</div>
+          </a>`;
+        }).join('')}
+      </div>
+    </div>`;
+
+  /* one frame later, so the needles/arcs transition from rest instead
+     of arriving already parked at their target */
+  const arm = requestAnimationFrame(() =>
+    shell.querySelectorAll('.dial').forEach((d) => d.classList.add('go')));
+  onCleanup(() => cancelAnimationFrame(arm));
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   B — HIGHWAY EXIT SIGNS
+   ══════════════════════════════════════════════════════════════════ */
+function designHighway(shell) {
+  shell.innerHTML = `
+    <div class="sec hw">
+      <div class="hw-head">
+        <div class="eyebrow hw-eyebrow">Next exits</div>
+        <h2 class="h2 hw-title">Follow the Journey</h2>
+        <p class="sub hw-sub">Every sign is a different road out of the garage. Take whichever one you like.</p>
+      </div>
+      <div class="hw-signs">
+        ${SOCIALS.map((s, i) => `
+          <a class="sign" href="${s.href}" ${A_ATTR} aria-label="${esc(s.name)}"
+             style="animation-delay:${(i * 0.09).toFixed(2)}s">
+            <div class="sign-board">
+              <div class="sign-exit">Exit ${String(i + 1).padStart(2, '0')}</div>
+              <div class="sign-icon">${ICON[s.key]}</div>
+              <div class="sign-name">${esc(s.short)}</div>
+              <div class="sign-arrow">→</div>
+            </div>
+            <div class="sign-post"><i></i><i></i></div>
+          </a>`).join('')}
+      </div>
+      <div class="hw-road">
+        <div class="hw-lane"></div>
+        <div class="hw-rider">🏍️</div>
+      </div>
+    </div>`;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   C — GARAGE SHUTTER BAYS
+   ══════════════════════════════════════════════════════════════════ */
+function designBays(shell) {
+  shell.innerHTML = `
+    <div class="sec gb">
+      <div class="gb-head">
+        <div>
+          <div class="eyebrow gb-eyebrow">Bay 01 — ${String(N).padStart(2, '0')}</div>
+          <h2 class="h2 gb-title">Follow the Journey</h2>
+        </div>
+        <div class="gb-key">Hover a shutter to open the bay</div>
+      </div>
+      <div class="gb-bays">
+        ${SOCIALS.map((s, i) => `
+          <a class="bay" href="${s.href}" ${A_ATTR} aria-label="${esc(s.name)}"
+             style="--pc:${s.color};animation-delay:${(i * 0.07).toFixed(2)}s">
+            <div class="bay-in">
+              <div class="bay-neon">${ICON[s.key]}</div>
+              <div class="bay-name">${esc(s.short)}</div>
+              <div class="bay-handle">${esc(s.handle)}</div>
+              <div class="bay-spill"></div>
+            </div>
+            <div class="bay-door" style="animation-delay:${(0.55 + i * 0.07).toFixed(2)}s">
+              <div class="bay-no">${String(i + 1).padStart(2, '0')}</div>
+            </div>
+          </a>`).join('')}
+      </div>
+    </div>`;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   D — ROUTE MAP WAYPOINTS
+   Pin positions are read off the real path with getPointAtLength, so
+   they sit exactly on the road at any width.
+   ══════════════════════════════════════════════════════════════════ */
+/* The road runs across on a wide column and stands up on a narrow one,
+   so the stops stay evenly spread instead of being squashed together. */
+const ROUTE_WIDE = {
+  d:'M 40 250 C 150 250 150 90 260 90 S 400 250 500 250 S 640 70 750 70 S 900 210 960 130',
+  vw:1000, vh:300, h:330, w:14,
+};
+const ROUTE_TALL = {
+  d:'M 150 30 C 150 120 80 140 80 235 S 220 330 220 430 S 80 530 80 630 S 220 730 220 830',
+  vw:300, vh:860, h:620, w:26,
+};
+
+function designRoute(shell) {
+  const narrow = shell.clientWidth < 560;
+  const R = narrow ? ROUTE_TALL : ROUTE_WIDE;
+
+  shell.innerHTML = `
+    <div class="sec rt">
+      <div class="rt-head">
+        <div class="eyebrow rt-eyebrow">Route map</div>
+        <h2 class="h2 rt-title">Follow the Journey</h2>
+        <p class="sub rt-sub">${NWORD_C} stops on the same road. Pick one and ride along.</p>
+      </div>
+      <div class="rt-map" id="rtMap" style="height:${R.h}px">
+        <svg viewBox="0 0 ${R.vw} ${R.vh}" preserveAspectRatio="none" aria-hidden="true">
+          <path class="rt-road" id="rtPath" d="${R.d}" style="stroke-width:${R.w}"></path>
+          <path class="rt-line rt-draw" id="rtLine" d="${R.d}"></path>
+        </svg>
+        <span class="rt-rider" id="rtRider"></span>
+      </div>
+    </div>`;
+
+  const map = shell.querySelector('#rtMap');
+  const path = shell.querySelector('#rtPath');
+  const line = shell.querySelector('#rtLine');
+  const rider = shell.querySelector('#rtRider');
+  const total = path.getTotalLength();
+
+  /* the dashed overlay draws itself once, then falls back to the
+     marching-ants loop the class already carries */
+  line.style.strokeDasharray = total;
+  line.style.strokeDashoffset = total;
+  line.addEventListener('animationend', () => {
+    line.style.strokeDasharray = '';
+    line.style.strokeDashoffset = '';
+    line.classList.remove('rt-draw');
+  }, { once: true });
+
+  /* percentages, so a pin stays welded to the road at any width even
+     though the viewBox is stretched by preserveAspectRatio="none" */
+  const pct = (t) => {
+    const p = path.getPointAtLength(total * t);
+    return { x: (p.x / R.vw) * 100, y: (p.y / R.vh) * 100 };
+  };
+
+  /* waypoints spaced evenly along the route, inset from both ends */
+  SOCIALS.forEach((s, i) => {
+    const t = 0.05 + (0.9 * i) / (SOCIALS.length - 1);
+    const { x, y } = pct(t);
+    const a = document.createElement('a');
+    a.className = 'wp';
+    a.href = s.href;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.setAttribute('aria-label', s.name);
+    a.style.cssText = `left:${x}%;top:${y}%;--pc:${s.color};animation-delay:${(0.5 + i * 0.13).toFixed(2)}s`;
+    a.innerHTML = `
+      <div class="wp-pin">${ICON[s.key]}</div>
+      <div class="wp-card">
+        <b>${esc(s.name)}</b><span>${esc(s.handle)}</span><em>${esc(s.cta)} →</em>
+      </div>
+      <div class="wp-dist">${esc(s.role)}</div>`;
+    map.appendChild(a);
+  });
+
+  /* end flags — only where there is room for them */
+  if (!narrow) {
+    const start = pct(0), end = pct(1);
+    [['Start', start], ['You', end]].forEach(([label, p], i) => {
+      const f = document.createElement('span');
+      f.className = 'rt-flag';
+      f.textContent = label;
+      f.style.cssText = `left:${p.x}%;top:${p.y + (i ? -16 : 14)}%`;
+      map.appendChild(f);
+    });
+  }
+
+  /* rider dot running the route on a loop */
+  let raf = 0, t0 = 0;
+  const step = (ts) => {
+    if (!t0) t0 = ts;
+    const t = ((ts - t0) / 7000) % 1;
+    const { x, y } = pct(t);
+    rider.style.left = x + '%';
+    rider.style.top = y + '%';
+    raf = requestAnimationFrame(step);
+  };
+  raf = requestAnimationFrame(step);
+  onCleanup(() => cancelAnimationFrame(raf));
+
+  /* swap the whole road over when the column crosses the breakpoint */
+  onWidthChange(shell, (w) => { if ((w < 560) !== narrow) render(); });
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   E — RIDE PASS STUBS
+   ══════════════════════════════════════════════════════════════════ */
+function designPasses(shell) {
+  const bars = () => Array.from({ length: 22 },
+    () => `<i style="height:${(40 + Math.random() * 60).toFixed(0)}%"></i>`).join('');
+  const mid = (SOCIALS.length - 1) / 2;
+
+  shell.innerHTML = `
+    <div class="sec rp">
+      <div class="rp-head">
+        <div>
+          <div class="eyebrow rp-eyebrow">Ride passes</div>
+          <h2 class="h2 rp-title">Follow the Journey</h2>
+        </div>
+        <div class="rp-issue">
+          <b>Bear 650 · Wild Honey</b>
+          Issued to every rider · no expiry
+        </div>
+      </div>
+      <div class="rp-row">
+        ${SOCIALS.map((s, i) => `
+          <a class="pass" href="${s.href}" ${A_ATTR} aria-label="${esc(s.name)}"
+             style="--pc:${s.color};--dx:${((mid - i) * 46).toFixed(0)}px;--dr:${((i - mid) * 3).toFixed(1)}deg;
+                    animation-delay:${(i * 0.085).toFixed(2)}s">
+            <div class="pass-body">
+              <div class="pass-top">
+                <span class="pass-seat">${String(i + 1).padStart(2, '0')}</span>
+                <div class="pass-icon">${ICON[s.key]}</div>
+                <div class="pass-name">${esc(s.short)}</div>
+              </div>
+              <div class="pass-perf"><span class="pass-tear"></span></div>
+              <div class="pass-bot">
+                <div class="pass-label">${esc(s.cta)}</div>
+                <div class="pass-handle">${esc(s.handle)}</div>
+                <div class="pass-code">${bars()}</div>
+                <span class="pass-scan"></span>
+              </div>
+            </div>
+          </a>`).join('')}
+      </div>
+    </div>`;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   F — NEON MARQUEE
+   ══════════════════════════════════════════════════════════════════ */
+function designMarquee(shell) {
+  /* duplicated once so the -50% translate loops seamlessly */
+  const strip = (items) => `<span>${items.join('')}</span><span>${items.join('')}</span>`;
+  const top = SOCIALS.map((s) => `<b>${esc(s.short)}</b> ${esc(s.handle)} ✦ `);
+  const bot = SOCIALS.map((s) => `${esc(s.role)} ✦ <b>${esc(s.cta)}</b> `);
+
+  shell.innerHTML = `
+    <div class="nm">
+      <div class="nm-strip"><div class="nm-track">${strip(top)}</div></div>
+      <div class="nm-mid">
+        <div class="nm-head">
+          <div class="eyebrow nm-eyebrow">Stay on the road with me</div>
+          <h2 class="h2 nm-title">Follow the Journey</h2>
+          <p class="sub nm-sub">Wherever you already scroll — the rides show up there too.</p>
+        </div>
+        <div class="nm-grid" id="nmGrid">
+          ${SOCIALS.map((s, i) => `
+            <a class="tile" href="${s.href}" ${A_ATTR} aria-label="${esc(s.name)}"
+               style="--pc:${s.color};animation-delay:${(i * 0.06).toFixed(2)}s">
+              <div class="tile-icon">${ICON[s.key]}</div>
+              <div class="tile-name">${esc(s.name)}</div>
+              <div class="tile-handle">${esc(s.handle)}</div>
+              <div class="tile-go">${esc(s.cta)} <span>→</span></div>
+            </a>`).join('')}
+        </div>
+      </div>
+      <div class="nm-strip rev"><div class="nm-track">${strip(bot)}</div></div>
+    </div>`;
+
+  /* pointer-tracking wash on each tile */
+  const grid = shell.querySelector('#nmGrid');
+  const move = (e) => {
+    const tile = e.target.closest('.tile');
+    if (!tile) return;
+    const r = tile.getBoundingClientRect();
+    tile.style.setProperty('--mx', `${e.clientX - r.left}px`);
+    tile.style.setProperty('--my', `${e.clientY - r.top}px`);
+  };
+  grid.addEventListener('pointermove', move);
+  onCleanup(() => grid.removeEventListener('pointermove', move));
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   G — SPROCKET ORBIT
+   ══════════════════════════════════════════════════════════════════ */
+function designSprocket(shell) {
+  /* sprocket teeth, drawn round the hub */
+  const teeth = Array.from({ length: 18 }, (_, i) => {
+    const a = (i / 18) * Math.PI * 2;
+    const x1 = 50 + Math.cos(a) * 38, y1 = 50 + Math.sin(a) * 38;
+    const x2 = 50 + Math.cos(a) * 46, y2 = 50 + Math.sin(a) * 46;
+    return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`;
+  }).join('');
+
+  shell.innerHTML = `
+    <div class="sec sp">
+      <div class="sp-head">
+        <div class="eyebrow sp-eyebrow">Drivetrain</div>
+        <h2 class="h2 sp-title">Follow the Journey</h2>
+      </div>
+      <div class="sp-stage">
+        <div class="sp-chain"></div>
+        <div class="sp-ring">
+          ${SOCIALS.map((s, i) => `
+            <div class="sp-item" style="--a:${((360 / SOCIALS.length) * i).toFixed(1)}deg;
+                 animation-delay:${(0.25 + i * 0.08).toFixed(2)}s">
+              <a class="sp-btn" href="${s.href}" ${A_ATTR} aria-label="${esc(s.name)}" style="--pc:${s.color}">
+                <span class="sp-dot">${ICON[s.key]}</span>
+                <span class="sp-lab">${esc(s.short)}</span>
+                <span class="sp-hand">${esc(s.handle)}</span>
+              </a>
+            </div>`).join('')}
+        </div>
+        <div class="sp-hub">
+          <svg viewBox="0 0 100 100" aria-hidden="true">
+            <circle cx="50" cy="50" r="42"/><circle cx="50" cy="50" r="17"/>${teeth}
+          </svg>
+          <div>
+            <div class="sp-hub-t">FOLLOW<br/>THE JOURNEY</div>
+            <div class="sp-hub-s">${N} channels</div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   H — SPLIT-FLAP BOARD
+   ══════════════════════════════════════════════════════════════════ */
+function designFlap(shell) {
+  const flaps = (word, base) => word.toUpperCase().split('').map((c, j) =>
+    `<span class="flap" style="--d:${(base + j * 0.055).toFixed(2)}s">${c === ' ' ? '&nbsp;' : esc(c)}</span>`).join('');
+
+  shell.innerHTML = `
+    <div class="sec fb">
+      <div class="fb-head">
+        <div>
+          <div class="eyebrow fb-eyebrow">Departures</div>
+          <h2 class="h2 fb-title">Follow the Journey</h2>
+        </div>
+        <div class="fb-clock"><b>ALL ON TIME</b>${N} channels · no delays</div>
+      </div>
+      <div class="fb-board">
+        <div class="fb-bar"><span>Ch</span><span>Channel</span><span>Handle</span><span style="justify-self:end">Board</span></div>
+        ${SOCIALS.map((s, i) => `
+          <a class="fb-row" href="${s.href}" ${A_ATTR} aria-label="${esc(s.name)}" style="--pc:${s.color}">
+            <span class="fb-gate"><i class="fb-lamp"></i>${String(i + 1).padStart(2, '0')}</span>
+            <span class="fb-flaps">${flaps(s.short, 0.2 + i * 0.1)}</span>
+            <span class="fb-handle">${esc(s.handle)}</span>
+            <span class="fb-cta">${esc(s.cta)} <span>→</span></span>
+          </a>`).join('')}
+      </div>
+    </div>`;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   I — NUMBER PLATES
+   ══════════════════════════════════════════════════════════════════ */
+/* Ashoka Chakra — 24 spokes, as on the hologram */
+const CHAKRA = `<svg viewBox="0 0 100 100" aria-hidden="true">
+  <circle cx="50" cy="50" r="45"/>
+  ${Array.from({ length: 24 }, (_, i) => {
+    const a = (i / 24) * Math.PI * 2;
+    return `<line x1="${(50 + Math.cos(a) * 11).toFixed(1)}" y1="${(50 + Math.sin(a) * 11).toFixed(1)}"
+                  x2="${(50 + Math.cos(a) * 41).toFixed(1)}" y2="${(50 + Math.sin(a) * 41).toFixed(1)}"/>`;
+  }).join('')}
+  <circle class="hub" cx="50" cy="50" r="9"/>
+</svg>`;
+
+/* laser-etched PIN — 10 digits, stable per channel */
+const pinOf = (i) => `IN ${4210000000 + i * 76543}`;
+
+function designPlates(shell) {
+  shell.innerHTML = `
+    <div class="sec np">
+      <div class="np-head">
+        <div class="eyebrow np-eyebrow">Registered channels</div>
+        <h2 class="h2 np-title">Follow the Journey</h2>
+        <p class="sub np-sub">${NWORD_C} plates on the wall. Every one of them points somewhere I post from.</p>
+      </div>
+      <div class="np-grid">
+        ${SOCIALS.map((s, i) => `
+          <a class="plate" href="${s.href}" ${A_ATTR} aria-label="${esc(s.name)}"
+             style="--pc:${s.color};animation-delay:${(i * 0.08).toFixed(2)}s">
+            <i class="rivet r1"></i><i class="rivet r2"></i>
+            <span class="hsrp-left">
+              <span class="hsrp-holo">${CHAKRA}</span>
+              <span class="hsrp-ind">IND</span>
+            </span>
+            <span class="np-txt">
+              <span class="np-reg">TN 42 · ${esc(s.short.toUpperCase())}</span>
+              <span class="np-sm">${esc(s.handle)}</span>
+            </span>
+            <span class="hsrp-stick">${ICON[s.key]}</span>
+            <span class="hsrp-pin" style="animation-delay:${(0.55 + i * 0.08).toFixed(2)}s">${pinOf(i)}</span>
+          </a>`).join('')}
+      </div>
+    </div>`;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   J — STICKER PEEL
+   ══════════════════════════════════════════════════════════════════ */
+function designStickers(shell) {
+  /* fixed tilts rather than random, so a replay looks the same twice */
+  const TILT = [-4.5, 3, -2, 4.5, -3.5, 2.5, -5];
+  shell.innerHTML = `
+    <div class="sec st">
+      <div class="st-head">
+        <div>
+          <div class="eyebrow st-eyebrow">Sticker wall</div>
+          <h2 class="h2 st-title">Follow the Journey</h2>
+        </div>
+        <div class="st-hint">Reach for one — the corner lifts</div>
+      </div>
+      <div class="st-case">
+        <div class="st-wrap">
+          ${SOCIALS.map((s, i) => `
+            <a class="stk" href="${s.href}" ${A_ATTR} aria-label="${esc(s.name)}"
+               style="--pc:${s.color};--rot:${TILT[i % TILT.length]}deg;animation-delay:${(i * 0.075).toFixed(2)}s">
+              <span class="stk-face">
+                <span class="stk-ic">${ICON[s.key]}</span>
+                <span class="stk-nm">${esc(s.short)}</span>
+                <span class="stk-hd">${esc(s.handle)}</span>
+              </span>
+              <span class="stk-peel"></span>
+            </a>`).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   K — GEAR SHIFT GATE
+   The detents and the knob are placed off the measured row centres,
+   so the gate lines up whatever the rows end up being.
+   ══════════════════════════════════════════════════════════════════ */
+const GEARS = ['1', 'N', '2', '3', '4', '5', '6'].slice(0, N);
+
+function designGears(shell) {
+  shell.innerHTML = `
+    <div class="sec gs">
+      <div class="gs-head">
+        <div class="eyebrow gs-eyebrow">Shift pattern</div>
+        <h2 class="h2 gs-title">Follow the Journey</h2>
+        <p class="sub gs-sub">One down, ${WORDS[N - 2]} up — and a channel in every gate. Point at one to shift into it.</p>
+      </div>
+      <div class="gs-body">
+        <div class="gs-gate" id="gsGate">
+          <div class="gs-slot"></div>
+          <div class="gs-knob" id="gsKnob"></div>
+        </div>
+        <div class="gs-rows" id="gsRows">
+          ${SOCIALS.map((s, i) => `
+            <a class="gs-row" href="${s.href}" ${A_ATTR} aria-label="${esc(s.name)}"
+               style="--pc:${s.color};animation-delay:${(0.2 + i * 0.07).toFixed(2)}s">
+              <span class="gs-g">${GEARS[i]}</span>
+              <span class="gs-ic">${ICON[s.key]}</span>
+              <span class="gs-tx">
+                <span class="gs-nm">${esc(s.name)}</span>
+                <span class="gs-hd">${esc(s.handle)}</span>
+              </span>
+              <span class="gs-go">${esc(s.cta)} →</span>
+            </a>`).join('')}
+        </div>
+      </div>
+    </div>`;
+
+  const gate = shell.querySelector('#gsGate');
+  const knob = shell.querySelector('#gsKnob');
+  const rows = [...shell.querySelectorAll('.gs-row')];
+  const NEUTRAL = 1;   // index of the 'N' gate
+
+  /* centre of a row, in gate-local pixels */
+  const centreOf = (row) => {
+    const r = row.getBoundingClientRect(), g = gate.getBoundingClientRect();
+    return r.top + r.height / 2 - g.top;
+  };
+  const shiftTo = (i) => {
+    knob.style.setProperty('--ky', `${centreOf(rows[i])}px`);
+    knob.style.setProperty('--kc', SOCIALS[i].color);
+  };
+
+  const layout = () => {
+    gate.querySelectorAll('.gs-det,.gs-num').forEach((n) => n.remove());
+    rows.forEach((row, i) => {
+      const y = centreOf(row);
+      const det = document.createElement('span');
+      det.className = 'gs-det';
+      det.style.cssText = `top:${y}px;animation-delay:${(0.5 + i * 0.06).toFixed(2)}s`;
+      const num = document.createElement('span');
+      num.className = 'gs-num';
+      num.textContent = GEARS[i];
+      num.style.cssText = `top:${y}px;animation-delay:${(0.5 + i * 0.06).toFixed(2)}s`;
+      gate.append(det, num);
+    });
+    shiftTo(NEUTRAL);
+  };
+
+  /* wait a frame — the rows have to be laid out before they can be measured */
+  const raf = requestAnimationFrame(layout);
+  rows.forEach((row, i) => row.addEventListener('pointerenter', () => shiftTo(i)));
+  shell.querySelector('#gsRows').addEventListener('pointerleave', () => shiftTo(NEUTRAL));
+  onWidthChange(shell, layout);
+  onCleanup(() => cancelAnimationFrame(raf));
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   L — EXPANDING LANES
+   ══════════════════════════════════════════════════════════════════ */
+function designLanes(shell) {
+  shell.innerHTML = `
+    <div class="sec ln">
+      <div class="ln-head">
+        <div class="eyebrow ln-eyebrow">${NWORD_C} lanes</div>
+        <h2 class="h2 ln-title">Follow the Journey</h2>
+        <p class="sub ln-sub">Closed until you look at one. Whichever lane you take, it ends up at the same rider.</p>
+      </div>
+      <div class="ln-row">
+        ${SOCIALS.map((s, i) => `
+          <a class="lane" href="${s.href}" ${A_ATTR} aria-label="${esc(s.name)}"
+             style="--pc:${s.color};animation-delay:${(i * 0.07).toFixed(2)}s">
+            <span class="lane-wash"></span>
+            <span class="lane-ic">${ICON[s.key]}</span>
+            <span class="lane-v">${esc(s.short)}</span>
+            <span class="lane-in">
+              <span class="lane-nm">${esc(s.name)}</span>
+              <span class="lane-hd">${esc(s.handle)}</span>
+              <span class="lane-go">${esc(s.cta)} <span>→</span></span>
+            </span>
+          </a>`).join('')}
+      </div>
+    </div>`;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   Picker wiring
+   ══════════════════════════════════════════════════════════════════ */
+const DESIGNS = [
+  { id:'A', name:'Instrument Cluster',
+    desc:'Dash gauges — needles sweep, hover revs to redline',
+    sub:'The bike’s own dashboard. Each platform is a gauge that fills and swings its needle on entry; hovering revs that dial into the redline and lights its telltale lamp. Sits closest to the Bear 650 spec callouts already on the page.',
+    note:'<b>Fits:</b> reads as a continuation of the spec-callout language above it. <b>Mobile:</b> two dials per row on smaller faces; the needle sweep and redline survive intact.',
+    fn: designCluster },
+  { id:'B', name:'Highway Exit Signs',
+    desc:'Gantry signs over a moving road, swing on hover',
+    sub:'A stretch of highway with the lane marking marching past and a rider crossing it. Every platform is an exit sign that drops in from above and swings on its posts when you hover, with a reflective glint sweeping the face.',
+    note:'<b>Fits:</b> the most literal "journey" read, and playful. <b>Watch:</b> the green sign colour is fixed, so it stays the same in light and dark — deliberate, since real signs are. <b>Mobile:</b> three signs per row over a shorter road, rider still crossing.',
+    fn: designHighway },
+  { id:'C', name:'Garage Shutter Bays',
+    desc:'Roller shutters roll up to a neon sign inside',
+    sub:'Seven bays in the workshop wall. The shutters tease open once on load, then roll fully up on hover to reveal a neon platform sign that flickers on, with light spilling onto the floor of the bay.',
+    note:'<b>Fits:</b> strongest garage metaphor of the twelve, and the reveal is the most fun. <b>Watch:</b> the bay interiors are dark in both themes by design — a lit garage would kill the neon. <b>Mobile:</b> three shorter bays per row, and on touch the shutters sit open, since there is no hover to raise them.',
+    fn: designBays },
+  { id:'D', name:'Route Map Waypoints',
+    desc:'Self-drawing road, pins pop in, rider runs the loop',
+    sub:'The road draws itself across a map grid, then waypoints drop onto it one after another, each pulsing and opening a small card on hover. A rider dot keeps running the route on a loop. Pin positions are measured off the real path, so they never drift.',
+    note:'<b>Fits:</b> pairs naturally with the Rides &amp; Routes section above. <b>Mobile:</b> the road actually stands up — a different, taller serpentine path with the stops spread down it and each card parked under its own pin, rather than the wide route squashed.',
+    fn: designRoute },
+  { id:'E', name:'Ride Pass Stubs',
+    desc:'Perforated passes dealt from a stack, stub tears on hover',
+    sub:'Boarding-pass style stubs dealt out of a single stack, each with a real perforation and barcode. Hover lifts and tilts the pass, brightens the tear line and runs a scan line up the barcode.',
+    note:'<b>Fits:</b> echoes the Ride Pass Deck already at the top of the page — one visual family, top and bottom. <b>Watch:</b> that similarity is also the risk if you want contrast instead. <b>Mobile:</b> two passes per row with a shorter barcode.',
+    fn: designPasses },
+  { id:'F', name:'Neon Marquee',
+    desc:'Two handle ribbons + tiles that light under the cursor',
+    sub:'Two ribbons of handles running opposite ways, pausing when you hover them, wrapped around a grid of tiles. Each tile carries a colour wash that follows the pointer, an icon that kicks over, and a CTA that slides up.',
+    note:'<b>Fits:</b> quietest and most conventional of the twelve — the safest choice if the page above is already loud. <b>Watch:</b> least "garage", most "portfolio footer". <b>Mobile:</b> two tiles per row, ribbons slowed and shrunk; the cursor wash simply never fires on touch.',
+    fn: designMarquee },
+
+  { id:'G', name:'Sprocket Orbit',
+    desc:'Icons ride a turning chain ring; reach in and it stops',
+    sub:'The platforms ride a chain ring around a turning sprocket, each staying upright as the ring rotates. Point anywhere inside and the whole drivetrain freezes so you can pick one off; the icon you touch fills with its colour and drops its handle underneath.',
+    note:'<b>Fits:</b> the only radial layout of the twelve — a real change of shape after a page of rows and grids. <b>Mobile:</b> the ring shrinks and the handles hide; below 520px it stops spinning and stacks into a 2-up grid, since orbit + touch don’t mix.',
+    fn: designSprocket },
+  { id:'H', name:'Split-Flap Board',
+    desc:'Departure board — every name clatters in letter by letter',
+    sub:'A departures board. Each channel name flips into place one letter at a time on a staggered delay, then behaves like a live departure: the lamp lights, a bar runs down the left edge, and a light sweeps across the row.',
+    note:'<b>Fits:</b> the strongest single entrance moment of the twelve — worth it if this is the last thing on the page. <b>Mobile:</b> drops the handle column and shrinks the flaps; the row stays one line, never wraps.',
+    fn: designFlap },
+  { id:'I', name:'HSRP Number Plates',
+    desc:'Indian high-security plates — IND hologram, laser PIN',
+    sub:'Each channel bolted on as a current Indian HSRP: the chromium Ashoka Chakra hologram top-left with its colours never sitting still, the hot-stamped blue IND under it, a laser-etched 10-digit PIN that etches itself in, a colour-coded sticker carrying the platform, and two non-reusable snap locks. Plates bolt in on a rotate and tilt in 3D under a moving highlight.',
+    note:'<b>Fits:</b> unmistakably Indian and unmistakably garage — the only design that reads as a real object rather than a card, and the registration reads TN 42. <b>Watch:</b> the plate face stays white with black lettering in both themes on purpose — a real HSRP is. <b>Mobile:</b> one plate per row, full width, hologram and PIN unchanged.',
+    fn: designPlates },
+  { id:'J', name:'Sticker Peel',
+    desc:'Vinyl on the top box — the corner peels as you reach',
+    sub:'Stickers slapped on the top box at slightly wrong angles. They land with an overshoot on load; reaching for one straightens it, lifts it off the case and peels the corner back with the backing showing underneath and a shadow falling across it.',
+    note:'<b>Fits:</b> the most tactile of the twelve and the most personal — it reads as a rider’s box, not a nav bar. <b>Mobile:</b> two stickers per row, tilts kept. On touch there is no hover to peel with, so a tap simply opens the link — the peel is a desktop reward.',
+    fn: designStickers },
+  { id:'K', name:'Gear Shift Gate',
+    desc:'1 · N · 2 · 3 · 4 · 5 · 6 — the knob shifts to what you point at',
+    sub:'Seven channels, seven gate positions — one down, five up. The slot draws itself, the detents fade in, and the knob drops into neutral. Point at any channel and the knob slides into that gate and takes on its colour; let go and it drops back to N.',
+    note:'<b>Fits:</b> the cleverest fit to a Bear 650 page — a real six-speed gate with exactly seven positions to fill. <b>Mobile:</b> the gate column is dropped entirely below 820px and the rows go full width, since there is no hover to shift with.',
+    fn: designGears },
+  { id:'L', name:'Expanding Lanes',
+    desc:'Closed lanes; the one you point at opens and floods',
+    sub:'Seven closed lanes showing only a vertical name. The one you point at expands and the rest give way, flooding with its own colour as the handle and CTA rise into the open space.',
+    note:'<b>Fits:</b> the most compact of the twelve on desktop — seven channels in one band. <b>Mobile:</b> flips to a vertical stack where the open lane grows in height instead of width, so the same interaction survives the rotation.',
+    fn: designLanes },
+];
+
+const shell = document.getElementById('shell');
+const list = document.getElementById('list');
+let idx = 0;
+
+list.innerHTML = DESIGNS.map((d, i) => `
+  <button class="design-btn${i === 0 ? ' active' : ''}" data-i="${i}">
+    <span class="btn-name">${d.id} · ${d.name}</span>
+    <span class="btn-desc">${d.desc}</span>
+  </button>`).join('');
+
+function render() {
+  cleanups.forEach((fn) => fn());
+  cleanups = [];
+  const d = DESIGNS[idx];
+  document.getElementById('hName').textContent = `${d.id} — ${d.name}`;
+  document.getElementById('hSub').textContent = d.sub;
+  document.getElementById('notes').innerHTML = d.note;
+  list.querySelectorAll('.design-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
+  shell.innerHTML = '';
+  d.fn(shell);
+}
+
+list.addEventListener('click', (e) => {
+  const b = e.target.closest('.design-btn');
+  if (!b) return;
+  idx = +b.dataset.i;
+  render();
+});
+document.getElementById('prevBtn').onclick = () => { idx = (idx - 1 + DESIGNS.length) % DESIGNS.length; render(); };
+document.getElementById('nextBtn').onclick = () => { idx = (idx + 1) % DESIGNS.length; render(); };
+document.getElementById('replayBtn').onclick = render;
+
+const themeBtn = document.getElementById('themeBtn');
+themeBtn.onclick = () => {
+  const dark = shell.dataset.t === 'dark';
+  shell.dataset.t = dark ? 'light' : 'dark';
+  themeBtn.textContent = dark ? '☀ Light' : '☾ Dark';
+  render();
+};
+
+/* 390px shell — the container queries fire off the section's own width,
+   so this shows the real phone layout without resizing the window */
+const deviceBtn = document.getElementById('deviceBtn');
+deviceBtn.onclick = () => {
+  const mob = shell.classList.toggle('is-mobile');
+  deviceBtn.textContent = mob ? '▯ Mobile' : '▭ Desktop';
+  render();
+};
+
+render();
+</script>
+</body>
+</html>

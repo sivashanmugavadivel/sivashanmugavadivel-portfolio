@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Storefront Design Picker</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0c0b12;--card:#15131f;--bd:rgba(255,255,255,0.09);
+  --acc:#a78bfa;--off:#f0eef6;--d1:rgba(240,238,246,0.64);--d2:rgba(240,238,246,0.4);--d3:rgba(240,238,246,0.22);
+  --sans:'Inter',sans-serif;--serif:'Playfair Display',serif}
+body{background:var(--bg);color:var(--d1);font-family:var(--sans);min-height:100vh}
+.layout{display:flex;height:100vh}
+.side{width:330px;flex-shrink:0;background:#100e1a;border-right:1px solid var(--bd);
+  display:flex;flex-direction:column;overflow:hidden}
+.side h1{font-family:var(--serif);font-size:1.05rem;font-weight:700;color:var(--off);padding:16px 18px 6px}
+.side .intro{font-size:0.7rem;color:var(--d3);padding:0 18px 12px;border-bottom:1px solid var(--bd);line-height:1.6}
+.batch{padding:12px 18px 4px;font-size:0.58rem;font-weight:700;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--acc)}
+.list{flex:1;overflow-y:auto;padding:0 10px 12px;display:flex;flex-direction:column;gap:6px}
+.item{width:100%;text-align:left;padding:12px;border-radius:11px;border:1px solid var(--bd);
+  background:transparent;color:var(--d1);font-family:var(--sans);cursor:pointer;transition:all .25s}
+.item:hover{border-color:var(--acc);background:rgba(167,139,250,0.07);color:var(--off)}
+.item.on{border-color:var(--acc);background:rgba(167,139,250,0.14);color:var(--off)}
+.item b{display:flex;align-items:center;gap:8px;font-size:0.83rem;font-weight:600;margin-bottom:5px}
+.item b i{font-style:normal;min-width:20px;height:20px;padding:0 5px;border-radius:6px;
+  display:grid;place-items:center;font-size:0.6rem;font-weight:700;
+  background:rgba(167,139,250,0.18);color:var(--acc);flex-shrink:0}
+.item .what{display:block;font-size:0.67rem;color:var(--d2);line-height:1.6}
+.item .tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+.item .tags u{font-size:0.55rem;letter-spacing:0.07em;text-transform:uppercase;text-decoration:none;
+  padding:3px 8px;border-radius:99px;background:rgba(139,92,246,0.15);color:var(--acc);
+  border:1px solid rgba(167,139,250,0.2);font-weight:600}
+.side footer{padding:11px 18px 14px;border-top:1px solid var(--bd);font-size:0.63rem;color:var(--d3);line-height:1.65}
+.stage{flex:1;display:flex;flex-direction:column;min-width:0}
+.bar{padding:10px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:12px;
+  background:#100e1a;flex-wrap:wrap}
+.bar .now{font-size:0.8rem;font-weight:600;color:var(--off)}
+.bar .how{font-size:0.66rem;color:var(--d3)}
+.bar .views{margin-left:auto;display:flex;gap:1px;background:var(--bd);border-radius:8px;overflow:hidden}
+.bar .views button{padding:7px 12px;border:0;background:#15131f;color:var(--d2);cursor:pointer;
+  font-family:var(--sans);font-size:0.68rem;transition:.22s}
+.bar .views button.on{background:var(--acc);color:#100e1a;font-weight:600}
+.bar a{font-size:0.7rem;font-weight:600;color:var(--acc);text-decoration:none;
+  padding:7px 13px;border-radius:99px;border:1px solid rgba(167,139,250,0.28);transition:.25s;white-space:nowrap}
+.bar a:hover{background:var(--acc);color:#100e1a}
+.frameholder{flex:1;min-height:0;display:flex;align-items:flex-start;justify-content:center;
+  overflow:auto;background:#08070d;padding:0}
+.frameholder.phone{padding:22px;background:
+  radial-gradient(40vw 40vw at 50% 20%,rgba(167,139,250,0.07),transparent 70%),#08070d}
+iframe{width:100%;height:100%;border:0;background:#000;display:block}
+.frameholder.phone iframe{width:390px;height:844px;max-height:100%;border-radius:26px;
+  border:8px solid #1c1a26;box-shadow:0 30px 60px -20px rgba(0,0,0,0.9);flex-shrink:0}
+@media(max-width:900px){
+  .layout{flex-direction:column;height:auto}
+  .side{width:100%}
+  .list{max-height:none}
+  .frameholder{height:78vh}
+  .frameholder.phone{padding:12px}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="side">
+    <h1>Storefront redesign</h1>
+    <div class="intro">Twelve different <em>structures</em> — each navigates and presents a part a different way. Use the Phone view to check any of them at 390&nbsp;×&nbsp;844.</div>
+    <div class="list" id="list"></div>
+    <footer>Standalone HTML in this folder, all reading the real catalogue from <code>storefront-data.js</code>. Open from the file system so the photos resolve.</footer>
+  </aside>
+  <main class="stage">
+    <div class="bar">
+      <span class="now" id="now"></span>
+      <span class="how" id="how"></span>
+      <div class="views">
+        <button id="vDesk" class="on">Desktop</button>
+        <button id="vPhone">Phone</button>
+      </div>
+      <a id="open" href="#" target="_blank">Full screen ↗</a>
+    </div>
+    <div class="frameholder" id="holder"><iframe id="frame" title="preview"></iframe></div>
+  </main>
+</div>
+<script>
+const DESIGNS = [
+  { batch: 'Batch one', n: 1, file: 'storefront-design-1-gallery-walk.html', name: 'Gallery Walk',
+    what: 'The page scrolls sideways. A vertical left rail replaces the header; each category is a rotated title slab followed by frames hung two rows deep.',
+    how: 'Scroll or ← → to walk', tags: ['Horizontal', 'Bone / ink / red'] },
+  { n: 2, file: 'storefront-design-2-cinema-scroll.html', name: 'Cinema Scroll',
+    what: 'One part per full screen, snapping as you scroll, sides alternating. Chapter cards between categories, and the whole page re-tints per category.',
+    how: 'Scroll — it snaps', tags: ['Scroll-snap', 'Colour shifts'] },
+  { n: 3, file: 'storefront-design-3-split-archive.html', name: 'Split Archive',
+    what: 'No cards. Left half is a fixed viewing stage, right half a scrolling typed ledger. Hover a line to swap the picture; click to open the buy links.',
+    how: 'Hover the rows', tags: ['Split screen', 'Text ledger'] },
+  { n: 4, file: 'storefront-design-4-editorial-collage.html', name: 'Editorial Collage',
+    what: 'A printed magazine feature — varying spans, offsets and tilts, broken by pull quotes and margin notes. Nav is a full-screen contents overlay.',
+    how: 'Click "Contents"', tags: ['Asymmetric', 'Newsprint'] },
+  { n: 5, file: 'storefront-design-5-workshop-terminal.html', name: 'Workshop Terminal',
+    what: 'The storefront as a program. Boot sequence and a real prompt — type ls, open safety, show 07. Output prints as tables you can expand.',
+    how: 'Type: help, ls, open safety', tags: ['Interactive CLI', 'Phosphor'] },
+  { n: 6, file: 'storefront-design-6-carousel-dial.html', name: 'Carousel Dial',
+    what: 'The page never scrolls. Parts sit on a 3D ring you spin by drag, wheel or arrow keys. Categories are a dial along the bottom.',
+    how: 'Drag, scroll or ← →', tags: ['3D ring', 'No scroll'] },
+
+  { batch: 'Batch two', n: 7, file: 'storefront-design-7-hotspot-360.html', name: 'Hotspot 360',
+    what: 'The bike itself is the menu. Every part is a numbered pin on the side profile — and you can drag the bike through all 37 frames of its 360° spin.',
+    how: 'Tap a pin · drag the bike', tags: ['Uses the bike shots', 'Pin map', 'Bottom sheet'] },
+  { n: 8, file: 'storefront-design-8-receipt.html', name: 'The Receipt',
+    what: 'The whole storefront printed as one long till receipt on a workbench — line items, section subtotals, torn edges, barcode. Lines unroll in place.',
+    how: 'Tap any line', tags: ['Paper', 'Narrow by design', 'Best on phone'] },
+  { n: 9, file: 'storefront-design-9-stacked-deck.html', name: 'Stacked Deck',
+    what: 'Every part is a full card that sticks while the next slides over it, so the page builds a physical pile. The card behind shrinks and dims.',
+    how: 'Just scroll', tags: ['Sticky stack', 'Mint / coral'] },
+  { n: 10, file: 'storefront-design-10-pegboard.html', name: 'Pegboard',
+    what: 'The garage wall. One independently scrolling column per category, parts hanging as tickets on hooks, with a live filter box across all of them.',
+    how: 'Filter · tap a ticket', tags: ['Board columns', 'Search', 'Swipe on phone'] },
+  { n: 11, file: 'storefront-design-11-contact-sheet.html', name: 'Contact Sheet',
+    what: 'A darkroom proof sheet — every part one small frame on a sprocketed strip, grease-pencil ringed if it made the cut. Tap to blow one up.',
+    how: 'Tap a frame', tags: ['Film strips', 'Darkroom', 'Enlarger view'] },
+  { n: 12, file: 'storefront-design-12-vending-machine.html', name: 'Vending Machine',
+    what: 'Parts sit behind glass on lettered shelves. Punch a slot code on the keypad and the part drops into the collection tray with its buy link.',
+    how: 'Key A1, B2… or tap the glass', tags: ['Keypad', 'Playful', 'Slot codes'] },
+]
+
+const list = document.getElementById('list')
+list.innerHTML = DESIGNS.map(d =>
+  (d.batch ? `<div class="batch">${d.batch}</div>` : '') +
+  `<button class="item" data-file="${d.file}" data-name="${d.name}" data-how="${d.how}">
+     <b><i>${d.n}</i>${d.name}</b>
+     <span class="what">${d.what}</span>
+     <span class="tags">${d.tags.map(t => `<u>${t}</u>`).join('')}</span>
+   </button>`).join('')
+
+function show(btn) {
+  document.querySelectorAll('.item').forEach(b => b.classList.toggle('on', b === btn))
+  document.getElementById('frame').src = btn.dataset.file
+  document.getElementById('now').textContent = btn.dataset.name
+  document.getElementById('how').textContent = '— ' + btn.dataset.how
+  document.getElementById('open').href = btn.dataset.file
+}
+list.addEventListener('click', e => {
+  const btn = e.target.closest('.item')
+  if (btn) show(btn)
+})
+
+/* desktop / phone frame toggle */
+const holder = document.getElementById('holder')
+const vDesk = document.getElementById('vDesk'), vPhone = document.getElementById('vPhone')
+vDesk.addEventListener('click', () => {
+  holder.classList.remove('phone'); vDesk.classList.add('on'); vPhone.classList.remove('on')
+})
+vPhone.addEventListener('click', () => {
+  holder.classList.add('phone'); vPhone.classList.add('on'); vDesk.classList.remove('on')
+})
+
+show(document.querySelector('.item'))
+</script>
+</body>
+</html>

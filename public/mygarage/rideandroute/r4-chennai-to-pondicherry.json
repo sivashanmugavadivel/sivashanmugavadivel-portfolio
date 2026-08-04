@@ -1,0 +1,35 @@
+{
+  "order": 40,
+  "id": "r4",
+
+  "name": "Chennai to Pondicherry",
+  "subtitle": "Scenic Roads & Good Vibes",
+  "mode": "planned",
+
+  "distance": "150 KM",
+  "time": null,
+  "date": "Planned",
+  "rating": null,
+
+  "fromCity": "Chennai",
+  "toCity": "Pondicherry",
+  "states": ["Tamil Nadu", "Puducherry"],
+  "color": "#38bdf8",
+
+  "description": "East Coast Road — one of the most scenic routes in South India.",
+  "story": "Planned. ECR the whole way down: the Bay of Bengal on the right, a stop at Mahabalipuram, and into the French Quarter at the other end.",
+  "highlights": ["East Coast Road", "Bay of Bengal Views", "Mahabalipuram", "French Quarter"],
+  "via": ["ECR", "Mahabalipuram", "Kalpakkam"],
+
+  "mapCenter": [12.5, 80.0],
+  "mapZoom": 9,
+
+  "videoId": null,
+  "photos": [],
+  "stats": null,
+
+  "stops": [
+    { "id": "chennai", "label": "Chennai", "lat": 13.0827, "lng": 80.2707, "dir": "right" },
+    { "id": "pondy", "label": "Pondicherry", "lat": 11.9416, "lng": 79.8083, "dir": "right" }
+  ]
+}

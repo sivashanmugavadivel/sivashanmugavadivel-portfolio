@@ -464,9 +464,10 @@ function FeaturedPostsSection() {
           </p>
         </Reveal>
 
-        {/* 3D sphere showcase — drag to spin, click a photo to open the gallery */}
+        {/* 3D sphere showcase — spins on its own, display only. The buttons
+            below are how you get to the gallery. */}
         <Reveal delay={0.2}>
-          <SphereGridGallery images={SPHERE_IMAGES} to="/gallery" />
+          <SphereGridGallery images={SPHERE_IMAGES} />
         </Reveal>
 
         <Reveal delay={0.2}>

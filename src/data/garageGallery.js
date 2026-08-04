@@ -1,5 +1,5 @@
 /**
- * The garage photo wall, read straight out of `config.json` → `garage.gallery`.
+ * The garage photo wall, read straight out of `garage.config.json` → `gallery`.
  *
  * Same idea as ../data/accessories.js: the content lives in config so photos and
  * captions can be edited without opening a component. Rendered by the polaroid
@@ -31,11 +31,11 @@
  * real set is still being shot.
  */
 
-import cfg from './config.json'
+import garageCfg from './garage.config.json'
 
 const BASE = import.meta.env.BASE_URL
 
-const gallery = cfg.garage?.gallery ?? {}
+const gallery = garageCfg.gallery ?? {}
 
 /** Ticker tuning, with the defaults the design was drawn at. */
 const TICKER_DEFAULTS = {

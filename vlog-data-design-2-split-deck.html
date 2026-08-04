@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Vlog detail · 2 · Split Deck</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   SPLIT DECK — the player never leaves.
+
+   Two columns. The left one is pinned for the whole page: the video,
+   its numbers, and a chapter rail that tracks where you are. The
+   right one is a deck of cards you scroll through — chapters, route,
+   Instagram, posts, more videos — each dealing itself in with its
+   children staggered behind it.
+
+   On a phone the left column collapses to a sticky top player and
+   the deck runs full width underneath.
+   ══════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0910; --panel:#100e18; --card:#161320; --card2:#1d1a2b;
+  --off:#f2f0f7; --d1:rgba(242,240,247,0.64); --d2:rgba(242,240,247,0.4);
+  --d3:rgba(242,240,247,0.19); --bd:rgba(255,255,255,0.08); --bd2:rgba(255,255,255,0.14);
+  --acc:#8b5cf6; --acc2:#a78bfa; --accbg:rgba(139,92,246,0.12);
+  --ig1:#f9ce34; --ig2:#ee2a7b; --ig3:#6228d7;
+  --sans:'Manrope',sans-serif; --disp:'Space Grotesk',sans-serif;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--d1);font-family:var(--sans);-webkit-font-smoothing:antialiased;
+  overflow-x:hidden}
+::selection{background:var(--acc);color:#fff}
+img,video{display:block;max-width:100%}
+/* a soft violet bloom that drifts with the pointer, behind everything */
+.bloom{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;filter:blur(90px);
+  background:radial-gradient(46vw 46vw at var(--mx,70%) var(--my,20%),var(--acc),transparent 66%);
+  transition:background .5s linear}
+
+.topbar{position:fixed;top:0;left:0;right:0;height:52px;z-index:50;display:flex;align-items:center;
+  gap:14px;padding:0 clamp(14px,3vw,26px);background:rgba(10,9,16,.82);
+  backdrop-filter:blur(14px);border-bottom:1px solid var(--bd)}
+.topbar a.b{display:flex;align-items:center;gap:8px;font-size:0.63rem;font-weight:800;
+  letter-spacing:.18em;text-transform:uppercase;color:var(--d2);text-decoration:none;transition:.3s}
+.topbar a.b:hover{color:var(--acc2)}
+.topbar a.b i{font-style:normal;transition:transform .3s var(--ease)}
+.topbar a.b:hover i{transform:translateX(-4px)}
+.topbar .crumb{font-size:0.63rem;color:var(--d3);letter-spacing:.1em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar .pct{margin-left:auto;font-family:var(--disp);font-size:0.68rem;color:var(--acc2);
+  font-variant-numeric:tabular-nums;flex-shrink:0}
+.prog{position:fixed;top:52px;left:0;height:2px;background:linear-gradient(90deg,var(--acc),var(--acc2));
+  z-index:51;width:0;box-shadow:0 0 10px var(--acc)}
+
+/* ══ the two columns ══ */
+.shell{position:relative;z-index:2;display:grid;grid-template-columns:400px 1fr;
+  gap:clamp(20px,3vw,44px);max-width:1400px;margin:0 auto;
+  padding:76px clamp(14px,3vw,34px) clamp(60px,10vw,120px);align-items:start}
+@media(max-width:1040px){.shell{grid-template-columns:1fr;gap:20px}}
+
+/* ── LEFT: pinned player ── */
+.rail{position:sticky;top:70px}
+@media(max-width:1040px){.rail{position:sticky;top:52px;z-index:30}}
+.stage{position:relative;border-radius:16px;overflow:hidden;background:#000;
+  border:1px solid var(--bd);aspect-ratio:16/9;
+  box-shadow:0 30px 60px -22px rgba(0,0,0,.9)}
+.stage img.pl{width:100%;height:100%;object-fit:cover;filter:brightness(.68);
+  transition:filter .6s var(--ease),transform 1.2s var(--ease)}
+.stage:hover img.pl{filter:brightness(.85);transform:scale(1.04)}
+.stage video.cl{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;
+  transition:opacity 1s var(--ease)}
+.stage video.cl.on{opacity:.9}
+.stage iframe{position:absolute;inset:0;width:100%;height:100%;border:0;z-index:5}
+.stage .go{position:absolute;inset:0;z-index:3;border:0;background:transparent;cursor:pointer;
+  display:grid;place-items:center}
+.stage .go i{font-style:normal;width:56px;height:56px;border-radius:50%;display:grid;place-items:center;
+  font-size:1.05rem;padding-left:3px;color:#fff;background:rgba(139,92,246,.4);
+  border:1px solid rgba(255,255,255,.32);backdrop-filter:blur(6px);transition:.4s var(--ease)}
+.stage .go:hover i{background:var(--acc);transform:scale(1.12)}
+.stage .go::after{content:'';position:absolute;width:56px;height:56px;border-radius:50%;
+  border:1px solid var(--acc2);animation:ping 2.4s var(--ease) infinite}
+@keyframes ping{0%{transform:scale(1);opacity:.75}100%{transform:scale(1.8);opacity:0}}
+.stage .dur{position:absolute;bottom:9px;right:10px;z-index:4;background:rgba(0,0,0,.85);color:#fff;
+  font-size:0.6rem;font-weight:700;padding:3px 8px;border-radius:5px;letter-spacing:.04em}
+.stage .tag{position:absolute;top:10px;left:11px;z-index:4;font-size:0.5rem;font-weight:800;
+  letter-spacing:.18em;text-transform:uppercase;color:var(--acc2);padding:4px 10px;border-radius:99px;
+  background:rgba(10,9,16,.78);border:1px solid rgba(167,139,250,.35)}
+
+.meta{margin-top:18px}
+.meta h1{font-family:var(--disp);font-size:clamp(1.15rem,2.2vw,1.6rem);font-weight:700;color:var(--off);
+  line-height:1.24;letter-spacing:-.015em}
+.meta .un{display:flex;gap:10px;flex-wrap:wrap;margin-top:9px;font-size:0.66rem;color:var(--d2)}
+.meta .un em{font-style:normal;color:var(--acc2);font-weight:700}
+.meta p{font-size:0.79rem;line-height:1.72;margin-top:12px;color:var(--d1)}
+
+.nums{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--bd);
+  border:1px solid var(--bd);border-radius:12px;overflow:hidden;margin-top:16px}
+.nums div{background:var(--panel);padding:12px 10px;text-align:center}
+.nums b{display:block;font-family:var(--disp);font-size:1.15rem;color:var(--off);line-height:1;
+  font-variant-numeric:tabular-nums}
+.nums span{display:block;font-size:0.48rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--d2);margin-top:5px}
+
+/* chapter rail — the scroll spy */
+.crail{margin-top:18px;border-top:1px solid var(--bd);padding-top:14px;
+  display:flex;flex-direction:column;gap:2px;max-height:30vh;overflow-y:auto}
+.crail::-webkit-scrollbar{width:3px}
+.crail::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:9px}
+.crail .lbl{font-size:0.5rem;font-weight:800;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--d3);margin-bottom:7px}
+.crail button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;
+  background:transparent;color:var(--d2);font-family:var(--sans);font-size:0.72rem;cursor:pointer;
+  padding:7px 9px;border-radius:8px;transition:.3s var(--ease);position:relative}
+.crail button:hover{background:var(--accbg);color:var(--off)}
+.crail button.on{background:var(--accbg);color:var(--off)}
+.crail button.on::before{content:'';position:absolute;left:0;top:20%;bottom:20%;width:2px;
+  border-radius:9px;background:var(--acc2)}
+.crail button s{text-decoration:none;font-family:var(--disp);font-size:0.66rem;color:var(--acc2);
+  font-variant-numeric:tabular-nums;flex-shrink:0;min-width:34px}
+.crail button span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:1040px){
+  .meta,.nums,.crail{display:none}     /* the deck carries this on a phone */
+  .stage{border-radius:0 0 16px 16px}
+}
+
+/* ── RIGHT: the deck ── */
+.deck{display:flex;flex-direction:column;gap:clamp(14px,2.4vw,24px);min-width:0}
+.cardx{background:var(--card);border:1px solid var(--bd);border-radius:18px;
+  padding:clamp(18px,3vw,32px);position:relative;overflow:hidden;
+  opacity:0;transform:translateY(46px) scale(.985);
+  transition:opacity .9s var(--ease),transform .9s var(--ease)}
+.cardx.in{opacity:1;transform:none}
+/* a hairline that sweeps across the top edge as the card deals in */
+.cardx::before{content:'';position:absolute;left:0;top:0;height:1px;width:0;
+  background:linear-gradient(90deg,transparent,var(--acc2),transparent);
+  transition:width 1.4s var(--ease) .2s}
+.cardx.in::before{width:100%}
+/* children stagger behind the card */
+.cardx .st{opacity:0;transform:translateY(20px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
+.cardx.in .st{opacity:1;transform:none}
+
+.ch{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.ch .n{font-family:var(--disp);font-size:0.62rem;font-weight:700;letter-spacing:.14em;color:var(--acc2);
+  border:1px solid rgba(167,139,250,.3);padding:4px 9px;border-radius:7px;background:var(--accbg)}
+.ch h2{font-family:var(--disp);font-size:clamp(1.05rem,2.1vw,1.42rem);font-weight:700;color:var(--off);
+  letter-spacing:-.01em}
+.ch u{text-decoration:none;margin-left:auto;font-size:0.58rem;color:var(--d2);white-space:nowrap}
+
+/* phone-only meta card */
+.mobmeta{display:none}
+@media(max-width:1040px){.mobmeta{display:block}}
+.mobmeta h1{font-family:var(--disp);font-size:1.3rem;font-weight:700;color:var(--off);line-height:1.25}
+.mobmeta .un{display:flex;gap:10px;flex-wrap:wrap;margin-top:9px;font-size:0.66rem;color:var(--d2)}
+.mobmeta .un em{font-style:normal;color:var(--acc2);font-weight:700}
+.mobmeta p{font-size:0.82rem;line-height:1.72;margin-top:12px}
+.mobmeta .nums2{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--bd);
+  border:1px solid var(--bd);border-radius:12px;overflow:hidden;margin-top:16px}
+.mobmeta .nums2 div{background:var(--panel);padding:12px 10px;text-align:center}
+.mobmeta .nums2 b{display:block;font-family:var(--disp);font-size:1.1rem;color:var(--off);line-height:1}
+.mobmeta .nums2 span{display:block;font-size:0.46rem;font-weight:800;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--d2);margin-top:5px}
+
+/* chapters inside the deck */
+.clist{display:flex;flex-direction:column;gap:9px}
+.crow{display:grid;grid-template-columns:56px 1fr 104px;gap:14px;align-items:center;
+  padding:11px;border-radius:12px;border:1px solid transparent;cursor:pointer;
+  transition:.4s var(--ease)}
+.crow:hover{background:var(--card2);border-color:var(--bd2);transform:translateX(6px)}
+.crow.on{background:var(--accbg);border-color:rgba(167,139,250,.32)}
+.crow .t{font-family:var(--disp);font-size:0.85rem;color:var(--acc2);font-variant-numeric:tabular-nums}
+.crow b{display:block;font-size:0.85rem;font-weight:700;color:var(--off);line-height:1.32}
+.crow span{display:block;font-size:0.72rem;line-height:1.6;margin-top:3px}
+.crow .th{width:104px;aspect-ratio:16/10;border-radius:8px;overflow:hidden;border:1px solid var(--bd)}
+.crow .th img{width:100%;height:100%;object-fit:cover;filter:grayscale(.85) brightness(.68);
+  transition:.5s var(--ease)}
+.crow:hover .th img{filter:none;transform:scale(1.08)}
+@media(max-width:640px){
+  .crow{grid-template-columns:48px 1fr}
+  .crow .th{display:none}
+}
+
+/* stills: a horizontal rail you can drag, and it eases with scroll too */
+.railx{margin:0 calc(-1 * clamp(18px,3vw,32px));padding:0 clamp(18px,3vw,32px);
+  overflow-x:auto;scrollbar-width:none;cursor:grab}
+.railx::-webkit-scrollbar{display:none}
+.railx.drag{cursor:grabbing}
+.railtrack{display:flex;gap:11px;padding-bottom:4px}
+.sh{flex:0 0 auto;width:clamp(150px,20vw,200px);border-radius:12px;overflow:hidden;position:relative;
+  border:1px solid var(--bd);background:#000;transition:.45s var(--ease)}
+.sh img{width:100%;aspect-ratio:4/3;object-fit:cover;filter:brightness(.8);transition:.6s var(--ease)}
+.sh:hover{transform:translateY(-6px);border-color:rgba(167,139,250,.4)}
+.sh:hover img{filter:brightness(1.02);transform:scale(1.07)}
+.sh .cp{position:absolute;left:0;right:0;bottom:0;padding:20px 10px 8px;
+  background:linear-gradient(to top,rgba(0,0,0,.9),transparent);
+  display:flex;justify-content:space-between;gap:7px;font-size:0.6rem;color:rgba(255,255,255,.85)}
+.sh .cp em{font-style:normal;color:var(--acc2);font-weight:800;font-size:0.55rem}
+
+/* ── route ── */
+.rt{display:grid;grid-template-columns:1fr 250px;gap:clamp(16px,2.6vw,26px)}
+@media(max-width:760px){.rt{grid-template-columns:1fr}}
+.plot{position:relative;background:var(--panel);border:1px solid var(--bd);border-radius:14px;
+  min-height:280px;overflow:hidden}
+.plot::before{content:'';position:absolute;inset:0;opacity:.45;
+  background-image:linear-gradient(var(--bd) 1px,transparent 1px),
+                   linear-gradient(90deg,var(--bd) 1px,transparent 1px);background-size:30px 30px}
+.plot svg{position:absolute;inset:0;width:100%;height:100%;z-index:2;overflow:visible}
+.plot .gh{fill:none;stroke:var(--bd2);stroke-width:2;stroke-dasharray:4 6}
+.plot .live{fill:none;stroke:var(--acc2);stroke-width:2.6;stroke-linecap:round;
+  filter:drop-shadow(0 0 8px rgba(167,139,250,.7));
+  stroke-dasharray:var(--len);stroke-dashoffset:var(--len);
+  transition:stroke-dashoffset 2.2s var(--ease)}
+.cardx.in .plot .live{stroke-dashoffset:0}
+.plot .pin{position:absolute;transform:translate(-50%,-50%);z-index:3;display:flex;align-items:center;
+  gap:7px;opacity:0;transition:opacity .6s var(--ease)}
+.cardx.in .plot .pin{opacity:1}
+.plot .pin b{width:8px;height:8px;border-radius:50%;background:var(--off);
+  box-shadow:0 0 0 3px rgba(16,14,24,.9)}
+.plot .pin.edge b{width:12px;height:12px;background:var(--acc2);
+  box-shadow:0 0 0 3px rgba(16,14,24,.9),0 0 12px var(--acc2)}
+.plot .pin s{text-decoration:none;font-size:0.55rem;font-weight:800;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--off);background:rgba(16,14,24,.86);padding:3px 7px;
+  border-radius:5px;border:1px solid var(--bd);white-space:nowrap}
+.plot .dot{r:5.5;fill:var(--acc2);filter:drop-shadow(0 0 9px var(--acc2))}
+.rtx{display:flex;flex-direction:column;gap:12px}
+.rtx .md{font-size:0.5rem;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--acc2);
+  border:1px solid rgba(167,139,250,.3);padding:4px 10px;border-radius:99px;align-self:flex-start;
+  background:var(--accbg)}
+.rtx h3{font-family:var(--disp);font-size:1.05rem;font-weight:700;color:var(--off);line-height:1.28}
+.rtx p{font-size:0.76rem;line-height:1.72}
+.rtx .kv{display:flex;flex-direction:column;gap:1px;background:var(--bd);border:1px solid var(--bd);
+  border-radius:11px;overflow:hidden;margin-top:auto}
+.rtx .kv div{background:var(--panel);padding:9px 12px;display:flex;justify-content:space-between;gap:9px}
+.rtx .kv span{font-size:0.55rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--d2)}
+.rtx .kv b{font-family:var(--disp);font-size:0.78rem;color:var(--off)}
+.rtx .chips{display:flex;gap:6px;flex-wrap:wrap}
+.rtx .chips u{text-decoration:none;font-size:0.55rem;font-weight:700;padding:4px 9px;border-radius:99px;
+  background:var(--card2);color:var(--d1);border:1px solid var(--bd)}
+
+/* ── instagram ── */
+.igwrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:11px}
+.igc{position:relative;aspect-ratio:9/16;border-radius:13px;overflow:hidden;background:#000;
+  border:1px solid var(--bd);cursor:pointer;transition:.45s var(--ease)}
+.igc:hover{transform:translateY(-6px) rotate(-.8deg);border-color:rgba(238,42,123,.5);
+  box-shadow:0 22px 42px -18px rgba(0,0,0,.9)}
+.igc img{width:100%;height:100%;object-fit:cover;filter:brightness(.6);transition:.65s var(--ease)}
+.igc:hover img{filter:brightness(.88);transform:scale(1.07)}
+.igc iframe{position:absolute;inset:0;width:100%;height:100%;border:0;z-index:5;background:#000}
+.igc .lg{position:absolute;top:8px;left:8px;z-index:3;width:24px;height:24px;border-radius:7px;
+  display:grid;place-items:center;font-size:0.62rem;color:#fff;
+  background:linear-gradient(135deg,var(--ig1),var(--ig2) 55%,var(--ig3))}
+.igc .pp{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:3;width:38px;
+  height:38px;border-radius:50%;display:grid;place-items:center;font-size:0.72rem;padding-left:2px;
+  color:#fff;background:rgba(0,0,0,.42);border:1px solid rgba(255,255,255,.3);
+  backdrop-filter:blur(5px);transition:.4s var(--ease)}
+.igc:hover .pp{background:linear-gradient(135deg,var(--ig2),var(--ig3));border-color:transparent;
+  transform:translate(-50%,-50%) scale(1.14)}
+.igc .cp{position:absolute;left:0;right:0;bottom:0;z-index:3;padding:24px 10px 10px;
+  background:linear-gradient(to top,rgba(0,0,0,.94),transparent)}
+.igc .cp b{display:block;font-size:0.68rem;font-weight:700;color:#fff;line-height:1.4}
+.igc .cp span{display:block;font-size:0.53rem;color:var(--acc2);margin-top:4px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ── posts ── */
+.plist{display:flex;flex-direction:column;gap:10px}
+.prow{display:grid;grid-template-columns:112px 1fr;gap:15px;align-items:center;text-decoration:none;
+  background:var(--card2);border:1px solid var(--bd);border-radius:13px;overflow:hidden;
+  transition:.45s var(--ease)}
+.prow:hover{border-color:rgba(167,139,250,.42);transform:translateX(7px)}
+.prow .cv{width:112px;aspect-ratio:1;overflow:hidden;background:#000;position:relative}
+.prow .cv img{width:100%;height:100%;object-fit:cover;filter:brightness(.76);transition:.6s var(--ease)}
+.prow:hover .cv img{filter:brightness(1);transform:scale(1.1)}
+.prow .cv i{position:absolute;bottom:5px;left:6px;font-style:normal;font-size:.92rem;
+  filter:drop-shadow(0 2px 5px #000)}
+.prow .tx{padding:12px 14px 12px 0;min-width:0}
+.prow .tx u{text-decoration:none;font-size:0.5rem;font-weight:800;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--acc2)}
+.prow .tx b{display:block;font-size:0.85rem;font-weight:700;color:var(--off);line-height:1.32;margin:5px 0}
+.prow .tx span{display:block;font-size:0.71rem;line-height:1.6}
+
+/* ── more videos ── */
+.vgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(196px,1fr));gap:12px}
+.vc{border-radius:13px;overflow:hidden;border:1px solid var(--bd);background:var(--card2);
+  text-decoration:none;display:block;transition:.45s var(--ease)}
+.vc:hover{transform:translateY(-6px);border-color:rgba(167,139,250,.45)}
+.vc .th{position:relative;aspect-ratio:16/9;overflow:hidden;background:#000}
+.vc .th img{width:100%;height:100%;object-fit:cover;filter:brightness(.74);transition:.55s var(--ease)}
+.vc:hover .th img{filter:brightness(.98);transform:scale(1.07)}
+.vc .th video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;
+  transition:opacity .45s}
+.vc:hover .th video{opacity:1}
+.vc .th .d{position:absolute;bottom:7px;right:7px;z-index:2;background:rgba(0,0,0,.85);color:#fff;
+  font-size:0.55rem;font-weight:700;padding:2px 6px;border-radius:4px}
+.vc .th .c{position:absolute;top:7px;left:8px;z-index:2;font-size:0.46rem;font-weight:800;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--acc2);padding:3px 8px;border-radius:99px;
+  background:rgba(10,9,16,.8);border:1px solid rgba(167,139,250,.3)}
+.vc .tx{padding:11px 12px 13px}
+.vc .tx b{display:block;font-size:0.8rem;font-weight:700;color:var(--off);line-height:1.32}
+.vc .tx span{display:block;font-size:0.63rem;color:var(--d2);margin-top:4px}
+
+/* ── foot card ── */
+.foot{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.foot img{width:44px;height:44px;border-radius:50%;object-fit:cover;border:1px solid var(--bd)}
+.foot .w b{display:block;font-size:0.84rem;font-weight:700;color:var(--off)}
+.foot .w span{font-size:0.65rem;color:var(--d2)}
+.foot .links{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.foot .links a{text-decoration:none;font-size:0.6rem;font-weight:800;letter-spacing:.14em;
+  text-transform:uppercase;padding:10px 18px;border-radius:99px;transition:.35s var(--ease)}
+.foot .links a.yt{background:#ff0033;color:#fff}
+.foot .links a.ig{background:linear-gradient(135deg,var(--ig1),var(--ig2) 55%,var(--ig3));color:#fff}
+.foot .links a:hover{transform:translateY(-3px)}
+@media(max-width:600px){.foot .links{margin-left:0;width:100%}.foot .links a{flex:1;text-align:center}}
+
+/* ── empty state ── */
+.empty{min-height:70vh;display:grid;place-items:center;text-align:center;padding:80px 24px}
+.empty .in{max-width:470px}
+.empty .ic{font-size:2.9rem;margin-bottom:16px;animation:bob 3.4s var(--ease) infinite}
+@keyframes bob{50%{transform:translateY(-10px)}}
+.empty b{display:block;font-size:0.58rem;font-weight:800;letter-spacing:.3em;text-transform:uppercase;
+  color:var(--acc2);margin-bottom:14px}
+.empty h2{font-family:var(--disp);font-size:clamp(1.5rem,4.4vw,2.3rem);color:var(--off);
+  line-height:1.2;margin-bottom:14px}
+.empty p{font-size:0.88rem;line-height:1.78}
+.empty .rail2{height:2px;background:var(--bd);margin:24px 0;position:relative;overflow:hidden;
+  border-radius:9px}
+.empty .rail2 i{position:absolute;inset:0;width:38%;background:var(--acc2);
+  animation:sweep 2.6s var(--ease) infinite}
+@keyframes sweep{0%{transform:translateX(-110%)}100%{transform:translateX(270%)}}
+</style>
+</head>
+<body>
+<div class="bloom" id="bloom"></div>
+<div class="topbar">
+  <a class="b" href="vlog-data-design-preview.html"><i>←</i> Designs</a>
+  <span class="crumb" id="crumb"></span>
+  <span class="pct" id="pct">0%</span>
+</div>
+<div class="prog" id="prog"></div>
+<div id="app"></div>
+
+<script src="vlog-data.js"></script>
+<script>
+const D = window.VLOG
+const app = document.getElementById('app')
+const $ = s => document.querySelector(s)
+
+if (D.isEmpty) {
+  $('#crumb').textContent = 'Vlogs'
+  app.innerHTML = `
+    <div class="empty"><div class="in">
+      <div class="ic">🎥</div><b>Coming soon</b>
+      <h2>No ride video to open yet</h2>
+      <div class="rail2"><i></i></div>
+      <p>The rig is mounted and the rides are planned. The moment one is filmed, this page
+         opens with the player pinned on the left and everything else dealt out beside it.</p>
+    </div></div>`
+} else {
+  render(D.current())
+}
+
+function render(V) {
+  $('#crumb').textContent = `Vlogs / ${V.cat} / ${V.title}`
+
+  /* card() keeps the deck honest: every section is the same shell, so the
+     only thing that varies between them is the content inside. */
+  const card = (n, title, note, body) => `
+    <section class="cardx">
+      <div class="ch st"><span class="n">${n}</span><h2>${title}</h2>
+        ${note ? `<u>${note}</u>` : ''}</div>
+      <div class="st">${body}</div>
+    </section>`
+
+  app.innerHTML = `
+  <div class="shell">
+    <!-- ── pinned player ── -->
+    <aside class="rail">
+      <div class="stage" id="stage">
+        <img class="pl" src="${V.posterBig}" alt="" onerror="this.src='${V.still}'" />
+        ${V.clip ? `<video class="cl" id="cl" src="${V.clip}" muted loop playsinline preload="metadata"></video>` : ''}
+        <span class="tag">${V.cat}</span>
+        <span class="dur">${V.duration}</span>
+        <button class="go" id="go" aria-label="Play"><i>▶</i></button>
+      </div>
+      <div class="meta">
+        <h1>${V.title}</h1>
+        <div class="un"><em>${V.kind}</em><span>${V.when.label}</span><span>${V.views} views</span></div>
+        <p>${V.blurb}</p>
+      </div>
+      <div class="nums">
+        <div><b>${V.duration}</b><span>Runtime</span></div>
+        <div><b>${V.chapters.length}</b><span>Chapters</span></div>
+        <div><b>${V.route.distance.replace(' KM', '')}</b><span>KM route</span></div>
+      </div>
+      <nav class="crail">
+        <div class="lbl">Jump to a chapter</div>
+        ${V.chapters.map((c, i) => `
+          <button data-i="${i}"><s>${c.at}</s><span>${c.title}</span></button>`).join('')}
+      </nav>
+    </aside>
+
+    <!-- ── the deck ── -->
+    <div class="deck">
+      <section class="cardx mobmeta">
+        <h1>${V.title}</h1>
+        <div class="un"><em>${V.kind}</em><span>${V.when.label}</span><span>${V.views} views</span></div>
+        <p>${V.blurb}</p>
+        <div class="nums2">
+          <div><b>${V.duration}</b><span>Runtime</span></div>
+          <div><b>${V.chapters.length}</b><span>Chapters</span></div>
+          <div><b>${V.route.km}</b><span>KM route</span></div>
+        </div>
+      </section>
+
+      ${card('01', 'Chapters', `${V.chapters.length} marks · tap to seek`, `
+        <div class="clist" id="clist">
+          ${V.chapters.map((c, i) => `
+            <div class="crow" data-i="${i}">
+              <div class="t">${c.at}</div>
+              <div><b>${c.title}</b><span>${c.blurb}</span></div>
+              <div class="th"><img src="${c.photo}" alt="" loading="lazy" /></div>
+            </div>`).join('')}
+        </div>`)}
+
+      ${card('02', 'Frame Grabs', `${V.stills.length} stills · drag sideways`, `
+        <div class="railx" id="railx"><div class="railtrack">
+          ${V.stills.map(s => `
+            <figure class="sh"><img src="${s.src}" alt="" loading="lazy" />
+              <figcaption class="cp"><span>${s.cap}</span><em>${s.at}</em></figcaption></figure>`).join('')}
+        </div></div>`)}
+
+      ${card('03', 'The Route', `${V.route.distance} · ${V.route.date}`, `
+        <div class="rt">
+          <div class="plot" id="plot">
+            <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+              <path class="gh" id="gh" d="" vector-effect="non-scaling-stroke" />
+              <path class="live" id="live" d="" vector-effect="non-scaling-stroke" />
+              <circle class="dot" id="dot" cx="0" cy="0" />
+            </svg>
+            ${V.route.stops.map(s => `
+              <div class="pin${s.first || s.last ? ' edge' : ''}"
+                   style="left:${s.x}%;top:${s.y}%"><b></b><s>${s.label}</s></div>`).join('')}
+          </div>
+          <div class="rtx">
+            <span class="md">${V.route.mode}</span>
+            <h3>${V.route.name}</h3>
+            <p>${V.route.story}</p>
+            <div class="chips">${V.route.highlights.map(h => `<u>${h}</u>`).join('')}</div>
+            <div class="kv">
+              <div><span>Distance</span><b>${V.route.distance}</b></div>
+              <div><span>Stops</span><b>${V.route.stops.length}</b></div>
+              <div><span>When</span><b>${V.route.date}</b></div>
+              <div><span>States</span><b>${V.route.states.join(', ')}</b></div>
+            </div>
+          </div>
+        </div>`)}
+
+      ${card('04', 'On Instagram', `${D.social.handle} · tap to load`, `
+        <div class="igwrap">
+          ${V.insta.map(r => `
+            <div class="igc" data-embed="${r.embed}">
+              <img src="${r.still}" alt="" loading="lazy" />
+              <div class="lg">◙</div><div class="pp">▶</div>
+              <div class="cp"><b>${r.caption}</b><span>${r.tags.slice(0, 3).join(' ')}</span></div>
+            </div>`).join('')}
+        </div>`)}
+
+      ${card('05', 'From the Blog', `${D.posts.length} posts`, `
+        <div class="plist">
+          ${V.posts.map(p => `
+            <a class="prow" href="${p.href}">
+              <div class="cv"><img src="${p.cover}" alt="" loading="lazy" /><i>${p.icon}</i></div>
+              <div class="tx"><u>${p.cat} · ${p.when.short}</u><b>${p.title}</b>
+                <span>${p.excerpt}</span></div></a>`).join('')}
+        </div>`)}
+
+      ${card('06', 'More Videos', `${D.count} on the channel`, `
+        <div class="vgrid">
+          ${V.related.map(r => `
+            <a class="vc" href="?v=${r.yt}">
+              <div class="th">
+                <img src="${r.poster}" alt="" loading="lazy" onerror="this.src='${r.still}'" />
+                ${r.clip ? `<video src="${r.clip}" muted loop playsinline preload="none"></video>` : ''}
+                <span class="c">${r.cat}</span><span class="d">${r.duration}</span>
+              </div>
+              <div class="tx"><b>${r.title}</b><span>${r.when.short} · ${r.views} views</span></div>
+            </a>`).join('')}
+        </div>`)}
+
+      <section class="cardx">
+        <div class="foot st">
+          <img src="public/avatar.jpg" alt="" />
+          <div class="w"><b>${D.channelName}</b>
+            <span>${D.count} videos · ${D.insta.length} reels · ${D.posts.length} posts</span></div>
+          <div class="links">
+            <a class="yt" href="${V.url}" target="_blank" rel="noopener">Watch on YouTube</a>
+            <a class="ig" href="${D.social.instagram}" target="_blank" rel="noopener">Instagram</a>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>`
+
+  wire(V)
+}
+
+function wire(V) {
+  const clamp01 = n => Math.min(1, Math.max(0, n))
+
+  /* ── the pointer bloom ── */
+  addEventListener('pointermove', e => {
+    const b = $('#bloom')
+    b.style.setProperty('--mx', (e.clientX / innerWidth) * 100 + '%')
+    b.style.setProperty('--my', (e.clientY / innerHeight) * 100 + '%')
+  }, { passive: true })
+
+  /* ── the player: iframe on demand, local clip meanwhile ── */
+  const stage = $('#stage'), cl = $('#cl')
+  if (cl) cl.play().then(() => cl.classList.add('on')).catch(() => {})
+  function seek(sec) {
+    let f = stage.querySelector('iframe')
+    if (!f) {
+      f = document.createElement('iframe')
+      f.allow = 'autoplay; encrypted-media; picture-in-picture'
+      f.allowFullscreen = true
+      stage.appendChild(f)
+    }
+    f.src = `${V.embed}?autoplay=1&start=${sec}&rel=0&modestbranding=1`
+    $('#go').style.display = 'none'
+    if (cl) cl.style.display = 'none'
+  }
+  $('#go').addEventListener('click', () => seek(0))
+
+  /* ── chapters: the rail and the deck rows stay in step ── */
+  const railBtns = [...document.querySelectorAll('.crail button')]
+  const rows = [...document.querySelectorAll('.crow')]
+  function mark(i) {
+    railBtns.forEach((b, j) => b.classList.toggle('on', j === i))
+    rows.forEach((r, j) => r.classList.toggle('on', j === i))
+  }
+  const pick = i => { mark(i); seek(V.chapters[i].sec) }
+  railBtns.forEach((b, i) => b.addEventListener('click', () => {
+    pick(i)
+    rows[i].scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }))
+  rows.forEach((r, i) => {
+    r.addEventListener('click', () => pick(i))
+    r.addEventListener('mouseenter', () => mark(i))
+  })
+  mark(0)
+
+  /* ── the stills rail: drag to scroll, plus a nudge from page scroll ── */
+  const rx = $('#railx')
+  let down = false, sx = 0, sl = 0
+  rx.addEventListener('pointerdown', e => {
+    down = true; sx = e.clientX; sl = rx.scrollLeft; rx.classList.add('drag')
+    rx.setPointerCapture(e.pointerId)
+  })
+  rx.addEventListener('pointermove', e => {
+    if (down) rx.scrollLeft = sl - (e.clientX - sx)
+  })
+  const up = () => { down = false; rx.classList.remove('drag') }
+  rx.addEventListener('pointerup', up)
+  rx.addEventListener('pointercancel', up)
+
+  /* ── the route line: drawn by CSS on reveal, marker driven by scroll ── */
+  const live = $('#live'), gh = $('#gh'), dot = $('#dot'), plot = $('#plot')
+  const stops = V.route.stops
+  const path = stops.map((s, i) => {
+    if (i === 0) return `M ${s.x} ${s.y}`
+    const p = stops[i - 1]
+    const cx = (p.x + s.x) / 2 + (s.y - p.y) * 0.15
+    const cy = (p.y + s.y) / 2 - (s.x - p.x) * 0.15
+    return `Q ${cx} ${cy} ${s.x} ${s.y}`
+  }).join(' ')
+  live.setAttribute('d', path)
+  gh.setAttribute('d', path)
+  const len = live.getTotalLength()
+  live.style.setProperty('--len', len)
+
+  function ride() {
+    const r = plot.getBoundingClientRect()
+    const p = clamp01((innerHeight * 0.8 - r.top) / (r.height + innerHeight * 0.45))
+    const pt = live.getPointAtLength(len * p)
+    dot.setAttribute('cx', pt.x)
+    dot.setAttribute('cy', pt.y)
+  }
+
+  /* ── Instagram embeds, built on click only ── */
+  document.querySelectorAll('.igc').forEach(c => c.addEventListener('click', () => {
+    if (c.querySelector('iframe')) return
+    const f = document.createElement('iframe')
+    f.src = c.dataset.embed
+    f.loading = 'lazy'
+    f.allowFullscreen = true
+    f.setAttribute('scrolling', 'no')
+    c.appendChild(f)
+  }))
+
+  /* ── related cards play their local clip on hover ── */
+  document.querySelectorAll('.vc video').forEach(v => {
+    const c = v.closest('.vc')
+    c.addEventListener('mouseenter', () => { v.currentTime = 0; v.play().catch(() => {}) })
+    c.addEventListener('mouseleave', () => v.pause())
+  })
+
+  /* ── the deal-in, staggered so a card's header leads its body ── */
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return
+    io.unobserve(e.target)
+    e.target.classList.add('in')
+    e.target.querySelectorAll('.st').forEach((s, i) => { s.style.transitionDelay = (0.12 + i * 0.1) + 's' })
+  }), { threshold: 0.1 })
+  document.querySelectorAll('.cardx').forEach(c => io.observe(c))
+
+  /* ── progress readout ── */
+  function prog() {
+    const max = document.documentElement.scrollHeight - innerHeight
+    const p = clamp01(scrollY / Math.max(1, max))
+    $('#prog').style.width = p * 100 + '%'
+    $('#pct').textContent = Math.round(p * 100) + '%'
+  }
+
+  let raf = null
+  addEventListener('scroll', () => {
+    if (raf) return
+    raf = requestAnimationFrame(() => { prog(); ride(); raf = null })
+  }, { passive: true })
+  addEventListener('resize', ride)
+  prog(); ride()
+}
+</script>
+</body>
+</html>

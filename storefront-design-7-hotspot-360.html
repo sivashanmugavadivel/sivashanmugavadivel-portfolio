@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Storefront · 7 · Hotspot 360</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@200;300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════
+   HOTSPOT 360 — the bike itself is the menu. Every part is a
+   numbered pin on the side profile; drag the bike to spin it
+   through all 37 frames and the pins step aside. Picking a
+   pin opens a detail panel (a bottom sheet on phones).
+   ══════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0b0d12; --panel:#12151d; --panel2:#171b25; --off:#eef2f8;
+  --d1:rgba(238,242,248,0.62); --d2:rgba(238,242,248,0.38); --d3:rgba(238,242,248,0.2);
+  --bd:rgba(255,255,255,0.09); --bd2:rgba(255,255,255,0.18);
+  --acc:#ffc94d; --acc2:#4fd1ff; --ok:#4ade80;
+  --disp:'Space Grotesk',sans-serif; --sans:'Sora',sans-serif;
+  --ease:cubic-bezier(.16,1,.3,1);
+  --sheet:0px;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--d1);font-family:var(--sans);overflow:hidden;
+  -webkit-font-smoothing:antialiased;user-select:none}
+::selection{background:var(--acc);color:#12151d}
+
+.bgfx{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(60vw 60vw at 50% 38%,rgba(255,201,77,0.09),transparent 68%),
+             radial-gradient(50vw 50vw at 82% 78%,rgba(79,209,255,0.07),transparent 70%)}
+.floorline{position:fixed;left:0;right:0;bottom:0;height:38vh;z-index:0;pointer-events:none;
+  background:linear-gradient(to top,rgba(0,0,0,0.7),transparent),
+             repeating-linear-gradient(to right,rgba(255,255,255,0.03) 0 1px,transparent 1px 72px)}
+
+.app{position:relative;z-index:2;height:100%;display:flex;flex-direction:column}
+
+/* ── top strip ── */
+.top{flex-shrink:0;display:flex;align-items:center;gap:12px;padding:14px clamp(14px,3.5vw,32px);
+  border-bottom:1px solid var(--bd)}
+.top .mark{font-family:var(--disp);font-weight:700;font-size:0.86rem;letter-spacing:0.02em;color:var(--off);
+  display:flex;align-items:center;gap:9px}
+.top .mark i{width:8px;height:8px;border-radius:50%;background:var(--acc);box-shadow:0 0 12px var(--acc)}
+.top .mark em{font-style:normal;color:var(--d3);font-weight:400}
+.top .modes{margin-left:auto;display:flex;gap:1px;background:var(--bd);border-radius:9px;overflow:hidden}
+.top .modes button{padding:8px 14px;border:0;background:var(--panel);color:var(--d2);cursor:pointer;
+  font-family:var(--sans);font-size:0.7rem;transition:.25s;white-space:nowrap}
+.top .modes button.on{background:var(--acc);color:#12151d;font-weight:500}
+.top .exit{padding:8px 14px;border:1px solid var(--bd);border-radius:9px;color:var(--d2);
+  text-decoration:none;font-size:0.7rem;transition:.25s;white-space:nowrap}
+.top .exit:hover{color:var(--off);border-color:var(--bd2)}
+
+/* ── stage ── */
+.stage{flex:1;position:relative;display:flex;align-items:center;justify-content:center;
+  padding:8px clamp(10px,3vw,40px) 0;min-height:0}
+.bikewrap{position:relative;width:min(940px,100%);aspect-ratio:800/480;max-height:100%;
+  cursor:grab;touch-action:pan-y}
+.bikewrap.drag{cursor:grabbing}
+.bikewrap img.frame{width:100%;height:100%;object-fit:contain;
+  filter:drop-shadow(0 40px 50px rgba(0,0,0,0.55));pointer-events:none}
+/* pins live in the same box, so percentages track the photo as it scales */
+.pins{position:absolute;inset:0;transition:opacity .4s var(--ease)}
+.pins.hide{opacity:0;pointer-events:none}
+.pin{position:absolute;transform:translate(-50%,-50%);z-index:3}
+.pin button{width:26px;height:26px;border-radius:50%;border:1px solid var(--acc);cursor:pointer;
+  background:rgba(18,21,29,0.86);color:var(--acc);font-family:var(--disp);font-weight:700;
+  font-size:0.66rem;backdrop-filter:blur(6px);transition:.3s var(--ease);position:relative;z-index:2}
+.pin button::after{content:'';position:absolute;inset:-6px;border-radius:50%;border:1px solid var(--acc);
+  opacity:0;animation:ping 2.6s var(--ease) infinite}
+.pin.hot button::after{animation-duration:1.6s}
+@keyframes ping{0%{opacity:.55;transform:scale(.8)}70%,100%{opacity:0;transform:scale(1.5)}}
+.pin button:hover{background:var(--acc);color:#12151d;transform:scale(1.22)}
+.pin.on button{background:var(--acc);color:#12151d;transform:scale(1.28);box-shadow:0 0 22px rgba(255,201,77,0.6)}
+.pin .lab{position:absolute;left:34px;top:50%;transform:translateY(-50%) translateX(-6px);
+  white-space:nowrap;background:rgba(18,21,29,0.94);border:1px solid var(--bd);border-radius:7px;
+  padding:6px 11px;font-size:0.66rem;color:var(--off);opacity:0;pointer-events:none;
+  transition:.28s var(--ease);backdrop-filter:blur(8px)}
+.pin:hover .lab{opacity:1;transform:translateY(-50%) translateX(0)}
+.pin.flip .lab{left:auto;right:34px;transform:translateY(-50%) translateX(6px)}
+.pin.flip:hover .lab{transform:translateY(-50%) translateX(0)}
+
+/* spin readout over the stage */
+.spinbadge{position:absolute;top:6px;left:50%;transform:translateX(-50%);display:flex;align-items:center;
+  gap:9px;padding:6px 14px;border-radius:999px;border:1px solid var(--bd);background:rgba(18,21,29,0.8);
+  backdrop-filter:blur(8px);font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--d2);
+  opacity:0;transition:opacity .3s}
+.spinbadge.on{opacity:1}
+.spinbadge b{color:var(--acc);font-weight:500;font-variant-numeric:tabular-nums}
+
+/* ── bottom bar: spin scrubber + category legend ── */
+.bottom{flex-shrink:0;padding:10px clamp(14px,3.5vw,32px) calc(14px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--bd);display:flex;align-items:center;gap:clamp(10px,2.4vw,26px);flex-wrap:wrap}
+.scrub{flex:1 1 260px;min-width:0;display:flex;align-items:center;gap:12px}
+.scrub input{flex:1;min-width:0;-webkit-appearance:none;appearance:none;height:3px;border-radius:99px;
+  background:var(--bd2);outline:0}
+.scrub input::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;
+  background:var(--acc);cursor:pointer;box-shadow:0 0 12px rgba(255,201,77,0.6)}
+.scrub input::-moz-range-thumb{width:16px;height:16px;border:0;border-radius:50%;background:var(--acc);cursor:pointer}
+.scrub .lbl{font-size:0.6rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--d3);white-space:nowrap}
+.legend{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;flex:0 1 auto}
+.legend::-webkit-scrollbar{display:none}
+.legend button{flex-shrink:0;display:inline-flex;align-items:center;gap:7px;padding:7px 13px;
+  border-radius:999px;border:1px solid var(--bd);background:var(--panel);color:var(--d2);cursor:pointer;
+  font-family:var(--sans);font-size:0.68rem;transition:.28s var(--ease);white-space:nowrap}
+.legend button:hover{color:var(--off);border-color:var(--bd2)}
+.legend button.on{background:var(--acc2);border-color:var(--acc2);color:#0b0d12;font-weight:500}
+.legend button u{text-decoration:none;opacity:0.6;font-size:0.62rem}
+
+/* ── detail panel: side drawer on desktop, bottom sheet on phones ── */
+.sheet{position:fixed;right:0;top:0;bottom:0;width:min(420px,86vw);z-index:60;background:var(--panel);
+  border-left:1px solid var(--bd);display:flex;flex-direction:column;
+  transform:translateX(102%);transition:transform .55s var(--ease);box-shadow:-30px 0 70px -30px rgba(0,0,0,0.9)}
+.sheet.on{transform:none}
+.sheet .grab{display:none}
+.sheet .shead{display:flex;align-items:flex-start;gap:12px;padding:20px 20px 14px;border-bottom:1px solid var(--bd)}
+.sheet .shead .n{font-family:var(--disp);font-weight:700;font-size:1.5rem;color:var(--acc);line-height:1}
+.sheet .shead .t{flex:1;min-width:0}
+.sheet .shead h2{font-family:var(--disp);font-weight:600;font-size:1.06rem;color:var(--off);line-height:1.25}
+.sheet .shead .cat{margin-top:5px;font-size:0.66rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--d3)}
+.sheet .close{flex-shrink:0;width:32px;height:32px;border-radius:50%;border:1px solid var(--bd);
+  background:transparent;color:var(--d1);cursor:pointer;font-size:0.9rem;transition:.25s}
+.sheet .close:hover{background:var(--off);color:#12151d}
+.sheet .sbody{flex:1;overflow-y:auto;padding:18px 20px 22px;display:flex;flex-direction:column;gap:16px}
+.sheet .shot{aspect-ratio:4/3;border-radius:14px;border:1px solid var(--bd);background:#0d1016;
+  display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:zoom-in;flex-shrink:0}
+.sheet .shot img{width:100%;height:100%;object-fit:contain;padding:14px;transition:opacity .22s,transform .5s var(--ease)}
+.sheet .shot:hover img{transform:scale(1.05)}
+.sheet .shot .none{font-size:2.2rem;opacity:0.2}
+.sheet .reel{display:flex;gap:6px;flex-wrap:wrap}
+.sheet .reel button{width:52px;height:52px;padding:0;border-radius:9px;overflow:hidden;cursor:pointer;
+  border:1px solid var(--bd);background:#0d1016;opacity:0.5;transition:.26s}
+.sheet .reel button.on{opacity:1;border-color:var(--acc)}
+.sheet .reel img{width:100%;height:100%;object-fit:cover}
+.sheet .facts{display:flex;flex-direction:column;border-top:1px solid var(--bd)}
+.sheet .facts div{display:flex;gap:14px;padding:10px 0;border-bottom:1px solid var(--bd);font-size:0.78rem}
+.sheet .facts k{flex:0 0 84px;font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--d3)}
+.sheet .facts v{color:var(--off)}
+.sheet .facts v.ok{color:var(--ok)}
+.sheet .buys{display:flex;gap:9px;flex-wrap:wrap}
+.buy{flex:1 1 auto;text-align:center;padding:13px 18px;border-radius:11px;text-decoration:none;
+  font-size:0.78rem;font-weight:500;transition:.3s var(--ease);white-space:nowrap}
+.buy.p{background:var(--acc);color:#12151d}
+.buy.p:hover{background:var(--off);transform:translateY(-2px)}
+.buy.s{border:1px solid var(--bd2);color:var(--off)}
+.buy.s:hover{border-color:var(--acc2);color:var(--acc2);transform:translateY(-2px)}
+.soon{font-size:0.76rem;color:var(--d3);font-style:italic}
+.sheet .nav{display:flex;gap:8px;margin-top:auto;padding-top:6px}
+.sheet .nav button{flex:1;padding:11px;border-radius:10px;border:1px solid var(--bd);background:transparent;
+  color:var(--d1);cursor:pointer;font-family:var(--sans);font-size:0.72rem;transition:.25s}
+.sheet .nav button:hover{background:var(--panel2);color:var(--off)}
+.scrim{position:fixed;inset:0;z-index:55;background:rgba(5,7,11,0.6);opacity:0;visibility:hidden;
+  transition:.45s var(--ease);backdrop-filter:blur(2px)}
+.scrim.on{opacity:1;visibility:visible}
+
+/* intro hint */
+.hint{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:9px;
+  font-size:0.64rem;letter-spacing:0.12em;color:var(--d3);pointer-events:none;
+  animation:pulse 3s ease-in-out infinite}
+@keyframes pulse{50%{opacity:0.4}}
+.hint.gone{display:none}
+
+/* lightbox */
+.lb{position:fixed;inset:0;z-index:99;background:rgba(6,8,12,0.97);backdrop-filter:blur(10px);
+  display:none;align-items:center;justify-content:center;padding:clamp(16px,6vw,56px)}
+.lb.on{display:flex;animation:fade .3s}
+@keyframes fade{from{opacity:0}}
+.lb img{max-width:90vw;max-height:74vh;object-fit:contain;border-radius:14px;animation:pop .42s var(--ease)}
+@keyframes pop{from{opacity:0;transform:scale(.94)}}
+.lb .cap{position:absolute;bottom:24px;left:0;right:0;text-align:center;font-size:0.7rem;
+  letter-spacing:0.12em;color:var(--acc);padding:0 16px}
+.lb button{position:absolute;width:44px;height:44px;border-radius:50%;border:1px solid var(--bd2);
+  background:rgba(18,21,29,0.9);color:var(--off);font-size:1.05rem;cursor:pointer;transition:.22s}
+.lb .x{top:18px;right:18px}.lb .prev{left:14px;top:50%}.lb .next{right:14px;top:50%}
+
+/* ── phones: the drawer becomes a bottom sheet ── */
+@media(max-width:760px){
+  .top{padding:10px 14px;gap:9px}
+  .top .mark em{display:none}
+  .top .modes button{padding:7px 11px;font-size:0.66rem}
+  .top .exit{padding:7px 11px;font-size:0.66rem}
+  .stage{padding:4px 8px 0}
+  .pin button{width:22px;height:22px;font-size:0.6rem}
+  .pin .lab{display:none}
+  .bottom{gap:9px;padding:9px 14px calc(12px + env(safe-area-inset-bottom))}
+  .scrub{flex:1 1 100%;order:2}
+  .legend{flex:1 1 100%;order:1}
+  .sheet{right:0;left:0;top:auto;bottom:0;width:auto;max-height:82vh;border-left:0;
+    border-top:1px solid var(--bd2);border-radius:20px 20px 0 0;
+    transform:translateY(102%);box-shadow:0 -30px 70px -30px rgba(0,0,0,0.9)}
+  .sheet.on{transform:none}
+  .sheet .grab{display:block;width:40px;height:4px;border-radius:99px;background:var(--bd2);
+    margin:10px auto 0;flex-shrink:0}
+  .sheet .shead{padding:12px 16px 12px}
+  .sheet .sbody{padding:14px 16px calc(18px + env(safe-area-inset-bottom))}
+  .sheet .shot{aspect-ratio:16/11}
+  .sheet .reel button{width:44px;height:44px}
+}
+@media(max-height:520px) and (orientation:landscape){
+  .sheet{width:min(360px,60vw);top:0;bottom:0;left:auto;transform:translateX(102%);border-radius:0}
+  .sheet.on{transform:none}
+  .sheet .grab{display:none}
+}
+</style>
+</head>
+<body>
+<div class="bgfx"></div><div class="floorline"></div>
+
+<div class="app">
+  <header class="top">
+    <div class="mark"><i></i>Storefront <em>— pick it off the bike</em></div>
+    <div class="modes">
+      <button id="mMap" class="on">Map</button>
+      <button id="mSpin">Spin 360°</button>
+    </div>
+    <a class="exit" href="#">✕ Garage</a>
+  </header>
+
+  <div class="stage">
+    <div class="bikewrap" id="bikewrap">
+      <img class="frame" id="frame" alt="Royal Enfield Bear 650" />
+      <div class="pins" id="pins"></div>
+      <div class="spinbadge" id="spinbadge">Frame <b id="fno">01</b> / 37</div>
+      <div class="hint" id="hint">Tap a numbered pin · drag the bike to spin</div>
+    </div>
+  </div>
+
+  <div class="bottom">
+    <div class="legend" id="legend"></div>
+    <div class="scrub">
+      <span class="lbl">Spin</span>
+      <input type="range" id="scrub" min="1" max="37" value="1" aria-label="rotate the bike" />
+      <span class="lbl" id="pincount"></span>
+    </div>
+  </div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="sheet" id="sheet">
+  <div class="grab"></div>
+  <div class="shead">
+    <span class="n" id="shN">01</span>
+    <div class="t"><h2 id="shName">—</h2><div class="cat" id="shCat"></div></div>
+    <button class="close" id="shClose">✕</button>
+  </div>
+  <div class="sbody">
+    <div class="shot" id="shShot"></div>
+    <div class="reel" id="shReel"></div>
+    <div class="facts" id="shFacts"></div>
+    <div class="buys" id="shBuys"></div>
+    <div class="nav">
+      <button id="shPrev">‹ Previous part</button>
+      <button id="shNext">Next part ›</button>
+    </div>
+  </div>
+</aside>
+
+<div class="lb" id="lb">
+  <button class="x" onclick="closeLb()">✕</button>
+  <button class="prev" onclick="stepLb(-1)">‹</button>
+  <button class="next" onclick="stepLb(1)">›</button>
+  <img id="lbImg" alt="" />
+  <div class="cap" id="lbCap"></div>
+</div>
+
+<script src="storefront-data.js"></script>
+<script>
+/* ── where each part sits on the side profile (frame 01), in % of the photo ──
+   These are placed by eye against the zone the part actually bolts to; they
+   are indicative, not surveyed. Only valid on frame 01, so the pins hide the
+   moment the bike is spun away from it. */
+const PIN = {
+  'Insta360 X5':                          [63.5, 11],
+  'Insta360 X4 Air':                      [57.5, 7],
+  'Insta360 Ace Pro 2':                   [69, 9],
+  'Insta360 Heavy Duty Clamp':            [60, 21],
+  'TELESIN Camera Clamp Handlebar Bike Mount': [66.5, 23],
+  'FutureEye X80':                        [72.5, 27],
+  'Sena 60S EVO':                         [44, 6],
+  'Headlight Grill':                      [74, 34],
+  'Handlebar Brace Pad':                  [63, 17],
+  'Suspension Forks Cover':               [73.5, 48],
+  'Dashboard Screen Protector':           [67.5, 15],
+  'Fork Sliders':                         [76, 61],
+  'Saddle Stay with Plate with Footrest': [20, 40],
+  'Crash Guard with Sliders':             [55, 60],
+  'Tyre Hugger':                          [20.5, 55],
+  '100W Fast Two-Way Charging':           [57, 20],
+}
+
+const ITEMS = SF.all.map((it, i) => ({
+  ...it, no: i + 1, imgs: it.imgs.map(f => SF.url(f)), at: PIN[it.name] || [50, 50],
+}))
+const N = ITEMS.length
+
+/* ── the 360 spin ── */
+const frameEl = document.getElementById('frame')
+const wrap = document.getElementById('bikewrap')
+const scrub = document.getElementById('scrub')
+const badge = document.getElementById('spinbadge')
+const fno = document.getElementById('fno')
+const pinsEl = document.getElementById('pins')
+let frame = 1, spinning = false
+
+/* preload so dragging doesn't flicker */
+for (let i = 1; i <= SF.bikeFrames; i++) { const im = new Image(); im.src = SF.bike(i) }
+
+function setFrame(n, fromUser) {
+  frame = ((Math.round(n) - 1) % SF.bikeFrames + SF.bikeFrames) % SF.bikeFrames + 1
+  frameEl.src = SF.bike(frame)
+  fno.textContent = String(frame).padStart(2, '0')
+  scrub.value = frame
+  const home = frame === 1
+  pinsEl.classList.toggle('hide', !home)
+  badge.classList.toggle('on', !home || spinning)
+  if (fromUser) document.getElementById('hint').classList.add('gone')
+}
+setFrame(1)
+
+scrub.addEventListener('input', () => { setMode('spin'); setFrame(+scrub.value, true) })
+
+let dragging = false, lastX = 0, acc = 0
+wrap.addEventListener('pointerdown', e => {
+  if (e.target.closest('.pin')) return
+  dragging = true; lastX = e.clientX; acc = 0
+  wrap.classList.add('drag'); wrap.setPointerCapture(e.pointerId)
+})
+wrap.addEventListener('pointermove', e => {
+  if (!dragging) return
+  const dx = e.clientX - lastX; lastX = e.clientX
+  acc += dx
+  const perFrame = wrap.clientWidth / SF.bikeFrames / 1.6
+  if (Math.abs(acc) >= perFrame) {
+    const steps = Math.trunc(acc / perFrame)
+    acc -= steps * perFrame
+    spinning = true; setMode('spin'); setFrame(frame - steps, true)
+  }
+})
+const endDrag = () => { dragging = false; spinning = false; wrap.classList.remove('drag'); setFrame(frame) }
+wrap.addEventListener('pointerup', endDrag)
+wrap.addEventListener('pointercancel', endDrag)
+
+/* mode buttons: Map snaps home so the pins line up again */
+const mMap = document.getElementById('mMap'), mSpin = document.getElementById('mSpin')
+function setMode(m) {
+  mMap.classList.toggle('on', m === 'map')
+  mSpin.classList.toggle('on', m === 'spin')
+}
+mMap.addEventListener('click', () => { setMode('map'); setFrame(1, true) })
+mSpin.addEventListener('click', () => { setMode('spin'); setFrame(10, true) })
+
+/* ── pins ── */
+function paintPins(filter) {
+  const list = filter ? ITEMS.filter(i => i.cat.id === filter) : ITEMS
+  pinsEl.innerHTML = list.map(it => `
+    <div class="pin ${it.featured ? 'hot' : ''} ${it.at[0] > 62 ? 'flip' : ''}"
+         style="left:${it.at[0]}%;top:${it.at[1]}%" data-no="${it.no}">
+      <button aria-label="${it.name}">${String(it.no).padStart(2, '0')}</button>
+      <span class="lab">${it.name}</span>
+    </div>`).join('')
+  document.getElementById('pincount').textContent = `${list.length} pin${list.length === 1 ? '' : 's'}`
+}
+paintPins(null)
+pinsEl.addEventListener('click', e => {
+  const p = e.target.closest('.pin')
+  if (p) open(+p.dataset.no)
+})
+
+/* ── category legend filters which pins show ── */
+let filter = null
+document.getElementById('legend').innerHTML =
+  `<button class="on" data-cat="">All <u>${N}</u></button>` +
+  SF.cats.map(c => `<button data-cat="${c.id}">${c.icon} ${c.label} <u>${c.items.length}</u></button>`).join('')
+document.getElementById('legend').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return
+  filter = b.dataset.cat || null
+  document.querySelectorAll('.legend button').forEach(x => x.classList.toggle('on', x === b))
+  setMode('map'); setFrame(1, true)
+  paintPins(filter)
+})
+
+/* ── detail sheet ── */
+const sheet = document.getElementById('sheet'), scrim = document.getElementById('scrim')
+let cur = null, plateAt = 0
+
+function open(no) {
+  cur = ITEMS.find(i => i.no === no); if (!cur) return
+  plateAt = 0
+  document.getElementById('shN').textContent = String(cur.no).padStart(2, '0')
+  document.getElementById('shName').textContent = cur.name
+  document.getElementById('shCat').textContent = `${cur.cat.icon} ${cur.cat.label}`
+  document.getElementById('shShot').innerHTML = cur.imgs.length
+    ? `<img src="${cur.imgs[0]}" alt="${cur.name}" />` : `<span class="none">${cur.cat.icon}</span>`
+  document.getElementById('shReel').innerHTML = cur.imgs.length > 1
+    ? cur.imgs.map((s, k) => `<button class="${k === 0 ? 'on' : ''}" data-k="${k}"><img src="${s}" alt="" /></button>`).join('') : ''
+  document.getElementById('shFacts').innerHTML = [
+    ['Category', `${cur.cat.icon} ${cur.cat.label}`],
+    ['Plates', String(cur.imgs.length).padStart(2, '0')],
+    ['Source', cur.links.map(l => l[0]).join(', ') || '—'],
+    ['Status', `<span class="ok">${cur.featured ? 'Fitted · headline pick' : 'Fitted'}</span>`],
+  ].map(([k, v]) => `<div><k>${k}</k><v>${v}</v></div>`).join('')
+  document.getElementById('shBuys').innerHTML = cur.links.length
+    ? cur.links.map(([v, u], k) => `<a class="buy ${k === 0 ? 'p' : 's'}" href="${u}" target="_blank" rel="noopener noreferrer">${k === 0 ? 'Buy on ' + v : v} ↗</a>`).join('')
+    : '<span class="soon">Link coming soon</span>'
+
+  document.querySelectorAll('.pin').forEach(p => p.classList.toggle('on', +p.dataset.no === no))
+  sheet.classList.add('on'); scrim.classList.add('on')
+}
+function close() {
+  sheet.classList.remove('on'); scrim.classList.remove('on')
+  document.querySelectorAll('.pin').forEach(p => p.classList.remove('on'))
+}
+document.getElementById('shClose').addEventListener('click', close)
+scrim.addEventListener('click', close)
+document.getElementById('shPrev').addEventListener('click', () => open(cur.no === 1 ? N : cur.no - 1))
+document.getElementById('shNext').addEventListener('click', () => open(cur.no === N ? 1 : cur.no + 1))
+document.getElementById('shReel').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return
+  plateAt = +b.dataset.k
+  const img = document.querySelector('#shShot img')
+  img.style.opacity = 0
+  setTimeout(() => { img.src = cur.imgs[plateAt]; img.style.opacity = 1 }, 150)
+  document.querySelectorAll('#shReel button').forEach((x, j) => x.classList.toggle('on', j === plateAt))
+})
+document.getElementById('shShot').addEventListener('click', () => { if (cur && cur.imgs.length) openLb() })
+
+addEventListener('keydown', e => {
+  if (document.getElementById('lb').classList.contains('on')) return
+  if (e.key === 'Escape') close()
+  if (!sheet.classList.contains('on')) {
+    if (e.key === 'ArrowRight') { setMode('spin'); setFrame(frame + 1, true) }
+    if (e.key === 'ArrowLeft') { setMode('spin'); setFrame(frame - 1, true) }
+  }
+})
+
+/* lightbox */
+let at = 0
+function openLb() { at = plateAt; paint(); document.getElementById('lb').classList.add('on') }
+function paint() {
+  document.getElementById('lbImg').src = cur.imgs[at]
+  document.getElementById('lbCap').textContent = `${cur.name} — plate ${at + 1} of ${cur.imgs.length}`
+}
+function stepLb(d) { at = (at + d + cur.imgs.length) % cur.imgs.length; paint() }
+function closeLb() { document.getElementById('lb').classList.remove('on') }
+document.getElementById('lb').addEventListener('click', e => { if (e.target.id === 'lb') closeLb() })
+addEventListener('keydown', e => {
+  if (!document.getElementById('lb').classList.contains('on')) return
+  if (e.key === 'Escape') closeLb()
+  if (e.key === 'ArrowRight') stepLb(1)
+  if (e.key === 'ArrowLeft') stepLb(-1)
+})
+</script>
+</body>
+</html>

@@ -1,0 +1,272 @@
+{
+  "rides": {
+    "title": "Rides & Routes",
+    "note": "Every road has a story.",
+    "folder": "mygarage/rideandroute",
+    "modes": [
+      { "key": "completed", "label": "Completed", "plural": "Completed Rides", "color": "#22c55e" },
+      { "key": "upcoming", "label": "Upcoming", "plural": "Upcoming Rides", "color": "#f59e0b" },
+      { "key": "planned", "label": "Planned", "plural": "Planned Rides", "color": "#8b5cf6" }
+    ]
+  },
+  "vlogs": {
+    "title": "Latest Vlogs",
+    "note": "Rides, trips and the bits in between — filmed on the Insta360 rig bolted to the bike.",
+    "channel": "https://www.youtube.com/@sivashanmugavadivel",
+    "folder": "mygarage/vlog/config"
+  },
+  "maintenance": {
+    "title": "Service & Maintenance",
+    "note": "Every rupee the Bear has cost to keep running. Open any service for the full bill.",
+    "currency": "₹",
+    "owner": "Royal Enfield · Bear 650",
+    "services": []
+  },
+  "gallery": {
+    "title": "Ride Gallery",
+    "note": "Shots from the road, pinned up as they were taken.",
+    "ticker": {
+      "photoSize": 210,
+      "gap": 34,
+      "tilt": 8,
+      "speed": 46,
+      "scrollBoost": 2.2,
+      "pauseOnHover": true
+    },
+    "photos": []
+  },
+  "accessories": {
+    "note": "The gear actually bolted to the bike. Links go straight to where each one was bought.",
+    "categories": [
+      {
+        "id": "camera",
+        "label": "Camera & Accessories",
+        "icon": "📷",
+        "items": [
+          {
+            "id": "insta360-x5",
+            "name": "Insta360 X5",
+            "desc": "",
+            "featured": true,
+            "links": [
+              {
+                "vendor": "Insta360",
+                "url": "https://www.insta360.com/sal/x5?utm_source=AffiliateCenter&utm_medium=copylink&utm_term=INRSGGO3OY3"
+              },
+              {
+                "vendor": "Amazon",
+                "url": "https://amzn.in/d/0gU0cXaW"
+              }
+            ]
+          },
+          {
+            "id": "insta360-x4-air",
+            "name": "Insta360 X4 Air",
+            "desc": "",
+            "links": [
+              {
+                "vendor": "Insta360",
+                "url": "https://www.insta360.com/sal/x4-air?utm_source=AffiliateCenter&utm_medium=copylink&utm_term=INRSGGO3OY3"
+              },
+              {
+                "vendor": "Amazon",
+                "url": "https://amzn.in/d/04ylvhYu"
+              }
+            ]
+          },
+          {
+            "id": "insta360-ace-pro-2",
+            "name": "Insta360 Ace Pro 2",
+            "desc": "",
+            "featured": true,
+            "links": [
+              {
+                "vendor": "Insta360",
+                "url": "https://www.insta360.com/sal/ace-pro-2?utm_source=AffiliateCenter&utm_medium=copylink&utm_term=INRSGGO3OY3"
+              },
+              {
+                "vendor": "Amazon",
+                "url": "https://amzn.in/d/0j5mlyWS"
+              }
+            ]
+          },
+          {
+            "id": "insta360-heavy-duty-clamp",
+            "name": "Insta360 Heavy Duty Clamp",
+            "desc": "",
+            "links": [
+              {
+                "vendor": "Amazon",
+                "url": "https://amzn.in/d/0hr1hLI6"
+              }
+            ]
+          },
+          {
+            "id": "telesin-handlebar-mount",
+            "name": "TELESIN Camera Clamp Handlebar Bike Mount",
+            "desc": "",
+            "links": [
+              {
+                "vendor": "Amazon",
+                "url": "https://amzn.in/d/08shcZQH"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "lighting",
+        "label": "Lighting",
+        "icon": "💡",
+        "items": [
+          {
+            "id": "futureeye-x80",
+            "name": "FutureEye X80",
+            "desc": "",
+            "featured": true,
+            "links": [
+              {
+                "vendor": "Amazon",
+                "url": "https://a.co/d/00IW1eUF"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "helmet",
+        "label": "Helmet & Accessories",
+        "icon": "🎧",
+        "items": [
+          {
+            "id": "sena-60s-evo",
+            "name": "Sena 60S EVO",
+            "desc": "",
+            "featured": true,
+            "links": [
+              {
+                "vendor": "Amazon",
+                "url": "https://a.co/d/05C8wMTZ"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "safety",
+        "label": "Safety",
+        "icon": "🛡️",
+        "items": [
+          {
+            "id": "headlight-grill",
+            "name": "Headlight Grill",
+            "desc": "",
+            "links": [
+              {
+                "vendor": "Amazon",
+                "url": "https://amzn.in/d/0hDBui68"
+              }
+            ]
+          },
+          {
+            "id": "handlebar-brace-pad",
+            "name": "Handlebar Brace Pad",
+            "desc": "",
+            "links": [
+              {
+                "vendor": "Amazon",
+                "url": "https://amzn.in/d/0b8r9VKh"
+              }
+            ]
+          },
+          {
+            "id": "suspension-forks-cover",
+            "name": "Suspension Forks Cover",
+            "desc": "",
+            "links": [
+              {
+                "vendor": "Amazon",
+                "url": "https://amzn.in/d/0hzQSdbK"
+              }
+            ]
+          },
+          {
+            "id": "dashboard-screen-protector",
+            "name": "Dashboard Screen Protector",
+            "desc": "",
+            "links": [
+              {
+                "vendor": "Amazon",
+                "url": "https://amzn.in/d/09icZe3A"
+              }
+            ]
+          },
+          {
+            "id": "fork-sliders",
+            "name": "Fork Sliders",
+            "desc": "",
+            "links": [
+              {
+                "vendor": "Motocare",
+                "url": "https://motocare.co.in/product-details/fork-sliders-for-bear-650"
+              }
+            ]
+          },
+          {
+            "id": "saddle-stay-plate-footrest",
+            "name": "Saddle Stay with Plate with Footrest",
+            "desc": "",
+            "featured": true,
+            "links": [
+              {
+                "vendor": "Motocare",
+                "url": "https://motocare.co.in/product-details/saddle-stay-with-plate-with-footrest-for-bear-650"
+              }
+            ]
+          },
+          {
+            "id": "crash-guard-sliders",
+            "name": "Crash Guard with Sliders",
+            "desc": "",
+            "featured": true,
+            "links": [
+              {
+                "vendor": "Motocare",
+                "url": "https://motocare.co.in/product-details/crash-guard-with-dual-sliders-for-bear-650"
+              }
+            ]
+          },
+          {
+            "id": "tyre-hugger",
+            "name": "Tyre Hugger",
+            "desc": "",
+            "links": [
+              {
+                "vendor": "Motocare",
+                "url": "https://motocare.co.in/product-details/tyre-hugger-for-bear-650"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "essentials",
+        "label": "Essentials",
+        "icon": "🔌",
+        "items": [
+          {
+            "id": "100w-two-way-charger",
+            "name": "100W Fast Two-Way Charging",
+            "desc": "",
+            "links": [
+              {
+                "vendor": "Amazon",
+                "url": "https://a.co/d/07qIgKj1"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

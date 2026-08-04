@@ -1,5 +1,5 @@
 /**
- * Accessories, read straight out of `config.json` → `garage.accessories`.
+ * Accessories, read straight out of `garage.config.json` → `accessories`.
  *
  * The list lives in config so it can be edited without touching a component.
  * Two views share it: the "Accessories & Add-ons" strip on /mygarage (featured
@@ -27,10 +27,10 @@
  * what shows on the garage page, move the `featured` flags around.
  */
 
-import cfg from './config.json'
+import garageCfg from './garage.config.json'
 import itemImages from './itemImages.json'
 
-const accessories = cfg.garage?.accessories ?? {}
+const accessories = garageCfg.accessories ?? {}
 
 /** Must stay in step with `keyOf` in scripts/gen-item-images.mjs. */
 const keyOf = name => String(name).toLowerCase().replace(/[^a-z0-9]/g, '')

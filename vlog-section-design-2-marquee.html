@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Vlogs · 2 · Cinema Marquee</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════
+   CINEMA MARQUEE — one big screen with the rest of the reel
+   queued beside it. The screen's own colours spill onto the wall
+   behind it, a curtain wipes across on every change, and the
+   queue auto-advances on a ring timer you can stop by touching
+   anything. Title changes are staged letter-by-letter.
+   ══════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08070e; --card:#141220; --card2:#1a1828;
+  --bd:rgba(255,255,255,0.07); --bd2:rgba(255,255,255,0.13);
+  --off:#f0eef6; --d1:rgba(240,238,246,0.65); --d2:rgba(240,238,246,0.4); --d3:rgba(240,238,246,0.22);
+  --acc:#8b5cf6; --acc2:#a78bfa;
+  --gold:#e0bb3c;
+  --sans:'Inter',sans-serif; --serif:'Playfair Display',serif; --mono:'JetBrains Mono',monospace;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+body{background:var(--bg);color:var(--d1);font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--acc);color:#fff}
+.page{width:90%;max-width:1240px;margin:0 auto;padding:64px 0 90px;
+  display:flex;flex-direction:column;gap:clamp(40px,7vh,76px)}
+.stub{border:1px dashed var(--bd);border-radius:16px;padding:26px;color:var(--d3);
+  font-size:0.7rem;letter-spacing:0.16em;text-transform:uppercase;text-align:center}
+
+.sec{position:relative;background:var(--card);border:1px solid var(--bd);border-radius:16px;
+  padding:26px clamp(18px,3vw,30px) 28px;overflow:hidden;
+  opacity:0;transform:translateY(32px);animation:rise .8s var(--ease) .1s forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+
+/* ══ the light spill ══
+   A blurred, saturated copy of the current still, pushed behind
+   everything — the wall of the room taking the screen's colour. */
+.spill{position:absolute;inset:-14%;z-index:0;pointer-events:none;opacity:0;
+  filter:blur(72px) saturate(2.1);transform:scale(1.08);
+  transition:opacity 1.1s ease,background-image .1s}
+.spill.on{opacity:.4}
+.sec::after{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(90% 70% at 50% 0%,transparent 40%,rgba(8,7,14,0.72))}
+
+.head{position:relative;z-index:3;display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;margin-bottom:20px}
+.kick{font-family:var(--mono);font-size:0.58rem;letter-spacing:0.24em;text-transform:uppercase;
+  color:var(--acc2);display:block;margin-bottom:7px}
+.head h2{font-family:var(--serif);font-size:clamp(1.3rem,3.4vw,1.85rem);font-weight:700;color:var(--off);line-height:1.1}
+.head .note{font-size:0.75rem;color:var(--d2);line-height:1.6;max-width:400px;margin-top:8px}
+.head .all{margin-left:auto;font-size:0.7rem;color:var(--acc2);text-decoration:none;padding:7px 15px;
+  border-radius:999px;border:1px solid rgba(167,139,250,0.28);transition:.3s var(--ease);white-space:nowrap}
+.head .all:hover{background:var(--acc);color:#fff;border-color:var(--acc);transform:translateY(-2px)}
+
+/* ══ layout ══ */
+.house{position:relative;z-index:3;display:grid;grid-template-columns:minmax(0,1.62fr) minmax(0,1fr);gap:18px}
+
+/* ── the screen ── */
+.stage{position:relative;border-radius:12px;overflow:hidden;background:#000;
+  border:1px solid var(--bd2);aspect-ratio:16/9;
+  box-shadow:0 40px 80px -40px #000,0 0 0 1px rgba(255,255,255,0.04)}
+.stage .lay{position:absolute;inset:0;opacity:0;transition:opacity .7s ease}
+.stage .lay.on{opacity:1}
+.stage .lay img,.stage .lay video{width:100%;height:100%;object-fit:cover;display:block;
+  transform:scale(1.03);animation:kb 16s ease-in-out infinite alternate}
+@keyframes kb{to{transform:scale(1.13) translate3d(-1.5%,-1%,0)}}
+.stage .grade{position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(0,0,0,0.25),transparent 32%,rgba(0,0,0,0.86))}
+
+/* the curtain — two panels that sweep in and back out on a change */
+.curtain{position:absolute;inset:0;z-index:6;pointer-events:none;display:flex}
+.curtain i{flex:1;background:linear-gradient(180deg,#1a1226,#0b0812);transform:scaleX(0)}
+.curtain i:first-child{transform-origin:left}
+.curtain i:last-child{transform-origin:right}
+.curtain.close i{transform:scaleX(1);transition:transform .34s cubic-bezier(.7,0,.84,0)}
+.curtain.open i{transform:scaleX(0);transition:transform .5s var(--ease)}
+/* a rope of light down the seam while it is shut */
+.curtain::after{content:'';position:absolute;top:0;bottom:0;left:50%;width:1px;
+  background:linear-gradient(180deg,transparent,var(--acc2),transparent);opacity:0;transition:opacity .3s}
+.curtain.close::after{opacity:.9}
+
+.now{position:absolute;left:0;right:0;bottom:0;z-index:5;padding:clamp(16px,3vw,26px);
+  display:flex;flex-direction:column;gap:9px}
+.now .rowtop{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:0.55rem;
+  letter-spacing:0.18em;text-transform:uppercase;color:rgba(255,255,255,0.6)}
+.now .rowtop b{color:var(--gold);font-weight:600}
+.now .rowtop .pill{padding:3px 9px;border-radius:999px;background:rgba(139,92,246,0.3);
+  border:1px solid rgba(167,139,250,0.4);color:#fff;letter-spacing:0.14em}
+.now h3{font-family:var(--serif);font-weight:700;color:#fff;line-height:1.12;
+  font-size:clamp(1.15rem,2.9vw,2rem);text-shadow:0 3px 22px rgba(0,0,0,.75);
+  display:flex;flex-wrap:wrap;gap:0 0.3em}
+/* each word rides in on its own, staggered by --i */
+.now h3 span{display:inline-block;transform:translateY(110%);opacity:0;overflow:hidden}
+.now.play h3 span{animation:word .72s var(--ease) forwards;animation-delay:calc(var(--i) * .055s + .18s)}
+@keyframes word{to{transform:none;opacity:1}}
+.now p{font-size:0.8rem;line-height:1.6;color:rgba(255,255,255,0.72);max-width:56ch;
+  opacity:0;transform:translateY(12px)}
+.now.play p{animation:up .7s var(--ease) .42s forwards}
+@keyframes up{to{opacity:1;transform:none}}
+.now .go{align-self:flex-start;display:inline-flex;align-items:center;gap:9px;margin-top:3px;
+  padding:10px 18px;border-radius:999px;background:#fff;color:#0b0812;text-decoration:none;
+  font-size:0.74rem;font-weight:700;opacity:0;transform:translateY(12px);transition:.3s var(--ease)}
+.now.play .go{animation:up .7s var(--ease) .55s forwards}
+.now .go:hover{background:var(--acc);color:#fff;transform:translateY(-2px)}
+
+/* ── the queue ── */
+.queue{display:flex;flex-direction:column;min-height:0}
+.qhead{display:flex;align-items:center;gap:10px;padding:0 2px 11px;
+  font-family:var(--mono);font-size:0.56rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--d2)}
+.qhead .auto{margin-left:auto;display:flex;align-items:center;gap:7px;cursor:pointer;
+  color:var(--d2);transition:.25s;background:none;border:0;font:inherit;letter-spacing:0.16em}
+.qhead .auto:hover{color:var(--off)}
+.qhead .auto .ring{width:15px;height:15px;transform:rotate(-90deg)}
+.qhead .auto .ring circle{fill:none;stroke-width:2.4}
+.qhead .auto .ring .bgc{stroke:rgba(255,255,255,0.14)}
+.qhead .auto .ring .fg{stroke:var(--acc2);stroke-linecap:round;
+  stroke-dasharray:38;stroke-dashoffset:38;transition:stroke-dashoffset .2s linear}
+
+.list{display:flex;flex-direction:column;gap:6px;overflow-y:auto;max-height:min(46vh,420px);
+  padding-right:5px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.14) transparent}
+.list::-webkit-scrollbar{width:5px}
+.list::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.14);border-radius:9px}
+.q{position:relative;display:grid;grid-template-columns:74px minmax(0,1fr);gap:11px;align-items:center;
+  padding:7px;border-radius:10px;border:1px solid transparent;background:transparent;cursor:pointer;
+  text-align:left;font:inherit;color:inherit;transition:.35s var(--ease);overflow:hidden}
+.q::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--acc2);
+  transform:scaleY(0);transform-origin:center;transition:transform .4s var(--ease)}
+.q:hover{background:rgba(255,255,255,0.035);border-color:var(--bd);transform:translateX(3px)}
+.q.on{background:rgba(139,92,246,0.13);border-color:rgba(167,139,250,0.3)}
+.q.on::before{transform:scaleY(1)}
+.q .th{position:relative;aspect-ratio:16/10;border-radius:6px;overflow:hidden;background:#000;flex:none}
+.q .th img,.q .th video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.q .th video{opacity:0;transition:opacity .4s}
+.q:hover .th video{opacity:1}
+.q .th .d{position:absolute;right:3px;bottom:3px;font-family:var(--mono);font-size:0.48rem;
+  padding:1px 4px;border-radius:3px;background:rgba(0,0,0,0.78);color:#fff}
+.q .th::after{content:'';position:absolute;inset:0;border:1px solid rgba(255,255,255,0.1);border-radius:6px}
+.q .tx{min-width:0}
+.q .tx b{display:block;font-size:0.75rem;font-weight:600;color:var(--off);line-height:1.32;
+  overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.q.on .tx b{color:#fff}
+.q .tx s{display:block;text-decoration:none;font-family:var(--mono);font-size:0.53rem;
+  letter-spacing:0.1em;color:var(--d2);margin-top:4px}
+/* the little bars that dance beside whatever is on screen */
+.q .eq{position:absolute;right:9px;top:50%;transform:translateY(-50%);display:none;gap:2px;align-items:flex-end;height:11px}
+.q.on .eq{display:flex}
+.q .eq i{width:2px;background:var(--acc2);border-radius:1px;animation:eq .9s ease-in-out infinite}
+.q .eq i:nth-child(1){height:40%;animation-delay:0s}
+.q .eq i:nth-child(2){height:100%;animation-delay:.18s}
+.q .eq i:nth-child(3){height:65%;animation-delay:.34s}
+@keyframes eq{0%,100%{transform:scaleY(.35)}50%{transform:scaleY(1)}}
+
+/* ── the way out of the queue ──
+   The section holds five; everything else lives on the vlog page. */
+.qmore{display:flex;align-items:center;gap:11px;padding:12px 13px;margin-top:4px;border-radius:10px;
+  border:1px dashed rgba(167,139,250,0.32);background:rgba(139,92,246,0.06);text-decoration:none;
+  transition:.35s var(--ease)}
+.qmore:hover{background:rgba(139,92,246,0.15);border-style:solid;border-color:var(--acc2);transform:translateX(3px)}
+.qmore .n{flex:none;min-width:40px;height:40px;padding:0 8px;border-radius:9px;display:grid;place-items:center;
+  background:rgba(139,92,246,0.2);color:var(--acc2);font-family:var(--mono);font-size:0.78rem;font-weight:700}
+.qmore .tx{flex:1;min-width:0}
+.qmore .tx b{display:block;font-size:0.78rem;font-weight:600;color:var(--off)}
+.qmore .tx s{display:block;text-decoration:none;font-family:var(--mono);font-size:0.53rem;
+  letter-spacing:0.1em;color:var(--d2);margin-top:4px}
+.qmore .go{flex:none;color:var(--acc2);font-size:1rem;transition:transform .35s var(--ease)}
+.qmore:hover .go{transform:translateX(4px)}
+
+/* ── empty state ── */
+.empty{position:relative;z-index:3;border:1px dashed var(--bd2);border-radius:12px;background:var(--card2);
+  padding:clamp(36px,7vw,62px) 24px;text-align:center;display:flex;flex-direction:column;
+  align-items:center;gap:11px;overflow:hidden}
+.empty .cur{position:absolute;inset:0;display:flex;pointer-events:none;opacity:.5}
+.empty .cur i{flex:1;background:linear-gradient(180deg,#1a1226,#0b0812);
+  border-right:1px solid rgba(255,255,255,0.03);animation:sway 5s ease-in-out infinite alternate}
+.empty .cur i:nth-child(2n){animation-delay:-1.6s}
+.empty .cur i:nth-child(3n){animation-delay:-3.1s}
+@keyframes sway{to{transform:scaleY(1.04) translateY(-4px)}}
+.empty > *{position:relative;z-index:2}
+.empty .ico{font-size:2rem;animation:bob 2.8s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.empty .lab{font-size:0.62rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--gold);font-weight:700}
+.empty p{font-size:0.82rem;color:var(--d2);max-width:430px;line-height:1.65}
+
+@media(max-width:900px){
+  .house{grid-template-columns:1fr}
+  .list{max-height:300px}
+}
+@media(max-width:760px){
+  .page{width:94%;padding:40px 0 60px}
+  .head .all{margin-left:0}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition-duration:.001s!important}
+  .now h3 span,.now p,.now .go{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="stub">↑ Accessories &amp; Add-ons</div>
+
+  <section class="sec">
+    <div class="spill" id="spill"></div>
+    <div class="head">
+      <div>
+        <span class="kick" id="kick"></span>
+        <h2 id="h2"></h2>
+        <div class="note" id="note"></div>
+      </div>
+      <a class="all" id="all" target="_blank" rel="noopener">View all →</a>
+    </div>
+    <div id="body"></div>
+  </section>
+
+  <div class="stub">↓ Ride Gallery</div>
+</div>
+
+<script src="vlog-data.js"></script>
+<script>
+const V = window.VLOG
+document.getElementById('kick').textContent = V.kicker
+document.getElementById('h2').textContent   = V.heading
+document.getElementById('note').textContent = V.note
+document.getElementById('all').href         = V.page
+
+if (V.isEmpty) {
+  document.getElementById('body').innerHTML = `
+    <div class="empty">
+      <div class="cur">${'<i></i>'.repeat(14)}</div>
+      <div class="ico">🎬</div>
+      <div class="lab">The curtain is still down</div>
+      <p>No ride film has premiered yet. The first one opens here the day it is cut —
+         the queue beside it fills in behind it.</p>
+    </div>`
+} else {
+  build()
+}
+
+function build() {
+  document.getElementById('body').innerHTML = `
+    <div class="house">
+      <div class="stage" id="stage">
+        <div class="grade"></div>
+        <div class="curtain" id="curtain"><i></i><i></i></div>
+        <div class="now" id="now">
+          <div class="rowtop">
+            <span class="pill" id="pill"></span>
+            <span id="meta"></span>
+            <b id="favmark"></b>
+          </div>
+          <h3 id="title"></h3>
+          <p id="blurb"></p>
+          <a class="go" id="go" target="_blank" rel="noopener">▶ Watch on YouTube</a>
+        </div>
+      </div>
+
+      <div class="queue">
+        <div class="qhead">
+          <span>Up next</span>
+          <span style="color:var(--d3)">${V.LIMIT} of ${V.count}</span>
+          <button class="auto" id="auto" aria-label="Toggle autoplay">
+            <svg class="ring" viewBox="0 0 16 16"><circle class="bgc" cx="8" cy="8" r="6"/><circle class="fg" id="ringfg" cx="8" cy="8" r="6"/></svg>
+            <span id="autotxt">Auto</span>
+          </button>
+        </div>
+        <div class="list" id="list"></div>
+      </div>
+    </div>`
+
+  const list = document.getElementById('list')
+  list.innerHTML = V.shown.map(v => `
+    <button class="q" data-i="${v.i}">
+      <span class="th">
+        <img src="${v.poster}" alt="" loading="lazy"
+             onerror="this.onerror=null;this.src='${v.still}'" />
+        ${v.clip ? `<video src="${v.clip}" muted loop playsinline preload="none"></video>` : ''}
+        <span class="d">${v.duration}</span>
+      </span>
+      <span class="tx">
+        <b>${v.title}</b>
+        <s>${v.cat} · ${v.when.short} · ${v.views} views</s>
+      </span>
+      <span class="eq"><i></i><i></i><i></i></span>
+    </button>`).join('') + `
+    <a class="qmore" href="${V.page}">
+      <span class="n">+${V.more}</span>
+      <span class="tx"><b>More vlogs</b><s>The whole reel, shorts and all</s></span>
+      <span class="go">→</span>
+    </a>`
+
+  wire()
+}
+
+function wire() {
+  const stage  = document.getElementById('stage')
+  const curt   = document.getElementById('curtain')
+  const now    = document.getElementById('now')
+  const spill  = document.getElementById('spill')
+  const list   = document.getElementById('list')
+  const ring   = document.getElementById('ringfg')
+  const HOLD   = 7000        // ms per item on auto
+  let cur = -1, auto = true, t0 = 0, raf = 0
+
+  /* ── swap what is on screen, behind a curtain wipe ── */
+  function show(i, instant) {
+    if (i === cur) return
+    cur = i
+    const v = V.all[i]
+
+    list.querySelectorAll('.q').forEach(b => b.classList.toggle('on', +b.dataset.i === i))
+
+    const paint = () => {
+      /* the layer that is leaving is dropped only after the new one is in,
+         so there is never a black flash between the two */
+      const old = stage.querySelector('.lay')
+      const lay = document.createElement('div')
+      lay.className = 'lay'
+      lay.innerHTML = v.clip
+        ? `<video src="${v.clip}" autoplay muted loop playsinline></video>`
+        : `<img src="${v.posterBig}" alt="${v.title}" onerror="this.onerror=null;this.src='${v.still}'" />`
+      stage.prepend(lay)
+      requestAnimationFrame(() => lay.classList.add('on'))
+      if (old) setTimeout(() => old.remove(), 800)
+
+      spill.style.backgroundImage = `url(${v.poster})`
+      spill.style.backgroundSize = 'cover'
+      spill.style.backgroundPosition = 'center'
+      spill.classList.add('on')
+
+      document.getElementById('pill').textContent = v.type === 'short' ? 'Short' : 'Ride Film'
+      document.getElementById('meta').textContent = `${v.cat} · ${v.when.label} · ${v.duration} · ${v.views} views`
+      document.getElementById('favmark').textContent = v.fav ? '★ Pick of the reel' : ''
+      document.getElementById('title').innerHTML = v.title.split(' ')
+        .map((w, n) => `<span style="--i:${n}">${w}</span>`).join(' ')
+      document.getElementById('blurb').textContent = v.blurb
+      document.getElementById('go').href = v.url
+
+      /* restart the staged text */
+      now.classList.remove('play')
+      void now.offsetWidth
+      now.classList.add('play')
+    }
+
+    if (instant) { paint(); return }
+
+    curt.classList.remove('open'); curt.classList.add('close')
+    setTimeout(() => {
+      paint()
+      curt.classList.remove('close'); curt.classList.add('open')
+    }, 340)
+  }
+
+  /* ── auto-advance ── */
+  function tick(ts) {
+    raf = requestAnimationFrame(tick)
+    if (!auto) { ring.style.strokeDashoffset = 38; return }
+    if (!t0) t0 = ts
+    const p = Math.min(1, (ts - t0) / HOLD)
+    ring.style.strokeDashoffset = String(38 * (1 - p))
+    if (p >= 1) { t0 = ts; show((cur + 1) % V.shown.length) }
+  }
+  raf = requestAnimationFrame(tick)
+
+  const setAuto = on => {
+    auto = on
+    t0 = 0
+    document.getElementById('autotxt').textContent = on ? 'Auto' : 'Paused'
+  }
+  document.getElementById('auto').onclick = () => setAuto(!auto)
+
+  list.addEventListener('click', e => {
+    const b = e.target.closest('.q'); if (!b) return
+    show(+b.dataset.i); t0 = 0
+  })
+  /* rolling a queue thumbnail is a deliberate act — stop the clock while it happens */
+  list.addEventListener('pointerover', e => {
+    const b = e.target.closest('.q'); if (!b) return
+    b.querySelector('video')?.play().catch(() => {})
+  })
+  list.addEventListener('pointerout', e => {
+    const b = e.target.closest('.q'); if (!b || b.contains(e.relatedTarget)) return
+    const vid = b.querySelector('video'); if (vid) { vid.pause(); vid.currentTime = 0 }
+  })
+  stage.addEventListener('pointerenter', () => { auto && (t0 = 0) })
+
+  show(0, true)
+}
+</script>
+</body>
+</html>

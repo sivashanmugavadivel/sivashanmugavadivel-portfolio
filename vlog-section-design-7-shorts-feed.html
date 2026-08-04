@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Vlogs · 7 · Shorts Feed</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════
+   SHORTS FEED — one vlog at a time in a tall frame, the next and
+   the previous peeking above and below. Flick, wheel, drag or
+   arrow through them; each card springs into the middle while its
+   neighbours fall back in depth. A bar across the top runs the
+   card on, and the last card in the feed is the way to the rest.
+   ══════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08070e; --card:#141220; --card2:#1a1828;
+  --bd:rgba(255,255,255,0.07); --bd2:rgba(255,255,255,0.13);
+  --off:#f0eef6; --d1:rgba(240,238,246,0.65); --d2:rgba(240,238,246,0.4); --d3:rgba(240,238,246,0.22);
+  --acc:#8b5cf6; --acc2:#a78bfa;
+  --sans:'Inter',sans-serif; --serif:'Playfair Display',serif; --mono:'JetBrains Mono',monospace;
+  --spring:cubic-bezier(.34,1.4,.5,1);
+  --ease:cubic-bezier(.22,1,.36,1);
+  --fh:min(560px,72vh);
+}
+body{background:var(--bg);color:var(--d1);font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--acc);color:#fff}
+.page{width:90%;max-width:1240px;margin:0 auto;padding:64px 0 90px;
+  display:flex;flex-direction:column;gap:clamp(40px,7vh,76px)}
+.stub{border:1px dashed var(--bd);border-radius:16px;padding:26px;color:var(--d3);
+  font-size:0.7rem;letter-spacing:0.16em;text-transform:uppercase;text-align:center}
+
+.sec{position:relative;background:var(--card);border:1px solid var(--bd);border-radius:16px;
+  padding:26px clamp(16px,3vw,30px) 30px;overflow:hidden;
+  opacity:0;transform:translateY(32px);animation:rise .8s var(--ease) .1s forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+
+.head{display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;margin-bottom:22px}
+.kick{font-family:var(--mono);font-size:0.58rem;letter-spacing:0.24em;text-transform:uppercase;
+  color:var(--acc2);display:block;margin-bottom:7px}
+.head h2{font-family:var(--serif);font-size:clamp(1.3rem,3.4vw,1.85rem);font-weight:700;color:var(--off);line-height:1.1}
+.head .note{font-size:0.75rem;color:var(--d2);line-height:1.6;max-width:400px;margin-top:8px}
+.head .all{margin-left:auto;font-size:0.7rem;color:var(--acc2);text-decoration:none;padding:7px 15px;
+  border-radius:999px;border:1px solid rgba(167,139,250,0.28);transition:.3s var(--ease);white-space:nowrap}
+.head .all:hover{background:var(--acc);color:#fff;border-color:var(--acc);transform:translateY(-2px)}
+
+/* ══ the feed ══ */
+.feed{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,320px);gap:clamp(18px,3vw,34px);
+  align-items:center}
+
+.stagewrap{position:relative;display:flex;justify-content:center}
+.stage{position:relative;width:min(300px,78vw);height:var(--fh);perspective:1400px;
+  touch-action:pan-x;cursor:grab}
+.stage.drag{cursor:grabbing}
+/* the frames above and below fade out at the edge of the run */
+.stage::before,.stage::after{content:'';position:absolute;left:-14%;right:-14%;height:22%;z-index:9;
+  pointer-events:none}
+.stage::before{top:0;background:linear-gradient(180deg,var(--card) 12%,transparent)}
+.stage::after{bottom:0;background:linear-gradient(0deg,var(--card) 12%,transparent)}
+
+.slide{position:absolute;inset:0;border-radius:18px;overflow:hidden;background:#000;
+  border:1px solid var(--bd2);transform-origin:50% 50%;will-change:transform,opacity;
+  transition:transform .62s var(--spring),opacity .45s var(--ease),filter .5s var(--ease);
+  box-shadow:0 40px 70px -34px #000}
+.slide video,.slide img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.slide video{opacity:0;transition:opacity .5s ease}
+.slide.live video{opacity:1}
+.slide .veil{position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(0,0,0,.5) 0%,transparent 26%,transparent 46%,rgba(0,0,0,.88))}
+
+.slide .tag{position:absolute;top:14px;left:14px;z-index:3;font-family:var(--mono);font-size:0.5rem;
+  letter-spacing:0.18em;text-transform:uppercase;padding:4px 10px;border-radius:999px;
+  background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.2);color:#fff;backdrop-filter:blur(6px)}
+.slide .dur{position:absolute;top:14px;right:14px;z-index:3;font-family:var(--mono);font-size:0.53rem;
+  padding:4px 9px;border-radius:999px;background:rgba(0,0,0,.55);color:#fff;
+  border:1px solid rgba(255,255,255,.2);backdrop-filter:blur(6px)}
+.slide .cap{position:absolute;left:0;right:0;bottom:0;z-index:3;padding:18px 16px 20px;
+  display:flex;flex-direction:column;gap:8px}
+.slide .cap h3{font-size:1rem;font-weight:700;color:#fff;line-height:1.3;
+  text-shadow:0 2px 14px rgba(0,0,0,.85)}
+.slide .cap p{font-size:0.74rem;line-height:1.6;color:rgba(255,255,255,.75);
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.slide .cap .meta{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:0.5rem;
+  letter-spacing:0.14em;text-transform:uppercase;color:rgba(255,255,255,.55)}
+.slide .cap .go{align-self:flex-start;margin-top:4px;display:inline-flex;align-items:center;gap:8px;
+  padding:9px 16px;border-radius:999px;background:#fff;color:#12101c;text-decoration:none;
+  font-size:0.7rem;font-weight:700;transition:.3s var(--ease)}
+.slide .cap .go:hover{background:var(--acc);color:#fff;transform:translateY(-2px)}
+/* only the card in the middle is reachable; the neighbours are scenery */
+.slide:not(.on){pointer-events:none}
+.slide:not(.on) .cap{opacity:0;transition:opacity .3s}
+
+/* the last card: the way out of the feed */
+.slide.more{background:linear-gradient(160deg,#1d1834,#0e0c18);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:14px;text-align:center;padding:28px}
+.slide.more .big{font-family:var(--serif);font-size:3.4rem;font-weight:700;color:var(--off);line-height:1}
+.slide.more p{font-size:0.82rem;color:var(--d2);line-height:1.7;max-width:24ch}
+.slide.more .go{display:inline-flex;align-items:center;gap:9px;padding:12px 22px;border-radius:999px;
+  background:var(--acc);color:#fff;text-decoration:none;font-size:0.76rem;font-weight:600;
+  transition:.3s var(--ease)}
+.slide.more .go:hover{transform:translateY(-3px);box-shadow:0 16px 32px -12px rgba(139,92,246,.9)}
+.slide.more .rings{position:absolute;inset:0;pointer-events:none;display:grid;place-items:center}
+.slide.more .rings i{position:absolute;width:120px;height:120px;border-radius:50%;
+  border:1px solid rgba(167,139,250,.3);animation:ripple 3.6s var(--ease) infinite}
+.slide.more .rings i:nth-child(2){animation-delay:-1.2s}
+.slide.more .rings i:nth-child(3){animation-delay:-2.4s}
+@keyframes ripple{0%{transform:scale(.4);opacity:.7}100%{transform:scale(2.4);opacity:0}}
+
+/* ── the run bar, top of the stage ── */
+.runbar{position:absolute;top:-14px;left:0;right:0;display:flex;gap:4px;z-index:10}
+.runbar i{flex:1;height:2px;border-radius:2px;background:rgba(255,255,255,.14);overflow:hidden}
+.runbar i b{display:block;height:100%;width:0;background:var(--acc2);border-radius:2px}
+.runbar i.done b{width:100%}
+.runbar i.now b{animation:run linear forwards;animation-duration:var(--hold)}
+@keyframes run{to{width:100%}}
+
+/* ── the side list ── */
+.side{display:flex;flex-direction:column;gap:6px;min-width:0}
+.side .lab{font-family:var(--mono);font-size:0.55rem;letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--d2);display:flex;align-items:center;gap:9px;margin-bottom:5px}
+.side .lab s{margin-left:auto;text-decoration:none;color:var(--d3)}
+.row{display:grid;grid-template-columns:30px minmax(0,1fr);gap:11px;align-items:center;padding:9px 10px;
+  border-radius:10px;border:1px solid transparent;background:transparent;cursor:pointer;text-align:left;
+  font:inherit;color:inherit;transition:.35s var(--ease);position:relative;overflow:hidden}
+.row:hover{background:rgba(255,255,255,.04);border-color:var(--bd);transform:translateX(3px)}
+.row.on{background:rgba(139,92,246,.14);border-color:rgba(167,139,250,.32)}
+.row .k{font-family:var(--mono);font-size:0.62rem;color:var(--d3);text-align:center}
+.row.on .k{color:var(--acc2)}
+.row .t{min-width:0}
+.row .t b{display:block;font-size:0.76rem;font-weight:600;color:var(--off);line-height:1.3;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .t s{display:block;text-decoration:none;font-family:var(--mono);font-size:0.5rem;
+  letter-spacing:0.12em;color:var(--d2);margin-top:4px}
+.rowmore{display:flex;align-items:center;gap:10px;padding:11px;margin-top:4px;border-radius:10px;
+  border:1px dashed rgba(167,139,250,.32);background:rgba(139,92,246,.06);text-decoration:none;
+  transition:.35s var(--ease)}
+.rowmore:hover{background:rgba(139,92,246,.15);border-style:solid;transform:translateX(3px)}
+.rowmore b{font-family:var(--mono);font-size:0.72rem;color:var(--acc2);font-weight:700}
+.rowmore span{font-size:0.74rem;color:var(--off)}
+.rowmore i{margin-left:auto;font-style:normal;color:var(--acc2);transition:transform .3s var(--ease)}
+.rowmore:hover i{transform:translateX(4px)}
+
+.nudge{display:flex;align-items:center;gap:8px;margin-top:10px;font-family:var(--mono);font-size:0.53rem;
+  letter-spacing:0.16em;text-transform:uppercase;color:var(--d3)}
+.nudge button{width:28px;height:28px;border-radius:8px;border:1px solid var(--bd2);background:transparent;
+  color:var(--d1);cursor:pointer;transition:.28s var(--ease)}
+.nudge button:hover{border-color:var(--acc2);color:var(--acc2);background:rgba(139,92,246,.1)}
+
+/* ── empty state ── */
+.empty{border:1px dashed var(--bd2);border-radius:16px;background:var(--card2);
+  padding:clamp(36px,7vw,62px) 24px;text-align:center;display:flex;flex-direction:column;
+  align-items:center;gap:12px;overflow:hidden;position:relative}
+.empty .frames{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
+.empty .frames i{position:absolute;width:90px;height:160px;border:1px solid var(--bd);border-radius:12px;
+  animation:swipeup 4.2s var(--ease) infinite}
+.empty .frames i:nth-child(2){animation-delay:-1.4s}
+.empty .frames i:nth-child(3){animation-delay:-2.8s}
+@keyframes swipeup{0%{transform:translateY(70px) scale(.85);opacity:0}
+                   35%,60%{transform:none;opacity:.5}
+                   100%{transform:translateY(-60px) scale(1.05);opacity:0}}
+.empty > *:not(.frames){position:relative;z-index:2}
+.empty .ico{font-size:2rem;animation:bob 2.6s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.empty .lab2{font-size:0.62rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--acc2);font-weight:700}
+.empty p{font-size:0.83rem;color:var(--d2);max-width:420px;line-height:1.7}
+
+@media(max-width:880px){
+  .feed{grid-template-columns:1fr}
+  .side{order:2}
+}
+@media(max-width:760px){.page{width:94%;padding:40px 0 60px}.head .all{margin-left:0}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.001s!important}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="stub">↑ Accessories &amp; Add-ons</div>
+
+  <section class="sec">
+    <div class="head">
+      <div>
+        <span class="kick" id="kick"></span>
+        <h2 id="h2"></h2>
+        <div class="note" id="note"></div>
+      </div>
+      <a class="all" id="all" target="_blank" rel="noopener">All vlogs →</a>
+    </div>
+    <div id="body"></div>
+  </section>
+
+  <div class="stub">↓ Ride Gallery</div>
+</div>
+
+<script src="vlog-data.js"></script>
+<script>
+const V = window.VLOG
+document.getElementById('kick').textContent = V.kicker
+document.getElementById('h2').textContent   = V.heading
+document.getElementById('note').textContent = V.note
+document.getElementById('all').href         = V.page
+
+const HOLD = 7000       // ms a card holds before the feed moves on
+
+if (V.isEmpty) {
+  document.getElementById('body').innerHTML = `
+    <div class="empty">
+      <div class="frames"><i></i><i></i><i></i></div>
+      <div class="ico">📱</div>
+      <div class="lab2">Feed is empty</div>
+      <p>Nothing to flick through yet. The first ride short drops straight into
+         this feed the day it is cut.</p>
+    </div>`
+} else {
+  build()
+}
+
+function build() {
+  document.getElementById('body').innerHTML = `
+    <div class="feed">
+      <div class="stagewrap">
+        <div class="stage" id="stage">
+          <div class="runbar" id="runbar"></div>
+        </div>
+      </div>
+      <div class="side">
+        <div class="lab">In the feed<s>${V.LIMIT} of ${V.count}</s></div>
+        <div id="rows"></div>
+        <a class="rowmore" href="${V.page}">
+          <b>+${V.more}</b><span>more vlogs</span><i>→</i>
+        </a>
+        <div class="nudge">
+          <button id="up" aria-label="Previous">↑</button>
+          <button id="dn" aria-label="Next">↓</button>
+          <span>Wheel · drag · ↑ ↓</span>
+        </div>
+      </div>
+    </div>`
+
+  /* five cards, then the tail card that opens the full list */
+  const stage = document.getElementById('stage')
+  stage.insertAdjacentHTML('beforeend', V.shown.map(v => `
+    <article class="slide" data-i="${v.i}">
+      <img src="${v.poster}" alt="${v.title}" loading="lazy"
+           onerror="this.onerror=null;this.src='${v.still}'" />
+      ${v.clip ? `<video src="${v.clip}" muted loop playsinline preload="none"></video>` : ''}
+      <span class="veil"></span>
+      <span class="tag">${v.cat}</span>
+      <span class="dur">${v.duration}</span>
+      <div class="cap">
+        <div class="meta">${v.type === 'short' ? 'Short' : 'Full film'} · ${v.when.short} · ${v.views} views</div>
+        <h3>${v.title}</h3>
+        <p>${v.blurb}</p>
+        <a class="go" href="${v.url}" target="_blank" rel="noopener">▶ Watch</a>
+      </div>
+    </article>`).join('') + `
+    <article class="slide more" data-i="${V.shown.length}">
+      <div class="rings"><i></i><i></i><i></i></div>
+      <div class="big">+${V.more}</div>
+      <p>That is the last one this section holds. The rest of the reel is on the vlog page.</p>
+      <a class="go" href="${V.page}">See them all →</a>
+    </article>`)
+
+  document.getElementById('rows').innerHTML = V.shown.map(v => `
+    <button class="row" data-i="${v.i}">
+      <span class="k">${String(v.n).padStart(2, '0')}</span>
+      <span class="t"><b>${v.title}</b><s>${v.duration} · ${v.when.short}</s></span>
+    </button>`).join('')
+
+  document.getElementById('runbar').innerHTML =
+    V.shown.map(() => '<i><b></b></i>').join('')
+
+  wire()
+}
+
+function wire() {
+  const stage  = document.getElementById('stage')
+  const slides = [...stage.querySelectorAll('.slide')]
+  const rows   = document.getElementById('rows')
+  const bars   = [...document.querySelectorAll('.runbar i')]
+  const LAST   = slides.length - 1        // the tail card
+  let at = 0, timer = 0
+
+  /* ── lay the stack out around whichever card is in the middle ──
+     Each card is placed by its distance from centre: pushed up or down a
+     fraction of the frame, dropped back in z, dimmed and blurred. Only the
+     offset changes per step, so the springs do all the work. */
+  function place() {
+    slides.forEach((s, k) => {
+      const d = k - at
+      const ad = Math.abs(d)
+      s.style.transform =
+        `translate3d(0, ${d * 58}%, ${-ad * 130}px) scale(${1 - ad * 0.08})`
+      s.style.opacity = ad > 2 ? 0 : String(1 - ad * 0.34)
+      s.style.filter = ad ? `brightness(${1 - ad * 0.3}) blur(${ad * 1.6}px)` : ''
+      s.style.zIndex = String(20 - ad)
+      s.classList.toggle('on', k === at)
+    })
+    rows.querySelectorAll('.row').forEach((b, k) => b.classList.toggle('on', k === at))
+  }
+
+  /* ── the card in the middle rolls; the others are stills ── */
+  function roll() {
+    slides.forEach((s, k) => {
+      const vid = s.querySelector('video'); if (!vid) return
+      if (k === at) vid.play().then(() => s.classList.add('live')).catch(() => {})
+      else { s.classList.remove('live'); vid.pause(); vid.currentTime = 0 }
+    })
+  }
+
+  /* ── the run bar: filled behind, running on the current, empty ahead ── */
+  function bar() {
+    bars.forEach((b, k) => {
+      b.className = k < at ? 'done' : k === at ? 'now' : ''
+      /* restart the fill animation from zero on every arrival */
+      const fill = b.firstElementChild
+      fill.style.animation = 'none'; void fill.offsetWidth; fill.style.animation = ''
+    })
+    document.getElementById('runbar').style.setProperty('--hold', HOLD + 'ms')
+  }
+
+  function go(k, manual) {
+    at = Math.max(0, Math.min(LAST, k))
+    place(); roll(); bar()
+    clearTimeout(timer)
+    /* the tail card is a destination, not a step — the feed stops there */
+    if (at < LAST) timer = setTimeout(() => go(at + 1), HOLD)
+    if (manual) stage.focus?.()
+  }
+
+  rows.addEventListener('click', e => {
+    const b = e.target.closest('.row'); if (!b) return
+    go([...rows.children].indexOf(b), true)
+  })
+  document.getElementById('up').onclick = () => go(at - 1, true)
+  document.getElementById('dn').onclick = () => go(at + 1, true)
+
+  /* wheel, throttled so one flick is one card */
+  let lock = 0
+  stage.addEventListener('wheel', e => {
+    e.preventDefault()
+    const now = performance.now()
+    if (now - lock < 420) return
+    lock = now
+    go(at + (e.deltaY > 0 ? 1 : -1), true)
+  }, { passive: false })
+
+  /* drag: the stack follows the finger, then snaps to whichever card is nearest */
+  const drag = { on: false, y: 0, moved: 0 }
+  stage.addEventListener('pointerdown', e => {
+    if (e.target.closest('a')) return
+    drag.on = true; drag.y = e.clientY; drag.moved = 0
+    stage.classList.add('drag'); stage.setPointerCapture(e.pointerId)
+    clearTimeout(timer)
+  })
+  stage.addEventListener('pointermove', e => {
+    if (!drag.on) return
+    const dy = e.clientY - drag.y
+    drag.moved = dy
+    slides.forEach((s, k) => {
+      const d = k - at
+      s.style.transform =
+        `translate3d(0, calc(${d * 58}% + ${dy * 0.55}px), ${-Math.abs(d) * 130}px) ` +
+        `scale(${1 - Math.abs(d) * 0.08})`
+    })
+  })
+  const drop = e => {
+    if (!drag.on) return
+    drag.on = false; stage.classList.remove('drag')
+    try { stage.releasePointerCapture(e.pointerId) } catch {}
+    go(at + (drag.moved < -50 ? 1 : drag.moved > 50 ? -1 : 0), true)
+  }
+  stage.addEventListener('pointerup', drop)
+  stage.addEventListener('pointercancel', drop)
+
+  window.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); go(at + 1, true) }
+    if (e.key === 'ArrowUp')   { e.preventDefault(); go(at - 1, true) }
+  })
+
+  /* a feed running off screen is just decoding video for nobody */
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (e.isIntersecting) { go(at); return }
+    clearTimeout(timer)
+    slides.forEach(s => { s.classList.remove('live'); s.querySelector('video')?.pause() })
+  }), { threshold: 0.25 })
+  io.observe(stage)
+
+  go(0)
+}
+</script>
+</body>
+</html>

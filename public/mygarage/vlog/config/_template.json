@@ -1,0 +1,101 @@
+{
+  "_readme": [
+    "TEMPLATE — copy this file, rename it, fill it in. One file = one vlog.",
+    "",
+    "Files starting with _ are ignored by the loader, so this one never renders.",
+    "Name the copy after the vlog, e.g. first-light-to-nathakadaiyur.json — the",
+    "filename becomes the id (and the URL segment) when `id` is left out.",
+    "",
+    "ORDER: newest first, by `created`. Set `created` when you add the file and",
+    "never touch it again — that is what fixes the order. `date` is when the",
+    "video was actually filmed and is what the page displays; if `created` is",
+    "missing the loader falls back to `date`, then to the filename.",
+    "",
+    "REQUIRED: nothing but a title. A file in this folder IS a page — it shows",
+    "up in the garage section and gets its own /mygarage/vlogs/<filename> page",
+    "as soon as it exists. Every field is optional and each one just fills in",
+    "more of that page: drop `description` and the write-up section disappears,",
+    "drop `images` and the frame-grab strip does, and so on.",
+    "",
+    "NO VIDEO YET? Leave `video` empty. The page and the card still appear and",
+    "say the video is still to come, so a ride can be written up and routed",
+    "before the cut is uploaded. Paste the link later and the player appears.",
+    "",
+    "THERE IS NO FIELD FOR 'UP NEXT'. That section is built from the OTHER",
+    "files in this folder — same category first, then the newest of the rest.",
+    "Add a second vlog and each one starts pointing at the other. Same for the",
+    "garage section's list and its counters: all of it is this folder.",
+    "",
+    "PATHS: images and clips are paths inside public/ — put vlog photos in",
+    "public/mygarage/vlog/images/ and reference them as",
+    "'mygarage/vlog/images/<file>'. Absolute https:// URLs are left alone.",
+    "",
+    "`videos` is extra clips belonging to THIS vlog, shown after the images —",
+    "a second angle, a cut that missed the main edit. Not to be confused with",
+    "`video` (the vlog itself) or Up Next (the other files in this folder).",
+    "A bare YouTube link is enough; an object adds a title, caption or",
+    "duration; and a local .mp4/.webm/.mov in public/ works as well.",
+    "",
+    "See src/data/vlogs.js for the full field-by-field reference."
+  ],
+
+  "created": "2026-08-04",
+  "date": "2026-08-02",
+
+  "video": "https://youtu.be/XXXXXXXXXXX",
+
+  "id": "",
+  "title": "The vlog title",
+  "subtitle": "The line that sits under the title",
+  "excerpt": "One or two sentences. Used on cards and as the standfirst.",
+
+  "duration": "0:00",
+  "views": "",
+  "category": "Ride Stories",
+  "tags": ["Ride Story", "Tamil Nadu"],
+  "featured": false,
+  "type": "",
+
+  "clip": "",
+
+  "rideId": "r1",
+
+  "description": [
+    "A plain string is a paragraph. The first one gets the drop cap.",
+    { "heading": "A subhead" },
+    "Another paragraph.",
+    { "quote": "A pull quote.", "cite": "@sivashanmugavadivel" }
+  ],
+
+  "images": [
+    {
+      "src": "mygarage/vlog/images/example.jpg",
+      "caption": "What this frame is",
+      "at": "0:00",
+      "alt": ""
+    }
+  ],
+
+  "videos": [
+    "https://youtu.be/XXXXXXXXXXX",
+    {
+      "url": "https://youtube.com/shorts/XXXXXXXXXXX",
+      "title": "The walkaround",
+      "caption": "One line about this clip.",
+      "duration": "1:20"
+    },
+    {
+      "url": "mygarage/vlog/images/first-start.mp4",
+      "poster": "mygarage/vlog/images/first-start.jpg",
+      "title": "First start"
+    }
+  ],
+
+  "instagram": [
+    "https://www.instagram.com/reel/XXXXXXXXXXX/"
+  ],
+
+  "posts": [
+    "a-blog-post-slug-from-src-data-blog"
+  ]
+}

@@ -1,0 +1,110 @@
+{
+  "_readme": [
+    "DELIVERY DAY — vlog 01. Scaffolded; fill in the rest.",
+    "",
+    "TO FILL, in rough order of importance:",
+    "  1. date     — the actual delivery date, as YYYY-MM-DD. Blank means the",
+    "                page shows no date at all.",
+    "  2. description — anything in [square brackets] is a prompt, not copy.",
+    "                   Delete the brackets and write over them.",
+    "  3. duration — runtime as m:ss. Blank hides the runtime badge.",
+    "  4. images   — drop frame grabs in public/mygarage/vlog/images/ and list",
+    "                them here as 'mygarage/vlog/images/<file>'. While this is",
+    "                empty the Frame Grabs section does not appear.",
+    "  5. instagram / posts — reel links and blog slugs. Empty means those two",
+    "                sections stay off the page.",
+    "",
+    "The video link is already in, so the player works. There is no field for",
+    "the Up Next section — it is built from the other files in this folder.",
+    "",
+    "LEAVE ALONE: `created` fixes this file's place in the list. Changing it",
+    "reorders the section.",
+    "",
+    "SAFE TO DELETE: any field you don't want. Empty arrays and blank strings",
+    "just remove that part of the page — nothing breaks.",
+    "",
+    "`views` is typed by hand — there is no YouTube API key in this project, so",
+    "nothing can read the real count. Leave it blank to hide it."
+  ],
+
+  "created": "2026-08-03",
+  "date": "",
+
+  "video": "https://youtube.com/shorts/r4VaWSSbLXM?si=u-ZxRKOa2mfwW5M-",
+
+  "id": "bear-650-delivery",
+  "title": "Bringing Home the Bear",
+  "subtitle": "Royal Enfield Bear 650 · Wild Honey · delivery day",
+  "excerpt": "[One or two sentences for the card and the standfirst — the wait, the showroom, and the ride home.]",
+
+  "duration": "",
+  "views": "",
+  "category": "Garage",
+  "tags": ["Delivery Day", "Bear 650", "Wild Honey", "First Ride"],
+  "featured": true,
+
+  "clip": "",
+
+  "rideId": "bear-650-delivery",
+
+  "description": [
+    "[Open with the moment the cover came off, or the moment you booked it — whichever the video actually opens on.]",
+    { "heading": "The wait" },
+    "[Booking date, how long the wait was, what you did in the meantime — the accessories bought before the bike arrived.]",
+    { "heading": "Wild Honey in daylight" },
+    "[What the colour actually looks like outside the showroom lighting. The tank, the badge, the bits photos never get right.]",
+    {
+      "quote": "[A line worth pulling out — something you said in the video, or a thought from the ride home.]",
+      "cite": "@sivashanmugavadivel"
+    },
+    { "heading": "The ride home" },
+    "[First kilometres. How it felt, what surprised you, what the run-in restrictions meant for the first day.]"
+  ],
+
+  "images": [
+    { "src": "mygarage/vlog/images/delivery/web/20260803_101210.jpg" },
+    { "src": "mygarage/vlog/images/delivery/web/20260803_101824.jpg" },
+    { "src": "mygarage/vlog/images/delivery/web/20260803_104534.jpg" },
+    { "src": "mygarage/vlog/images/delivery/web/20260803_104656.jpg" },
+    { "src": "mygarage/vlog/images/delivery/web/20260803_104721.jpg" },
+    { "src": "mygarage/vlog/images/delivery/web/20260803_122331.jpg" },
+    { "src": "mygarage/vlog/images/delivery/web/20260803_122604.jpg" },
+    { "src": "mygarage/vlog/images/delivery/web/20260803_122632.jpg" },
+    { "src": "mygarage/vlog/images/delivery/web/20260803_122854.jpg" },
+    { "src": "mygarage/vlog/images/delivery/web/20260803_122902.jpg" },
+    { "src": "mygarage/vlog/images/delivery/web/20260803_122928.jpg" },
+    { "src": "mygarage/vlog/images/delivery/web/20260803_122955.jpg" },
+    { "src": "mygarage/vlog/images/delivery/web/20260803_123012.jpg" }
+  ],
+
+  "videos": [
+	{
+      "url": "https://youtube.com/shorts/r4VaWSSbLXM?si=NhqIlKlg0mxxxvfa",
+      "title": "New Memories begins! ❤️‍🔥 Royal Enfield Bear 650",
+      "caption": "Royal Enfield Bear 650!",
+      "duration": "1:00"
+    },
+	{
+      "url": "https://youtube.com/shorts/eu7ulcDSfBs?si=C-wLqA0r9mFzwwA9",
+      "title": "Celebrating My New Royal Enfield Bear 650!",
+      "caption": "Royal Enfield Bear 650!",
+      "duration": "0:55"
+    },
+	{
+      "url": "https://youtube.com/shorts/UojGk6mUF6Y?si=S-5aEIhdSn27SVJz",
+      "title": "New Bike, New Memories! ❤️‍🔥 Royal Enfield Bear 650",
+      "caption": "Royal Enfield Bear 650!",
+      "duration": "0:40"
+    }
+  ],
+
+  "instagram": [
+	"https://www.instagram.com/reel/DblVDK0PIwj/?igsh=MTl3b3UzN3VlbTl4cw==",
+	"https://www.instagram.com/reel/DblXxNJPTfK/?igsh=MWM0eno2MXJ0OXY3eA==",
+	"https://www.instagram.com/reel/DblX-oKPggT/?igsh=MTRxOXljdHVqMDJmdg==",
+	"https://www.instagram.com/reel/DblYMhDv-WZ/?igsh=c2hxem5qMTFhZHky",
+	"https://www.instagram.com/p/DblbBjwj3xb/?igsh=NXlja2YxZGdhYnRo"
+  ],
+
+  "posts": []
+}
