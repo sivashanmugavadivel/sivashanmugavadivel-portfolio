@@ -341,10 +341,29 @@ function DetailMap({ ride, onEstimate }) {
          y  ->  screen HORIZONTAL — a label is centred on its pin, and the longest
                                     here runs ~175px, so half of that plus slack
        Upright the axes are the obvious way round, but the pin is still tall, so
-       the vertical figure has to cover it there too. */
-    const FIT_PAD = turned
-      ? [PIN_H + 34, 135]
-      : [90, PIN_H + 34]
+       the vertical figure has to cover it there too.
+
+       Both figures are PIXEL COUNTS — half a label, or the height of a pin — so
+       they don't shrink with the pane, and on a phone they stop being reserve and
+       start being most of the map. Turned, 135 either side of an 858px-wide pane
+       leaves the route two thirds of the room; either side of a 390px one it
+       leaves a third, and a 34km ride draws as a 120px scribble in the middle.
+       That, not the gutters, was the squashed map on a phone.
+
+       So cap the label figure at a fifth of what the reader actually sees across.
+       Desktop is unaffected — a fifth of 858 is 172, well over both constants —
+       and on a phone the labels shrink at the same breakpoint (see `.v7dlabel`
+       at the foot of this file), so half the longest is ~72px and still fits in
+       the 78 the cap leaves. */
+    const LABEL_PAD = turned ? 135 : 90
+    const CROSS_PAD = PIN_H + 34
+    const fitPad = () => {
+      /* boxRef is the wrapper, not the turned container, so this is the width
+         on screen whichever way the map inside it is facing. */
+      const across = boxRef.current?.clientWidth || 0
+      const label = across ? Math.min(LABEL_PAD, Math.round(across * 0.2)) : LABEL_PAD
+      return turned ? [CROSS_PAD, label] : [label, CROSS_PAD]
+    }
 
     /* ── The ride-along ───────────────────────────────────────────────────
        The route draws itself from the first stop to the last while a bike rides
@@ -550,7 +569,7 @@ function DetailMap({ ride, onEstimate }) {
          any fit or the bounds are computed against stale dimensions. */
       lMap.current?.invalidateSize()
       if (lMap.current && fitRef.current) {
-        lMap.current.fitBounds(fitRef.current, { padding: FIT_PAD, animate: false })
+        lMap.current.fitBounds(fitRef.current, { padding: fitPad(), animate: false })
       }
     }
 
@@ -595,7 +614,7 @@ function DetailMap({ ride, onEstimate }) {
           // Main line — revealed leg by leg as the bike rides it
           const poly = L.polyline(coords, { color: ride.color || 'var(--accent)', weight: 4, opacity: 0.95, smoothFactor: 1, lineCap: 'round', interactive: false }).addTo(map)
           fitRef.current = poly.getBounds()
-          map.fitBounds(fitRef.current, { padding: FIT_PAD, animate: false })
+          map.fitBounds(fitRef.current, { padding: fitPad(), animate: false })
           /* `data.waypoints` sits beside `routes`, not inside it, and holds each
              requested stop snapped onto the road — which is what tells the ride
              where to pause. */
@@ -607,7 +626,7 @@ function DetailMap({ ride, onEstimate }) {
           const line = L.polyline(straight,
             { color: ride.color, weight: 3, opacity: 0.85, interactive: false }).addTo(map)
           fitRef.current = line.getBounds()
-          map.fitBounds(fitRef.current, { padding: FIT_PAD, animate: false })
+          map.fitBounds(fitRef.current, { padding: fitPad(), animate: false })
           /* No router, so the stops are already exactly on the line — they stand
              in for the snapped waypoints unchanged, and the ride still pauses at
              each one. */
@@ -688,7 +707,7 @@ function DetailMap({ ride, onEstimate }) {
         const dx = stop.dir === 'right' ? 20 : -(PIN_H + 14)
         const label = stop.label && turned
           ? `<div style="position:absolute;left:${PIN_W / 2 + dx}px;top:${PIN_H}px;transform:translate(-50%,-50%) rotate(-90deg);z-index:4">
-               <span style="${chip};display:inline-block">${stop.label}</span>
+               <span class="v7dlabel" style="${chip};display:inline-block">${stop.label}</span>
              </div>`
           : ''
 
@@ -710,7 +729,9 @@ function DetailMap({ ride, onEstimate }) {
            pin head for `left`, below the anchor for `right`. */
         if (stop.label && !turned) {
           marker.bindTooltip(
-            `<div style="${chip}">${stop.label}</div>`,
+            /* the class is the handle the phone breakpoint shrinks — see the
+               <style> block at the foot of this file */
+            `<div class="v7dlabel" style="${chip}">${stop.label}</div>`,
             {
               permanent: true,
               direction: stop.dir === 'right' ? 'bottom' : 'top',
@@ -947,8 +968,8 @@ export default function GarageV7RideDetail() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
           {/* MAP — full real road route */}
-          <motion.div {...up(0.1)} style={{ borderRadius: 16, overflow: 'hidden', border: `1px solid ${BD}`, height: 460 }}>
-            <div style={{ padding: '16px 20px', background: BG2, borderBottom: `1px solid ${BD}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <motion.div {...up(0.1)} className="detail-map" style={{ borderRadius: 16, overflow: 'hidden', border: `1px solid ${BD}`, height: 460 }}>
+            <div className="detail-map-head" style={{ padding: '16px 20px', background: BG2, borderBottom: `1px solid ${BD}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <div style={{ fontSize: '0.6rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--accent)', fontWeight: 700, marginBottom: 2 }}>Route Map</div>
                 <div style={{ fontSize: '0.85rem', fontWeight: 600, color: OFF }}>{ride.fromCity} → {ride.toCity}</div>
@@ -962,7 +983,7 @@ export default function GarageV7RideDetail() {
                 )}
               </div>
             </div>
-            <div style={{ height: 'calc(100% - 68px)', position: 'relative' }}>
+            <div className="detail-map-pane" style={{ height: 'calc(100% - 68px)', position: 'relative' }}>
               <DetailMap ride={ride} onEstimate={setEstSeconds} />
             </div>
           </motion.div>
@@ -1115,7 +1136,49 @@ export default function GarageV7RideDetail() {
       <Lightbox open={lbOpen} close={() => setLbOpen(false)}
         slides={(ride.photos || []).map(src => ({ src }))} index={lbIdx} />
 
-      <style>{`@media(max-width:900px){.detail-main{grid-template-columns:1fr!important}.detail-main>*:last-child{position:static!important}}`}</style>
+      <style>{`
+        @media(max-width:900px){
+          .detail-main{grid-template-columns:1fr!important}
+          .detail-main>*:last-child{position:static!important}
+        }
+
+        /* ── phones ──────────────────────────────────────────────────────
+           A 34 km route on a 350 px map puts three permanent labels on top
+           of each other, and the page's own gutters were taking 40 px of the
+           390 px there is. So on a phone the map breaks out of those gutters
+           to run edge to edge, gets noticeably taller, and its labels shrink
+           to something that fits beside a pin rather than across the map. */
+        @media(max-width:600px){
+          .detail-map{
+            /* cancel the container padding on both sides */
+            margin-left:calc(-1 * clamp(20px,4vw,48px));
+            margin-right:calc(-1 * clamp(20px,4vw,48px));
+            border-radius:0!important;
+            border-left:0!important;
+            border-right:0!important;
+            /* taller, so a short route is not squeezed into a letterbox */
+            height:min(68vh,540px)!important;
+            /* The header's two halves stack at this width, so it runs about
+               91px rather than the 68px the pane's height subtracts — enough
+               of the map to be clipped off the bottom. Measure it instead:
+               header takes what it needs, pane takes the rest. */
+            display:flex;
+            flex-direction:column;
+          }
+          .detail-map-head{flex:none}
+          .detail-map-pane{flex:1;height:auto!important;min-height:0}
+          /* the pin labels: smaller and tighter, so three of them on a short
+             route stop stacking on top of one another */
+          .v7dlabel{
+            font-size:9.5px!important;
+            padding:2px 6px!important;
+            max-width:42vw;
+            overflow:hidden;
+            text-overflow:ellipsis;
+            white-space:nowrap;
+          }
+        }
+      `}</style>
     </div>
   )
 }
