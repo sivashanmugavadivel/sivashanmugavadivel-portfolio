@@ -101,6 +101,12 @@ const STAGGER = 120      // per-shape offset
    (which is immediate, since they're already in the browser cache). */
 let introPlayed = false
 
+/* Same reasoning, for the fireworks. They mark arriving at the garage, and you
+   have not arrived again by pressing back out of a ride page — going off a
+   second time reads as the page having reset, which is precisely what a reader
+   returning to where they left off does not want to be told. */
+let fireworksShown = false
+
 function BearDrawLoader({ height }) {
   const reduce = useReducedMotion()
 
@@ -331,7 +337,9 @@ export default function MyGarage() {
   /* Fireworks go up once the bike is actually on screen, not during the
      loader — the display is for the reveal, not the wait. Only the ending is
      held in state, so the effect below never sets state synchronously. */
-  const [fireworksDone, setFireworksDone] = useState(false)
+  /* Read at mount, and only at mount: StrictMode mounts twice but both reads
+     happen before the effect below writes, so a first visit still gets them. */
+  const [fireworksDone, setFireworksDone] = useState(fireworksShown)
   /* hold the loader until BOTH the frames are in and the draw+fill has
      played out, so a warm cache doesn't flash the animation away */
   const revealed = loaded >= FRAME_COUNT && minElapsed
@@ -352,6 +360,9 @@ export default function MyGarage() {
   /* ── fireworks: five seconds from the reveal, then they fade out ── */
   useEffect(() => {
     if (!revealed) return
+    /* Marked as soon as they go up, not when they finish — someone who clicks
+       into a ride three seconds in has still seen them arrive. */
+    fireworksShown = true
     const t = setTimeout(() => setFireworksDone(true), FIREWORKS_MS)
     return () => clearTimeout(t)
   }, [revealed])

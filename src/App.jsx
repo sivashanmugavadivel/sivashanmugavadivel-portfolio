@@ -1,5 +1,5 @@
 import { Routes, Route, useLocation, useNavigationType } from 'react-router-dom'
-import { useState, useEffect, lazy, Suspense } from 'react'
+import { useState, useEffect, useLayoutEffect, lazy, Suspense } from 'react'
 import { useTheme } from './hooks/useTheme'
 import { usePageLoad } from './hooks/usePageLoad'
 import { motion } from 'framer-motion'
@@ -52,25 +52,93 @@ const MyGarageStorefront = lazy(() => import('./pages/GarageStorefront'))
 const MyGarageVlogDetail = lazy(() => import('./pages/MyGarageVlogDetail'))
 
 /**
+ * Where the reader was on each history entry.
+ *
+ * Keyed by the router's per-entry key, which is stable across a route component
+ * being unmounted and rebuilt — which is exactly what happens when you open a
+ * ride from My Garage and come back. Module scope, not state: this is per-tab
+ * session memory, nothing renders from it, and writing to it must never cost a
+ * render (it happens on every scroll event).
+ */
+const scrollPositions = new Map()
+
+/**
+ * How long to keep asking for a scroll position the page can't honour yet.
+ * My Garage holds its content behind a frame preloader, so for the first
+ * moments after a back navigation the document is one viewport tall and a
+ * scrollTo(0, 4000) silently lands at 0. ~3s at 60fps.
+ */
+const SETTLE_FRAMES = 180
+
+/**
  * Scroll behaviour on navigation:
  *
- *   back / forward  → leave it alone, so the browser restores where you were
+ *   back / forward  → back to where the reader left that entry
  *   #hash in the URL → scroll to that element
  *   anything else   → top of the page
  *
- * Pages are lazy-loaded, so a hash target usually isn't mounted on the first
- * pass; we retry for a short while rather than giving up on frame one.
+ * WHY THIS ISN'T LEFT TO THE BROWSER
+ *   It used to be — POP returned early and native scroll restoration was meant
+ *   to handle it. It can't. The browser restores at its own moment, which for a
+ *   lazy-loaded route is always before the page component has mounted and long
+ *   before My Garage has revealed the ~10,000px of scroll track the position
+ *   refers to. There is nothing to scroll to yet, so it restores to the top and
+ *   the reader lands at the beginning of the page they were halfway down.
+ *
+ *   So restoration is taken over here: remember the position per entry, and on
+ *   the way back keep asking for it until the page is tall enough to give it.
  */
-function ScrollToTop() {
-  const { pathname, hash } = useLocation()
+function ScrollManager() {
+  const { pathname, hash, key } = useLocation()
   const navType = useNavigationType()
 
+  /* Off, or it restores to the top first and we fight it for a frame. */
   useEffect(() => {
-    if (navType === 'POP') return          // browser handles back/forward
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual'
+      return () => { window.history.scrollRestoration = 'auto' }
+    }
+  }, [])
 
+  /* Keep a running note of where this entry is. One Map write per scroll event
+     — no state, no re-render.
+     A LAYOUT effect, and the ordering matters. Leaving a long page for a short
+     one makes the document shrink, and the browser clamps scrollY to the new
+     bottom the moment it does: read the position after that and you record
+     where the reader was dragged to, not where they were. Restoring 4292 for a
+     reader who left at 5013 was exactly this. A layout cleanup runs in the same
+     commit but ahead of the outgoing page's nodes being removed, so the
+     document is still its old height here. The listener comes off at the same
+     moment, so the clamp that follows has nothing left to write through. */
+  useLayoutEffect(() => {
+    const save = () => scrollPositions.set(key, window.scrollY)
+    window.addEventListener('scroll', save, { passive: true })
+    return () => { save(); window.removeEventListener('scroll', save) }
+  }, [key])
+
+  useEffect(() => {
+    let raf, tries = 0
+    const cancel = () => cancelAnimationFrame(raf)
+
+    /* Coming back. Ask for the remembered position every frame until the page
+       has grown enough to honour it — see SETTLE_FRAMES. */
+    const y = navType === 'POP' ? scrollPositions.get(key) : undefined
+    if (y) {
+      const settle = () => {
+        const reach = document.documentElement.scrollHeight - window.innerHeight
+        if (reach >= y - 2) { window.scrollTo(0, y); return }
+        if (tries++ < SETTLE_FRAMES) raf = requestAnimationFrame(settle)
+        else window.scrollTo(0, Math.max(0, reach))   // as close as it will go
+      }
+      raf = requestAnimationFrame(settle)
+      return cancel
+    }
+
+    /* A fresh arrival. Pages are lazy-loaded, so a hash target usually isn't
+       mounted on the first pass; retry for a short while rather than giving up
+       on frame one. */
     if (!hash) { window.scrollTo(0, 0); return }
 
-    let raf, tries = 0
     const find = () => {
       const el = document.getElementById(decodeURIComponent(hash.slice(1)))
       if (el) { el.scrollIntoView({ block: 'start' }); return }
@@ -78,8 +146,8 @@ function ScrollToTop() {
       else window.scrollTo(0, 0)
     }
     raf = requestAnimationFrame(find)
-    return () => cancelAnimationFrame(raf)
-  }, [pathname, hash, navType])
+    return cancel
+  }, [pathname, hash, key, navType])
 
   return null
 }
@@ -87,7 +155,7 @@ function ScrollToTop() {
 function AppRoutes() {
   return (
     <PageWrapper>
-      <ScrollToTop />
+      <ScrollManager />
       <Suspense fallback={null}>
         <Routes>
           <Route path="/" element={<Home />} />
