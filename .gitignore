@@ -25,3 +25,9 @@ dist-ssr
 
 # Local originals of compressed video previews (not deployed)
 public/video-previews/_orig/
+
+# This is a pnpm project — pnpm-lock.yaml is the lockfile, and CI installs
+# with it. An npm lockfile alongside it resolves a different dependency tree
+# to the one that actually ships, so keep it out of the repo.
+package-lock.json
+yarn.lock
