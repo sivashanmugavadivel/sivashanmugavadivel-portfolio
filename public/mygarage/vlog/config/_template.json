@@ -6,10 +6,12 @@
     "Name the copy after the vlog, e.g. first-light-to-nathakadaiyur.json — the",
     "filename becomes the id (and the URL segment) when `id` is left out.",
     "",
-    "ORDER: newest first, by `created`. Set `created` when you add the file and",
-    "never touch it again — that is what fixes the order. `date` is when the",
-    "video was actually filmed and is what the page displays; if `created` is",
-    "missing the loader falls back to `date`, then to the filename.",
+    "ORDER: OLDEST FIRST, by `created` — the list reads as a journey, so the",
+    "garage section's road starts at the first vlog and the stop numbers count",
+    "up from it. Set `created` when you add the file and never touch it again —",
+    "that is what fixes the order. `date` is when the video was actually filmed",
+    "and is what the page displays; if `created` is missing the loader falls",
+    "back to `date`, then to the filename.",
     "",
     "REQUIRED: nothing but a title. A file in this folder IS a page — it shows",
     "up in the garage section and gets its own /mygarage/vlogs/<filename> page",
@@ -22,7 +24,8 @@
     "before the cut is uploaded. Paste the link later and the player appears.",
     "",
     "THERE IS NO FIELD FOR 'UP NEXT'. That section is built from the OTHER",
-    "files in this folder — same category first, then the newest of the rest.",
+    "files in this folder — same category first, newest first within each group",
+    "(it is a what-to-watch list, so it runs the opposite way to the road).",
     "Add a second vlog and each one starts pointing at the other. Same for the",
     "garage section's list and its counters: all of it is this folder.",
     "",
@@ -91,8 +94,22 @@
     }
   ],
 
+  "_instagram_note": [
+    "A bare /p/ or /reel/ link is enough — those embed themselves.",
+    "A STORY or HIGHLIGHT link (instagram.com/s/...) cannot embed: Instagram",
+    "serves no embed for those. It still appears, as a card that opens the",
+    "story on Instagram — but give it a `poster` (a screenshot you saved) and",
+    "the print shows that picture instead, which is far better. Keep the",
+    "?story_media_id= on the link — it is what picks one frame out of a",
+    "highlight."
+  ],
   "instagram": [
-    "https://www.instagram.com/reel/XXXXXXXXXXX/"
+    "https://www.instagram.com/reel/XXXXXXXXXXX/",
+    {
+      "url": "https://www.instagram.com/s/XXXXXXXX?story_media_id=XXXXXXXX",
+      "caption": "What this story frame shows",
+      "poster": "mygarage/vlog/images/story-1.jpg"
+    }
   ],
 
   "posts": [

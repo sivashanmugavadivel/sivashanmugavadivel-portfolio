@@ -38,9 +38,10 @@ import 'yet-another-react-lightbox/styles.css'
 import 'yet-another-react-lightbox/plugins/captions.css'
 import 'yet-another-react-lightbox/plugins/counter.css'
 import {
-  vlogs, vlogById, relatedVlogs, attachPosts, vlogsChannel,
+  vlogs, vlogById, latestVlog, relatedVlogs, attachPosts, vlogsChannel,
 } from '../data/vlogs'
 import cfg from '../data/config.json'
+import { addBasemap } from '../utils/basemap'
 
 /* Type sizes are REM-SCALED by 16/18: the design was drawn against a 16px
    root and this site's :root is 18px, so each rem here is 8/9 of the value in
@@ -104,6 +105,10 @@ function useDesignFonts() {
 const EASE = [0.16, 1, 0.3, 1]
 
 const NAV_H = 64               // the fixed navbar, so the docked player clears it
+
+/** Stop labels come from ride JSON and go into marker HTML — escape them. */
+const ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ESC[c])
 
 const clamp01 = n => Math.min(1, Math.max(0, n))
 const lerp = (a, b, t) => a + (b - a) * t
@@ -205,15 +210,32 @@ function RouteMap({ ride }) {
         })
         map.current = m
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-          { subdomains: 'abcd', maxZoom: 19 }).addTo(m)
+        addBasemap(L, m)
 
         const colour = ride.color || ACC
-        const o = ride.osrm
-        if (!o) { setState('straight'); return }
+
+        /* Route through EVERY stop the ride names, not just its two endpoints.
+           OSRM returns the shortest way between whatever coordinates it is
+           given, so a first→last query drew the direct road and silently threw
+           the waypoints away: the sidebar's `via` list said one thing and the
+           line on the map showed another. This is the same chain the ride
+           detail map and the mini-map already route through.
+
+           `osrm` is the two-point fallback for rides authored before `stops`
+           existed. */
+        const chain = ride.mapStops?.length > 1
+          ? ride.mapStops
+          : ride.osrm
+            ? [{ lat: ride.osrm.fromLat, lng: ride.osrm.fromLng, label: ride.fromCity },
+               { lat: ride.osrm.toLat, lng: ride.osrm.toLng, label: ride.toCity }]
+            : []
+        if (chain.length < 2) { setState('straight'); return }
+
+        const first = chain[0]
+        const last = chain[chain.length - 1]
 
         const url = 'https://router.project-osrm.org/route/v1/driving/' +
-          `${o.fromLng},${o.fromLat};${o.toLng},${o.toLat}` +
+          chain.map(s => `${s.lng},${s.lat}`).join(';') +
           '?overview=full&geometries=geojson'
 
         fetch(url)
@@ -227,7 +249,17 @@ function RouteMap({ ride }) {
             const poly = L.polyline(coords, {
               color: colour, weight: 4, opacity: 0.95, smoothFactor: 1, lineCap: 'round',
             }).addTo(m)
-            m.fitBounds(poly.getBounds(), { padding: [40, 40] })
+            /* `animate: false` matters, and is why the line used to stop
+               halfway. Leaflet re-projects a polyline whenever the view
+               changes, which rewrites the SVG path and changes its length. An
+               animated fitBounds settles AFTER the dash lengths below are
+               measured, so `strokeDasharray` was left holding the pre-zoom
+               length — shorter than the final path, and a dasharray shorter
+               than its path simply repeats: one dash, then a gap for the rest
+               of the route. Fitting synchronously means the path measured is
+               the path drawn. The ride detail map has always passed this. */
+            m.fitBounds(poly.getBounds(), { padding: [40, 40], animate: false })
+
             /* draw it on, through the SVG path Leaflet just made */
             const path = poly.getElement()
             if (path?.getTotalLength) {
@@ -236,13 +268,26 @@ function RouteMap({ ride }) {
               path.style.strokeDashoffset = len
               path.style.transition = 'stroke-dashoffset 1.4s ease-out'
               requestAnimationFrame(() => { path.style.strokeDashoffset = '0' })
+              /* Then drop the dash entirely. Any later re-projection — a window
+                 resize, the container settling — would otherwise clip the line
+                 against a stale length again. A solid stroke cannot go stale. */
+              const solid = () => {
+                path.style.strokeDasharray = 'none'
+                path.style.strokeDashoffset = '0'
+                path.style.transition = ''
+              }
+              path.addEventListener('transitionend', solid, { once: true })
+              /* transitionend never fires if the tab is hidden while it runs */
+              setTimeout(solid, 2600)
             }
             setState('routed')
           })
           .catch(() => {
             if (!alive) return
-            /* OSRM unreachable, or the ride isn't routable — straight line */
-            L.polyline([[o.fromLat, o.fromLng], [o.toLat, o.toLng]], {
+            /* OSRM unreachable, or the ride isn't routable — dashed line, but
+               still bent through the stops, so an unrouted map shows the shape
+               of the journey rather than a single chord across it. */
+            L.polyline(chain.map(s => [s.lat, s.lng]), {
               color: colour, weight: 3, opacity: 0.85, dashArray: '6 8', interactive: false,
             }).addTo(m)
             setState('straight')
@@ -260,17 +305,29 @@ function RouteMap({ ride }) {
                </div>`,
             iconSize: [30, 30], iconAnchor: [15, 15],
           })
+          /* `title` is the full name on hover, for a label the ellipsis cut
+             short. `direction: 'auto'` is what stops it being cut off by the
+             map's edge instead: a fixed 'right' ran the start pin's banner off
+             the side of a card whose right edge is where that pin sits, so
+             Leaflet now flips it inward for any pin past the halfway line. */
           L.marker([lat, lng], { icon, interactive: false, keyboard: false })
             .addTo(m)
             .bindTooltip(
-              `<div style="background:rgba(13,11,20,0.95);border:1px solid ${colour}60;color:#f0eee8;font-family:system-ui,sans-serif;font-size:11px;font-weight:700;padding:4px 10px;border-radius:4px;white-space:nowrap">${label}</div>`,
-              { permanent: true, direction: 'right', offset: [12, 0], className: 'vd-tip' }
+              `<div title="${esc(label)}" style="background:rgba(13,11,20,0.95);border:1px solid ${colour}60;color:#f0eee8;font-family:system-ui,sans-serif;font-size:11px;font-weight:700;padding:4px 10px;border-radius:4px;white-space:nowrap;max-width:170px;overflow:hidden;text-overflow:ellipsis">${esc(label)}</div>`,
+              { permanent: true, direction: 'auto', offset: [12, 0], className: 'vd-tip' }
             )
         }
-        if (o) {
-          pin(o.fromLat, o.fromLng, ride.fromCity || 'Start', true)
-          pin(o.toLat, o.toLng, ride.toCity || 'End', false)
-        }
+        /* Only the ends get a pin. The stops between them shape the line and are
+           named in the sidebar's `via` list; pinning all seven of the marathon
+           route's would bury the map in labels.
+
+           The STOP's own label wins over `fromCity`/`toCity`. Both name the same
+           place, but the city fields are the ones the header and the Ride Info
+           table read, so they carry the full "Royal Enfield Senthur Motors,
+           Dharapuram" — and these tooltips are nowrap, so a name that long
+           stretches a banner clean across the map. */
+        pin(first.lat, first.lng, first.label || ride.fromCity || 'Start', true)
+        pin(last.lat, last.lng, last.label || ride.toCity || 'End', false)
       }).catch(() => alive && setState('failed'))
     }, { rootMargin: '200px' })
 
@@ -411,8 +468,9 @@ export default function MyGarageVlogDetail() {
   const { id } = useParams()
   const reduce = useReducedMotion()
 
-  /* No id (bare /mygarage/vlogs) opens the newest one. */
-  const vlog = id ? vlogById(id) : vlogs[0]
+  /* No id (bare /mygarage/vlogs) opens the newest one — the last in `vlogs`,
+     which runs oldest first. */
+  const vlog = id ? vlogById(id) : latestVlog()
 
   /* Blog posts resolve asynchronously (the blog lives in files, not config).
      The result is stamped with the vlog it belongs to, so moving between vlogs
@@ -1176,7 +1234,16 @@ function Polaroid({ reel, poster, live }) {
   /* a poster of your own beats the embed: no Instagram chrome, and it can't be
      thrown off by whatever shape the post's video happens to be */
   const own = reel.thumbnail || ''
-  const showEmbed = live && !own
+  /* `embeddable` is false for a story or highlight — Instagram serves no embed
+     for those at all, so they can only ever be a still that links out. */
+  const isStory = reel.embeddable === false
+  /* `poster` is the page's stand-in, the vlog's own frame grabs. Fine for a
+     reel, where it only shows for the moment before the embed paints — but a
+     story never paints over it, so an unrelated frame would sit there
+     permanently pretending to be the story. A story shows its OWN poster or
+     none. */
+  const still = own || (isStory ? '' : poster)
+  const showEmbed = live && !own && !isStory
 
   /* The picture is as tall as 16/9 of the width for a reel. Sizing it here
      rather than in CSS because it is the iframe's own box that has to grow,
@@ -1211,10 +1278,24 @@ function Polaroid({ reel, poster, live }) {
             scrolling="no"
             style={{ top: `-${IG_HEADER}px` }}
           />
-        ) : (own || poster) ? (
+        ) : still ? (
           <a href={reel.url} target="_blank" rel="noopener noreferrer" className="vd-igopen">
-            <img src={own || poster} alt="" loading="lazy" />
+            <img src={still} alt="" loading="lazy" />
             <span className="vd-igplay" aria-hidden>▶</span>
+          </a>
+        ) : isStory ? (
+          /* A story with no poster of its own. There is nothing to show it
+             with, so the print says what it is and opens it on Instagram
+             rather than sitting there as a blank frame. */
+          <a
+            href={reel.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="vd-igopen vd-igstory"
+          >
+            <span className="vd-igsring" aria-hidden>▶</span>
+            <b>{reel.caption || 'Story'}</b>
+            <s>View on Instagram →</s>
           </a>
         ) : (
           <div className="vd-igph" />
@@ -1311,7 +1392,9 @@ function InstaStrip({ reels, posterFor }) {
     <Rail width="230px" label="reels" deps={`${reels.length}:${live}`}
       onNear={() => setLive(true)}>
       {reels.map((r, i) => (
-        <Polaroid key={r.code} reel={r} poster={posterFor(i)} live={live} />
+        /* `key`, not `code`: every frame of one Instagram highlight shares a
+           shortcode, so two of them would collide on `code`. */
+        <Polaroid key={r.key || r.code} reel={r} poster={posterFor(i)} live={live} />
       ))}
     </Rail>
   )
@@ -1391,7 +1474,11 @@ function PageStyles() {
       /* the map is a static plate — it must not look grabbable */
       .leaflet-container { background: ${RBG} !important; cursor: default !important; }
       .vd-tip { background: transparent !important; border: none !important;
-        box-shadow: none !important; padding: 0 !important; }
+        box-shadow: none !important; padding: 0 !important;
+        /* the map sits in a pointer-events:none wrapper so a static plate can't
+           be grabbed — the label re-enables just itself, so the hover title of
+           a truncated name still appears */
+        pointer-events: auto !important; }
       .vd-tip::before { display: none !important; }
 
       .vd-fullride { transition: border-color .25s, color .25s, background .25s; }
@@ -1551,6 +1638,23 @@ function PageStyles() {
       /* a print with its own poster opens Instagram rather than embedding it */
       .vd-igopen { position: absolute; inset: 0; display: block; }
       .vd-igopen img { width: 100%; height: 100%; object-fit: cover; }
+
+      /* a story or highlight with no poster: no embed exists for one, so the
+         print names it and opens it instead of showing a blank frame */
+      .vd-igstory { display: grid; place-content: center; justify-items: center;
+        gap: 9px; padding: 18px; text-align: center; text-decoration: none;
+        background: linear-gradient(135deg,#2a2436,#171420 60%,#241c2e); }
+      .vd-igsring { width: 44px; height: 44px; border-radius: 50%; display: grid;
+        place-items: center; font-size: 0.6222rem; padding-left: 2px; color: #fff;
+        background: linear-gradient(135deg,#f9ce34,#ee2a7b 55%,#6228d7);
+        transition: .4s cubic-bezier(.16,1,.3,1); }
+      .vd-pola:hover .vd-igsring { transform: scale(1.12); }
+      .vd-igstory b { font-size: 0.6222rem; font-weight: 700; color: #f4f3f7;
+        line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical; overflow: hidden; }
+      .vd-igstory s { text-decoration: none; font-size: 0.4889rem; font-weight: 800;
+        letter-spacing: .16em; text-transform: uppercase; color: rgba(244,243,247,.5); }
+      .vd-pola:hover .vd-igstory s { color: ${ACC}; }
       .vd-igplay { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
         z-index: 3; width: 40px; height: 40px; border-radius: 50%; display: grid;
         place-items: center; font-size: 0.6222rem; padding-left: 2px; color: #fff;

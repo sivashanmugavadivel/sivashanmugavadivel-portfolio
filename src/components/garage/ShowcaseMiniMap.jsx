@@ -17,6 +17,7 @@
 
 import { useEffect, useRef } from 'react'
 import { mapCities, mapRoutes } from '../../data/rides'
+import { addBasemap } from '../../utils/basemap'
 
 function loadLeaflet() {
   return new Promise(resolve => {
@@ -127,7 +128,7 @@ export default function ShowcaseMiniMap() {
         inertia: false, zoomSnap: 0,
       })
       lMap.current = map
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 19 }).addTo(map)
+      addBasemap(L, map)
 
       // Observe map visibility — replay the route draw every time it enters view
       ioRef.current = new IntersectionObserver(entries => {

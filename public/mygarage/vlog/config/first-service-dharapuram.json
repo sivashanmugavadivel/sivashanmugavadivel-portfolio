@@ -1,0 +1,94 @@
+{
+  "_readme": [
+    "FIRST SERVICE — Home to Senthur Motors, Dharapuram.",
+    "Scaffolded from the route and purpose only; everything else is yours to fill.",
+    "",
+    "STILL TO FILL:",
+    "  1. created  — DONE (22 Aug 2026). This is what fixes the vlog's place in",
+    "                the list (oldest first), so leave it alone from here.",
+    "  2. video    — paste any YouTube link (youtu.be/…, /shorts/…, watch?v=…).",
+    "                Empty is fine: the page still renders and says the video is",
+    "                still to come.",
+    "  3. duration / views — typed by hand. Blank hides each badge.",
+    "  4. description — anything in [square brackets] is a prompt, not copy. The",
+    "                odometer reading and the bill are the two things a first-",
+    "                service write-up is actually read for.",
+    "  5. images   — drop frame grabs in public/mygarage/vlog/images/ (a",
+    "                first-service/ subfolder keeps it tidy) and list them as",
+    "                'mygarage/vlog/images/<file>'. While empty, the Frame Grabs",
+    "                section does not appear.",
+    "  6. videos / instagram / posts — extra clips, reel links, blog slugs. Empty",
+    "                means those sections stay off the page.",
+    "",
+    "THE ROUTE comes from rideId below, which points at",
+    "public/mygarage/rideandroute/r6-home-to-dharapuram-first-service.json. The",
+    "stop coordinates in that file are APPROXIMATE — check them on a map.",
+    "",
+    "THE BILL belongs in garage.config.json → maintenance.services, not here —",
+    "that is what the Service & Maintenance section reads.",
+    "",
+    "SAFE TO DELETE: any field you don't want. Empty arrays and blank strings",
+    "just remove that part of the page — nothing breaks."
+  ],
+
+  "created": "2026-08-22",
+  "date": "2026-08-22",
+
+  "video": "https://youtube.com/shorts/1Zz0QIVHJEw?si=WqH44etIwOa5XuJJ",
+
+  "id": "first-service-dharapuram",
+  "title": "First Service at Dharapuram",
+  "subtitle": "Kariya Kattu Valasu to Royal Enfield Senthur Motors, Dharapuram",
+  "excerpt": "[One or two sentences for the card and the standfirst — the run-in kilometres done, the ride back to where the bike came from, and what the first service actually involved.]",
+
+  "duration": "",
+  "views": "",
+  "category": "Garage",
+  "tags": ["First Service", "Bear 650", "Senthur Motors", "Maintenance"],
+  "featured": true,
+
+  "clip": "",
+
+  "rideId": "first-service-dharapuram",
+
+  "description": [
+    "[Open on whatever the video opens on — the odometer before setting off, or pulling out of the gate on the way to the service centre.]",
+    { "heading": "Due at the first service" },
+    "[Kilometres on the clock, how long since delivery, and what Royal Enfield asks for at the first service.]",
+    { "heading": "The road back to Senthur Motors" },
+    "[Kangayam, Avinashipalayam, Dharapuram — the same showroom the bike was delivered from. What the run down was like with the engine now broken in.]",
+    { "heading": "What they did" },
+    "[Oil, filter, checks, anything raised or replaced. What it cost and how long it took.]",
+    {
+      "quote": "[A line worth pulling out — something said on camera, or a thought on the ride home.]",
+      "cite": "@sivashanmugavadivel"
+    },
+    { "heading": "How it feels after" },
+    "[Anything that changed on the ride home — the gearbox, the throttle, the noise.]"
+  ],
+
+  "images": [],
+
+  "videos": [
+	{
+      "url": "https://youtube.com/shorts/1Zz0QIVHJEw?si=WqH44etIwOa5XuJJ",
+      "title": "First Service At 500km! ❤️‍🔥 Royal Enfield Bear 650",
+      "caption": "Royal Enfield Bear 650!",
+      "duration": "0:31"
+    },
+	{
+      "url": "https://youtube.com/shorts/1Zz0QIVHJEw?si=WqH44etIwOa5XuJJ",
+      "title": "Some of them think road is their bedroom😡",
+      "caption": "Royal Enfield Bear 650!",
+      "duration": "0:29"
+    }
+  ],
+
+  "instagram": [
+	"https://www.instagram.com/reel/DcCu8l6P9sn/?utm_source=ig_web_copy_link&igsi=MzRlODBiNWFlZA==",
+	"https://www.instagram.com/s/aGlnaGxpZ2h0OjE4MDU0OTgxNDc5NTYyMzU5?story_media_id=3969166449100917571_7703854996&igsi=djM0aWZ4cHhscnZk",
+	"https://www.instagram.com/s/aGlnaGxpZ2h0OjE4MDU0OTgxNDc5NTYyMzU5?story_media_id=3969168278899606382_7703854996&igsi=djM0aWZ4cHhscnZk"
+  ],
+
+  "posts": []
+}

@@ -1,0 +1,62 @@
+{
+  "_comment": "Royal Enfield's ONE RIDE 2026. Replaced the old Kangayam-to-Coimbatore entry in this slot. Field notes live in src/data/rides.js.",
+
+  "_verified": [
+    "The date and edition are Royal Enfield's own, checked against:",
+    "  royalenfield.com/in/en/one-ride-2026        (the official event page)",
+    "  royalenfield.com.au/news-announcements/one-ride-2026",
+    "  mcnews.com.au/royal-enfield-registrations-open-for-one-ride-2026",
+    "",
+    "  · Sunday 20 September 2026",
+    "  · the 15th global edition",
+    "  · official tagline: Every Rider. Every Road. Everywhere.",
+    "  · registration is open; the first 1,000 to register get a One Ride tee"
+  ],
+
+  "_todo": [
+    "STOPS — only home is set, because the route is yours to choose: One Ride is",
+    "        a global date, not a fixed course, and riders set off wherever they",
+    "        like (usually a dealer meet). A ride with one stop gets its page but",
+    "        no map, and is left off the mini-map, until a second stop exists.",
+    "        Add where you are riding to and the route draws itself.",
+    "distance — 'TBD' until the route is set. It renders as typed, and only",
+    "        'completed' rides feed the garage totals, so nothing is skewed.",
+    "time / rating / stats / photos — after the ride. Move `mode` to 'completed'",
+    "        then, and the totals pick it up.",
+    "states  — assumes Tamil Nadu. Correct it if the ride leaves the state."
+  ],
+
+  "order": 20,
+  "id": "one-ride-2026",
+
+  "name": "One Ride 2026",
+  "subtitle": "Royal Enfield's 15th global One Ride · Every Rider. Every Road. Everywhere.",
+  "mode": "upcoming",
+
+  "distance": "TBD",
+  "time": null,
+  "estimateTime": null,
+  "date": "20 Sep 2026",
+  "rating": null,
+
+  "fromCity": "Kariya Kattu Valasu",
+  "toCity": "To be decided",
+  "states": ["Tamil Nadu"],
+  "color": "#dc2626",
+
+  "description": "Royal Enfield's global One Ride — one date, riders out on every road there is.",
+  "story": "One Ride is Royal Enfield's annual worldwide ride, and 2026 is the 15th edition of it: Sunday 20 September, riders in every country out on the same day under one line — Every Rider. Every Road. Everywhere. There is no set course, which is the point of it. Registration is open, and the first thousand riders to sign up get the One Ride tee. It falls in the year Royal Enfield turns 125, the oldest motorcycle brand still in continuous production since 1901 — so the Bear's first One Ride lands on a good one.",
+  "highlights": ["One Ride 2026", "15th Global Edition", "Every Rider. Every Road. Everywhere.", "125 Years of Royal Enfield"],
+  "via": [],
+
+  "mapCenter": [11.035075, 77.618430],
+  "mapZoom": 10,
+
+  "videoId": null,
+  "photos": [],
+  "stats": null,
+
+  "stops": [
+    { "id": "kangayam", "label": "Kariya Kattu Valasu", "icon": "home", "lat": 11.035075, "lng": 77.618430, "home": true, "dir": "left" }
+  ]
+}

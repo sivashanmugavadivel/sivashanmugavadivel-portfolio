@@ -1,0 +1,82 @@
+{
+  "_readme": [
+    "KOVIAON MARATHON — Home to Hindusthan College of Arts and Sciences, Coimbatore.",
+    "Scaffolded from the route and purpose only; everything else is yours to fill.",
+    "",
+    "STILL TO FILL:",
+    "  1. created  — DONE (23 Aug 2026). This is what fixes the vlog's place in",
+    "                the list (oldest first), so leave it alone from here.",
+    "  2. video    — paste any YouTube link (youtu.be/…, /shorts/…, watch?v=…).",
+    "                Empty is fine: the page still renders and says the video is",
+    "                still to come.",
+    "  3. duration / views — typed by hand. Blank hides each badge.",
+    "  4. description — anything in [square brackets] is a prompt, not copy.",
+    "  5. images   — drop frame grabs in public/mygarage/vlog/images/ (a",
+    "                koviaon-marathon/ subfolder keeps it tidy) and list them as",
+    "                'mygarage/vlog/images/<file>'. While empty, the Frame Grabs",
+    "                section does not appear.",
+    "  6. videos / instagram / posts — extra clips, reel links, blog slugs. Empty",
+    "                means those sections stay off the page.",
+    "",
+    "THE ROUTE comes from rideId below, which points at",
+    "public/mygarage/rideandroute/r5-home-to-hindusthan-college.json. The stop",
+    "coordinates in that file are APPROXIMATE — check them on a map.",
+    "",
+    "SAFE TO DELETE: any field you don't want. Empty arrays and blank strings",
+    "just remove that part of the page — nothing breaks."
+  ],
+
+  "created": "2026-08-23",
+  "date": "2026-08-23",
+
+  "video": "https://youtube.com/shorts/_hC_r8o0m2w?si=ZpSK-eoLmbkeB8z6",
+
+  "id": "koviaon-marathon-hindusthan-college",
+  "title": "Riding to the KoviaON Marathon",
+  "subtitle": "Kariya Kattu Valasu to Hindusthan College of Arts and Sciences, Coimbatore",
+  "excerpt": "[One or two sentences for the card and the standfirst — the early start, the run down to Coimbatore, and the marathon at the other end.]",
+
+  "duration": "",
+  "views": "",
+  "category": "Ride Stories",
+  "tags": ["KoviaON Marathon", "Coimbatore", "Bear 650", "Early Start"],
+  "featured": false,
+
+  "clip": "",
+
+  "rideId": "r5",
+
+  "description": [
+    "[Open on whatever the video opens on — the pre-dawn start, loading the bib and shoes, or the first kilometres out of the village.]",
+    { "heading": "Why this ride" },
+    "[The KoviaON marathon at Hindusthan College — what it was, why you signed up, and why riding there beat any other way of getting there.]",
+    { "heading": "The road there" },
+    "[Kangayam, Avinashipalayam, Palladam, Sulur, Singanallur. What the road was like at that hour, where you stopped, what the traffic did once Coimbatore started.]",
+    {
+      "quote": "[A line worth pulling out — something said on camera, or a thought from the ride.]",
+      "cite": "@sivashanmugavadivel"
+    },
+    { "heading": "The marathon" },
+    "[The event itself — the campus, the crowd, the run, and how the legs felt about the ride home afterwards.]"
+  ],
+
+  "images": [],
+
+  "videos": [
+	{
+      "url": "https://youtube.com/shorts/_hC_r8o0m2w?si=ZpSK-eoLmbkeB8z6",
+      "title": "️‍To test my mental strength #kovaiON Marathon🔥",
+      "caption": "Royal Enfield Bear 650!",
+      "duration": "0:57"
+    }
+  ],
+
+  "instagram": [
+	"https://www.instagram.com/reel/DcY0AkKvEbQ/?utm_source=ig_web_copy_link&igsi=MzRlODBiNWFlZA==",
+	"https://www.instagram.com/p/DcUwOpMiEQw/?utm_source=ig_web_copy_link&igsi=MzRlODBiNWFlZA==",
+	"https://www.instagram.com/s/aGlnaGxpZ2h0OjE4MjEzNzA3NDI1MzUyNTc5?story_media_id=3969641907542478357_7703854996&igsi=MXIwa2RuN3NqeXNrbg==",
+	"https://www.instagram.com/s/aGlnaGxpZ2h0OjE4MjEzNzA3NDI1MzUyNTc5?story_media_id=3969725631411739140_7703854996&igsi=MXIwa2RuN3NqeXNrbg=="
+  ],
+
+  "posts": []
+}

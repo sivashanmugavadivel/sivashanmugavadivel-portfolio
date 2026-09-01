@@ -20,7 +20,43 @@
     "note": "Every rupee the Bear has cost to keep running. Open any service for the full bill.",
     "currency": "₹",
     "owner": "Royal Enfield · Bear 650",
-    "services": []
+    "_services_note": [
+      "Newest first. `items` amounts are PRE-TAX — subtotal, GST and total are",
+      "worked out in src/data/maintenance.js from the line items, so no figure",
+      "is typed twice. See that file for the full field reference.",
+      "",
+      "Deliberately NOT recorded from a service document: the customer mobile",
+      "number and the service consultant's number. This config is published on",
+      "a public page.",
+      "",
+      "`odometer` is left out where the reading isn't known. That is what hides",
+      "the Cost / KM stat rather than inventing one — add the reading and the",
+      "stat appears on its own."
+    ],
+    "services": [
+      {
+        "id": "svc-2026-08-fsc1",
+        "name": "First Free Service",
+        "summary": "Engine oil and filter, brake and all-parts checkup, health card",
+        "date": "22 Aug 2026",
+        "odometer": 787,
+        "type": "Free Service",
+        "workshop": "Royal Enfield Senthur Motors, Dharapuram",
+        "invoice": "RJC007749JK01396",
+        "items": [
+          { "label": "Engine oil, 10W50 API SN", "qty": "3.10 L", "amount": 2154.25 },
+          { "label": "Engine oil filter", "qty": "1", "amount": 422.88 },
+          { "label": "Chain lube & cleaner kit", "qty": "60 ml", "amount": 101.40 },
+          { "label": "Vinyl dresser", "qty": "20 ml", "amount": 19.60 },
+          { "label": "Cleanser", "qty": "20 ml", "amount": 6.00 },
+          { "label": "Rust cleaner", "qty": "40 ml", "amount": 59.20 },
+          { "label": "Consumable charges for service", "qty": "1 hr labour", "amount": 100.00 }
+        ],
+        "taxRate": 18,
+        "nextDue": { "km": 5000, "date": "22 Feb 2027" },
+        "notes": "FSC-1, due at 1.5 months or 500 km. Next service falls at 5,000 km or six months from this one, whichever comes first. Raised at drop-off: rear suspension hard, gear shifting hard, app connect issue. Figures are from the service estimate — replace them if the final bill differed."
+      }
+    ]
   },
   "gallery": {
     "title": "Ride Gallery",

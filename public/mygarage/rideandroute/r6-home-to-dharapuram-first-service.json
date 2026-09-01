@@ -1,0 +1,58 @@
+{
+  "_comment": "The route behind the first-service vlog (public/mygarage/vlog/config/first-service-dharapuram.json → rideId 'r6'). Field notes live in src/data/rides.js.",
+
+  "_todo": [
+    "time     — what the ride actually took, as a QUOTED clock, H:MM ('1:15').",
+    "           Unquoted 1:15 is invalid JSON and takes the whole garage down.",
+    "           Leave it null and the detail page shows the router's estimate",
+    "           instead, which is 56 mins for these stops.",
+    "rating / stats / photos — fill in as you like; null and [] are fine.",
+    "",
+    "COORDINATES are geocoded from OpenStreetMap, not guessed: Kangeyam town",
+    "and the Avinashipalayam village node in Tiruppur South (638660). The two",
+    "exceptions are Kariya Kattu Valasu and the showroom, which keep the values",
+    "already authored in r1 — OSM has no node for Senthur Motors, and r1 is the",
+    "same trip in the other direction, so the pins must agree.",
+    "",
+    "DISTANCE is the router's figure for this exact chain (54.2 km), not an",
+    "odometer reading. 'completed' rides are what the garage totals are summed",
+    "from, so correct it if the trip meter disagreed."
+  ],
+
+  "order": 11,
+  "id": "r6",
+
+  "name": "Home to Dharapuram — First Service",
+  "subtitle": "Kariya Kattu Valasu → Kangayam → Avinashipalayam → Royal Enfield Senthur Motors, Dharapuram",
+  "mode": "completed",
+
+  "distance": "54 KM",
+  "time": null,
+  "estimateTime": null,
+  "date": "22 Aug 2026",
+  "rating": null,
+
+  "fromCity": "Kariya Kattu Valasu",
+  "toCity": "Royal Enfield Senthur Motors, Dharapuram",
+  "states": ["Tamil Nadu"],
+  "color": "#14b8a6",
+
+  "description": "Back to the showroom the Bear came from, for its first service.",
+  "story": "The first service run — out of Kariya Kattu Valasu through Kangayam and Avinashipalayam, and down to Senthur Motors at Dharapuram, the same showroom the bike was delivered from. The delivery ride came the other way up this road on day one.",
+  "highlights": ["First Service", "Senthur Motors", "Avinashipalayam Road", "Back Where It Started"],
+  "via": ["Kangayam", "Avinashipalayam"],
+
+  "mapCenter": [10.9, 77.5],
+  "mapZoom": 10,
+
+  "videoId": null,
+  "photos": [],
+  "stats": null,
+
+  "stops": [
+    { "id": "kangayam", "label": "Kariya Kattu Valasu", "icon": "home", "lat": 11.035075, "lng": 77.618430, "home": true, "dir": "left" },
+    { "id": "kangayam-town", "label": "Kangayam", "lat": 11.0060598, "lng": 77.5607403, "dir": "right" },
+    { "id": "avinashipalayam", "label": "Avinashipalayam", "lat": 10.9694897, "lng": 77.4354180, "dir": "left" },
+    { "id": "dharapuram", "label": "Royal Enfield Senthur Motors", "icon": "showroom", "lat": 10.73, "lng": 77.52, "dir": "left" }
+  ]
+}

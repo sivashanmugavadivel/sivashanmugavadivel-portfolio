@@ -19,6 +19,7 @@ import Lightbox from 'yet-another-react-lightbox'
 import 'yet-another-react-lightbox/styles.css'
 import { routes, ridesByMode, ridesInOrder, RIDE_MODES } from '../data/garage'
 import { labelFromSeconds } from '../data/rides'
+import { addBasemap, BASEMAP_CREDIT } from '../utils/basemap'
 
 /**
  * These pages are mounted under two roots: /mygarage/rides (the real garage)
@@ -588,8 +589,10 @@ function DetailMap({ ride, onEstimate }) {
       })
       lMap.current = map
 
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-        { subdomains: 'abcd', maxZoom: 19 }).addTo(map)
+      /* No control: on a portrait route this container is turned 90° and a
+         Leaflet control inside it turns with it. The credit is rendered on the
+         wrapper below instead, outside the turn. */
+      addBasemap(L, map, { attribution: false })
 
       /* Route through every stop the ride names, so a mid-ride stop is on the
          line rather than skipped by a direct first→last query. `osrm` is the
@@ -774,6 +777,15 @@ function DetailMap({ ride, onEstimate }) {
           transform: `translate(-50%,-50%)${turned ? ' rotate(90deg)' : ''}`,
         }}
       />
+      {/* The tile provider's credit, required by its terms. Out here on the
+          wrapper rather than inside the map, because the container above is
+          turned 90° for portrait routes and would stand this on its side. */}
+      <div style={{
+        position: 'absolute', right: 0, bottom: 0, zIndex: 500,
+        padding: '1px 6px', background: 'rgba(13,11,20,0.7)',
+        borderRadius: '4px 0 0 0', fontSize: 9, lineHeight: 1.5,
+        color: 'rgba(240,238,232,0.45)', pointerEvents: 'none',
+      }}>{BASEMAP_CREDIT}</div>
     </div>
   )
 }

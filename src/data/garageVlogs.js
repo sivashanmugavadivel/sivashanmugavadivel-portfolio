@@ -75,6 +75,10 @@ const toStop = (v, i) => ({
 export const garageVlogs = vlogs.map(toStop)
 
 export const vlogCount = garageVlogs.length
+/* The first stops on the road, which are the OLDEST vlogs — ./vlogs.js sorts
+   ascending so the road reads forwards. Taking them off the front is what makes
+   the "+N more · the road carries on" board at the end mean what it says: the
+   stops beyond this one are still ahead. */
 export const vlogsShown = garageVlogs.slice(0, VLOG_LIMIT)
 export const vlogsMore = Math.max(0, vlogCount - VLOG_LIMIT)
 

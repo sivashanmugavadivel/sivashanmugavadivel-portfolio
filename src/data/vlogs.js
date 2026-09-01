@@ -13,10 +13,15 @@
  * per-item files rather than one long array.
  *
  * ── ORDER ────────────────────────────────────────────────────────────────
- *   Newest first, by `created`. Set that once when the file is added and leave
- *   it alone; it is what fixes the order. `date` is when the video was filmed
- *   and is what the page shows. Missing `created` falls back to `date`, then
- *   to the filename, so a file with neither still lands somewhere stable.
+ *   OLDEST FIRST, by `created` — the list reads as a journey, so the garage
+ *   section's road starts at the first vlog and the numbering (`n`, the "STOP
+ *   01" label) counts up from it. Set `created` once when the file is added and
+ *   leave it alone; it is what fixes the order. `date` is when the video was
+ *   filmed and is what the page shows. Missing `created` falls back to `date`,
+ *   then to the filename, so a file with neither still lands somewhere stable.
+ *
+ *   Anything that wants the NEWEST first reverses this list for itself — see
+ *   `relatedVlogs` below. There is one order here, and it is ascending.
  *
  * ── SECTION CHROME ───────────────────────────────────────────────────────
  *   The heading and note around the list stay in garage.config.json → `vlogs`,
@@ -57,7 +62,9 @@
  *     "title":    "Friends Trip to Yercaud",
  *     "subtitle": "Hairpins, hill air and…",  // optional; the line under the title
  *     "excerpt":  "…",                        // optional standfirst / card blurb
- *     "date":     "2025-12-30",               // ISO. Sorts the list, newest first.
+ *     "date":     "2025-12-30",               // ISO. What the page shows, and the
+ *                                             //   fallback sort key when there
+ *                                             //   is no `created`.
  *     "duration": "0:48",                     // optional "m:ss" or "h:mm:ss";
  *                                             //   the runtime badge, omitted if blank
  *     "views":    "31K",                      // optional, and authored — there is no
@@ -119,6 +126,26 @@
  *          // shape that post's video is, so a landscape reel shows chrome.
  *          // Name a poster (a still you saved) and the print is just that
  *          // picture, cropped clean, with the tap going through to Instagram.
+ *          //
+ *          // STORY AND HIGHLIGHT LINKS (instagram.com/s/…) CANNOT EMBED.
+ *          // They are the one kind Instagram serves no embed for — /p/ and
+ *          // /reel/ answer the /embed endpoint, /s/ refuses it, because
+ *          // stories expire after 24 hours and highlights were never in that
+ *          // API. Nothing here can work around that.
+ *          //
+ *          // A bare /s/ link still appears: the print becomes a card naming
+ *          // the story, which opens it on Instagram when tapped. Give it a
+ *          // `poster` and you get a real picture in the frame instead — much
+ *          // better, and the only way to have one. Screenshot the story, put
+ *          // it in public/mygarage/vlog/images/, and name it here:
+ *          //
+ *          //   { "url": "https://www.instagram.com/s/AbC…?story_media_id=123…",
+ *          //     "caption": "At the start line",
+ *          //     "poster":  "mygarage/vlog/images/marathon/story-1.jpg" }
+ *          //
+ *          // Keep the ?story_media_id= on the link. It is what points at one
+ *          // frame of a highlight — the /s/ shortcode alone is the whole
+ *          // highlight, and is identical for every frame in it.
  *
  *     "posts": ["mulapari-festival-kariya-kalli-amman-temple"]
  *                 // optional slugs from src/data/blog/. Only the slug is stored —
@@ -261,12 +288,29 @@ const IG_BY_CODE = new Map(
  * The kind matters: a photo post lives at /p/CODE and a reel at /reel/CODE, and
  * the embed has to be asked for under the same one. Hardcoding /reel/ breaks
  * every photo post in a list.
+ *
+ * ── STORIES AND HIGHLIGHTS (/s/) ──────────────────────────────────────────
+ *   Accepted, but they are NOT embeddable, and that is Instagram's rule rather
+ *   than a gap here. The /embed endpoint serves permanent posts only: /p/ and
+ *   /reel/ both answer it with a full document, while the same request for an
+ *   /s/ link is refused outright. Stories expire after 24 hours and highlights
+ *   were never in the embed API.
+ *
+ *   So a /s/ entry can only ever be a still of your own that links out to
+ *   Instagram — which the Polaroid already does for any entry with a `poster`.
+ *   `igEntry` drops one that has no poster, because there would be nothing to
+ *   put in the frame.
  */
 function igParts(url) {
-  const m = String(url ?? '').match(/instagram\.com\/(reel|reels|p|tv)\/([\w-]+)/)
+  const s = String(url ?? '')
+  const m = s.match(/instagram\.com\/(reel|reels|p|tv|s)\/([\w-]+)/)
   if (!m) return null
   /* /reels/ is an alias for /reel/; everything else is already canonical */
-  return { kind: m[1] === 'reels' ? 'reel' : m[1], code: m[2] }
+  const kind = m[1] === 'reels' ? 'reel' : m[1]
+  /* A /s/ link's shortcode identifies the HIGHLIGHT, so every frame in one
+     shares it; which frame is meant rides in the query string. */
+  const mediaId = s.match(/[?&]story_media_id=([\w-]+)/)?.[1] || ''
+  return { kind, code: m[2], mediaId }
 }
 
 /** The shortcode out of /reel/CODE/, /p/CODE/ or /tv/CODE/. */
@@ -285,7 +329,7 @@ function igEntry(entry) {
   const url = raw0.url || raw0.link || ''
   const parts = igParts(url)
   if (!parts) return null
-  const { kind, code } = parts
+  const { kind, code, mediaId } = parts
   /* the entry's own words win; otherwise inherit from the wall */
   const known = { ...(IG_BY_CODE.get(code) ?? {}), ...raw0 }
   const raw = (known.caption || '').trim()
@@ -294,21 +338,35 @@ function igEntry(entry) {
      though, which would leave the prose line blank — so fall back to the raw
      caption, then to the category, rather than rendering an empty heading. */
   const prose = raw.replace(/#\S+/g, '').replace(/\s+/g, ' ').trim()
+  const thumbnail = srcOf(known.poster || known.thumbnail || '')
+
+  /* A story or highlight has no embed to fall back on — see `igParts`. It is
+     kept anyway, poster or not: with one the print is that still, and without
+     one the page draws a card that links out to Instagram. Dropping it would
+     mean a link written into this file rendering as nothing at all, which
+     reads as a bug however well documented it is. */
+  const embeddable = kind !== 's'
+
   return {
     code,
+    /* The React key. It cannot be `code` alone: every frame of one highlight
+       carries the same shortcode, so two of them in a list would collide. */
+    key: mediaId ? `${code}-${mediaId}` : code,
     kind,
+    embeddable,
     url: known.url || url,
     /* /embed renders the post itself in an iframe with no Instagram script.
        Under the link's own kind, so a photo post isn't asked for as a reel. */
-    embed: `https://www.instagram.com/${kind}/${code}/embed`,
+    embed: embeddable ? `https://www.instagram.com/${kind}/${code}/embed` : '',
     caption: prose || raw || known.category || '',
     hashtags: raw.match(/#\S+/g) ?? [],
     category: known.category || '',
     /* A still of your own. Instagram exposes no thumbnail without an API
        token, so the alternative is its embed — which brings its own action bar
        and sizes itself to the post's video, chrome and all. Name a poster and
-       the print is just that picture, with the embed kept for the tap. */
-    thumbnail: srcOf(known.poster || known.thumbnail || ''),
+       the print is just that picture, with the embed kept for the tap.
+       REQUIRED for a story or highlight, which has no embed to fall back on. */
+    thumbnail,
   }
 }
 
@@ -451,7 +509,7 @@ export const vlogsNote = block.note ?? ''
 export const vlogsChannel = block.channel ?? cfg.social?.youtube?.href ?? ''
 
 /**
- * Every vlog, newest `created` first.
+ * Every vlog, OLDEST `created` first — see the ORDER note at the top.
  *
  * One file in the folder is one vlog, with no other condition: a file that has
  * not been filled in yet still gets a page, so work in progress is visible
@@ -459,21 +517,35 @@ export const vlogsChannel = block.channel ?? cfg.social?.youtube?.href ?? ''
  * leading `_` — that's `_template.json` — and anything that isn't a JSON
  * object. The filename is the tie-breaker, so two files created the same day
  * keep a stable order instead of shuffling per build.
+ *
+ * `n` is stamped after the sort, so it is position in this list: the first vlog
+ * is stop 01 and each new one takes the next number.
  */
 export const vlogs = Object.entries(FILES)
   .map(([path, mod]) => [fileSlug(path), mod?.default ?? mod])
   .filter(([slug, data]) => !slug.startsWith('_') && data && typeof data === 'object')
   .map(([slug, data]) => build(data, slug))
-  .sort((a, b) => (b.orderMs - a.orderMs) || a.slug.localeCompare(b.slug))
+  .sort((a, b) => (a.orderMs - b.orderMs) || a.slug.localeCompare(b.slug))
   .map((v, i) => ({ ...v, n: i + 1 }))
+
+/** The newest vlog — the last one, now that the list runs oldest first. */
+export const latestVlog = () => vlogs[vlogs.length - 1] ?? null
 
 export const vlogCount = vlogs.length
 export const vlogById = id => vlogs.find(v => v.id === id || v.yt === id) ?? null
 
-/** The others, same category first — what a detail page puts under "Up next". */
+/**
+ * The others, same category first — what a detail page puts under "Up next".
+ *
+ * Newest first within each group, which is the opposite of `vlogs` itself: the
+ * road on /mygarage is a journey and reads forwards, but "Up next" is a
+ * what-to-watch list and the most recent vlog belongs at the front of it. Hence
+ * the reverse rather than reading `vlogs` in place.
+ */
 export function relatedVlogs(vlog, limit = 6) {
-  if (!vlog) return vlogs.slice(0, limit)
-  const rest = vlogs.filter(v => v.id !== vlog.id)
+  const newestFirst = [...vlogs].reverse()
+  if (!vlog) return newestFirst.slice(0, limit)
+  const rest = newestFirst.filter(v => v.id !== vlog.id)
   return [
     ...rest.filter(v => v.category === vlog.category),
     ...rest.filter(v => v.category !== vlog.category),
