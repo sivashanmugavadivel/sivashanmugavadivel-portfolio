@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Mileage · 7 · Weighted Readout</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   WEIGHTED READOUT — the reading has mass.
+
+   Nothing here is on a timeline. One spring integrator drives the
+   whole panel: it anticipates before it moves, overshoots once, and
+   settles. Grab the figure and throw it and the same spring catches
+   it — because a spring can be retargeted mid-flight, which is the
+   one thing a cubic-bezier can never do.
+
+   The figures underneath do not ease to the same place a little
+   later. They read the spring's position from N frames ago, so they
+   genuinely trail it, and the shape of the motion survives all the
+   way down the group. That is what follow-through is.
+
+   Squash and stretch is driven by velocity and volume-preserving, so
+   the block deforms rather than merely scaling.
+   ══════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08070e; --card:#141220; --card2:#1a1828; --well:#0d0b15;
+  --bd:rgba(255,255,255,0.07); --bd2:rgba(255,255,255,0.13);
+  --off:#f0eef6; --d1:rgba(240,238,246,0.65); --d2:rgba(240,238,246,0.4); --d3:rgba(240,238,246,0.22);
+  --acc:#8b5cf6; --acc2:#a78bfa;
+  --honey:#e0bb3c;
+  --good:#4ade80; --bad:#fb7185;
+  --sans:'Inter',sans-serif; --serif:'Playfair Display',serif; --mono:'JetBrains Mono',monospace;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+body{background:var(--bg);color:var(--d1);font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--honey);color:#161018}
+.page{width:90%;max-width:1180px;margin:0 auto;padding:64px 0 90px;
+  display:flex;flex-direction:column;gap:clamp(40px,7vh,76px)}
+.stub{border:1px dashed var(--bd);border-radius:16px;padding:26px;color:var(--d3);
+  font-size:0.7rem;letter-spacing:0.16em;text-transform:uppercase;text-align:center}
+
+.sec{position:relative;background:var(--card);border:1px solid var(--bd);border-radius:16px;
+  padding:26px clamp(14px,3vw,30px) 32px;overflow:hidden}
+.sec::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(60% 45% at 50% 0%,rgba(224,187,60,0.08),transparent 70%)}
+
+.head{position:relative;z-index:2;display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;margin-bottom:22px}
+.kick{font-family:var(--mono);font-size:0.58rem;letter-spacing:0.24em;text-transform:uppercase;
+  color:var(--honey);display:block;margin-bottom:7px}
+.head h2{font-family:var(--serif);font-size:clamp(1.35rem,3.6vw,2rem);font-weight:700;color:var(--off);line-height:1.1}
+.head .note{font-size:0.76rem;color:var(--d2);line-height:1.65;max-width:440px;margin-top:8px}
+
+/* ══ the rig ══ */
+.rig{position:relative;z-index:2;background:var(--well);border:1px solid var(--bd);border-radius:18px;
+  padding:clamp(20px,4vw,34px) clamp(16px,3vw,28px) clamp(16px,3vw,24px);
+  box-shadow:inset 0 -40px 80px -60px #000;overflow:hidden}
+
+/* the mass — the one thing you can grab */
+.mass{position:relative;display:inline-flex;align-items:flex-end;gap:10px;
+  padding:clamp(12px,2.4vw,20px) clamp(16px,3vw,26px);border-radius:16px;
+  background:linear-gradient(160deg,rgba(224,187,60,.10),rgba(224,187,60,.03));
+  border:1px solid rgba(224,187,60,.22);
+  cursor:grab;touch-action:none;user-select:none;
+  will-change:transform}
+.mass:active{cursor:grabbing}
+.mass.held{border-color:rgba(224,187,60,.55);
+  box-shadow:0 0 0 1px rgba(224,187,60,.2),0 30px 60px -34px rgba(224,187,60,.5)}
+.mass b{font-family:var(--mono);font-size:clamp(3rem,10vw,5rem);font-weight:700;color:var(--off);
+  line-height:.9;letter-spacing:-.045em;font-variant-numeric:tabular-nums;display:block}
+.mass .u{font-family:var(--mono);font-size:clamp(.7rem,1.8vw,.95rem);letter-spacing:0.2em;
+  text-transform:uppercase;color:var(--honey);padding-bottom:clamp(6px,1.4vw,12px)}
+/* the shadow under it reads the same spring, so the block looks lifted
+   rather than just moved */
+.shadow{position:absolute;left:50%;bottom:-14px;width:64%;height:14px;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(0,0,0,.6),transparent 70%);filter:blur(5px);
+  will-change:transform,opacity;pointer-events:none}
+
+.massrow{position:relative;display:flex;align-items:flex-end;gap:clamp(14px,3vw,26px);flex-wrap:wrap;
+  margin-bottom:clamp(18px,3.4vw,28px)}
+.grabhint{font-family:var(--mono);font-size:0.5rem;letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--d3);padding-bottom:6px;display:flex;align-items:center;gap:7px;
+  will-change:transform,opacity}
+.grabhint i{width:16px;height:16px;border-radius:50%;border:1px solid var(--d3);display:grid;
+  place-items:center;font-style:normal;font-size:.6rem}
+
+/* ── the trailing figures ── */
+.trail{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+@media(max-width:760px){ .trail{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media(max-width:440px){ .trail{grid-template-columns:1fr} }
+.fact{background:var(--card2);border:1px solid var(--bd);border-radius:12px;padding:13px 15px;
+  will-change:transform;transition:border-color .3s,box-shadow .35s var(--ease)}
+.fact:hover{border-color:rgba(224,187,60,.35);box-shadow:0 14px 28px -20px rgba(224,187,60,.6)}
+.fact s{display:block;text-decoration:none;font-family:var(--mono);font-size:0.45rem;
+  letter-spacing:0.18em;text-transform:uppercase;color:var(--d3);margin-bottom:6px}
+.fact b{display:block;font-family:var(--mono);font-size:1.04rem;font-weight:700;color:var(--off);
+  line-height:1;font-variant-numeric:tabular-nums}
+.fact b u{text-decoration:none;font-size:0.56rem;color:var(--d2);margin-left:3px;font-weight:400}
+.fact em{display:block;font-style:normal;font-size:0.55rem;color:var(--d3);margin-top:6px;line-height:1.5}
+.fact.up b{color:var(--good)}
+.fact.dn b{color:var(--bad)}
+
+/* ── the bench: what the spring is actually doing ── */
+.bench{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:clamp(16px,3vw,22px);
+  padding-top:14px;border-top:1px solid var(--bd)}
+.bench .lab{font-family:var(--mono);font-size:0.48rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--d3)}
+.presets{display:flex;gap:1px;background:var(--bd);border-radius:9px;overflow:hidden}
+.presets button{padding:7px 13px;border:0;background:var(--card2);color:var(--d2);cursor:pointer;
+  font-family:var(--mono);font-size:0.53rem;letter-spacing:0.14em;text-transform:uppercase;transition:.2s}
+.presets button:hover{color:var(--off)}
+.presets button.on{background:var(--honey);color:#161018;font-weight:700}
+.presets button:focus-visible{outline:2px solid var(--acc2);outline-offset:-2px}
+.readout{margin-left:auto;display:flex;gap:14px;font-family:var(--mono);font-size:0.52rem;
+  color:var(--d3);font-variant-numeric:tabular-nums}
+.readout span b{color:var(--honey);font-weight:600}
+/* the velocity trace — a live strip of where the spring has been */
+.trace{width:clamp(80px,14vw,132px);height:26px;flex:none}
+.trace path{fill:none;stroke:var(--honey);stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round;opacity:.75}
+.trace line{stroke:rgba(255,255,255,.1);stroke-width:1}
+
+.method{display:flex;gap:10px;align-items:flex-start;font-size:0.71rem;line-height:1.7;color:var(--d1);
+  margin-top:clamp(14px,2.6vw,18px)}
+.method i{flex:none;width:3px;align-self:stretch;border-radius:2px;background:var(--honey);opacity:.55}
+
+/* ══ empty ══ */
+.none{position:relative;z-index:2;border:1px dashed var(--bd2);border-radius:14px;
+  padding:38px 26px;text-align:center;color:var(--d2);font-size:0.8rem;line-height:1.75;max-width:470px;margin:0 auto}
+.none b{display:block;font-family:var(--mono);font-size:0.56rem;letter-spacing:0.24em;
+  text-transform:uppercase;color:var(--honey);margin-bottom:12px}
+.none .pend{width:2px;height:52px;margin:0 auto 8px;background:var(--bd2);transform-origin:50% 0;
+  animation:sway 3.6s cubic-bezier(.45,0,.55,1) infinite}
+.none .pend::after{content:'';position:absolute;left:50%;bottom:-7px;width:14px;height:14px;
+  margin-left:-7px;border-radius:50%;background:rgba(224,187,60,.35)}
+.none .pendwrap{position:relative;height:74px;margin-bottom:14px}
+@keyframes sway{0%,100%{transform:rotate(-11deg)}50%{transform:rotate(11deg)}}
+
+@media(prefers-reduced-motion:reduce){
+  .none .pend{animation:none;transform:none}
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="stub">section above</div>
+
+  <section class="sec" aria-labelledby="mh">
+    <div class="head">
+      <div>
+        <span class="kick" id="kick"></span>
+        <h2 id="mh"></h2>
+        <p class="note" id="note"></p>
+      </div>
+    </div>
+    <div id="body"></div>
+  </section>
+
+  <div class="stub">section below</div>
+</div>
+
+<script src="mileage-data.js"></script>
+<script src="mileage-motion.js"></script>
+<script>
+document.getElementById('kick').textContent = MILEAGE_COPY.kicker
+document.getElementById('mh').textContent   = MILEAGE_COPY.title
+document.getElementById('note').textContent = MILEAGE_COPY.note
+
+const body = document.getElementById('body')
+
+if (MILEAGE_EMPTY) {
+  body.innerHTML = `<div class="none">
+      <div class="pendwrap"><div class="pend"></div></div>
+      <b>Nothing to weigh</b>
+      ${MILEAGE_COPY.empty}
+    </div>`
+} else {
+
+body.innerHTML = `
+  <div class="rig" id="rig">
+    <div class="massrow">
+      <div class="mass" id="mass" role="button" tabindex="0"
+           aria-label="Mileage ${MILEAGE.kmpl} kilometres per litre. Drag to displace it.">
+        <b id="big">0.0</b>
+        <span class="u">km / l</span>
+        <span class="shadow" id="shadow"></span>
+      </div>
+      <span class="grabhint" id="hint"><i>↕</i> drag it · throw it</span>
+    </div>
+
+    <div class="trail" id="trail"></div>
+
+    <div class="bench">
+      <span class="lab">Spring</span>
+      <div class="presets" id="presets" role="group" aria-label="Spring character">
+        <button data-p="taut">Taut</button>
+        <button data-p="natural" class="on">Natural</button>
+        <button data-p="heavy">Heavy</button>
+      </div>
+      <svg class="trace" id="trace" viewBox="0 0 132 26" aria-hidden="true" preserveAspectRatio="none">
+        <line x1="0" y1="13" x2="132" y2="13"/>
+        <path id="tracePath" d=""/>
+      </svg>
+      <div class="readout">
+        <span>x <b id="rx">0.0</b></span>
+        <span>v <b id="rv">0.0</b></span>
+      </div>
+    </div>
+
+    <p class="method"><i></i><span>${MILEAGE.method}</span></p>
+  </div>
+`
+
+/* ── the figures that trail ─────────────────────────────────────── */
+const trail = document.getElementById('trail')
+trail.innerHTML = MILEAGE_FACTS.map((f) => `
+  <div class="fact ${f.tone || ''}">
+    <s>${f.label}</s>
+    <b>${f.value}${f.unit ? `<u>${f.unit}</u>` : ''}</b>
+    <em>${f.sub}</em>
+  </div>`).join('')
+
+const mass   = document.getElementById('mass')
+const shadow = document.getElementById('shadow')
+const hint   = document.getElementById('hint')
+const big    = document.getElementById('big')
+const facts  = [...trail.querySelectorAll('.fact')]
+
+/* ── the spring ──────────────────────────────────────────────────
+   One integrator for the whole panel. `x` is a vertical displacement
+   in pixels: 0 is home, negative is lifted. Everything on screen is a
+   function of this one number and its velocity. */
+const PRESETS = {
+  taut:    { stiffness: 320, damping: 26, mass: 1 },
+  natural: { stiffness: 170, damping: 17, mass: 1 },
+  heavy:   { stiffness: 110, damping: 15, mass: 1.7 },
+}
+const spring = new MM.Spring(Object.assign({ from: -140, to: -140 }, PRESETS.natural))
+
+/* Each figure trails the mass by a few frames more than the one before
+   it. A ring buffer, not a delayed tween: the follower is heading for
+   where the driver WAS, so the shape of the motion carries down the
+   group instead of six copies of it starting at different times. */
+const lags = facts.map((_, i) => new MM.Lag(4 + i * 3))
+const shadowLag = new MM.Lag(2)
+
+const rx = document.getElementById('rx')
+const rv = document.getElementById('rv')
+const tracePath = document.getElementById('tracePath')
+const HIST = 66
+const hist = new Array(HIST).fill(0)
+let histI = 0
+let frame = 0
+
+spring.onChange((x, v) => {
+  /* the mass: displaced, and squashed by how fast it is going. Volume
+     preserving, so it deforms rather than scaling. */
+  const s = MM.squash(v, 0.00028, 0.11)
+  mass.style.transform =
+    `translate3d(0, ${x.toFixed(2)}px, 0) scale(${s.sx.toFixed(4)}, ${s.sy.toFixed(4)})`
+
+  /* the shadow reads the same spring one beat behind and tightens as
+     the block comes down — a lifted thing has a smaller, softer shadow */
+  const sx = shadowLag.push(x)
+  const lift = Math.min(1, Math.abs(sx) / 140)
+  shadow.style.transform =
+    `translate3d(-50%, ${(-sx * 0.08).toFixed(2)}px, 0) scale(${(1 - lift * 0.35).toFixed(3)})`
+  shadow.style.opacity = (1 - lift * 0.55).toFixed(3)
+
+  /* the group, each further behind than the last */
+  for (let i = 0; i < facts.length; i++) {
+    const y = lags[i].push(x)
+    facts[i].style.transform = `translate3d(0, ${(y * 0.55).toFixed(2)}px, 0)`
+    facts[i].style.opacity = (1 - Math.min(0.85, Math.abs(y) / 190)).toFixed(3)
+  }
+
+  hint.style.transform = `translate3d(0, ${(lags[0].buf[0] * 0.25).toFixed(2)}px, 0)`
+
+  /* the bench readout, throttled — sixty text writes a second is a
+     waste and the numbers are unreadable anyway */
+  if ((frame++ & 3) === 0) {
+    rx.textContent = x.toFixed(1)
+    rv.textContent = v.toFixed(0)
+    hist[histI] = x
+    histI = (histI + 1) % HIST
+    let d = ''
+    for (let i = 0; i < HIST; i++) {
+      const val = hist[(histI + i) % HIST]
+      const px = (i / (HIST - 1)) * 132
+      const py = 13 - Math.max(-12, Math.min(12, val * 0.085))
+      d += (i ? ' L ' : 'M ') + px.toFixed(1) + ' ' + py.toFixed(1)
+    }
+    tracePath.setAttribute('d', d)
+  }
+})
+
+/* ── the number itself ───────────────────────────────────────────
+   Counted on its own curve rather than tied to the spring — a figure
+   that ran backwards every time the block overshot would be lying. */
+function countUp(ms) {
+  const t0 = performance.now()
+  const step = (t) => {
+    const k = Math.min(1, (t - t0) / ms)
+    const e = 1 - Math.pow(1 - k, 4)
+    big.textContent = (MILEAGE.kmpl * e).toFixed(1)
+    if (k < 1) requestAnimationFrame(step)
+  }
+  requestAnimationFrame(step)
+}
+
+/* ── drag and throw ──────────────────────────────────────────────
+   While held, the spring is driven by hand. On release it is retargeted
+   to home and given the pointer's own velocity — so a flick continues
+   the gesture instead of restarting as a fresh animation. */
+const track = MM.tracker()
+let dragging = false, grabY = 0, grabX = 0
+
+function down(e) {
+  if (MM.REDUCED) return
+  dragging = true
+  mass.classList.add('held')
+  mass.setPointerCapture?.(e.pointerId)
+  grabY = e.clientY
+  grabX = spring.x
+  track.reset()
+  track.add(spring.x)
+  e.preventDefault()
+}
+function move(e) {
+  if (!dragging) return
+  /* resistance past the ends, so it never feels like it has come off
+     its mounting — the further you pull, the less it gives */
+  const raw = grabX + (e.clientY - grabY)
+  const limit = 210
+  const over = Math.abs(raw) > limit ? (Math.abs(raw) - limit) * 0.55 : 0
+  const y = Math.sign(raw) * (Math.min(Math.abs(raw), limit) + over * 0.4)
+  spring.hold(y)
+  track.add(y)
+}
+function up() {
+  if (!dragging) return
+  dragging = false
+  mass.classList.remove('held')
+  spring.to(0).kick(track.velocity())
+}
+mass.addEventListener('pointerdown', down)
+window.addEventListener('pointermove', move)
+window.addEventListener('pointerup', up)
+window.addEventListener('pointercancel', up)
+
+/* the keyboard gets the same physics, not a different affordance */
+mass.addEventListener('keydown', (e) => {
+  const d = e.key === 'ArrowUp' ? -1 : e.key === 'ArrowDown' ? 1 : 0
+  if (!d) return
+  e.preventDefault()
+  spring.to(0).kick(d * 900)
+})
+
+/* ── spring character ────────────────────────────────────────────
+   Retargeting the constants mid-flight is legal and looks it: the
+   block is already moving and simply starts obeying a different law. */
+document.getElementById('presets').addEventListener('click', (e) => {
+  const b = e.target.closest('button')
+  if (!b) return
+  const p = PRESETS[b.dataset.p]
+  spring.k = p.stiffness; spring.c = p.damping; spring.m = p.mass
+  document.querySelectorAll('.presets button').forEach((x) => x.classList.toggle('on', x === b))
+  /* demonstrate it immediately rather than waiting for the next drag */
+  spring.to(0).kick(-1500)
+})
+
+/* ── the entrance ────────────────────────────────────────────────
+   Anticipation, then release. The block settles DOWN into place from
+   above, which means it first has to be shown going the other way —
+   a move with no wind-up reads as a cut, not as a movement. */
+function enter() {
+  if (MM.REDUCED) {
+    spring.snap(0)
+    big.textContent = MILEAGE.kmpl.toFixed(1)
+    return
+  }
+  MM.sequence([
+    [0, () => { spring.to(-168) }],          // wind up: lifts a little further
+    240,                                      // hold — the pause IS the anticipation
+    [0, () => { spring.to(0).kick(420) }],   // release, thrown downward into place
+    [90, () => countUp(1050)],               // the figure follows the movement in
+  ])
+}
+
+new IntersectionObserver((es, ob) => {
+  es.forEach((e) => {
+    if (!e.isIntersecting) return
+    ob.unobserve(e.target)
+    enter()
+  })
+}, { threshold: 0.3 }).observe(document.getElementById('rig'))
+}
+</script>
+</body>
+</html>

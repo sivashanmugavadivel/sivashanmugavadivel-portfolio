@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Mileage · 3 · Tank Level</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   TANK LEVEL — one tank, filling, with the level marker riding up on
+   the surface of the fuel, so the reading and the liquid arrive
+   together instead of the number being printed on top of a picture.
+
+   The fluid is real fluid: two crests at different speeds, a meniscus
+   that clings to the glass, bubbles that let go off the bottom, and a
+   slosh when the fill stops dead. Tilt the tank with the pointer and
+   the surface stays level, because a surface does.
+
+   The tank illustrates the tank; the figure beside it is the reading,
+   and the ruler under it is what that figure buys in kilometres.
+   ══════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08070e; --card:#141220; --card2:#1a1828; --well:#0d0b15;
+  --bd:rgba(255,255,255,0.07); --bd2:rgba(255,255,255,0.13);
+  --off:#f0eef6; --d1:rgba(240,238,246,0.65); --d2:rgba(240,238,246,0.4); --d3:rgba(240,238,246,0.22);
+  --acc:#8b5cf6; --acc2:#a78bfa;
+  --honey:#e0bb3c;
+  --good:#4ade80; --bad:#fb7185;
+  --sans:'Inter',sans-serif; --serif:'Playfair Display',serif; --mono:'JetBrains Mono',monospace;
+  --ease:cubic-bezier(.22,1,.36,1);
+  --pour:cubic-bezier(.16,.84,.32,1);
+}
+body{background:var(--bg);color:var(--d1);font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--honey);color:#161018}
+.page{width:90%;max-width:1180px;margin:0 auto;padding:64px 0 90px;
+  display:flex;flex-direction:column;gap:clamp(40px,7vh,76px)}
+.stub{border:1px dashed var(--bd);border-radius:16px;padding:26px;color:var(--d3);
+  font-size:0.7rem;letter-spacing:0.16em;text-transform:uppercase;text-align:center}
+
+.sec{position:relative;background:var(--card);border:1px solid var(--bd);border-radius:16px;
+  padding:26px clamp(14px,3vw,30px) 32px;overflow:hidden;
+  opacity:0;transform:translateY(32px);animation:rise .8s var(--ease) .1s forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+.sec::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(60% 45% at 50% 0%,rgba(224,187,60,0.08),transparent 70%)}
+
+.head{position:relative;z-index:2;display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;margin-bottom:22px}
+.kick{font-family:var(--mono);font-size:0.58rem;letter-spacing:0.24em;text-transform:uppercase;
+  color:var(--honey);display:block;margin-bottom:7px}
+.head h2{font-family:var(--serif);font-size:clamp(1.35rem,3.6vw,2rem);font-weight:700;color:var(--off);line-height:1.1}
+.head .note{font-size:0.76rem;color:var(--d2);line-height:1.65;max-width:440px;margin-top:8px}
+
+.wrap{position:relative;z-index:2;display:grid;
+  grid-template-columns:minmax(0,232px) minmax(0,1fr);gap:clamp(18px,4vw,40px);align-items:center}
+
+/* ══ the tank ══ */
+.tankbox{position:relative;perspective:900px}
+.tank{position:relative;height:clamp(260px,42vw,340px);border-radius:14px 14px 20px 20px;
+  overflow:hidden;border:1px solid var(--bd2);border-top:1px solid rgba(255,255,255,.2);
+  background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.012));
+  box-shadow:0 30px 60px -34px #000,inset 0 0 40px rgba(0,0,0,.55);
+  transition:transform .5s var(--ease);transform-style:preserve-3d;
+  transform:rotateY(var(--ry,0deg)) rotateX(var(--rx,0deg))}
+/* the highlight and shade that make it a cylinder, not a rectangle */
+.tank::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:5;
+  border-radius:14px 14px 20px 20px;
+  background:linear-gradient(90deg,rgba(255,255,255,.13) 0 9%,rgba(255,255,255,.03) 22%,
+             transparent 48% 62%,rgba(0,0,0,.34) 100%)}
+/* the measure etched down the left */
+.marks{position:absolute;left:0;top:0;bottom:0;width:34%;z-index:4;pointer-events:none}
+.marks i{position:absolute;left:0;height:0;border-top:1px solid rgba(255,255,255,.16);display:block}
+.marks i.big{border-top-color:rgba(255,255,255,.3)}
+.marks i s{position:absolute;left:calc(100% + 5px);top:-6px;text-decoration:none;
+  font-family:var(--mono);font-size:0.44rem;letter-spacing:0.08em;color:var(--d3);white-space:nowrap}
+
+/* the fuel */
+.fuel{position:absolute;left:0;right:0;bottom:0;height:0;z-index:2;
+  background:linear-gradient(180deg,rgba(224,187,60,.72),rgba(224,187,60,.26));
+  transition:height 2s var(--pour)}
+/* Two crests at different speeds — that is the whole trick. Shallow on
+   purpose: a tall crest tiles into a row of scallops and stops reading
+   as liquid at all. */
+.fuel .crest{position:absolute;left:-60%;right:-60%;top:-4px;height:8px;display:block;
+  background:radial-gradient(50% 100% at 50% 100%,rgba(243,220,130,.6) 42%,transparent 43%);
+  background-size:52px 8px;animation:wv 3.6s linear infinite}
+.fuel .crest.b{top:-3px;opacity:.4;animation-duration:2.4s;animation-direction:reverse;
+  background-size:38px 7px}
+@keyframes wv{to{transform:translateX(52px)}}
+/* the meniscus clinging to the glass */
+.fuel .skin{position:absolute;left:0;right:0;top:-1px;height:2px;display:block;
+  background:rgba(255,240,190,.75);box-shadow:0 0 12px 2px rgba(224,187,60,.65)}
+/* the slosh when the fill stops */
+.tank.settle .fuel .crest{animation-duration:.9s}
+.tank.settle .fuel .crest.b{animation-duration:.6s}
+
+/* bubbles */
+.bub{position:absolute;bottom:0;width:5px;height:5px;border-radius:50%;z-index:3;
+  background:rgba(255,255,255,.35);opacity:0;animation:up 3.4s ease-in infinite}
+.bub:nth-of-type(2){left:64%;width:3px;height:3px;animation-delay:1.1s;animation-duration:2.8s}
+.bub:nth-of-type(3){left:38%;width:4px;height:4px;animation-delay:2.2s}
+@keyframes up{0%{opacity:0;transform:translateY(0) scale(.6)}
+              12%{opacity:.6}
+              100%{opacity:0;transform:translateY(-190px) scale(1)}}
+
+/* the cap on top */
+.cap{position:absolute;left:50%;top:-13px;width:64px;height:22px;margin-left:-32px;z-index:6;
+  border-radius:7px 7px 3px 3px;background:linear-gradient(180deg,#4a4360,#252136);
+  border:1px solid var(--bd2);box-shadow:0 5px 14px rgba(0,0,0,.6)}
+.cap::after{content:'';position:absolute;left:50%;top:7px;width:26px;height:2px;margin-left:-13px;
+  border-radius:2px;background:rgba(255,255,255,.16)}
+
+/* The marker riding on the surface. It reads the level — which is what
+   a fuel surface actually measures — and hangs BELOW the meniscus, into
+   the liquid. Above it, a brimmed tank leaves no headroom and the tank's
+   own overflow:hidden takes the top off the type. */
+/* `bottom` puts the block's bottom edge on the surface, which floats it
+   ABOVE the line; the translate drops it so its top edge sits there and
+   the type hangs into the liquid instead. */
+.rider{position:absolute;left:0;right:0;bottom:0;z-index:7;pointer-events:none;
+  transform:translateY(100%);transition:bottom 2s var(--pour);padding-top:9px}
+.rider b{display:block;text-align:center;font-family:var(--mono);
+  font-size:clamp(.95rem,2.8vw,1.2rem);font-weight:700;color:var(--off);line-height:1;
+  letter-spacing:-.02em;font-variant-numeric:tabular-nums;
+  text-shadow:0 2px 10px rgba(0,0,0,.9)}
+.rider s{display:block;text-align:center;text-decoration:none;font-family:var(--mono);
+  font-size:0.44rem;letter-spacing:0.22em;text-transform:uppercase;color:#3b3008;
+  margin-top:5px}
+
+.tankcap{margin-top:12px;text-align:center;font-family:var(--mono);font-size:0.47rem;
+  letter-spacing:0.18em;text-transform:uppercase;color:var(--d3)}
+
+/* ══ the right side ══ */
+.side{display:flex;flex-direction:column;gap:16px;min-width:0}
+.claimrow{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.claimrow .huge{font-family:var(--mono);font-size:clamp(2.6rem,8vw,3.8rem);font-weight:700;
+  color:var(--off);line-height:1;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.claimrow .huge u{text-decoration:none;font-size:.9rem;color:var(--d2);margin-left:7px;font-weight:400;
+  letter-spacing:0}
+.claimrow .badge{font-family:var(--mono);font-size:0.5rem;letter-spacing:0.16em;text-transform:uppercase;
+  padding:5px 11px;border-radius:99px;border:1px solid rgba(74,222,128,.3);
+  color:var(--good);background:rgba(74,222,128,.08)}
+.claimrow .badge.dn{border-color:rgba(251,113,133,.3);color:var(--bad);background:rgba(251,113,133,.08)}
+
+/* the range ruler — what the tank buys, laid out as distance */
+.ruler{position:relative;background:var(--well);border:1px solid var(--bd);border-radius:14px;
+  padding:16px 16px 14px}
+.ruler > s{display:block;text-decoration:none;font-family:var(--mono);font-size:0.48rem;
+  letter-spacing:0.2em;text-transform:uppercase;color:var(--d3);margin-bottom:14px}
+.road{position:relative;height:8px;border-radius:99px;background:rgba(255,255,255,.05);
+  overflow:visible;margin-bottom:26px}
+.road .done{position:absolute;left:0;top:0;bottom:0;border-radius:99px;width:0;
+  background:linear-gradient(90deg,rgba(224,187,60,.3),var(--honey));
+  box-shadow:0 0 16px rgba(224,187,60,.4);
+  transition:width 2.2s var(--pour)}
+/* the tick marks along the road */
+.road .t{position:absolute;top:-4px;width:1px;height:16px;background:rgba(255,255,255,.14)}
+.road .t s{position:absolute;left:50%;top:20px;transform:translateX(-50%);text-decoration:none;
+  font-family:var(--mono);font-size:0.44rem;color:var(--d3);white-space:nowrap}
+/* the bike at the head of it — above the road, so it never lands on a
+   tick label, which all sit below */
+.road .rider2{position:absolute;top:-18px;left:0;width:30px;height:30px;margin-left:-15px;
+  transition:left 2.2s var(--pour);display:grid;place-items:center;font-size:1rem;
+  filter:drop-shadow(0 5px 8px rgba(0,0,0,.8))}
+/* the far end of the tank, marked like the other ticks so it reads as
+   the last one on the scale rather than as a floating badge */
+.road .t.end{background:var(--honey);height:20px;top:-6px;box-shadow:0 0 10px rgba(224,187,60,.6)}
+/* pinned to the right edge rather than centred on the tick — centred,
+   half the label hangs outside the panel */
+.road .t.end s{color:var(--honey);font-weight:700;letter-spacing:0.14em;text-transform:uppercase;
+  left:auto;right:0;transform:none}
+
+/* the derived figures */
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:8px}
+/* --d is the entrance stagger, scoped to the two properties the
+   entrance uses — on the whole shorthand it would delay hovers too */
+.fact{background:var(--card2);border:1px solid var(--bd);border-radius:12px;padding:12px 14px;
+  opacity:0;transform:translateY(10px);
+  transition:opacity .55s ease var(--d,0s),transform .55s var(--ease) var(--d,0s),
+             border-color .3s,box-shadow .35s var(--ease)}
+.fact.in{opacity:1;transform:none}
+.fact:hover{border-color:rgba(224,187,60,.35);box-shadow:0 14px 28px -20px rgba(224,187,60,.6)}
+.fact s{display:block;text-decoration:none;font-family:var(--mono);font-size:0.45rem;
+  letter-spacing:0.18em;text-transform:uppercase;color:var(--d3);margin-bottom:6px}
+.fact b{display:block;font-family:var(--mono);font-size:1.02rem;font-weight:700;color:var(--off);
+  line-height:1;font-variant-numeric:tabular-nums}
+.fact b u{text-decoration:none;font-size:0.56rem;color:var(--d2);margin-left:3px;font-weight:400}
+.fact em{display:block;font-style:normal;font-size:0.55rem;color:var(--d3);margin-top:6px;line-height:1.5}
+.fact.up b{color:var(--good)}
+.fact.dn b{color:var(--bad)}
+
+.method{display:flex;gap:10px;align-items:flex-start;font-size:0.71rem;line-height:1.7;color:var(--d1)}
+.method i{flex:none;width:3px;align-self:stretch;border-radius:2px;background:var(--honey);opacity:.55}
+
+/* ══ empty ══ */
+.none{position:relative;z-index:2;border:1px dashed var(--bd2);border-radius:14px;
+  padding:38px 26px;text-align:center;color:var(--d2);font-size:0.8rem;line-height:1.75;max-width:470px;margin:0 auto}
+.none b{display:block;font-family:var(--mono);font-size:0.56rem;letter-spacing:0.24em;
+  text-transform:uppercase;color:var(--honey);margin-bottom:12px}
+.none .empt{width:52px;height:96px;margin:0 auto 18px;border:1px solid var(--bd2);
+  border-radius:10px 10px 14px 14px;position:relative;overflow:hidden}
+.none .empt::after{content:'';position:absolute;left:0;right:0;bottom:0;height:6%;
+  background:rgba(224,187,60,.28);animation:tease 3.6s ease-in-out infinite}
+@keyframes tease{50%{height:11%}}
+
+@media(max-width:800px){
+  .wrap{grid-template-columns:1fr;gap:26px}
+  .tankbox{max-width:220px;margin:0 auto}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  .sec{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="stub">section above</div>
+
+  <section class="sec" aria-labelledby="mh">
+    <div class="head">
+      <div>
+        <span class="kick" id="kick"></span>
+        <h2 id="mh"></h2>
+        <p class="note" id="note"></p>
+      </div>
+    </div>
+    <div id="body"></div>
+  </section>
+
+  <div class="stub">section below</div>
+</div>
+
+<script src="mileage-data.js"></script>
+<script>
+document.getElementById('kick').textContent = MILEAGE_COPY.kicker
+document.getElementById('mh').textContent   = MILEAGE_COPY.title
+document.getElementById('note').textContent = MILEAGE_COPY.note
+
+const body = document.getElementById('body')
+
+if (MILEAGE_EMPTY) {
+  body.innerHTML = `<div class="none">
+      <div class="empt"></div>
+      <b>Tank dry</b>
+      ${MILEAGE_COPY.empty}
+    </div>`
+} else {
+
+/* The tank fills to the brim — 13.7 of 13.7 L — but stopping the fluid
+   at the very top would hide the surface behind the rim, so it settles
+   just under it, the way a brimmed tank actually sits. */
+const LEVEL = 88
+
+/* litre marks up the glass */
+let marks = ''
+for (let l = 2; l < MILEAGE_BIKE.tank; l += 2) {
+  const p = (l / MILEAGE_BIKE.tank) * LEVEL
+  marks += `<i class="${l % 4 === 0 ? 'big' : ''}" style="bottom:${p}%;width:${l % 4 === 0 ? 100 : 60}%">
+              ${l % 4 === 0 ? `<s>${l} L</s>` : ''}</i>`
+}
+
+/* Distance ticks along the range road at a round interval, and the
+   range itself as the last tick — the end of the tank belongs on the
+   same scale as everything before it. A tick within a tenth of the end
+   is dropped, or the two labels sit on top of each other. */
+const step = MILEAGE.range > 300 ? 100 : 50
+let ticks = ''
+for (let d = step; d < MILEAGE.range * 0.9; d += step) {
+  ticks += `<div class="t" style="left:${(d / MILEAGE.range) * 100}%"><s>${d}</s></div>`
+}
+ticks += `<div class="t end" style="left:100%"><s>${fmtKm(MILEAGE.range)} km · dry</s></div>`
+
+body.innerHTML = `
+  <div class="wrap">
+    <div class="tankbox">
+      <div class="tank" id="tank">
+        <div class="cap"></div>
+        <div class="marks">${marks}</div>
+        <div class="fuel" id="fuel">
+          <span class="crest"></span>
+          <span class="crest b"></span>
+          <span class="skin"></span>
+        </div>
+        <span class="bub" style="left:46%"></span>
+        <span class="bub"></span>
+        <span class="bub"></span>
+        <div class="rider" id="rider">
+          <b>${MILEAGE_BIKE.tank} L</b>
+          <s>brimmed</s>
+        </div>
+      </div>
+      <div class="tankcap">${MILEAGE_BIKE.fuel}</div>
+    </div>
+
+    <div class="side">
+      <div class="claimrow">
+        <div class="huge"><span id="big">0.0</span><u>km/l</u></div>
+        <span class="badge ${MILEAGE.vsClaimed >= 0 ? '' : 'dn'}">
+          ${MILEAGE.vsClaimed >= 0 ? '+' : ''}${MILEAGE.vsClaimed}% vs claimed ${MILEAGE_BIKE.claimed}
+        </span>
+      </div>
+
+      <div class="ruler">
+        <s>What one tank buys</s>
+        <div class="road">
+          <div class="done" id="done"></div>
+          ${ticks}
+          <div class="rider2" id="rider2" aria-hidden="true">🏍️</div>
+        </div>
+      </div>
+
+      <div class="facts" id="facts"></div>
+      <p class="method"><i></i><span>${MILEAGE.method}</span></p>
+    </div>
+  </div>
+`
+
+document.getElementById('facts').innerHTML = MILEAGE_FACTS
+  .filter(f => f.key !== 'range')       /* the road already says the range */
+  .map((f, i) => `
+    <div class="fact ${f.tone || ''}" style="--d:${(MILEAGE_REDUCED ? 0 : 1400 + i * 80)}ms">
+      <s>${f.label}</s>
+      <b>${f.value}${f.unit ? `<u>${f.unit}</u>` : ''}</b>
+      <em>${f.sub}</em>
+    </div>`).join('')
+
+/* ── the fill ────────────────────────────────────────────────── */
+const tank  = document.getElementById('tank')
+const fuel  = document.getElementById('fuel')
+const rider = document.getElementById('rider')
+const big   = document.getElementById('big')
+const done  = document.getElementById('done')
+const rider2 = document.getElementById('rider2')
+
+function countTo(el, to, ms) {
+  const t0 = performance.now()
+  const tick = (t) => {
+    const k = Math.min(1, (t - t0) / ms)
+    const e = 1 - Math.pow(1 - k, 3)
+    el.textContent = (to * e).toFixed(1)
+    if (k < 1) requestAnimationFrame(tick)
+  }
+  requestAnimationFrame(tick)
+}
+
+function run() {
+  if (MILEAGE_REDUCED) {
+    fuel.style.height = LEVEL + '%'
+    rider.style.bottom = LEVEL + '%'
+    done.style.width = '100%'
+    rider2.style.left = '100%'
+    big.textContent = MILEAGE.kmpl.toFixed(1)
+    document.querySelectorAll('.fact').forEach(f => f.classList.add('in'))
+    return
+  }
+  fuel.style.height = LEVEL + '%'
+  rider.style.bottom = LEVEL + '%'
+  countTo(big, MILEAGE.kmpl, 2000)
+  /* the road runs a beat behind the tank — you fill, then you ride */
+  setTimeout(() => {
+    done.style.width = '100%'
+    rider2.style.left = '100%'
+  }, 500)
+  /* and the surface sloshes when the fill stops dead */
+  setTimeout(() => {
+    tank.classList.add('settle')
+    setTimeout(() => tank.classList.remove('settle'), 1400)
+  }, 2000)
+  document.querySelectorAll('.fact').forEach(f => f.classList.add('in'))
+}
+
+new IntersectionObserver((es, ob) => {
+  es.forEach((e) => {
+    if (!e.isIntersecting) return
+    ob.unobserve(e.target)
+    setTimeout(run, 300)
+  })
+}, { threshold: 0.3 }).observe(tank)
+
+/* ── tilt ────────────────────────────────────────────────────────
+   The tank turns towards the pointer; the fluid inside does not,
+   because a liquid surface stays level however you hold the can. */
+const box = document.querySelector('.tankbox')
+box.addEventListener('pointermove', (e) => {
+  const r = box.getBoundingClientRect()
+  const x = (e.clientX - r.left) / r.width - 0.5
+  const y = (e.clientY - r.top) / r.height - 0.5
+  tank.style.setProperty('--ry', `${(x * 16).toFixed(2)}deg`)
+  tank.style.setProperty('--rx', `${(-y * 9).toFixed(2)}deg`)
+})
+box.addEventListener('pointerleave', () => {
+  tank.style.setProperty('--ry', '0deg')
+  tank.style.setProperty('--rx', '0deg')
+})
+}
+</script>
+</body>
+</html>

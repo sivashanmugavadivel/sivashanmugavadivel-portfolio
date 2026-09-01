@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Mileage · 14 · Fuel Gun</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   FUEL GUN — a nozzle, a drop, and a figure floating on what it
+   lands in.
+
+   The drop is not a keyframe. It swells at the spout until surface
+   tension gives, necks, pinches off, then falls under gravity — so it
+   accelerates, and it arrives faster than it left. It squashes on
+   impact and throws a little of itself back out.
+
+   The pool is a one-dimensional wave simulation: a row of heights,
+   each pulled toward the average of its neighbours. An impact pushes
+   one column down and the disturbance genuinely travels outward and
+   reflects off the ends. Nothing about the ripples is drawn; they are
+   what the water does.
+
+   The readout floats on it, and it floats properly — it reads the
+   surface height at its own position, so the wave passes under it and
+   lifts it as it goes.
+   ══════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08070e; --card:#141220; --card2:#1a1828; --well:#0d0b15;
+  --bd:rgba(255,255,255,0.07); --bd2:rgba(255,255,255,0.13);
+  --off:#f0eef6; --d1:rgba(240,238,246,0.65); --d2:rgba(240,238,246,0.4); --d3:rgba(240,238,246,0.22);
+  --acc:#8b5cf6; --acc2:#a78bfa;
+  --honey:#e0bb3c;
+  --good:#4ade80; --bad:#fb7185;
+  --sans:'Inter',sans-serif; --serif:'Playfair Display',serif; --mono:'JetBrains Mono',monospace;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+body{background:var(--bg);color:var(--d1);font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--honey);color:#161018}
+.page{width:90%;max-width:1180px;margin:0 auto;padding:64px 0 90px;
+  display:flex;flex-direction:column;gap:clamp(40px,7vh,76px)}
+.stub{border:1px dashed var(--bd);border-radius:16px;padding:26px;color:var(--d3);
+  font-size:0.7rem;letter-spacing:0.16em;text-transform:uppercase;text-align:center}
+
+.sec{position:relative;background:var(--card);border:1px solid var(--bd);border-radius:16px;
+  padding:26px clamp(14px,3vw,30px) 30px;overflow:hidden}
+.sec::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(60% 45% at 50% 0%,rgba(224,187,60,0.08),transparent 70%)}
+
+.head{position:relative;z-index:2;display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;margin-bottom:14px}
+.kick{font-family:var(--mono);font-size:0.58rem;letter-spacing:0.24em;text-transform:uppercase;
+  color:var(--honey);display:block;margin-bottom:7px}
+.head h2{font-family:var(--serif);font-size:clamp(1.35rem,3.6vw,2rem);font-weight:700;color:var(--off);line-height:1.1}
+.head .note{font-size:0.76rem;color:var(--d2);line-height:1.65;max-width:440px;margin-top:8px}
+
+/* ══ the stage ══ */
+.stage{position:relative;z-index:2;width:100%;max-width:720px;margin:0 auto;
+  aspect-ratio:680 / 470;background:
+    radial-gradient(70% 55% at 50% 88%,rgba(224,187,60,.10),transparent 70%),
+    var(--well);
+  border:1px solid var(--bd);border-radius:18px;overflow:hidden;
+  box-shadow:inset 0 -40px 80px -60px #000}
+.stage svg{position:absolute;inset:0;width:100%;height:100%}
+
+/* the readout floating on the pool */
+.float{position:absolute;z-index:6;transform:translate(-50%,-100%);pointer-events:none;
+  will-change:transform,top}
+.chip{display:flex;align-items:flex-end;gap:7px;padding:9px 14px 10px;border-radius:13px;
+  background:rgba(12,10,18,.86);border:1px solid rgba(224,187,60,.45);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  box-shadow:0 20px 40px -22px #000,0 0 26px -6px rgba(224,187,60,.4);white-space:nowrap}
+.chip b{font-family:var(--mono);font-size:clamp(1.4rem,4vw,2.2rem);font-weight:700;color:var(--off);
+  line-height:.9;letter-spacing:-.035em;font-variant-numeric:tabular-nums}
+.chip s{text-decoration:none;font-family:var(--mono);font-size:0.5rem;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--honey);padding-bottom:3px}
+
+/* The trigger pivots about the top of its own box. fill-box, not
+   view-box: the trigger lives inside a translated and scaled group, and
+   a view-box origin would be measured in the wrong space entirely. */
+#trigger{transform-box:fill-box;transform-origin:52% 5%}
+
+/* the waterline it is sitting in */
+.hull{position:absolute;left:50%;top:100%;width:58px;height:9px;margin:-2px 0 0 -29px;
+  border-radius:0 0 40% 40%;background:rgba(224,187,60,.5);filter:blur(1.5px)}
+
+/* ══ figures ══ */
+.facts{position:relative;z-index:2;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:9px;margin-top:clamp(14px,2.6vw,20px)}
+@media(max-width:760px){ .facts{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media(max-width:440px){ .facts{grid-template-columns:1fr} }
+.fact{background:var(--card2);border:1px solid var(--bd);border-radius:12px;padding:13px 15px;
+  opacity:0;transform:translateY(12px);
+  transition:opacity .6s ease var(--d,0s),transform .6s var(--ease) var(--d,0s),
+             border-color .3s,box-shadow .35s var(--ease)}
+.fact.in{opacity:1;transform:none}
+.fact:hover{border-color:rgba(224,187,60,.35);box-shadow:0 14px 28px -20px rgba(224,187,60,.6)}
+.fact s{display:block;text-decoration:none;font-family:var(--mono);font-size:0.45rem;
+  letter-spacing:0.18em;text-transform:uppercase;color:var(--d3);margin-bottom:6px}
+.fact b{display:block;font-family:var(--mono);font-size:1.04rem;font-weight:700;color:var(--off);
+  line-height:1;font-variant-numeric:tabular-nums}
+.fact b u{text-decoration:none;font-size:0.56rem;color:var(--d2);margin-left:3px;font-weight:400}
+.fact em{display:block;font-style:normal;font-size:0.55rem;color:var(--d3);margin-top:6px;line-height:1.5}
+.fact.up b{color:var(--good)}
+.fact.dn b{color:var(--bad)}
+
+.bench{position:relative;z-index:2;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  margin-top:clamp(14px,2.6vw,20px);padding-top:14px;border-top:1px solid var(--bd)}
+.bench .say{flex:1 1 300px;display:flex;gap:10px;align-items:flex-start;
+  font-size:0.71rem;line-height:1.7;color:var(--d1)}
+.bench .say i{flex:none;width:3px;align-self:stretch;border-radius:2px;background:var(--honey);opacity:.55}
+.bench button{flex:none;padding:7px 14px;border:1px solid var(--bd2);background:transparent;color:var(--d2);
+  border-radius:99px;cursor:pointer;font-family:var(--mono);font-size:0.5rem;letter-spacing:0.16em;
+  text-transform:uppercase;transition:.25s var(--ease)}
+.bench button:hover{color:var(--honey);border-color:rgba(224,187,60,.45);background:rgba(224,187,60,.06)}
+.bench button:focus-visible{outline:2px solid var(--acc2);outline-offset:2px}
+
+/* ══ empty ══ */
+.none{position:relative;z-index:2;border:1px dashed var(--bd2);border-radius:14px;
+  padding:38px 26px;text-align:center;color:var(--d2);font-size:0.8rem;line-height:1.75;max-width:470px;margin:0 auto}
+.none b{display:block;font-family:var(--mono);font-size:0.56rem;letter-spacing:0.24em;
+  text-transform:uppercase;color:var(--honey);margin-bottom:12px}
+.none .drip{width:9px;height:9px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;
+  background:rgba(224,187,60,.45);margin:0 auto 18px;animation:hang 3s ease-in-out infinite}
+@keyframes hang{0%,100%{transform:translateY(0) scaleY(1)}55%{transform:translateY(5px) scaleY(1.25)}}
+@media(prefers-reduced-motion:reduce){ .none .drip{animation:none} }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="stub">section above</div>
+
+  <section class="sec" aria-labelledby="mh">
+    <div class="head">
+      <div>
+        <span class="kick" id="kick"></span>
+        <h2 id="mh"></h2>
+        <p class="note" id="note"></p>
+      </div>
+    </div>
+    <div id="body"></div>
+  </section>
+
+  <div class="stub">section below</div>
+</div>
+
+<script src="mileage-data.js"></script>
+<script src="mileage-motion.js"></script>
+<script>
+document.getElementById('kick').textContent = MILEAGE_COPY.kicker
+document.getElementById('mh').textContent   = MILEAGE_COPY.title
+document.getElementById('note').textContent = MILEAGE_COPY.note
+
+const body = document.getElementById('body')
+
+if (MILEAGE_EMPTY) {
+  body.innerHTML = `<div class="none">
+      <div class="drip"></div>
+      <b>Nothing coming out</b>
+      ${MILEAGE_COPY.empty}
+    </div>`
+} else {
+
+/* ── the geometry, all in the stage's own units ─────────────────── */
+/* ── the stage, and where the nozzle sits in it ───────────────────
+   The gun is drawn in its own 650 x 345 space — the proportions of the
+   reference artwork — and then placed, so every path below can be read
+   against the original instead of against this stage. */
+const W = 660, H = 460
+/* Cropped in close, the way the reference artwork is — a nozzle with a
+   lot of empty frame around it reads as a small picture of a nozzle. */
+const GUN = { x: 26, y: 94, s: 0.77 }
+/* the spout tip, in the gun's own units, put through that placement */
+const TIP = { x: 606, y: 160 }
+const SPOUT = { x: GUN.x + TIP.x * GUN.s, y: GUN.y + TIP.y * GUN.s }
+const POOL = { top: 374, bottom: H }  // still-water line, and the floor
+/* The readout floats clear of where the drop lands, so the ripple has
+   somewhere to travel TO — a float sitting on the impact point only
+   ever bobs, and the wave never reads as a wave. */
+const FLOAT_X = 152
+const N = 96                          // columns in the wave simulation
+
+body.innerHTML = `
+  <div class="stage" id="stage">
+    <svg viewBox="0 0 ${W} ${H}" aria-hidden="true">
+      <defs>
+        <linearGradient id="poolGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0"   stop-color="#ffd76b"/>
+          <stop offset=".1"  stop-color="#e8a93a"/>
+          <stop offset="1"   stop-color="#4a3106"/>
+        </linearGradient>
+        <!-- the amber of the drop in the reference artwork -->
+        <radialGradient id="dropShine" cx=".34" cy=".28" r=".74">
+          <stop offset="0"   stop-color="#FFE083"/>
+          <stop offset=".42" stop-color="#FFC10A"/>
+          <stop offset="1"   stop-color="#E39A00"/>
+        </radialGradient>
+        <radialGradient id="poolGlow" cx=".5" cy="1" r=".7">
+          <stop offset="0" stop-color="rgba(224,187,60,.4)"/>
+          <stop offset="1" stop-color="rgba(224,187,60,0)"/>
+        </radialGradient>
+      </defs>
+
+      <!-- ══ the gun ══
+           Drawn to the reference artwork: red body with a darker facet
+           down its right side, white trigger guard and spout, dark hose
+           and trigger, and the drop hanging off the tip. Everything is
+           in the reference's own 650 x 345 space and placed by the
+           transform, so the paths can be checked against the original.
+
+           Back to front: hose, guard, trigger, spout — then the red
+           body over the top of all of them, which is what makes the
+           guard disappear under it and the spout emerge from behind. -->
+      <g id="gun" transform="translate(${GUN.x}, ${GUN.y}) scale(${GUN.s})">
+
+        <!-- the hose, running off the bottom left -->
+        <path d="M -40 372 L 130 198" fill="none" stroke="#414C5A" stroke-width="30"/>
+        <path d="M -40 372 L 130 198" fill="none" stroke="#2E3947" stroke-width="16"/>
+
+        <!-- the ferrule where the hose enters the body -->
+        <g transform="rotate(-46 126 202)">
+          <rect x="96" y="180" width="60" height="45" rx="7" fill="#F2F5F8"/>
+          <rect x="96" y="207" width="60" height="18" rx="7" fill="#DFE4EA"/>
+        </g>
+
+        <!-- the trigger guard -->
+        <path d="M 216 150 L 197 254 C 194 272 203 285 221 288 L 296 296
+                 C 313 298 323 289 327 274 L 352 172"
+              fill="none" stroke="#F2F5F8" stroke-width="25"
+              stroke-linejoin="round" stroke-linecap="round"/>
+        <!-- its shaded inner edge, so the loop reads as having a section -->
+        <path d="M 216 150 L 197 254 C 194 272 203 285 221 288 L 296 296"
+              fill="none" stroke="#E3E7EC" stroke-width="9"
+              stroke-linejoin="round" stroke-linecap="round" opacity=".9"/>
+
+        <!-- the trigger. The scallops are the finger grooves — five
+             bumps down its leading edge, which is the detail that makes
+             it read as a trigger rather than as a dark wedge. -->
+        <g id="trigger">
+          <path d="M 243 141
+                   c 13 5 15 19 12 29 c -3 11 3 19 12 22
+                   c 13 4 16 18 13 28 c -3 11 3 18 12 21
+                   c 13 4 16 18 13 28 c -3 10 2 17 11 21
+                   c 11 5 12 18 4 25 c -7 6 -18 5 -27 -1
+                   c -26 -17 -45 -44 -54 -76 c -8 -28 -8 -57 -1 -83
+                   c 3 -12 15 -19 27 -14 z"
+                fill="#2E3947"/>
+          <path d="M 243 141 c 13 5 15 19 12 29 c -3 11 3 19 12 22"
+                fill="none" stroke="#3B4757" stroke-width="5" stroke-linecap="round"/>
+        </g>
+
+        <!-- ── the spout ── -->
+        <!-- the corrugated section, then the smooth sweep to the tip -->
+        <path d="M 392 40 L 500 46 C 556 52 596 80 610 126"
+              fill="none" stroke="#DFE4EA" stroke-width="40" stroke-linecap="round"/>
+        <path d="M 392 32 L 500 38 C 552 44 590 70 604 116"
+              fill="none" stroke="#F4F7FA" stroke-width="24" stroke-linecap="round"/>
+        <!-- the ribs of the flexible section -->
+        <g stroke="#CDD4DC" stroke-width="5" stroke-linecap="round">
+          <line x1="418" y1="20" x2="418" y2="62"/>
+          <line x1="440" y1="21" x2="440" y2="63"/>
+          <line x1="462" y1="23" x2="462" y2="65"/>
+          <line x1="484" y1="25" x2="484" y2="67"/>
+        </g>
+        <!-- the cut end -->
+        <ellipse cx="608" cy="124" rx="19" ry="13" fill="#E9EDF2"
+                 transform="rotate(28 608 124)"/>
+
+        <!-- ── the body ── -->
+        <!-- The bright face. A long wedge: narrow where it meets the
+             hose at the lower left, deep on the right where the spout
+             leaves it, with an almost flat crown. -->
+        <path d="M 118 208
+                 L 110 180 C 106 165 111 149 123 139
+                 L 244 26 C 256 14 272 7 289 7
+                 L 350 7 C 371 7 389 20 397 40
+                 L 420 92 L 336 198 C 328 206 318 211 306 211
+                 L 132 214 C 123 214 116 212 118 208 Z"
+              fill="#ED3237"/>
+        <!-- The shaded underside. In a flat drawing this single darker
+             facet is doing all the work of describing the form, so its
+             edge wants to be one clean diagonal rather than a blend. -->
+        <path d="M 262 96 L 420 92 L 336 198
+                 C 328 206 318 211 306 211 L 166 213
+                 C 209 181 241 142 262 96 Z"
+              fill="#D42B2E"/>
+        <!-- the deepest wedge, where the spout leaves the body -->
+        <path d="M 378 30 L 397 40 L 420 92 L 388 132
+                 C 394 99 391 62 378 30 Z" fill="#C42528"/>
+        <!-- the rivet on the crown -->
+        <circle cx="331" cy="24" r="7" fill="#D42B2E"/>
+      </g>
+
+      <!-- ── the pool ── -->
+      <ellipse cx="${W / 2}" cy="${POOL.top + 30}" rx="240" ry="70" fill="url(#poolGlow)" opacity=".55"/>
+      <path id="pool" fill="url(#poolGrad)" d=""/>
+      <path id="poolSkin" fill="none" stroke="rgba(255,240,190,.75)" stroke-width="1.6" d=""/>
+
+      <!-- ripple rings on the surface, drawn where a drop went in -->
+      <g id="rings" opacity=".9"></g>
+
+      <!-- ── the drop, and what it throws up ── -->
+      <path id="drop" fill="url(#dropShine)" d=""/>
+      <ellipse id="dropShineDot" fill="#FFF0B8" opacity=".65" rx="0" ry="0"/>
+      <g id="spray"></g>
+    </svg>
+
+    <div class="float" id="float">
+      <div class="chip">
+        <b id="big">0.0</b>
+        <s>km / l</s>
+      </div>
+      <span class="hull"></span>
+    </div>
+  </div>
+
+  <div class="facts" id="facts"></div>
+
+  <div class="bench">
+    <p class="say"><i></i><span>${MILEAGE.method}</span></p>
+    <button id="squeeze">Squeeze the trigger</button>
+  </div>
+`
+
+document.getElementById('facts').innerHTML = MILEAGE_FACTS.map((f, i) => `
+  <div class="fact ${f.tone || ''}" style="--d:${(MM.REDUCED ? 0 : 700 + i * 70)}ms">
+    <s>${f.label}</s>
+    <b>${f.value}${f.unit ? `<u>${f.unit}</u>` : ''}</b>
+    <em>${f.sub}</em>
+  </div>`).join('')
+
+const stage   = document.getElementById('stage')
+const dropEl  = document.getElementById('drop')
+const shineEl = document.getElementById('dropShineDot')
+const poolEl  = document.getElementById('pool')
+const skinEl  = document.getElementById('poolSkin')
+const ringsEl = document.getElementById('rings')
+const sprayEl = document.getElementById('spray')
+const trigger = document.getElementById('trigger')
+const floatEl = document.getElementById('float')
+const big     = document.getElementById('big')
+
+/* ── the pool: a one-dimensional wave equation ───────────────────
+   Each column is pulled toward the mean of its two neighbours, which
+   is the discrete form of the wave equation and is all it takes for a
+   disturbance to travel. Damping bleeds energy so a ripple dies out
+   instead of ringing forever; the ends are free, so waves reflect off
+   the sides of the pool the way they do in a tray. */
+const h = new Float64Array(N)      // displacement from the still line
+const v = new Float64Array(N)
+const K = 0.24                      // stiffness — how fast waves travel
+const DAMP = 0.986
+
+function stepWater() {
+  for (let i = 0; i < N; i++) {
+    const l = h[i === 0 ? 0 : i - 1]
+    const r = h[i === N - 1 ? N - 1 : i + 1]
+    v[i] += ((l + r) * 0.5 - h[i]) * K
+    v[i] *= DAMP
+  }
+  for (let i = 0; i < N; i++) h[i] += v[i]
+}
+
+function splash(xUnits, force) {
+  const i = Math.round((xUnits / W) * (N - 1))
+  /* push a small crater rather than a single spike — a one-column
+     impulse turns into a sawtooth and reads as noise */
+  for (let d = -2; d <= 2; d++) {
+    const j = i + d
+    if (j < 0 || j >= N) continue
+    v[j] += force * (1 - Math.abs(d) / 3)
+  }
+}
+
+/* An idle swell on top of the simulation. Without it a pool at rest is
+   a perfectly straight line, which reads as a solid — a still liquid
+   still has a surface. Two slow sines, and at t = 0 it is a shape
+   rather than a line, so the reduced-motion frame is not flat either. */
+let clock = 0                       // seconds, advanced by the loop
+
+function ambient(i) {
+  const x = i / (N - 1)
+  return Math.sin(x * 7.5 + clock * 0.55) * 1.5
+       + Math.sin(x * 3.1 - clock * 0.34) * 2.1
+}
+
+/* the whole surface: what the simulation is doing, plus the idle swell */
+function surfaceAt(i) { return h[i] + ambient(i) }
+
+/* the surface, and the body of liquid under it, as one path */
+function poolPath(close) {
+  let d = `M 0 ${(POOL.top + surfaceAt(0)).toFixed(2)}`
+  for (let i = 1; i < N; i++) {
+    const x = (i / (N - 1)) * W
+    d += ` L ${x.toFixed(1)} ${(POOL.top + surfaceAt(i)).toFixed(2)}`
+  }
+  if (close) d += ` L ${W} ${H} L 0 ${H} Z`
+  return d
+}
+
+function heightAt(xUnits) {
+  const f = (xUnits / W) * (N - 1)
+  const i = Math.floor(f)
+  const frac = f - i
+  const a = surfaceAt(Math.max(0, Math.min(N - 1, i)))
+  const b = surfaceAt(Math.max(0, Math.min(N - 1, i + 1)))
+  return a + (b - a) * frac
+}
+
+/* ── the drop ────────────────────────────────────────────────────
+   Three lives: swelling at the spout, falling, and gone. Surface
+   tension holds it until it is heavy enough, then it necks and lets
+   go — which is why it stretches as it detaches rather than simply
+   starting to move. */
+const G = 780                       // units per second squared
+let drop = null
+let nextDropAt = 0
+
+function birth() {
+  drop = { y: SPOUT.y, vy: 0, r: 0, phase: 'swell', swell: 0 }
+}
+
+function stepDrop(dt) {
+  if (!drop) return
+  if (drop.phase === 'swell') {
+    drop.swell += dt * 1.75
+    drop.r = 4.5 + drop.swell * 10.5
+    if (drop.swell >= 1) { drop.phase = 'fall'; drop.vy = 26 }
+    /* it hangs lower as it gets heavier */
+    drop.y = SPOUT.y + drop.swell * 7
+    return
+  }
+  drop.vy += G * dt
+  drop.y += drop.vy * dt
+  const surface = POOL.top + heightAt(SPOUT.x)
+  if (drop.y >= surface - drop.r * 0.4) {
+    /* in it goes, with force proportional to how fast it arrived */
+    splash(SPOUT.x, Math.min(9, drop.vy * 0.016))
+    ring(SPOUT.x, surface)
+    spray(SPOUT.x, surface, drop.vy)
+    drop = null
+  }
+}
+
+/* A teardrop: round below, drawn up to a point above. `point` is how
+   far the tip is pulled up, as a multiple of the radius — surface
+   tension holding it to the spout while it hangs, relaxing once it is
+   in free fall and nothing is holding it any more. */
+function dropPath(cx, cy, rx, ry, point) {
+  const h = ry * (1 + point * 1.5)
+  return `M ${cx} ${(cy - h).toFixed(2)}`
+       + ` C ${(cx + rx * 0.62).toFixed(2)} ${(cy - h * 0.34).toFixed(2)},`
+       + ` ${(cx + rx).toFixed(2)} ${(cy - ry * 0.5).toFixed(2)},`
+       + ` ${(cx + rx).toFixed(2)} ${cy.toFixed(2)}`
+       + ` A ${rx.toFixed(2)} ${ry.toFixed(2)} 0 1 1 ${(cx - rx).toFixed(2)} ${cy.toFixed(2)}`
+       + ` C ${(cx - rx).toFixed(2)} ${(cy - ry * 0.5).toFixed(2)},`
+       + ` ${(cx - rx * 0.62).toFixed(2)} ${(cy - h * 0.34).toFixed(2)},`
+       + ` ${cx} ${(cy - h).toFixed(2)} Z`
+}
+
+function drawDrop() {
+  if (!drop) {
+    dropEl.setAttribute('d', '')
+    shineEl.setAttribute('rx', 0); shineEl.setAttribute('ry', 0)
+    return
+  }
+  /* stretched by speed, and pinched as it lets go — volume preserved,
+     so it thins as it lengthens */
+  const stretch = drop.phase === 'swell'
+    ? 1 + Math.pow(drop.swell, 3) * 0.4
+    : 1 + Math.min(0.85, drop.vy * 0.0022)
+  const rx = drop.r / Math.sqrt(stretch)
+  const ry = drop.r * stretch
+  /* hanging, it is drawn to a long point at the spout; falling, that
+     point relaxes away because there is nothing left holding it */
+  const point = drop.phase === 'swell'
+    ? 0.55 + drop.swell * 0.5
+    : Math.max(0, 0.5 - drop.vy * 0.0018)
+
+  dropEl.setAttribute('d', dropPath(SPOUT.x, drop.y, rx, ry, point))
+  /* the highlight a rounded body of liquid carries, up and to the left */
+  shineEl.setAttribute('cx', (SPOUT.x - rx * 0.34).toFixed(2))
+  shineEl.setAttribute('cy', (drop.y - ry * 0.3).toFixed(2))
+  shineEl.setAttribute('rx', (rx * 0.3).toFixed(2))
+  shineEl.setAttribute('ry', (ry * 0.24).toFixed(2))
+}
+
+/* ── what an impact throws up ────────────────────────────────────── */
+function ring(x, y) {
+  const el = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse')
+  el.setAttribute('cx', x); el.setAttribute('cy', y)
+  el.setAttribute('rx', 3); el.setAttribute('ry', 1)
+  el.setAttribute('fill', 'none')
+  el.setAttribute('stroke', 'rgba(255,240,190,.85)')
+  el.setAttribute('stroke-width', '1.6')
+  ringsEl.appendChild(el)
+  const a = el.animate([
+    { rx: '3px', ry: '1px', opacity: .85, strokeWidth: '1.8px' },
+    { rx: '92px', ry: '17px', opacity: 0, strokeWidth: '.4px' },
+  ], { duration: 1250, easing: 'cubic-bezier(.15,.75,.35,1)', fill: 'both' })
+  a.finished.then(() => el.remove()).catch(() => {})
+}
+
+function spray(x, y, speed) {
+  const n = 5
+  for (let i = 0; i < n; i++) {
+    const el = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
+    const r = 1.4 + Math.abs(((i * 37) % 11) / 11) * 1.9
+    el.setAttribute('cx', x); el.setAttribute('cy', y); el.setAttribute('r', r)
+    el.setAttribute('fill', '#f4cf72')
+    sprayEl.appendChild(el)
+    /* thrown out and up, then pulled back down — the arc is the point */
+    const dir = i % 2 ? 1 : -1
+    const dx = dir * (14 + i * 9)
+    const up = 20 + (speed * 0.03) + i * 4
+    const a = el.animate([
+      { transform: 'translate(0px, 0px)', opacity: .95 },
+      { transform: `translate(${dx * 0.55}px, ${-up}px)`, opacity: .9, offset: .42 },
+      { transform: `translate(${dx}px, 6px)`, opacity: 0 },
+    ], { duration: 620 + i * 40, easing: 'cubic-bezier(.3,.6,.5,1)', fill: 'both' })
+    a.finished.then(() => el.remove()).catch(() => {})
+  }
+}
+
+/* ── the trigger, pulled when a drop is released ─────────────────── */
+function pullTrigger() {
+  trigger.animate(
+    [{ transform: 'none' }, { transform: 'rotate(9deg)' }, { transform: 'none' }],
+    { duration: 260, easing: MM.EASE.out, composite: 'replace' },
+  )
+}
+
+/* ── the loop ────────────────────────────────────────────────────── */
+const STEP = 1 / 120
+let acc = 0, prev = 0, raf = 0, onScreen = false, running = false
+
+function paint() {
+  poolEl.setAttribute('d', poolPath(true))
+  skinEl.setAttribute('d', poolPath(false))
+  drawDrop()
+
+  /* the readout sits IN the liquid at its own x, so a ripple passing
+     under it lifts it as it goes by rather than the whole chip being
+     bolted to some global bob */
+  const fx = FLOAT_X
+  const fy = POOL.top + heightAt(fx)
+  floatEl.style.left = ((fx / W) * 100).toFixed(3) + '%'
+  floatEl.style.top = ((fy / H) * 100).toFixed(3) + '%'
+  /* it leans down the slope of the surface it is sitting on */
+  const slope = heightAt(fx + 26) - heightAt(fx - 26)
+  floatEl.style.transform = `translate(-50%, -100%) rotate(${(slope * 0.55).toFixed(2)}deg)`
+}
+
+function loop(now) {
+  const dt = Math.min((now - prev) / 1000, 1 / 20)
+  prev = now
+  acc += dt
+  let guard = 0
+  while (acc >= STEP && guard++ < 40) {
+    clock += STEP
+    stepWater()
+    stepDrop(STEP)
+    acc -= STEP
+  }
+  if (!drop && now >= nextDropAt) { birth(); pullTrigger(); nextDropAt = now + 2400 }
+  paint()
+  if (!onScreen) { running = false; raf = 0; return }
+  raf = requestAnimationFrame(loop)
+}
+
+function start() {
+  if (running || MM.REDUCED) return
+  running = true
+  prev = performance.now()
+  nextDropAt = prev + 500
+  raf = requestAnimationFrame(loop)
+}
+function stop() { running = false; if (raf) cancelAnimationFrame(raf); raf = 0 }
+
+function countUp(ms) {
+  const t0 = performance.now()
+  const step = (now) => {
+    const k = Math.min(1, (now - t0) / ms)
+    big.textContent = (MILEAGE.kmpl * (1 - Math.pow(1 - k, 4))).toFixed(1)
+    if (k < 1) requestAnimationFrame(step)
+  }
+  requestAnimationFrame(step)
+}
+
+document.getElementById('squeeze').addEventListener('click', () => {
+  if (MM.REDUCED) return
+  pullTrigger()
+  if (!drop) { birth(); nextDropAt = performance.now() + 2400 }
+})
+/* clicking the pool disturbs it where you clicked */
+stage.addEventListener('pointerdown', (e) => {
+  if (MM.REDUCED) return
+  const r = stage.getBoundingClientRect()
+  const x = ((e.clientX - r.left) / r.width) * W
+  const y = ((e.clientY - r.top) / r.height) * H
+  if (y < POOL.top - 30) return
+  splash(x, 5.5)
+  ring(x, POOL.top + heightAt(x))
+  start()
+})
+
+/* The still state: no ripples, but the idle swell is left in so the
+   surface is a surface rather than a ruled line — and a drop is left
+   hanging at the tip, because the nozzle in the reference artwork has
+   one and a bare spout is not the same picture. */
+function settle() {
+  h.fill(0); v.fill(0)
+  clock = 1.4
+  drop = { y: SPOUT.y + 6.5, vy: 0, r: 14.3, phase: 'swell', swell: 0.94 }
+  paint()
+  big.textContent = MILEAGE.kmpl.toFixed(1)
+  document.querySelectorAll('.fact').forEach((f) => f.classList.add('in'))
+}
+
+new IntersectionObserver((es) => {
+  es.forEach((e) => {
+    onScreen = e.isIntersecting
+    if (!onScreen) { stop(); return }
+    if (MM.REDUCED) { settle(); return }
+    start()
+    if (!big.dataset.ran) {
+      big.dataset.ran = '1'
+      countUp(1050)
+      document.querySelectorAll('.fact').forEach((f) => f.classList.add('in'))
+    }
+  })
+}, { threshold: 0.3 }).observe(stage)
+}
+</script>
+</body>
+</html>

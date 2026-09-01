@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Mileage · 16 · Filler Cap</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   FILLER CAP — looking straight down the neck while it fills.
+
+   The one design here shot from above. Everything else in this set
+   watches fuel from the side, where a surface is a line; from directly
+   overhead a surface is a disc, and it rises toward you rather than up
+   the frame. The figure floats on it and grows very slightly as the
+   fuel comes up, because a thing coming closer is bigger.
+
+   The ring of light around the neck is the only cue for depth, so it
+   tightens and brightens as the surface rises to meet it.
+   ══════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08070e; --card:#141220; --card2:#1a1828; --well:#0d0b15;
+  --bd:rgba(255,255,255,0.07); --bd2:rgba(255,255,255,0.13);
+  --off:#f0eef6; --d1:rgba(240,238,246,0.65); --d2:rgba(240,238,246,0.4); --d3:rgba(240,238,246,0.22);
+  --acc:#8b5cf6; --acc2:#a78bfa;
+  --honey:#e0bb3c;
+  --good:#4ade80; --bad:#fb7185;
+  --sans:'Inter',sans-serif; --serif:'Playfair Display',serif; --mono:'JetBrains Mono',monospace;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+body{background:var(--bg);color:var(--d1);font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--honey);color:#161018}
+.page{width:90%;max-width:1180px;margin:0 auto;padding:64px 0 90px;
+  display:flex;flex-direction:column;gap:clamp(40px,7vh,76px)}
+.stub{border:1px dashed var(--bd);border-radius:16px;padding:26px;color:var(--d3);
+  font-size:0.7rem;letter-spacing:0.16em;text-transform:uppercase;text-align:center}
+
+.sec{position:relative;background:var(--card);border:1px solid var(--bd);border-radius:16px;
+  padding:26px clamp(14px,3vw,30px) 30px;overflow:hidden}
+.sec::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(60% 45% at 50% 0%,rgba(224,187,60,0.08),transparent 70%)}
+
+.head{position:relative;z-index:2;display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;margin-bottom:14px}
+.kick{font-family:var(--mono);font-size:0.58rem;letter-spacing:0.24em;text-transform:uppercase;
+  color:var(--honey);display:block;margin-bottom:7px}
+.head h2{font-family:var(--serif);font-size:clamp(1.35rem,3.6vw,2rem);font-weight:700;color:var(--off);line-height:1.1}
+.head .note{font-size:0.76rem;color:var(--d2);line-height:1.65;max-width:440px;margin-top:8px}
+
+/* ══ the layout: the neck, and the figures beside it ══ */
+.wrap{position:relative;z-index:2;display:grid;
+  grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:clamp(18px,3.4vw,32px);align-items:center}
+@media(max-width:800px){ .wrap{grid-template-columns:1fr} }
+
+.neck{position:relative;width:100%;max-width:360px;margin:0 auto;aspect-ratio:1}
+.neck svg{position:absolute;inset:0;width:100%;height:100%}
+
+/* the readout floating on the disc of fuel */
+.float{position:absolute;left:50%;top:50%;z-index:6;pointer-events:none;
+  transform:translate(-50%,-50%);will-change:transform}
+.chip{display:flex;align-items:flex-end;gap:7px;padding:9px 14px 10px;border-radius:13px;
+  background:rgba(12,10,18,.82);border:1px solid rgba(224,187,60,.45);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  box-shadow:0 18px 34px -20px #000,0 0 24px -6px rgba(224,187,60,.45);white-space:nowrap}
+.chip b{font-family:var(--mono);font-size:clamp(1.3rem,3.6vw,2rem);font-weight:700;color:var(--off);
+  line-height:.9;letter-spacing:-.035em;font-variant-numeric:tabular-nums}
+.chip s{text-decoration:none;font-family:var(--mono);font-size:0.48rem;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--honey);padding-bottom:3px}
+/* what it is sitting in */
+.chip::after{content:'';position:absolute;left:8%;right:8%;bottom:-5px;height:9px;
+  border-radius:50%;background:rgba(224,187,60,.42);filter:blur(3px)}
+
+/* ══ figures ══ */
+.side{display:flex;flex-direction:column;gap:12px;min-width:0}
+.facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+@media(max-width:480px){ .facts{grid-template-columns:1fr} }
+.fact{background:var(--card2);border:1px solid var(--bd);border-radius:12px;padding:13px 15px;
+  opacity:0;transform:translateY(12px);
+  transition:opacity .6s ease var(--d,0s),transform .6s var(--ease) var(--d,0s),
+             border-color .3s,box-shadow .35s var(--ease)}
+.fact.in{opacity:1;transform:none}
+.fact:hover{border-color:rgba(224,187,60,.35);box-shadow:0 14px 28px -20px rgba(224,187,60,.6)}
+.fact s{display:block;text-decoration:none;font-family:var(--mono);font-size:0.45rem;
+  letter-spacing:0.18em;text-transform:uppercase;color:var(--d3);margin-bottom:6px}
+.fact b{display:block;font-family:var(--mono);font-size:1.04rem;font-weight:700;color:var(--off);
+  line-height:1;font-variant-numeric:tabular-nums}
+.fact b u{text-decoration:none;font-size:0.56rem;color:var(--d2);margin-left:3px;font-weight:400}
+.fact em{display:block;font-style:normal;font-size:0.55rem;color:var(--d3);margin-top:6px;line-height:1.5}
+.fact.up b{color:var(--good)}
+.fact.dn b{color:var(--bad)}
+
+.say{display:flex;gap:10px;align-items:flex-start;font-size:0.71rem;line-height:1.7;color:var(--d1)}
+.say i{flex:none;width:3px;align-self:stretch;border-radius:2px;background:var(--honey);opacity:.55}
+.ctl{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.ctl button{padding:7px 14px;border:1px solid var(--bd2);background:transparent;color:var(--d2);
+  border-radius:99px;cursor:pointer;font-family:var(--mono);font-size:0.5rem;letter-spacing:0.16em;
+  text-transform:uppercase;transition:.25s var(--ease)}
+.ctl button:hover{color:var(--honey);border-color:rgba(224,187,60,.45);background:rgba(224,187,60,.06)}
+.ctl button:focus-visible{outline:2px solid var(--acc2);outline-offset:2px}
+.ctl .lvl{font-family:var(--mono);font-size:0.48rem;letter-spacing:0.16em;
+  text-transform:uppercase;color:var(--d3)}
+
+/* ══ empty ══ */
+.none{position:relative;z-index:2;border:1px dashed var(--bd2);border-radius:14px;
+  padding:38px 26px;text-align:center;color:var(--d2);font-size:0.8rem;line-height:1.75;max-width:470px;margin:0 auto}
+.none b{display:block;font-family:var(--mono);font-size:0.56rem;letter-spacing:0.24em;
+  text-transform:uppercase;color:var(--honey);margin-bottom:12px}
+.none .ring{width:76px;height:76px;border-radius:50%;margin:0 auto 18px;
+  border:2px solid rgba(224,187,60,.28);box-shadow:inset 0 0 26px rgba(0,0,0,.9)}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="stub">section above</div>
+
+  <section class="sec" aria-labelledby="mh">
+    <div class="head">
+      <div>
+        <span class="kick" id="kick"></span>
+        <h2 id="mh"></h2>
+        <p class="note" id="note"></p>
+      </div>
+    </div>
+    <div id="body"></div>
+  </section>
+
+  <div class="stub">section below</div>
+</div>
+
+<script src="mileage-data.js"></script>
+<script src="mileage-motion.js"></script>
+<script>
+document.getElementById('kick').textContent = MILEAGE_COPY.kicker
+document.getElementById('mh').textContent   = MILEAGE_COPY.title
+document.getElementById('note').textContent = MILEAGE_COPY.note
+
+const body = document.getElementById('body')
+
+if (MILEAGE_EMPTY) {
+  body.innerHTML = `<div class="none">
+      <div class="ring"></div>
+      <b>Cap on</b>
+      ${MILEAGE_COPY.empty}
+    </div>`
+} else {
+
+const S = 360, C = S / 2               // the neck, square, centred
+const R_OUT = 168                       // the filler ring
+const R_IN = 132                        // the bore
+
+body.innerHTML = `
+  <div class="wrap">
+    <div class="neck" id="neck">
+      <svg viewBox="0 0 ${S} ${S}" aria-hidden="true">
+        <defs>
+          <radialGradient id="bore" cx=".5" cy=".5" r=".5">
+            <stop offset=".55" stop-color="#05040a"/>
+            <stop offset="1"   stop-color="#17131f"/>
+          </radialGradient>
+          <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0"   stop-color="#7d7690"/>
+            <stop offset=".35" stop-color="#413b52"/>
+            <stop offset=".62" stop-color="#6c6582"/>
+            <stop offset="1"   stop-color="#2a2536"/>
+          </linearGradient>
+          <radialGradient id="fuelDisc" cx=".38" cy=".32" r=".78">
+            <stop offset="0"   stop-color="#ffe08a"/>
+            <stop offset=".4"  stop-color="#e8a93a"/>
+            <stop offset="1"   stop-color="#7a5310"/>
+          </radialGradient>
+          <radialGradient id="lip" cx=".5" cy=".5" r=".5">
+            <stop offset=".72" stop-color="rgba(224,187,60,0)"/>
+            <stop offset=".93" stop-color="rgba(224,187,60,.5)"/>
+            <stop offset="1"   stop-color="rgba(224,187,60,0)"/>
+          </radialGradient>
+        </defs>
+
+        <!-- the painted tank around the neck -->
+        <circle cx="${C}" cy="${C}" r="${R_OUT + 16}" fill="#241d10"/>
+        <!-- the chromed filler ring, with its bolts -->
+        <circle cx="${C}" cy="${C}" r="${R_OUT}" fill="url(#rim)"/>
+        <g id="bolts"></g>
+        <!-- the bore, going down into the tank -->
+        <circle cx="${C}" cy="${C}" r="${R_IN}" fill="url(#bore)"/>
+
+        <!-- the fuel: a disc that grows as the level comes up toward
+             the viewer, with a rim of light where it meets the bore -->
+        <g id="fuelG">
+          <circle id="fuel" cx="${C}" cy="${C}" r="0" fill="url(#fuelDisc)"/>
+          <circle id="fuelLip" cx="${C}" cy="${C}" r="0" fill="url(#lip)"/>
+          <!-- concentric ripples on the surface, seen from directly above -->
+          <g id="ripples" fill="none" stroke="rgba(255,240,190,.4)" stroke-width="1.1"></g>
+        </g>
+
+        <!-- the shadow the ring throws down the bore. It tightens as the
+             surface rises, which is the only depth cue in the shot. -->
+        <circle id="shade" cx="${C}" cy="${C}" r="${R_IN}" fill="none"
+                stroke="#000" stroke-width="26" opacity=".7"/>
+      </svg>
+
+      <div class="float" id="float">
+        <div class="chip">
+          <b id="big">0.0</b>
+          <s>km / l</s>
+        </div>
+      </div>
+    </div>
+
+    <div class="side">
+      <div class="facts" id="facts"></div>
+      <p class="say"><i></i><span>${MILEAGE.method}</span></p>
+      <div class="ctl">
+        <button id="fill">Fill it</button>
+        <button id="drain">Drain it</button>
+        <span class="lvl" id="lvl">—</span>
+      </div>
+    </div>
+  </div>
+`
+
+document.getElementById('facts').innerHTML = MILEAGE_FACTS.map((f, i) => `
+  <div class="fact ${f.tone || ''}" style="--d:${(MM.REDUCED ? 0 : 700 + i * 70)}ms">
+    <s>${f.label}</s>
+    <b>${f.value}${f.unit ? `<u>${f.unit}</u>` : ''}</b>
+    <em>${f.sub}</em>
+  </div>`).join('')
+
+/* bolts around the filler ring */
+document.getElementById('bolts').innerHTML = Array.from({ length: 6 }, (_, i) => {
+  const a = (i / 6) * Math.PI * 2 - Math.PI / 2
+  const x = C + Math.cos(a) * (R_OUT - 17)
+  const y = C + Math.sin(a) * (R_OUT - 17)
+  return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5" fill="#8b8399"/>
+          <circle cx="${x.toFixed(1)}" cy="${(y - 1).toFixed(1)}" r="3.4" fill="#3a3448"/>`
+}).join('')
+
+const fuel    = document.getElementById('fuel')
+const fuelLip = document.getElementById('fuelLip')
+const ripples = document.getElementById('ripples')
+const shade   = document.getElementById('shade')
+const floatEl = document.getElementById('float')
+const big     = document.getElementById('big')
+const lvlEl   = document.getElementById('lvl')
+
+/* ── the level ───────────────────────────────────────────────────
+   0 is an empty tank — the surface is far down the bore and reads as a
+   small dark disc. 1 is brimmed, the surface right up under the ring.
+   Everything on screen is a function of this one number. */
+const level = new MM.Spring({ stiffness: 34, damping: 12, from: 0, to: 0 })
+let t = 0, raf = 0, onScreen = false, running = false
+
+function draw() {
+  const k = Math.max(0, Math.min(1, level.x))
+
+  /* the surface is a disc, and it is bigger the closer it is — this is
+     the whole reason the shot works from overhead */
+  const r = R_IN * (0.34 + 0.64 * k)
+  fuel.setAttribute('r', r.toFixed(1))
+  fuelLip.setAttribute('r', (r + 2).toFixed(1))
+
+  /* the ring's shadow tightens onto the surface as it comes up */
+  shade.setAttribute('stroke-width', (34 - 22 * k).toFixed(1))
+  shade.setAttribute('opacity', (0.78 - 0.4 * k).toFixed(3))
+
+  /* concentric ripples, seen from above. Three rings breathing out of
+     the middle at different phases, clipped to the surface. */
+  let rr = ''
+  for (let i = 0; i < 3; i++) {
+    const phase = (t * 0.34 + i / 3) % 1
+    const rad = r * (0.15 + phase * 0.85)
+    if (rad < r) {
+      rr += `<circle cx="${C}" cy="${C}" r="${rad.toFixed(1)}"
+              opacity="${((1 - phase) * 0.5 * k).toFixed(3)}"/>`
+    }
+  }
+  ripples.innerHTML = rr
+
+  /* the readout floats on it: bobbing, and very slightly larger as the
+     surface comes up, because it is coming toward the camera */
+  const bob = Math.sin(t * 1.25) * 3.2 * k
+  const scale = 0.86 + 0.2 * k
+  floatEl.style.transform =
+    `translate(-50%, -50%) translateY(${bob.toFixed(2)}px) scale(${scale.toFixed(3)})`
+  floatEl.style.opacity = Math.min(1, k * 2.6).toFixed(3)
+
+  lvlEl.textContent = `${(MILEAGE_BIKE.tank * k).toFixed(1)} of ${MILEAGE_BIKE.tank} L`
+}
+
+function loop() {
+  t += 0.016
+  draw()
+  if (!onScreen) { running = false; raf = 0; return }
+  raf = requestAnimationFrame(loop)
+}
+function start() { if (running || MM.REDUCED) return; running = true; raf = requestAnimationFrame(loop) }
+function stop() { running = false; if (raf) cancelAnimationFrame(raf); raf = 0 }
+
+function countUp(ms) {
+  const t0 = performance.now()
+  const step = (now) => {
+    const k = Math.min(1, (now - t0) / ms)
+    big.textContent = (MILEAGE.kmpl * (1 - Math.pow(1 - k, 4))).toFixed(1)
+    if (k < 1) requestAnimationFrame(step)
+  }
+  requestAnimationFrame(step)
+}
+
+document.getElementById('fill').addEventListener('click', () => { level.to(1); start() })
+document.getElementById('drain').addEventListener('click', () => { level.to(0.08); start() })
+
+function play() {
+  if (MM.REDUCED) {
+    level.snap(1)
+    big.textContent = MILEAGE.kmpl.toFixed(1)
+    draw()
+    document.querySelectorAll('.fact').forEach((f) => f.classList.add('in'))
+    return
+  }
+  level.snap(0.05)
+  start()
+  MM.sequence([
+    [260, () => level.to(1)],
+    [520, () => countUp(1100)],
+    [200, () => document.querySelectorAll('.fact').forEach((f) => f.classList.add('in'))],
+  ])
+}
+
+new IntersectionObserver((es) => {
+  es.forEach((e) => {
+    onScreen = e.isIntersecting
+    if (!onScreen) { stop(); return }
+    start()
+    if (!floatEl.dataset.ran) { floatEl.dataset.ran = '1'; play() }
+  })
+}, { threshold: 0.3 }).observe(document.getElementById('neck'))
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Mileage · 4 · Range Road</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   RANGE ROAD — the only design here that spends the tank rather than
+   showing it. Scrolling rides the bike down one full tank: the road
+   scrolls past, the gauge drains, the trip counter runs up, and the
+   distance markers arrive at the kilometres this mileage actually
+   reaches. The figure is what is left standing at the far end.
+
+   Nothing is on a timer — the scroll position IS the timeline, so a
+   reader can hold it anywhere on the tank and read it there. Every
+   moving part is written imperatively from one rAF, so the whole
+   section costs a handful of style writes per frame and no React-style
+   re-render.
+   ══════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08070e; --card:#141220; --card2:#1a1828; --well:#0d0b15; --road:#191527;
+  --bd:rgba(255,255,255,0.07); --bd2:rgba(255,255,255,0.13);
+  --off:#f0eef6; --d1:rgba(240,238,246,0.65); --d2:rgba(240,238,246,0.4); --d3:rgba(240,238,246,0.22);
+  --acc:#8b5cf6; --acc2:#a78bfa;
+  --honey:#e0bb3c;
+  --good:#4ade80; --bad:#fb7185;
+  --sans:'Inter',sans-serif; --serif:'Playfair Display',serif; --mono:'JetBrains Mono',monospace;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+body{background:var(--bg);color:var(--d1);font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--honey);color:#161018}
+.page{width:90%;max-width:1180px;margin:0 auto;padding:64px 0 90px;
+  display:flex;flex-direction:column;gap:clamp(40px,7vh,76px)}
+.stub{border:1px dashed var(--bd);border-radius:16px;padding:26px;color:var(--d3);
+  font-size:0.7rem;letter-spacing:0.16em;text-transform:uppercase;text-align:center}
+
+.sec{position:relative;background:var(--card);border:1px solid var(--bd);border-radius:16px;
+  padding:26px clamp(14px,3vw,30px) 30px;
+  opacity:0;transform:translateY(32px);animation:rise .8s var(--ease) .1s forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+
+.head{position:relative;z-index:3;display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;margin-bottom:18px}
+.kick{font-family:var(--mono);font-size:0.58rem;letter-spacing:0.24em;text-transform:uppercase;
+  color:var(--honey);display:block;margin-bottom:7px}
+.head h2{font-family:var(--serif);font-size:clamp(1.35rem,3.6vw,2rem);font-weight:700;color:var(--off);line-height:1.1}
+.head .note{font-size:0.76rem;color:var(--d2);line-height:1.65;max-width:440px;margin-top:8px}
+
+/* ══ the scroll track ══
+   Tall enough to give the ride room; the panel inside sticks while
+   it plays out. */
+.track{position:relative;height:230vh}
+.stick{position:sticky;top:clamp(12px,7vh,74px)}
+
+.stage{position:relative;background:var(--well);border:1px solid var(--bd2);border-radius:18px;
+  overflow:hidden;box-shadow:inset 0 -40px 80px -50px #000}
+
+/* The warm light over the road. Scoped to the road panel — across the
+   whole stage it washes over the result strip and muddies the type. */
+.sky{position:absolute;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(90% 120% at 12% 100%,rgba(224,187,60,.13),transparent 62%)}
+
+/* ── the readout bar across the top ── */
+.bar{position:relative;z-index:3;display:flex;gap:clamp(8px,2vw,18px);flex-wrap:wrap;align-items:flex-end;
+  padding:clamp(14px,2.6vw,20px) clamp(14px,2.6vw,22px) 0}
+.trip{min-width:0}
+.trip s{display:block;text-decoration:none;font-family:var(--mono);font-size:0.45rem;
+  letter-spacing:0.2em;text-transform:uppercase;color:var(--d3);margin-bottom:5px}
+.trip b{display:block;font-family:var(--mono);font-size:clamp(1.2rem,3.4vw,1.7rem);font-weight:700;
+  color:var(--off);line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.trip b u{text-decoration:none;font-size:0.56rem;color:var(--d2);margin-left:4px;font-weight:400;letter-spacing:0}
+.trip.key b{color:var(--honey)}
+
+/* the fuel gauge, draining */
+.gauge{margin-left:auto;min-width:132px}
+.gauge s{display:block;text-decoration:none;font-family:var(--mono);font-size:0.45rem;
+  letter-spacing:0.2em;text-transform:uppercase;color:var(--d3);margin-bottom:6px;text-align:right}
+.gauge .bars{display:flex;gap:3px;justify-content:flex-end}
+.gauge .bars i{width:9px;height:20px;border-radius:2px;background:rgba(255,255,255,.07);display:block;
+  transition:background .25s,box-shadow .25s}
+.gauge .bars i.on{background:var(--honey);box-shadow:0 0 8px rgba(224,187,60,.5)}
+.gauge .bars i.low.on{background:var(--bad);box-shadow:0 0 8px rgba(251,113,133,.55)}
+.gauge .ef{display:flex;justify-content:space-between;font-family:var(--mono);font-size:0.44rem;
+  letter-spacing:0.14em;color:var(--d3);margin-top:5px}
+/* the low-fuel lamp */
+.lamp{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:0.44rem;
+  letter-spacing:0.16em;text-transform:uppercase;color:var(--bad);margin-top:7px;
+  opacity:0;transition:opacity .3s}
+.lamp.on{opacity:1}
+.lamp i{width:6px;height:6px;border-radius:50%;background:var(--bad);animation:blip 1s infinite}
+@keyframes blip{50%{opacity:.2}}
+
+/* ── the road ── */
+.roadbox{position:relative;height:clamp(130px,22vw,178px);margin-top:clamp(10px,2vw,16px);
+  overflow:hidden}
+/* The horizon and the ground. The ground takes most of the box — the
+   sky only has to be deep enough for the hills to run across it. */
+.roadbox .ground{position:absolute;left:0;right:0;bottom:0;height:64%;
+  background:linear-gradient(180deg,var(--road),#0e0c16);
+  border-top:1px solid rgba(255,255,255,.08)}
+/* the dashes running away under the bike */
+.roadbox .dashes{position:absolute;left:0;right:0;bottom:22%;height:4px;
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,.34) 0 34px,transparent 34px 74px);
+  opacity:.4;will-change:background-position}
+/* the verge markers whipping past, faster than the dashes = depth */
+.roadbox .verge{position:absolute;left:0;right:0;bottom:52%;height:2px;
+  background:repeating-linear-gradient(90deg,rgba(224,187,60,.4) 0 8px,transparent 8px 120px);
+  opacity:.5;will-change:background-position}
+/* hills, slowest layer */
+.roadbox .hills{position:absolute;left:0;right:0;bottom:52%;height:34%;
+  background:repeating-linear-gradient(90deg,transparent 0 40px,rgba(255,255,255,.028) 40px 200px);
+  -webkit-mask:radial-gradient(120% 100% at 50% 100%,#000 40%,transparent 78%);
+          mask:radial-gradient(120% 100% at 50% 100%,#000 40%,transparent 78%);
+  will-change:background-position}
+
+/* the bike, held at a third across while the world moves past it */
+.bike{position:absolute;left:32%;bottom:20%;font-size:clamp(2rem,5.6vw,3rem);line-height:1;
+  filter:drop-shadow(0 10px 14px rgba(0,0,0,.8));will-change:transform;transform-origin:50% 90%}
+.bike::after{content:'';position:absolute;left:50%;bottom:-6px;width:74%;height:9px;
+  transform:translateX(-50%);border-radius:50%;
+  background:radial-gradient(ellipse,rgba(0,0,0,.6),transparent 70%);filter:blur(3px)}
+
+/* the distance markers coming down the road */
+.km{position:absolute;bottom:26%;transform:translateX(-50%);text-align:center;
+  font-family:var(--mono);white-space:nowrap;will-change:left,opacity;
+  transition:opacity .35s linear}
+.km i{display:block;width:2px;height:26px;margin:0 auto;background:rgba(255,255,255,.2)}
+.km b{display:block;font-size:0.5rem;font-weight:700;letter-spacing:0.1em;color:var(--d2);
+  background:var(--card2);border:1px solid var(--bd);border-radius:5px;padding:3px 7px;margin-bottom:3px}
+.km.hit b{color:var(--honey);border-color:rgba(224,187,60,.45);background:rgba(224,187,60,.12)}
+/* the end of the tank */
+.km.dry b{color:var(--bad);border-color:rgba(251,113,133,.45);background:rgba(251,113,133,.12)}
+
+/* ── the resolution, under the road ── */
+.result{position:relative;z-index:3;display:flex;align-items:flex-end;gap:clamp(12px,3vw,26px);
+  flex-wrap:wrap;padding:clamp(14px,2.6vw,20px) clamp(14px,2.6vw,22px) clamp(16px,3vw,22px);
+  border-top:1px solid var(--bd)}
+.result .fig{opacity:0;transform:translateY(10px);transition:.7s var(--ease)}
+.result.on .fig{opacity:1;transform:none}
+.result .fig s{display:block;text-decoration:none;font-family:var(--mono);font-size:0.46rem;
+  letter-spacing:0.22em;text-transform:uppercase;color:var(--honey);margin-bottom:6px}
+.result .fig b{display:block;font-family:var(--mono);font-size:clamp(2rem,6vw,2.9rem);font-weight:700;
+  color:var(--off);line-height:1;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.result .fig b u{text-decoration:none;font-size:.8rem;color:var(--d2);margin-left:6px;font-weight:400;letter-spacing:0}
+.result .said{font-size:0.73rem;line-height:1.7;color:var(--d1);max-width:400px;
+  border-left:2px solid rgba(224,187,60,.5);padding-left:12px}
+
+/* the hint that this section wants scrolling */
+.hint{position:absolute;left:50%;bottom:clamp(10px,2vw,16px);transform:translateX(-50%);z-index:4;
+  font-family:var(--mono);font-size:0.46rem;letter-spacing:0.24em;text-transform:uppercase;
+  color:var(--d3);pointer-events:none;transition:opacity .25s}
+
+/* ══ the figures, after the ride ══ */
+.facts{position:relative;z-index:2;display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));
+  gap:8px;margin-top:14px}
+.fact{background:var(--card2);border:1px solid var(--bd);border-radius:12px;padding:12px 14px;
+  transition:border-color .3s,transform .4s var(--ease)}
+.fact:hover{border-color:rgba(224,187,60,.35);transform:translateY(-2px)}
+.fact s{display:block;text-decoration:none;font-family:var(--mono);font-size:0.45rem;
+  letter-spacing:0.18em;text-transform:uppercase;color:var(--d3);margin-bottom:6px}
+.fact b{display:block;font-family:var(--mono);font-size:1.02rem;font-weight:700;color:var(--off);
+  line-height:1;font-variant-numeric:tabular-nums}
+.fact b u{text-decoration:none;font-size:0.56rem;color:var(--d2);margin-left:3px;font-weight:400}
+.fact em{display:block;font-style:normal;font-size:0.55rem;color:var(--d3);margin-top:6px;line-height:1.5}
+.fact.up b{color:var(--good)}
+.fact.dn b{color:var(--bad)}
+
+/* ══ empty ══ */
+.none{position:relative;z-index:2;border:1px dashed var(--bd2);border-radius:14px;
+  padding:38px 26px;text-align:center;color:var(--d2);font-size:0.8rem;line-height:1.75;max-width:470px;margin:0 auto}
+.none b{display:block;font-family:var(--mono);font-size:0.56rem;letter-spacing:0.24em;
+  text-transform:uppercase;color:var(--honey);margin-bottom:12px}
+.none .rd{height:6px;border-radius:99px;max-width:220px;margin:0 auto 18px;
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,.16) 0 16px,transparent 16px 34px)}
+
+@media(prefers-reduced-motion:reduce){
+  /* the ride is decoration; the figures are content. Hand over the end
+     state at once and stop everything moving. */
+  .track{height:auto}
+  .sec{opacity:1;transform:none;animation:none}
+  .result .fig{opacity:1;transform:none}
+  .hint{display:none}
+  *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="stub">section above</div>
+
+  <section class="sec" aria-labelledby="mh">
+    <div class="head">
+      <div>
+        <span class="kick" id="kick"></span>
+        <h2 id="mh"></h2>
+        <p class="note" id="note"></p>
+      </div>
+    </div>
+    <div id="body"></div>
+  </section>
+
+  <div class="stub">section below</div>
+</div>
+
+<script src="mileage-data.js"></script>
+<script>
+document.getElementById('kick').textContent = MILEAGE_COPY.kicker
+document.getElementById('mh').textContent   = MILEAGE_COPY.title
+document.getElementById('note').textContent = MILEAGE_COPY.note
+
+const body = document.getElementById('body')
+
+if (MILEAGE_EMPTY) {
+  body.innerHTML = `<div class="none">
+      <div class="rd"></div>
+      <b>Nowhere to ride yet</b>
+      ${MILEAGE_COPY.empty}
+    </div>`
+} else {
+
+const RANGE = MILEAGE.range
+const STEP  = RANGE > 300 ? 100 : 50
+const BARS  = 10                    /* segments on the fuel gauge */
+
+/* The markers that come down the road, plus the dry one at the end.
+   An interval marker inside the last tenth is dropped — at 416 km the
+   400 marker and the dry one land four percent apart and sit on top of
+   each other for the whole run-in. */
+const MARKS = []
+for (let d = STEP; d < RANGE * 0.9; d += STEP) MARKS.push({ d, label: `${d} km` })
+MARKS.push({ d: RANGE, label: `${fmtKm(RANGE)} km · dry`, dry: true })
+
+body.innerHTML = `
+  <div class="track" id="track">
+    <div class="stick">
+      <div class="stage">
+        <div class="bar">
+          <div class="trip key">
+            <s>Trip</s>
+            <b id="tripKm">0<u>km</u></b>
+          </div>
+          <div class="trip">
+            <s>Burnt</s>
+            <b id="burnt">0.0<u>L</u></b>
+          </div>
+          <div class="trip">
+            <s>Spent</s>
+            <b id="spent">${MILEAGE_BIKE.currency}0</b>
+          </div>
+          <div class="gauge">
+            <s>Fuel</s>
+            <div class="bars" id="bars">
+              ${Array.from({ length: BARS }, (_, i) =>
+                `<i class="${i < 2 ? 'low ' : ''}on"></i>`).join('')}
+            </div>
+            <div class="ef"><span>E</span><span>F</span></div>
+            <div class="lamp" id="lamp"><i></i> reserve</div>
+          </div>
+        </div>
+
+        <div class="roadbox" id="roadbox">
+          <div class="sky"></div>
+          <div class="hills"  id="hills"></div>
+          <div class="ground"></div>
+          <div class="verge"  id="verge"></div>
+          <div class="dashes" id="dashes"></div>
+          <div class="bike" id="bike" aria-hidden="true">🏍️</div>
+          ${MARKS.map((m, i) =>
+            `<div class="km${m.dry ? ' dry' : ''}" data-d="${m.d}" id="km${i}">
+               <b>${m.label}</b><i></i></div>`).join('')}
+          <div class="hint" id="hint">Scroll to ride the tank ↓</div>
+        </div>
+
+        <div class="result" id="result">
+          <div class="fig">
+            <s>What that works out to</s>
+            <b id="big">0.0<u>km/l</u></b>
+          </div>
+          <p class="said">${MILEAGE.method}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="facts" id="facts"></div>
+`
+
+document.getElementById('facts').innerHTML = MILEAGE_FACTS.map(f => `
+  <div class="fact ${f.tone || ''}">
+    <s>${f.label}</s>
+    <b>${f.value}${f.unit ? `<u>${f.unit}</u>` : ''}</b>
+    <em>${f.sub}</em>
+  </div>`).join('')
+
+/* ── the ride ────────────────────────────────────────────────────
+   One rAF, driven by where the track sits in the viewport. Nothing
+   here sets state — every element is written to directly, so the
+   whole section costs a handful of style writes per frame. */
+const track  = document.getElementById('track')
+const bike   = document.getElementById('bike')
+const dashes = document.getElementById('dashes')
+const verge  = document.getElementById('verge')
+const hills  = document.getElementById('hills')
+const tripKm = document.getElementById('tripKm')
+const burnt  = document.getElementById('burnt')
+const spent  = document.getElementById('spent')
+const barEls = [...document.getElementById('bars').children]
+const lamp   = document.getElementById('lamp')
+const big    = document.getElementById('big')
+const result = document.getElementById('result')
+const hint   = document.getElementById('hint')
+const kmEls  = MARKS.map((_, i) => document.getElementById('km' + i))
+
+/* Where the bike is held, in % across the panel. A marker sits at the
+   bike exactly when the trip reaches its distance, and is that far
+   ahead of it (in % of the panel per whole tank) before then — so the
+   whole tank is a little over one panel-width of road, and the last
+   two markers are still off to the right when the ride starts. */
+const BIKE_AT = 32, SPREAD = 100
+let raf = 0, lastBars = -1
+
+function paint() {
+  raf = 0
+  const span = track.offsetHeight - window.innerHeight
+  const p = span > 0
+    ? Math.min(1, Math.max(0, -track.getBoundingClientRect().top / span))
+    : 1
+
+  const km = RANGE * p
+  const litres = MILEAGE_BIKE.tank * p
+
+  tripKm.innerHTML = `${fmtKm(Math.round(km))}<u>km</u>`
+  burnt.innerHTML  = `${litres.toFixed(1)}<u>L</u>`
+  spent.textContent = fmtRs(litres * MILEAGE.rate)
+
+  /* the gauge drains in whole segments, the way a bar gauge does */
+  const lit = Math.max(0, Math.ceil(BARS * (1 - p)))
+  if (lit !== lastBars) {
+    barEls.forEach((el, i) => el.classList.toggle('on', i < lit))
+    lamp.classList.toggle('on', lit <= 2)
+    lastBars = lit
+  }
+
+  /* the parallax: three layers, three speeds */
+  const d = p * RANGE
+  dashes.style.backgroundPosition = `${-d * 3.4}px 0`
+  verge.style.backgroundPosition  = `${-d * 5.1}px 0`
+  hills.style.backgroundPosition  = `${-d * 0.9}px 0`
+
+  /* the bike leans into the ride and lifts a touch at speed */
+  const lean = Math.sin(p * Math.PI * 3) * 2.4
+  bike.style.transform = `rotate(${lean.toFixed(2)}deg) translateY(${(-Math.sin(p * Math.PI) * 3).toFixed(1)}px)`
+
+  /* markers slide down the road, and light up as the bike passes them */
+  kmEls.forEach((el, i) => {
+    const at = MARKS[i].d / RANGE
+    const x = BIKE_AT + (at - p) * SPREAD
+    el.style.left = `${x.toFixed(2)}%`
+    /* faded out rather than removed, so one arriving does not pop in */
+    el.style.opacity = x > 106 || x < -16 ? '0' : '1'
+    el.classList.toggle('hit', p >= at)
+  })
+
+  hint.style.opacity = String(Math.max(0, 1 - p * 5))
+
+  /* the figure resolves over the last stretch, once the tank is nearly out */
+  const k = Math.max(0, Math.min(1, (p - 0.6) / 0.35))
+  big.innerHTML = `${(MILEAGE.kmpl * (1 - Math.pow(1 - k, 3))).toFixed(1)}<u>km/l</u>`
+  result.classList.toggle('on', p > 0.62)
+}
+
+const onScroll = () => { if (!raf) raf = requestAnimationFrame(paint) }
+paint()
+window.addEventListener('scroll', onScroll, { passive: true })
+window.addEventListener('resize', onScroll)
+}
+</script>
+</body>
+</html>

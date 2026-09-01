@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Mileage · 12 · Morph</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   MORPH — one reading, said four ways, and nothing ever fades.
+
+   A cross-fade is what you reach for when you have not worked out what
+   the relationship between two states is. It says: these are different
+   pictures. But 30.4 km/l and ₹3.39 a kilometre are not different
+   pictures — they are the same fact turned round, and the motion
+   should say so.
+
+   So the line is matched character by character against the next one.
+   Glyphs that both lines share are the SAME elements: they travel to
+   their new positions and never blink. Glyphs that are leaving scale
+   away in place; glyphs that are arriving grow into the gap the others
+   have opened. There is no opacity animation in this file at all.
+   ══════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08070e; --card:#141220; --card2:#1a1828; --well:#0d0b15;
+  --bd:rgba(255,255,255,0.07); --bd2:rgba(255,255,255,0.13);
+  --off:#f0eef6; --d1:rgba(240,238,246,0.65); --d2:rgba(240,238,246,0.4); --d3:rgba(240,238,246,0.22);
+  --acc:#8b5cf6; --acc2:#a78bfa;
+  --honey:#e0bb3c;
+  --good:#4ade80; --bad:#fb7185;
+  --sans:'Inter',sans-serif; --serif:'Playfair Display',serif; --mono:'JetBrains Mono',monospace;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+body{background:var(--bg);color:var(--d1);font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--honey);color:#161018}
+.page{width:90%;max-width:1180px;margin:0 auto;padding:64px 0 90px;
+  display:flex;flex-direction:column;gap:clamp(40px,7vh,76px)}
+.stub{border:1px dashed var(--bd);border-radius:16px;padding:26px;color:var(--d3);
+  font-size:0.7rem;letter-spacing:0.16em;text-transform:uppercase;text-align:center}
+
+.sec{position:relative;background:var(--card);border:1px solid var(--bd);border-radius:16px;
+  padding:26px clamp(14px,3vw,30px) 30px;overflow:hidden}
+.sec::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(60% 45% at 50% 0%,rgba(224,187,60,0.08),transparent 70%)}
+
+.head{position:relative;z-index:2;display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;margin-bottom:18px}
+.kick{font-family:var(--mono);font-size:0.58rem;letter-spacing:0.24em;text-transform:uppercase;
+  color:var(--honey);display:block;margin-bottom:7px}
+.head h2{font-family:var(--serif);font-size:clamp(1.35rem,3.6vw,2rem);font-weight:700;color:var(--off);line-height:1.1}
+.head .note{font-size:0.76rem;color:var(--d2);line-height:1.65;max-width:440px;margin-top:8px}
+
+/* ══ the line ══ */
+.stage{position:relative;z-index:2;background:var(--well);border:1px solid var(--bd);border-radius:18px;
+  padding:clamp(20px,4vw,32px) clamp(16px,3vw,26px);overflow:hidden;
+  box-shadow:inset 0 -40px 80px -60px #000}
+
+.morph{position:relative;min-height:clamp(52px,9vw,86px)}
+/* Sized for the LONGEST framing, not the shortest. The line cannot
+   wrap — a glyph that changes row mid-morph travels across the whole
+   panel to get there — so it has to fit at every width instead. */
+.line{position:relative;display:flex;align-items:baseline;flex-wrap:nowrap;
+  font-family:var(--mono);font-weight:700;letter-spacing:-.02em;
+  font-size:clamp(1.05rem,4.4vw,2.6rem);line-height:1.25;white-space:pre}
+/* the ghosts of departing glyphs, out of flow so they cannot push
+   anything about on their way out */
+.ghosts{position:absolute;inset:0;pointer-events:none}
+.g{position:absolute;font-family:var(--mono);font-weight:700;letter-spacing:-.02em;
+  line-height:1.25;white-space:pre;will-change:transform}
+
+.ch{display:inline-block;white-space:pre;will-change:transform;
+  transform-origin:50% 62%}
+/* numerals carry the reading; words carry the sense. Different weight
+   of ink, same line. */
+.ch.num{color:var(--off)}
+.ch.word{color:var(--d2);font-weight:400}
+.ch.sym{color:var(--honey)}
+
+.sub{position:relative;z-index:2;font-size:0.73rem;line-height:1.7;color:var(--d2);
+  margin-top:clamp(10px,2vw,16px);min-height:2.6em;max-width:520px}
+.sub span{display:inline-block;will-change:transform,opacity}
+
+/* ── the dots ── */
+.dots{position:relative;z-index:2;display:flex;align-items:center;gap:9px;
+  margin-top:clamp(14px,2.6vw,20px)}
+.dots button{width:auto;height:22px;padding:0 11px;border-radius:99px;cursor:pointer;
+  border:1px solid var(--bd2);background:transparent;color:var(--d3);
+  font-family:var(--mono);font-size:0.44rem;letter-spacing:0.16em;text-transform:uppercase;
+  transition:.3s var(--ease)}
+.dots button:hover{color:var(--d1);border-color:var(--bd2)}
+.dots button.on{color:#161018;background:var(--honey);border-color:var(--honey);font-weight:700}
+.dots button:focus-visible{outline:2px solid var(--acc2);outline-offset:2px}
+.dots .hold{margin-left:auto;display:flex;align-items:center;gap:8px;
+  font-family:var(--mono);font-size:0.44rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--d3)}
+/* the ring that fills while a framing is being held */
+.ring{width:16px;height:16px;flex:none}
+.ring circle{fill:none;stroke-width:2}
+.ring .bgc{stroke:rgba(255,255,255,.1)}
+.ring .fgc{stroke:var(--honey);stroke-linecap:round;
+  stroke-dasharray:44;stroke-dashoffset:44;transform:rotate(-90deg);transform-origin:50% 50%}
+.dots .pause{padding:0 11px;height:22px}
+
+/* ── the figures, which do not cycle ── */
+.facts{position:relative;z-index:2;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:9px;margin-top:clamp(14px,2.6vw,20px)}
+@media(max-width:760px){ .facts{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media(max-width:440px){ .facts{grid-template-columns:1fr} }
+.fact{background:var(--card2);border:1px solid var(--bd);border-radius:12px;padding:13px 15px;
+  transition:border-color .3s,box-shadow .35s var(--ease)}
+.fact:hover{border-color:rgba(224,187,60,.35);box-shadow:0 14px 28px -20px rgba(224,187,60,.6)}
+.fact.lit{border-color:rgba(224,187,60,.5);background:rgba(224,187,60,.06)}
+.fact s{display:block;text-decoration:none;font-family:var(--mono);font-size:0.45rem;
+  letter-spacing:0.18em;text-transform:uppercase;color:var(--d3);margin-bottom:6px}
+.fact b{display:block;font-family:var(--mono);font-size:1.04rem;font-weight:700;color:var(--off);
+  line-height:1;font-variant-numeric:tabular-nums}
+.fact b u{text-decoration:none;font-size:0.56rem;color:var(--d2);margin-left:3px;font-weight:400}
+.fact em{display:block;font-style:normal;font-size:0.55rem;color:var(--d3);margin-top:6px;line-height:1.5}
+.fact.up b{color:var(--good)}
+.fact.dn b{color:var(--bad)}
+
+/* ══ empty ══ */
+.none{position:relative;z-index:2;border:1px dashed var(--bd2);border-radius:14px;
+  padding:38px 26px;text-align:center;color:var(--d2);font-size:0.8rem;line-height:1.75;max-width:470px;margin:0 auto}
+.none b{display:block;font-family:var(--mono);font-size:0.56rem;letter-spacing:0.24em;
+  text-transform:uppercase;color:var(--honey);margin-bottom:12px}
+.none .cur{display:inline-block;width:12px;height:26px;background:rgba(224,187,60,.4);
+  margin-bottom:16px;animation:blink 1.15s steps(2,start) infinite}
+@keyframes blink{50%{opacity:0}}
+@media(prefers-reduced-motion:reduce){ .none .cur{animation:none} }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="stub">section above</div>
+
+  <section class="sec" aria-labelledby="mh">
+    <div class="head">
+      <div>
+        <span class="kick" id="kick"></span>
+        <h2 id="mh"></h2>
+        <p class="note" id="note"></p>
+      </div>
+    </div>
+    <div id="body"></div>
+  </section>
+
+  <div class="stub">section below</div>
+</div>
+
+<script src="mileage-data.js"></script>
+<script src="mileage-motion.js"></script>
+<script>
+document.getElementById('kick').textContent = MILEAGE_COPY.kicker
+document.getElementById('mh').textContent   = MILEAGE_COPY.title
+document.getElementById('note').textContent = MILEAGE_COPY.note
+
+const body = document.getElementById('body')
+
+if (MILEAGE_EMPTY) {
+  body.innerHTML = `<div class="none">
+      <div class="cur"></div>
+      <b>Nothing to turn round</b>
+      ${MILEAGE_COPY.empty}
+    </div>`
+} else {
+
+/* Four framings of one reading. Deliberately sharing glyphs where the
+   arithmetic does — the 3 in 30.4 is the same 3 as in ₹3.39, and
+   letting it travel between them is the point. */
+const R = MILEAGE_BIKE.currency
+const VIEWS = [
+  { tab: 'per litre', key: 'kmpl',
+    text: `${MILEAGE.kmpl.toFixed(1)} km per litre`,
+    sub: `Measured brim to brim, not read off a brochure. The maker claims ${MILEAGE_BIKE.claimed}.` },
+  { tab: 'per tank', key: 'range',
+    text: `${MILEAGE.range} km on one tank`,
+    sub: `${MILEAGE_BIKE.tank} litres filled to the brim, at ${MILEAGE.kmpl} km/l. Far enough for a day out and back.` },
+  { tab: 'per km', key: 'cost',
+    text: `${R}${MILEAGE.costPerKm.toFixed(2)} a kilometre`,
+    sub: `Fuel only, at ${R}${MILEAGE.rate.toFixed(2)} a litre. A hundred kilometres costs ${R}${Math.round(MILEAGE.costPerKm * 100)}.` },
+  { tab: 'per 100 km', key: 'per100',
+    text: `${MILEAGE.per100.toFixed(2)} litres per 100 km`,
+    sub: `The same figure turned inside out — the way consumption is quoted most places that are not India.` },
+]
+
+body.innerHTML = `
+  <div class="stage">
+    <div class="morph">
+      <div class="line" id="line"></div>
+      <div class="ghosts" id="ghosts"></div>
+    </div>
+    <p class="sub" id="sub"></p>
+  </div>
+
+  <div class="dots" id="dots">
+    ${VIEWS.map((v, i) => `<button data-i="${i}" ${i === 0 ? 'class="on"' : ''}>${v.tab}</button>`).join('')}
+    <span class="hold">
+      <svg class="ring" viewBox="0 0 16 16" aria-hidden="true">
+        <circle class="bgc" cx="8" cy="8" r="7"/>
+        <circle class="fgc" id="ring" cx="8" cy="8" r="7"/>
+      </svg>
+      <button class="pause" id="pause" aria-pressed="false">Pause</button>
+    </span>
+  </div>
+
+  <div class="facts" id="facts"></div>
+`
+
+document.getElementById('facts').innerHTML = MILEAGE_FACTS.map((f) => `
+  <div class="fact ${f.tone || ''}" data-k="${f.key}">
+    <s>${f.label}</s>
+    <b>${f.value}${f.unit ? `<u>${f.unit}</u>` : ''}</b>
+    <em>${f.sub}</em>
+  </div>`).join('')
+
+const line   = document.getElementById('line')
+const ghosts = document.getElementById('ghosts')
+const subEl  = document.getElementById('sub')
+const ring   = document.getElementById('ring')
+const facts  = [...document.querySelectorAll('.fact')]
+
+/* what kind of ink a character gets */
+function kind(c) {
+  if (/[0-9]/.test(c)) return 'num'
+  if (/[a-zA-Z]/.test(c)) return 'word'
+  if (c === ' ') return 'word'
+  return 'sym'
+}
+function makeCh(c) {
+  const el = document.createElement('span')
+  el.className = 'ch ' + kind(c)
+  el.textContent = c
+  return el
+}
+
+/* ── matching ────────────────────────────────────────────────────
+   A longest common subsequence over the two character arrays. What
+   comes back is which glyphs the two lines genuinely share, IN ORDER —
+   so a 3 does not swap places with a later 3 and cross the line to get
+   there. Both strings are short, so the quadratic table is free. */
+function lcs(a, b) {
+  const n = a.length, m = b.length
+  const T = Array.from({ length: n + 1 }, () => new Uint16Array(m + 1))
+  for (let i = n - 1; i >= 0; i--) {
+    for (let j = m - 1; j >= 0; j--) {
+      T[i][j] = a[i] === b[j] ? T[i + 1][j + 1] + 1 : Math.max(T[i + 1][j], T[i][j + 1])
+    }
+  }
+  const pairs = []
+  let i = 0, j = 0
+  while (i < n && j < m) {
+    if (a[i] === b[j]) { pairs.push([i, j]); i++; j++ }
+    else if (T[i + 1][j] >= T[i][j + 1]) i++
+    else j++
+  }
+  return pairs
+}
+
+/* ── the morph ───────────────────────────────────────────────────
+   First: measure every glyph on screen.
+   Mutate: build the next line, reusing the shared glyph ELEMENTS.
+   Last: measure again, and put the survivors back where they were.
+   Departing glyphs are lifted out of flow into the ghost layer, so
+   they cannot shove the line about while they leave.
+
+   Not one opacity keyframe in here. Things arrive by growing and leave
+   by shrinking, which is what makes it read as one line rearranging
+   rather than two lines swapped over. */
+let current = -1
+let chars = []
+
+function render(i, instant) {
+  if (i === current) return
+  const view = VIEWS[i]
+  const next = [...view.text]
+
+  document.querySelectorAll('.dots button[data-i]').forEach((b, j) =>
+    b.classList.toggle('on', j === i))
+  facts.forEach((f) => f.classList.toggle('lit', f.dataset.k === view.key))
+
+  if (instant || MM.REDUCED) {
+    line.innerHTML = ''
+    chars = next.map((c) => { const el = makeCh(c); line.appendChild(el); return el })
+    subEl.textContent = view.sub
+    current = i
+    return
+  }
+
+  const prev = [...(VIEWS[current] ? VIEWS[current].text : '')]
+  const pairs = lcs(prev, next)
+  const keepOld = new Map(pairs.map(([p, q]) => [p, q]))
+  const keepNew = new Map(pairs.map(([p, q]) => [q, p]))
+
+  /* FIRST — where everything is now */
+  const box = line.getBoundingClientRect()
+  const first = chars.map((el) => el.getBoundingClientRect())
+
+  /* the ones that are leaving, cloned into the ghost layer at exactly
+     the place they were standing */
+  const leaving = []
+  chars.forEach((el, p) => {
+    if (keepOld.has(p)) return
+    const r = first[p]
+    const g = document.createElement('span')
+    g.className = 'g ' + kind(el.textContent)
+    g.textContent = el.textContent
+    g.style.left = (r.left - box.left) + 'px'
+    g.style.top = (r.top - box.top) + 'px'
+    g.style.fontSize = getComputedStyle(el).fontSize
+    ghosts.appendChild(g)
+    leaving.push(g)
+  })
+
+  /* MUTATE — the new line, reusing every shared element */
+  const built = next.map((c, q) => {
+    if (keepNew.has(q)) return chars[keepNew.get(q)]
+    return makeCh(c)
+  })
+  line.replaceChildren(...built)
+
+  /* LAST — and invert the survivors back to where they were */
+  const D = 620
+  built.forEach((el, q) => {
+    const from = keepNew.has(q) ? first[keepNew.get(q)] : null
+    const to = el.getBoundingClientRect()
+    if (from) {
+      const dx = from.left - to.left
+      const dy = from.top - to.top
+      if (Math.abs(dx) > 0.4 || Math.abs(dy) > 0.4) {
+        el.animate(
+          [{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }],
+          { duration: D, easing: MM.EASE.out, fill: 'both' },
+        )
+      }
+    } else {
+      /* arriving: grows out of the gap the survivors have just opened,
+         so it is late by design rather than by accident */
+      el.animate(
+        [{ transform: 'scale(0, .55)' }, { transform: 'scale(1.06, 1)', offset: .72 }, { transform: 'none' }],
+        { duration: D * 0.72, easing: MM.EASE.out, delay: D * 0.34, fill: 'both' },
+      )
+    }
+  })
+
+  /* leaving: collapses in place and is gone before the survivors land */
+  leaving.forEach((g) => {
+    const a = g.animate(
+      [{ transform: 'none' }, { transform: 'scale(0, .5)' }],
+      { duration: D * 0.42, easing: MM.EASE.exit, fill: 'both' },
+    )
+    a.finished.then(() => g.remove()).catch(() => {})
+  })
+
+  chars = built
+
+  /* the sentence underneath does cross the line — it is a different
+     sentence, not the same one rearranged, and pretending otherwise
+     would be the same dishonesty in reverse */
+  subEl.animate(
+    [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-5px)' }],
+    { duration: 170, easing: MM.EASE.exit, fill: 'both' },
+  ).finished.then(() => {
+    subEl.textContent = view.sub
+    subEl.animate(
+      [{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }],
+      { duration: 330, easing: MM.EASE.out, fill: 'both' },
+    )
+  }).catch(() => {})
+
+  current = i
+}
+
+/* ── the cycle ───────────────────────────────────────────────────
+   Holds each framing long enough to be read, shows how long is left,
+   and stops the moment anyone touches it or the section leaves the
+   screen. A section that animates forever in the corner of the eye is
+   a section people scroll past faster. */
+const HOLD = 4200
+let cycling = false
+let holdAnim = null
+let timer = 0
+
+function scheduleNext() {
+  clearTimeout(timer)
+  if (holdAnim) holdAnim.cancel()
+  if (!cycling || MM.REDUCED) { ring.style.strokeDashoffset = 44; return }
+  holdAnim = ring.animate(
+    [{ strokeDashoffset: 44 }, { strokeDashoffset: 0 }],
+    { duration: HOLD, easing: 'linear', fill: 'forwards' },
+  )
+  timer = setTimeout(() => {
+    render((current + 1) % VIEWS.length)
+    scheduleNext()
+  }, HOLD)
+}
+
+function setCycling(on) {
+  cycling = on
+  const b = document.getElementById('pause')
+  b.textContent = on ? 'Pause' : 'Play'
+  b.setAttribute('aria-pressed', on ? 'false' : 'true')
+  scheduleNext()
+}
+
+document.getElementById('pause').addEventListener('click', () => setCycling(!cycling))
+document.getElementById('dots').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-i]')
+  if (!b) return
+  render(Number(b.dataset.i))
+  if (cycling) scheduleNext()      // a manual pick restarts the hold
+})
+
+/* pause while the pointer is on it — nobody wants the thing they are
+   reading to change under them */
+const stage = document.querySelector('.stage')
+stage.addEventListener('pointerenter', () => { if (cycling) { clearTimeout(timer); if (holdAnim) holdAnim.pause() } })
+stage.addEventListener('pointerleave', () => { if (cycling) scheduleNext() })
+
+let rt = 0
+window.addEventListener('resize', () => {
+  /* re-lay the line without animating — a resize is not a state change */
+  clearTimeout(rt)
+  rt = setTimeout(() => { const c = current; current = -1; render(c, true) }, 160)
+})
+
+render(0, true)
+
+/* only run while it is actually being looked at */
+new IntersectionObserver((es) => {
+  es.forEach((e) => setCycling(e.isIntersecting && !MM.REDUCED))
+}, { threshold: 0.4 }).observe(stage)
+}
+</script>
+</body>
+</html>

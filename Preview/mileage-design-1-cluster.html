@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Mileage · 1 · Instrument Cluster</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   INSTRUMENT CLUSTER — the section as the bike's own dial.
+
+   It boots the way a real cluster boots: the needle sweeps the full
+   arc and drops back, every segment of the odometer lights at once
+   and then settles, and only then does the reading arrive. One
+   number, delivered by hardware rather than typed onto a page.
+   ══════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08070e; --card:#141220; --card2:#1a1828; --well:#0d0b15;
+  --bd:rgba(255,255,255,0.07); --bd2:rgba(255,255,255,0.13);
+  --off:#f0eef6; --d1:rgba(240,238,246,0.65); --d2:rgba(240,238,246,0.4); --d3:rgba(240,238,246,0.22);
+  --acc:#8b5cf6; --acc2:#a78bfa;
+  --honey:#e0bb3c;
+  --good:#4ade80; --bad:#fb7185;
+  --sans:'Inter',sans-serif; --serif:'Playfair Display',serif; --mono:'JetBrains Mono',monospace;
+  --ease:cubic-bezier(.22,1,.36,1);
+  /* the needle's own curve — overshoots, comes back, settles */
+  --swing:cubic-bezier(.34,1.4,.5,1);
+}
+body{background:var(--bg);color:var(--d1);font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--honey);color:#161018}
+.page{width:90%;max-width:1180px;margin:0 auto;padding:64px 0 90px;
+  display:flex;flex-direction:column;gap:clamp(40px,7vh,76px)}
+.stub{border:1px dashed var(--bd);border-radius:16px;padding:26px;color:var(--d3);
+  font-size:0.7rem;letter-spacing:0.16em;text-transform:uppercase;text-align:center}
+
+.sec{position:relative;background:var(--card);border:1px solid var(--bd);border-radius:16px;
+  padding:26px clamp(14px,3vw,30px) 30px;overflow:hidden;
+  opacity:0;transform:translateY(32px);animation:rise .8s var(--ease) .1s forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+.sec::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(60% 45% at 50% 0%,rgba(224,187,60,0.08),transparent 70%)}
+
+.head{position:relative;z-index:2;display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;margin-bottom:22px}
+.kick{font-family:var(--mono);font-size:0.58rem;letter-spacing:0.24em;text-transform:uppercase;
+  color:var(--honey);display:block;margin-bottom:7px}
+.head h2{font-family:var(--serif);font-size:clamp(1.35rem,3.6vw,2rem);font-weight:700;color:var(--off);line-height:1.1}
+.head .note{font-size:0.76rem;color:var(--d2);line-height:1.65;max-width:440px;margin-top:8px}
+
+/* ══ the cluster body ══ */
+.cluster{position:relative;z-index:2;display:grid;
+  grid-template-columns:minmax(0,310px) minmax(0,1fr);gap:clamp(16px,3vw,34px);align-items:center;
+  background:var(--well);border:1px solid var(--bd2);border-radius:22px;
+  padding:clamp(18px,3vw,30px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),inset 0 -30px 60px -30px rgba(0,0,0,.9)}
+/* the glass in front of it */
+.cluster::after{content:'';position:absolute;inset:0;border-radius:22px;pointer-events:none;
+  background:linear-gradient(115deg,transparent 32%,rgba(255,255,255,.055) 46%,transparent 60%);
+  background-size:280% 100%;background-position:120% 0}
+.cluster.flash::after{animation:sweepglass .9s var(--ease)}
+@keyframes sweepglass{from{background-position:120% 0}to{background-position:-60% 0}}
+
+/* ── the dial ── */
+.dial{position:relative;aspect-ratio:1;width:100%;max-width:310px;margin:0 auto}
+.dial svg{width:100%;height:100%;display:block;overflow:visible}
+.track{fill:none;stroke:rgba(255,255,255,.07);stroke-width:13;stroke-linecap:round}
+.fill{fill:none;stroke:url(#gg);stroke-width:13;stroke-linecap:round;
+  filter:drop-shadow(0 0 9px rgba(224,187,60,.5));
+  transition:stroke-dashoffset 1.25s var(--ease)}
+.tick{stroke:rgba(255,255,255,.26);stroke-width:1.5}
+.tick.maj{stroke:rgba(255,255,255,.55);stroke-width:2.5}
+.tnum{fill:var(--d2);font-family:var(--mono);font-size:9px;text-anchor:middle;dominant-baseline:middle}
+/* the maker's figure, ruled on the dial so the reading sits against something */
+.claim{stroke:var(--acc2);stroke-width:2.5;stroke-dasharray:3 3}
+.claimlab{fill:var(--acc2);font-family:var(--mono);font-size:7.5px;letter-spacing:.1em;text-anchor:middle}
+
+/* the needle — one element, rotated about the hub */
+.needle{position:absolute;left:50%;top:50%;width:2px;height:35%;margin-left:-1px;
+  transform-origin:50% 100%;
+  transform:translateY(-100%) rotate(var(--a,-125deg));
+  transition:transform 1.25s var(--swing);will-change:transform}
+.needle i{position:absolute;inset:0;display:block;border-radius:2px;
+  background:linear-gradient(180deg,var(--honey),rgba(224,187,60,.15));
+  box-shadow:0 0 12px 1px rgba(224,187,60,.55)}
+/* the counterweight past the hub, the way a real needle has one */
+.needle i::after{content:'';position:absolute;left:-2.5px;bottom:-16px;width:7px;height:18px;
+  border-radius:4px;background:linear-gradient(180deg,rgba(224,187,60,.55),rgba(224,187,60,.1))}
+.hub{position:absolute;left:50%;top:50%;width:36px;height:36px;margin:-18px 0 0 -18px;border-radius:50%;
+  background:radial-gradient(circle at 38% 32%,#3a3450,#141220 70%);
+  border:1px solid var(--bd2);box-shadow:0 6px 18px rgba(0,0,0,.7)}
+
+/* the number in the middle of the dial */
+.read{position:absolute;left:0;right:0;top:60%;text-align:center}
+.read b{display:block;font-family:var(--mono);font-size:clamp(2.1rem,6.6vw,2.9rem);font-weight:700;
+  color:var(--off);line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+.read s{display:block;text-decoration:none;font-family:var(--mono);font-size:0.5rem;
+  letter-spacing:0.26em;text-transform:uppercase;color:var(--honey);margin-top:7px}
+.read em{display:block;font-style:normal;font-size:0.6rem;color:var(--d3);margin-top:8px}
+
+/* The tell-tale lamp. It sits under the readout rather than up in the
+   dial face — inside the arc it lands square on the tick numerals. */
+.lamp{display:inline-flex;margin-top:9px;
+  font-family:var(--mono);font-size:0.5rem;letter-spacing:0.2em;text-transform:uppercase;
+  padding:3px 10px;border-radius:99px;white-space:nowrap;
+  border:1px solid rgba(224,187,60,.3);color:var(--honey);background:rgba(224,187,60,.08);
+  opacity:0;transition:opacity .4s ease}
+.cluster.lit .lamp{opacity:1}
+/* while it boots, everything is lit — that is what a self-test looks like */
+.cluster.boot .lamp{opacity:1;border-color:rgba(255,255,255,.28);color:var(--off);
+  background:rgba(255,255,255,.06)}
+
+/* ── right side ── */
+.side{display:flex;flex-direction:column;gap:12px;min-width:0}
+
+/* the odometer drum — six wheels, each a 0-9 strip that rolls */
+.drum{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px 16px}
+.drum > s{text-decoration:none;font-family:var(--mono);font-size:0.5rem;letter-spacing:0.2em;
+  text-transform:uppercase;color:var(--d3)}
+.wheels{display:flex;gap:3px;margin-left:auto}
+.w{position:relative;width:clamp(19px,4.4vw,26px);height:40px;overflow:hidden;border-radius:4px;
+  background:linear-gradient(180deg,#07060c,#1c1a2a 50%,#07060c);
+  border:1px solid var(--bd);box-shadow:inset 0 0 10px rgba(0,0,0,.9)}
+.w.km{background:linear-gradient(180deg,#2a1f06,#5a4410 50%,#2a1f06)}
+.w strip{position:absolute;left:0;right:0;top:0;display:block;
+  transition:transform 1.5s var(--ease);will-change:transform}
+.w strip span{display:flex;align-items:center;justify-content:center;height:40px;
+  font-family:var(--mono);font-size:1.05rem;font-weight:700;color:var(--off);
+  font-variant-numeric:tabular-nums}
+.w.km strip span{color:var(--honey)}
+/* the shading that makes the strip read as a curved wheel */
+.w::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(0,0,0,.85),transparent 34%,transparent 66%,rgba(0,0,0,.85))}
+
+/* The supporting figures. Six of them, so a fixed three across rather
+   than auto-fit — auto-fit lands five on one row and leaves the sixth
+   stranded on its own. */
+.facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media(max-width:1040px){ .facts{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media(max-width:520px){ .facts{grid-template-columns:1fr} }
+/* --d is the entrance stagger, and it is scoped to the two properties
+   the entrance uses. Putting it on the whole shorthand would make a
+   hover a second and a half late. */
+.fact{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px 14px;
+  opacity:0;transform:translateY(10px);
+  transition:opacity .55s ease var(--d,0s),transform .55s var(--ease) var(--d,0s),
+             border-color .3s,box-shadow .35s var(--ease)}
+.cluster.lit .fact{opacity:1;transform:none}
+.fact:hover{border-color:rgba(224,187,60,.35);box-shadow:0 14px 28px -20px rgba(224,187,60,.6)}
+.fact s{display:block;text-decoration:none;font-family:var(--mono);font-size:0.45rem;
+  letter-spacing:0.18em;text-transform:uppercase;color:var(--d3);margin-bottom:6px}
+.fact b{display:block;font-family:var(--mono);font-size:1.02rem;font-weight:700;color:var(--off);
+  line-height:1;font-variant-numeric:tabular-nums}
+.fact b u{text-decoration:none;font-size:0.56rem;color:var(--d2);margin-left:3px;font-weight:400}
+.fact em{display:block;font-style:normal;font-size:0.55rem;color:var(--d3);margin-top:6px;line-height:1.5}
+.fact.up b{color:var(--good)}
+.fact.dn b{color:var(--bad)}
+
+/* how the figure was arrived at — the one line that keeps it honest */
+.method{display:flex;gap:10px;align-items:flex-start;font-size:0.71rem;line-height:1.7;color:var(--d1);
+  padding:11px 14px;border-radius:11px;background:rgba(224,187,60,.05);
+  border:1px solid rgba(224,187,60,.16)}
+.method i{flex:none;width:3px;align-self:stretch;border-radius:2px;background:var(--honey);opacity:.6}
+
+/* the restart, because a self-test is worth seeing twice */
+.again{align-self:flex-start;font-family:var(--mono);font-size:0.5rem;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--d2);background:transparent;border:1px solid var(--bd2);
+  border-radius:99px;padding:7px 14px;cursor:pointer;transition:.28s var(--ease)}
+.again:hover{color:var(--honey);border-color:rgba(224,187,60,.45);background:rgba(224,187,60,.06)}
+.again:focus-visible{outline:2px solid var(--acc2);outline-offset:2px}
+
+/* ══ empty ══ */
+.none{position:relative;z-index:2;border:1px dashed var(--bd2);border-radius:14px;
+  padding:38px 26px;text-align:center;color:var(--d2);font-size:0.8rem;line-height:1.75;max-width:470px;margin:0 auto}
+.none b{display:block;font-family:var(--mono);font-size:0.56rem;letter-spacing:0.24em;
+  text-transform:uppercase;color:var(--honey);margin-bottom:12px}
+.none .gauge0{width:74px;height:74px;margin:0 auto 18px;border-radius:50%;
+  border:2px dashed rgba(224,187,60,.3);position:relative;animation:idle 4s ease-in-out infinite}
+.none .gauge0::after{content:'';position:absolute;left:50%;top:50%;width:2px;height:26px;margin-left:-1px;
+  transform-origin:50% 100%;transform:translateY(-100%) rotate(-125deg);background:rgba(224,187,60,.5)}
+@keyframes idle{50%{transform:rotate(-3deg)}}
+
+@media(max-width:840px){
+  .cluster{grid-template-columns:1fr}
+  .dial{max-width:260px}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  .sec{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="stub">section above</div>
+
+  <section class="sec" aria-labelledby="mh">
+    <div class="head">
+      <div>
+        <span class="kick" id="kick"></span>
+        <h2 id="mh"></h2>
+        <p class="note" id="note"></p>
+      </div>
+    </div>
+    <div id="body"></div>
+  </section>
+
+  <div class="stub">section below</div>
+</div>
+
+<script src="mileage-data.js"></script>
+<script>
+document.getElementById('kick').textContent = MILEAGE_COPY.kicker
+document.getElementById('mh').textContent   = MILEAGE_COPY.title
+document.getElementById('note').textContent = MILEAGE_COPY.note
+
+const body = document.getElementById('body')
+
+if (MILEAGE_EMPTY) {
+  body.innerHTML = `<div class="none">
+      <div class="gauge0"></div>
+      <b>Needle at rest</b>
+      ${MILEAGE_COPY.empty}
+    </div>`
+} else {
+
+/* ── dial geometry ───────────────────────────────────────────────
+   A 250° sweep opening downwards, the way a bike tacho does. The arc
+   is one path and the reading is a dash-offset along it. The scale is
+   built around the reading rather than fixed, so the needle always
+   lands in the readable middle of the dial. */
+const LO = Math.floor(Math.min(MILEAGE.kmpl, MILEAGE_BIKE.claimed) - 6)
+const HI = Math.ceil(Math.max(MILEAGE.kmpl, MILEAGE_BIKE.claimed) + 6)
+const R = 112, CX = 130, CY = 130
+const A0 = -215, A1 = 35
+
+const rad = (d) => (d * Math.PI) / 180
+const pt = (a, r) => [CX + Math.cos(rad(a)) * r, CY + Math.sin(rad(a)) * r]
+const angleFor = (v) => A0 + ((Math.min(HI, Math.max(LO, v)) - LO) / (HI - LO)) * (A1 - A0)
+const arcLen = rad(A1 - A0) * R
+const frac = (v) => (Math.min(HI, Math.max(LO, v)) - LO) / (HI - LO)
+
+let ticks = ''
+for (let v = LO; v <= HI; v++) {
+  const a = angleFor(v), maj = (v - LO) % 3 === 0
+  const [x1, y1] = pt(a, R - 8), [x2, y2] = pt(a, R - (maj ? 19 : 14))
+  ticks += `<line class="tick${maj ? ' maj' : ''}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`
+  if (maj) {
+    const [tx, ty] = pt(a, R - 32)
+    ticks += `<text class="tnum" x="${tx}" y="${ty}">${v}</text>`
+  }
+}
+const ca = angleFor(MILEAGE_BIKE.claimed)
+const [cx1, cy1] = pt(ca, R + 10), [cx2, cy2] = pt(ca, R - 22)
+const [clx, cly] = pt(ca, R + 22)
+const [sx, sy] = pt(A0, R), [ex, ey] = pt(A1, R)
+
+body.innerHTML = `
+  <div class="cluster boot" id="cl">
+    <div class="dial">
+      <svg viewBox="0 0 260 260" role="img"
+           aria-label="Dial reading ${MILEAGE.kmpl} kilometres per litre, against a claimed ${MILEAGE_BIKE.claimed}.">
+        <defs>
+          <linearGradient id="gg" x1="0" y1="1" x2="1" y2="0">
+            <stop offset="0"   stop-color="#fb7185"/>
+            <stop offset=".5"  stop-color="#e0bb3c"/>
+            <stop offset="1"   stop-color="#4ade80"/>
+          </linearGradient>
+        </defs>
+        <path class="track" d="M ${sx} ${sy} A ${R} ${R} 0 1 1 ${ex} ${ey}"/>
+        <path class="fill" id="arc" d="M ${sx} ${sy} A ${R} ${R} 0 1 1 ${ex} ${ey}"
+              stroke-dasharray="${arcLen.toFixed(1)}" stroke-dashoffset="${arcLen.toFixed(1)}"/>
+        ${ticks}
+        <line class="claim" x1="${cx1}" y1="${cy1}" x2="${cx2}" y2="${cy2}"/>
+        <text class="claimlab" x="${clx}" y="${cly}">claimed</text>
+      </svg>
+      <div class="needle" id="ndl" style="--a:${angleFor(LO) + 90}deg"><i></i></div>
+      <div class="hub"></div>
+      <div class="read">
+        <b id="big">0.0</b>
+        <s>km per litre</s>
+        <em id="sub">${MILEAGE_BIKE.name}</em>
+        <div class="lamp" id="lamp">self test</div>
+      </div>
+    </div>
+
+    <div class="side">
+      <div class="drum">
+        <s>Odometer</s>
+        <div class="wheels" id="wheels" aria-hidden="true"></div>
+      </div>
+      <div class="facts" id="facts"></div>
+      <p class="method"><i></i><span>${MILEAGE.method}</span></p>
+      <button class="again" id="again">Run self-test</button>
+    </div>
+  </div>
+`
+
+/* the supporting figures — everything the one reading implies */
+document.getElementById('facts').innerHTML = MILEAGE_FACTS.map((f, i) => `
+  <div class="fact ${f.tone || ''}" style="--d:${(MILEAGE_REDUCED ? 0 : 1500 + i * 70)}ms">
+    <s>${f.label}</s>
+    <b>${f.value}${f.unit ? `<u>${f.unit}</u>` : ''}</b>
+    <em>${f.sub}</em>
+  </div>`).join('')
+
+/* ── the odometer drum ──────────────────────────────────────────
+   Six wheels. Each is a 0-9 strip translated so the right digit sits
+   in the window; the trailing wheels get more turns, so the drum
+   settles right-to-left the way a real one does. */
+const DIGITS = 6, WH = 40
+const wheels = document.getElementById('wheels')
+wheels.innerHTML = Array.from({ length: DIGITS }, (_, i) =>
+  `<div class="w${i === DIGITS - 1 ? ' km' : ''}"><strip>${
+     Array.from({ length: 40 }, (_, d) => `<span>${d % 10}</span>`).join('')
+   }</strip></div>`).join('')
+const strips = [...wheels.querySelectorAll('strip')]
+
+/* The strip holds 40 digits, so the furthest it can travel is index 39 —
+   two laps plus a nine is 29, which fits. The wheels differ in how long
+   they take rather than how far they go, which is what makes the drum
+   settle left to right instead of landing all at once. */
+const LAPS = 2
+function rollOdo(value) {
+  const s = String(value).padStart(DIGITS, '0')
+  strips.forEach((strip, i) => {
+    strip.style.transitionDelay = `${i * 60}ms`
+    strip.style.transitionDuration = `${1.2 + (DIGITS - 1 - i) * 0.12}s`
+    strip.style.transform = `translateY(-${(LAPS * 10 + Number(s[i])) * WH}px)`
+  })
+}
+function resetOdo() {
+  strips.forEach((strip) => {
+    strip.style.transition = 'none'
+    strip.style.transform = 'translateY(0)'
+  })
+  void wheels.offsetWidth
+  strips.forEach((strip) => { strip.style.transition = '' })
+}
+
+/* ── counting the number up ─────────────────────────────────────── */
+const big = document.getElementById('big')
+let raf = 0
+function countTo(to, ms) {
+  cancelAnimationFrame(raf)
+  const from = Number(big.textContent) || 0
+  const t0 = performance.now()
+  const tick = (t) => {
+    const k = Math.min(1, (t - t0) / ms)
+    const e = 1 - Math.pow(1 - k, 3)
+    big.textContent = (from + (to - from) * e).toFixed(1)
+    if (k < 1) raf = requestAnimationFrame(tick)
+  }
+  raf = requestAnimationFrame(tick)
+}
+
+/* ── the boot sequence ──────────────────────────────────────────
+   Sweep to the top of the dial, fall back to the bottom, then rise
+   to the reading and stay there. Ignition, in three moves. */
+const cl   = document.getElementById('cl')
+const ndl  = document.getElementById('ndl')
+const arc  = document.getElementById('arc')
+const lamp = document.getElementById('lamp')
+const timers = []
+
+/* the end state, handed over at once — what reduced motion gets, and
+   what the self-test is working towards */
+function settle() {
+  cl.classList.remove('boot')
+  cl.classList.add('lit')
+  lamp.textContent = `read ${MILEAGE.date}`
+  big.textContent = MILEAGE.kmpl.toFixed(1)
+  ndl.style.setProperty('--a', `${angleFor(MILEAGE.kmpl) + 90}deg`)
+  arc.style.strokeDashoffset = (arcLen * (1 - frac(MILEAGE.kmpl))).toFixed(1)
+  rollOdo(MILEAGE.odo)
+}
+
+function selfTest() {
+  if (MILEAGE_REDUCED) { settle(); return }
+  timers.forEach(clearTimeout); timers.length = 0
+  cl.classList.remove('lit', 'flash')
+  cl.classList.add('boot')
+  lamp.textContent = 'self test'
+  big.textContent = '0.0'
+  resetOdo()
+  ndl.style.setProperty('--a', `${angleFor(LO) + 90}deg`)
+  arc.style.strokeDashoffset = arcLen.toFixed(1)
+
+  /* 1 — needle sweeps to full */
+  timers.push(setTimeout(() => {
+    ndl.style.setProperty('--a', `${angleFor(HI) + 90}deg`)
+    arc.style.strokeDashoffset = '0'
+  }, 260))
+
+  /* 2 — and drops back */
+  timers.push(setTimeout(() => {
+    ndl.style.setProperty('--a', `${angleFor(LO) + 90}deg`)
+    arc.style.strokeDashoffset = arcLen.toFixed(1)
+  }, 1180))
+
+  /* 3 — the real reading, with the drum and the figures behind it */
+  timers.push(setTimeout(() => {
+    cl.classList.remove('boot')
+    cl.classList.add('lit', 'flash')
+    lamp.textContent = `read ${MILEAGE.date}`
+    ndl.style.setProperty('--a', `${angleFor(MILEAGE.kmpl) + 90}deg`)
+    arc.style.strokeDashoffset = (arcLen * (1 - frac(MILEAGE.kmpl))).toFixed(1)
+    countTo(MILEAGE.kmpl, 1250)
+    rollOdo(MILEAGE.odo)
+  }, 2000))
+}
+
+document.getElementById('again').addEventListener('click', selfTest)
+
+/* boot when the section actually comes into view, not while it is
+   still below the fold — the sweep is the reveal */
+new IntersectionObserver((es, ob) => {
+  es.forEach((e) => {
+    if (!e.isIntersecting) return
+    ob.unobserve(e.target)
+    setTimeout(selfTest, 350)
+  })
+}, { threshold: 0.35 }).observe(cl)
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Mileage · 13 · Glass Tank</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   GLASS TANK — the actual Bear, with its tank cut away.
+
+   The product frame is the real one from /public/bear650. The tank is
+   not made transparent — it cannot be, it is a photograph — so a
+   cutaway is punched INTO it instead, the way a technical illustration
+   does: a bright cut edge, the bodywork dimmed around it, and the
+   inside of the tank showing through with fuel in it.
+
+   The cut line is a deliberate, arbitrary edge rather than a trace of
+   the tank's outline, which is what makes it read as a drawing
+   convention and not as a badly masked photo.
+
+   The figure floats on the fuel. It is tethered to the surface, and it
+   rides the surface — when the fuel moves, it moves, a beat late.
+   ══════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08070e; --card:#141220; --card2:#1a1828; --well:#0d0b15;
+  --bd:rgba(255,255,255,0.07); --bd2:rgba(255,255,255,0.13);
+  --off:#f0eef6; --d1:rgba(240,238,246,0.65); --d2:rgba(240,238,246,0.4); --d3:rgba(240,238,246,0.22);
+  --acc:#8b5cf6; --acc2:#a78bfa;
+  --honey:#e0bb3c;
+  --good:#4ade80; --bad:#fb7185;
+  --sans:'Inter',sans-serif; --serif:'Playfair Display',serif; --mono:'JetBrains Mono',monospace;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+body{background:var(--bg);color:var(--d1);font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--honey);color:#161018}
+.page{width:90%;max-width:1180px;margin:0 auto;padding:64px 0 90px;
+  display:flex;flex-direction:column;gap:clamp(40px,7vh,76px)}
+.stub{border:1px dashed var(--bd);border-radius:16px;padding:26px;color:var(--d3);
+  font-size:0.7rem;letter-spacing:0.16em;text-transform:uppercase;text-align:center}
+
+.sec{position:relative;background:var(--card);border:1px solid var(--bd);border-radius:16px;
+  padding:26px clamp(14px,3vw,30px) 30px;overflow:hidden}
+.sec::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(60% 45% at 50% 0%,rgba(224,187,60,0.08),transparent 70%)}
+
+.head{position:relative;z-index:2;display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;margin-bottom:10px}
+.kick{font-family:var(--mono);font-size:0.58rem;letter-spacing:0.24em;text-transform:uppercase;
+  color:var(--honey);display:block;margin-bottom:7px}
+.head h2{font-family:var(--serif);font-size:clamp(1.35rem,3.6vw,2rem);font-weight:700;color:var(--off);line-height:1.1}
+.head .note{font-size:0.76rem;color:var(--d2);line-height:1.65;max-width:440px;margin-top:8px}
+
+/* ══ the bike ══ */
+.rig{position:relative;z-index:2;width:100%;max-width:920px;margin:0 auto;
+  aspect-ratio:800 / 501}
+.rig svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+
+/* the photograph, dimmed so the cutaway is the subject */
+/* Held well down. The cut has to be the brightest thing in the frame or
+   it reads as a tank that has been lit up rather than one that has been
+   opened. */
+.bike{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+  filter:brightness(.34) saturate(.4) contrast(1.06);
+  transition:filter 1.4s var(--ease)}
+.rig.lit .bike{filter:brightness(.5) saturate(.6) contrast(1.03)}
+
+@media(prefers-reduced-motion:reduce){ .bike{transition:none} }
+
+/* ══ the readout that floats on the fuel ══ */
+.float{position:absolute;z-index:6;transform:translate(-50%,-100%);pointer-events:none;
+  will-change:transform}
+.chip{display:flex;align-items:flex-end;gap:7px;padding:9px 14px 10px;border-radius:13px;
+  background:rgba(12,10,18,.86);border:1px solid rgba(224,187,60,.42);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  box-shadow:0 20px 40px -22px #000,0 0 26px -6px rgba(224,187,60,.4);white-space:nowrap}
+.chip b{font-family:var(--mono);font-size:clamp(1.5rem,4.2vw,2.4rem);font-weight:700;color:var(--off);
+  line-height:.9;letter-spacing:-.035em;font-variant-numeric:tabular-nums}
+.chip s{text-decoration:none;font-family:var(--mono);font-size:0.5rem;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--honey);padding-bottom:3px}
+/* the tether down to the surface it is standing on */
+.tether{position:absolute;left:50%;top:100%;width:1px;transform:translateX(-50%);
+  background:linear-gradient(180deg,rgba(224,187,60,.7),rgba(224,187,60,.06))}
+.tether::after{content:'';position:absolute;left:50%;bottom:-3px;width:7px;height:7px;
+  margin-left:-3.5px;border-radius:50%;background:var(--honey);
+  box-shadow:0 0 12px 2px rgba(224,187,60,.6)}
+
+/* ══ the figures ══ */
+.facts{position:relative;z-index:2;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:9px;margin-top:clamp(8px,1.6vw,14px)}
+@media(max-width:760px){ .facts{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media(max-width:440px){ .facts{grid-template-columns:1fr} }
+.fact{background:var(--card2);border:1px solid var(--bd);border-radius:12px;padding:13px 15px;
+  opacity:0;transform:translateY(12px);
+  transition:opacity .6s ease var(--d,0s),transform .6s var(--ease) var(--d,0s),
+             border-color .3s,box-shadow .35s var(--ease)}
+.fact.in{opacity:1;transform:none}
+.fact:hover{border-color:rgba(224,187,60,.35);box-shadow:0 14px 28px -20px rgba(224,187,60,.6)}
+.fact s{display:block;text-decoration:none;font-family:var(--mono);font-size:0.45rem;
+  letter-spacing:0.18em;text-transform:uppercase;color:var(--d3);margin-bottom:6px}
+.fact b{display:block;font-family:var(--mono);font-size:1.04rem;font-weight:700;color:var(--off);
+  line-height:1;font-variant-numeric:tabular-nums}
+.fact b u{text-decoration:none;font-size:0.56rem;color:var(--d2);margin-left:3px;font-weight:400}
+.fact em{display:block;font-style:normal;font-size:0.55rem;color:var(--d3);margin-top:6px;line-height:1.5}
+.fact.up b{color:var(--good)}
+.fact.dn b{color:var(--bad)}
+
+.bench{position:relative;z-index:2;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  margin-top:clamp(14px,2.6vw,20px);padding-top:14px;border-top:1px solid var(--bd)}
+.bench .say{flex:1 1 300px;display:flex;gap:10px;align-items:flex-start;
+  font-size:0.71rem;line-height:1.7;color:var(--d1)}
+.bench .say i{flex:none;width:3px;align-self:stretch;border-radius:2px;background:var(--honey);opacity:.55}
+.bench button{flex:none;padding:7px 14px;border:1px solid var(--bd2);background:transparent;color:var(--d2);
+  border-radius:99px;cursor:pointer;font-family:var(--mono);font-size:0.5rem;letter-spacing:0.16em;
+  text-transform:uppercase;transition:.25s var(--ease)}
+.bench button:hover{color:var(--honey);border-color:rgba(224,187,60,.45);background:rgba(224,187,60,.06)}
+.bench button.on{color:#161018;background:var(--honey);border-color:var(--honey);font-weight:700}
+.bench button:focus-visible{outline:2px solid var(--acc2);outline-offset:2px}
+
+/* ══ empty ══ */
+.none{position:relative;z-index:2;border:1px dashed var(--bd2);border-radius:14px;
+  padding:38px 26px;text-align:center;color:var(--d2);font-size:0.8rem;line-height:1.75;max-width:470px;margin:0 auto}
+.none b{display:block;font-family:var(--mono);font-size:0.56rem;letter-spacing:0.24em;
+  text-transform:uppercase;color:var(--honey);margin-bottom:12px}
+.none img{width:190px;max-width:60%;display:block;margin:0 auto 14px;
+  filter:brightness(.4) saturate(.3) grayscale(.5)}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="stub">section above</div>
+
+  <section class="sec" aria-labelledby="mh">
+    <div class="head">
+      <div>
+        <span class="kick" id="kick"></span>
+        <h2 id="mh"></h2>
+        <p class="note" id="note"></p>
+      </div>
+    </div>
+    <div id="body"></div>
+  </section>
+
+  <div class="stub">section below</div>
+</div>
+
+<script src="mileage-data.js"></script>
+<script src="mileage-motion.js"></script>
+<script>
+document.getElementById('kick').textContent = MILEAGE_COPY.kicker
+document.getElementById('mh').textContent   = MILEAGE_COPY.title
+document.getElementById('note').textContent = MILEAGE_COPY.note
+
+const BIKE = '../public/bear650/wild-honey06.png'
+const body = document.getElementById('body')
+
+if (MILEAGE_EMPTY) {
+  body.innerHTML = `<div class="none">
+      <img src="${BIKE}" alt="">
+      <b>Tank not opened</b>
+      ${MILEAGE_COPY.empty}
+    </div>`
+} else {
+
+/* ── the cut line ────────────────────────────────────────────────
+   Traced against the frame's own geometry. The Wild Honey tank body
+   in wild-honey06.png occupies x 359-484, y 126-194 of the 800 x 501
+   image; this sits a few pixels inside that, so the cut never runs off
+   the tank and onto the frame rails or the seat behind it.
+
+   Keep these in the image's pixel space — the SVG shares the photo's
+   viewBox, so the two cannot drift apart when the section is resized. */
+const VB = { w: 800, h: 501 }
+/* Traced off the measured columns and inset ~3px, so the cut sits on
+   painted tank the whole way round and never touches the frame rails,
+   the seat nose or the chrome front panel. The top edge climbs forward
+   because the tank does. */
+const TANK = 'M 363 172 C 371 163 385 153 401 146 C 419 138 440 132 451 130 ' +
+             'L 455 134 L 455 185 C 452 187 448 188 444 188 ' +
+             'L 371 188 C 365 186 362 179 363 172 Z'
+/* where the fuel can sit, in the same space */
+const FUEL = { top: 132, bottom: 186 }
+const LEVEL = 0.74                     /* how full, 0-1 of that span */
+/* how far above the tank the readout hangs, in image pixels */
+const FLOAT_LIFT = 74
+
+body.innerHTML = `
+  <div class="rig" id="rig">
+    <img class="bike" src="${BIKE}"
+         alt="Royal Enfield Bear 650 in Wild Honey, side profile, with the fuel tank cut away">
+
+    <svg viewBox="0 0 ${VB.w} ${VB.h}" aria-hidden="true">
+      <defs>
+        <clipPath id="tankClip"><path d="${TANK}"/></clipPath>
+
+        <!-- amber, and dark at the bottom: fuel in a cavity, not a
+             repaint of the panel it sits behind -->
+        <linearGradient id="fuelGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0"   stop-color="#ffd76b"/>
+          <stop offset=".14" stop-color="#e8a93a"/>
+          <stop offset="1"   stop-color="#5c3d07"/>
+        </linearGradient>
+        <linearGradient id="glassGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0"   stop-color="rgba(255,255,255,.14)"/>
+          <stop offset=".45" stop-color="rgba(255,255,255,.02)"/>
+          <stop offset="1"   stop-color="rgba(0,0,0,.3)"/>
+        </linearGradient>
+        <radialGradient id="glow" cx=".5" cy=".5" r=".5">
+          <stop offset="0" stop-color="rgba(224,187,60,.5)"/>
+          <stop offset="1" stop-color="rgba(224,187,60,0)"/>
+        </radialGradient>
+      </defs>
+
+      <!-- the light the fuel throws onto the bodywork around the cut -->
+      <ellipse id="spill" cx="412" cy="160" rx="115" ry="48" fill="url(#glow)" opacity="0"/>
+
+      <!-- everything below is confined to the cut -->
+      <g clip-path="url(#tankClip)">
+        <!-- the inside of the tank, behind the fuel. Near-black, so the
+             cut reads as an opening into a cavity rather than as the
+             same panel repainted a different colour. -->
+        <rect x="350" y="118" width="130" height="82" fill="#06050b"/>
+        <rect x="350" y="118" width="130" height="82" fill="url(#glassGrad)" opacity=".5"/>
+        <!-- the fuel. One group, translated vertically, carrying its own
+             surface — so the surface and the body can never separate. -->
+        <g id="fuelG" transform="translate(0, 80)">
+          <path id="fuelBody" fill="url(#fuelGrad)"
+                d="M 340 0 L 500 0 L 500 120 L 340 120 Z"/>
+          <path id="wave1" fill="#f2d97a" opacity=".9" d=""/>
+          <path id="wave2" fill="#fff0bc" opacity=".45" d=""/>
+        </g>
+        <!-- bubbles rising in it -->
+        <g id="bubbles"></g>
+        <!-- the glass itself, over the fuel -->
+        <rect x="350" y="120" width="130" height="80" fill="url(#glassGrad)"/>
+      </g>
+
+      <!-- the cut edge: bright, so it reads as a cut and not a shadow -->
+      <path d="${TANK}" fill="none" stroke="rgba(255,226,140,.95)" stroke-width="2.2"
+            id="cutEdge" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/>
+      <path d="${TANK}" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="4"
+            opacity=".35" style="filter:blur(3px)"/>
+
+      <!-- the litre marks etched on the inside of the cut -->
+      <g id="marks" opacity="0"></g>
+    </svg>
+
+    <div class="float" id="float">
+      <div class="chip">
+        <b id="big">0.0</b>
+        <s>km / l</s>
+      </div>
+      <span class="tether" id="tether"></span>
+    </div>
+  </div>
+
+  <div class="facts" id="facts"></div>
+
+  <div class="bench">
+    <p class="say"><i></i><span>${MILEAGE.method}</span></p>
+    <button id="slosh">Slosh it</button>
+    <button id="replay">Replay</button>
+  </div>
+`
+
+document.getElementById('facts').innerHTML = MILEAGE_FACTS.map((f, i) => `
+  <div class="fact ${f.tone || ''}" style="--d:${(MM.REDUCED ? 0 : 900 + i * 70)}ms">
+    <s>${f.label}</s>
+    <b>${f.value}${f.unit ? `<u>${f.unit}</u>` : ''}</b>
+    <em>${f.sub}</em>
+  </div>`).join('')
+
+const rig     = document.getElementById('rig')
+const fuelG   = document.getElementById('fuelG')
+const wave1   = document.getElementById('wave1')
+const wave2   = document.getElementById('wave2')
+const bubbles = document.getElementById('bubbles')
+const spill   = document.getElementById('spill')
+const cutEdge = document.getElementById('cutEdge')
+const marks   = document.getElementById('marks')
+const floatEl = document.getElementById('float')
+const tether  = document.getElementById('tether')
+const big     = document.getElementById('big')
+
+/* litre marks up the inside of the cut */
+const litreLines = []
+for (let l = 3; l < MILEAGE_BIKE.tank; l += 3) {
+  const y = FUEL.bottom - (FUEL.bottom - FUEL.top) * (l / MILEAGE_BIKE.tank)
+  litreLines.push(`<line x1="370" y1="${y.toFixed(1)}" x2="392" y2="${y.toFixed(1)}"
+    stroke="rgba(255,255,255,.3)" stroke-width="1"/>
+    <text x="396" y="${(y + 3).toFixed(1)}" fill="rgba(255,255,255,.35)"
+      font-family="monospace" font-size="7">${l}L</text>`)
+}
+marks.innerHTML = litreLines.join('')
+
+/* ── the fuel surface ────────────────────────────────────────────
+   Two sine trains at different wavelengths and speeds, summed. One
+   alone reads as a corrugation; two that beat against each other read
+   as liquid. The body of the fuel is the same group, so the surface is
+   never a separate thing sitting on top of a rectangle. */
+const X0 = 340, X1 = 500, STEPS = 34
+function wavePath(t, amp, len, speed, phase, depth) {
+  let d = `M ${X0} 0`
+  for (let i = 0; i <= STEPS; i++) {
+    const x = X0 + ((X1 - X0) * i) / STEPS
+    const y = Math.sin((x / len) + t * speed + phase) * amp
+    d += ` L ${x.toFixed(1)} ${y.toFixed(2)}`
+  }
+  d += ` L ${X1} ${depth} L ${X0} ${depth} Z`
+  return d
+}
+
+/* ── state ───────────────────────────────────────────────────────── */
+const level = new MM.Spring({ stiffness: 42, damping: 11, from: 0, to: 0 })
+const tilt  = new MM.Spring({ stiffness: 60, damping: 6.5, from: 0, to: 0 })
+let t = 0, raf = 0, running = false, onScreen = false
+
+/* One image pixel, in real screen pixels. The tether is the only thing
+   here that cannot be expressed as a percentage — its containing block
+   is the chip, not the frame — so it needs the real scale. Cached, and
+   re-taken on resize, rather than measured every frame. */
+let pxPerUnit = 1
+function measure() { pxPerUnit = rig.clientHeight / VB.h }
+
+/* where the fuel group sits: 0 = empty (surface at the bottom of the
+   tank), 1 = at LEVEL */
+function surfaceAt(k) {
+  return FUEL.bottom - (FUEL.bottom - FUEL.top) * LEVEL * k
+}
+
+function draw() {
+  const k = level.x
+  const sy = surfaceAt(k)
+  const wob = tilt.x
+
+  const amp1 = 1.5 + Math.abs(wob) * 2.6
+  const amp2 = 0.9 + Math.abs(wob) * 1.7
+  wave1.setAttribute('d', wavePath(t, amp1, 13, 1.5, 0, 120))
+  wave2.setAttribute('d', wavePath(t, amp2, 8.5, -2.3, 1.7, 120))
+  /* a tilt rocks the whole body of fuel, not merely its surface */
+  fuelG.setAttribute('transform',
+    `translate(0, ${sy.toFixed(2)}) rotate(${(wob * 0.5).toFixed(3)}, 415, 40)`)
+
+  spill.setAttribute('cy', sy.toFixed(1))
+  spill.setAttribute('opacity', (k * 0.85).toFixed(3))
+  marks.setAttribute('opacity', (k * 0.9).toFixed(3))
+
+  /* The readout hangs clear ABOVE the tank and is tethered DOWN to the
+     surface — it is a marker for the fuel, not a label sitting on the
+     bodywork. Both ends live in the image's own coordinate space and
+     are written as percentages, so nothing drifts when the section is
+     resized. The chip rides the surface a beat late; the tether takes
+     up the slack. */
+  const bob = Math.sin(t * 1.5) * amp1 * 0.55
+  const surf = sy + bob
+  const anchorY = FUEL.top - FLOAT_LIFT + bob * 0.35
+  const fx = 412 + wob * 1.4
+
+  floatEl.style.left = ((fx / VB.w) * 100).toFixed(3) + '%'
+  floatEl.style.top = ((anchorY / VB.h) * 100).toFixed(3) + '%'
+  floatEl.style.transform = `translate(-50%, -100%) rotate(${(wob * 0.2).toFixed(2)}deg)`
+  tether.style.height = Math.max(0, (surf - anchorY) * pxPerUnit).toFixed(1) + 'px'
+}
+
+function frame() {
+  t += 0.016
+  draw()
+  /* The surface never stops moving — dead-flat liquid reads as a solid.
+     So this loop does not settle; it is stopped by the section leaving
+     the screen instead, which is the only time nobody is looking. */
+  if (!onScreen) { running = false; raf = 0; return }
+  raf = requestAnimationFrame(frame)
+}
+
+function start() {
+  if (running || MM.REDUCED) return
+  running = true
+  raf = requestAnimationFrame(frame)
+}
+function stop() {
+  running = false
+  if (raf) cancelAnimationFrame(raf)
+  raf = 0
+}
+
+function countUp(ms) {
+  const t0 = performance.now()
+  const step = (now) => {
+    const k = Math.min(1, (now - t0) / ms)
+    big.textContent = (MILEAGE.kmpl * (1 - Math.pow(1 - k, 4))).toFixed(1)
+    if (k < 1) requestAnimationFrame(step)
+  }
+  requestAnimationFrame(step)
+}
+
+/* ── the reveal ──────────────────────────────────────────────────
+   The cut is drawn first — the panel is opened — and only then does
+   the fuel come up. Filling a tank that has not been opened yet is the
+   sort of thing that reads as wrong without anyone being able to say
+   why. */
+function play() {
+  cutEdge.style.transition = 'none'
+  cutEdge.style.strokeDashoffset = '1'
+  level.snap(0)
+  big.textContent = '0.0'
+  rig.classList.remove('lit')
+  void cutEdge.getBoundingClientRect()
+
+  if (MM.REDUCED) {
+    /* the tank open, full, and perfectly still — one paint, no loop */
+    cutEdge.style.strokeDashoffset = '0'
+    level.snap(1)
+    tilt.snap(0)
+    big.textContent = MILEAGE.kmpl.toFixed(1)
+    rig.classList.add('lit')
+    document.querySelectorAll('.fact').forEach((f) => f.classList.add('in'))
+    draw()
+    return
+  }
+
+  MM.sequence([
+    [0, () => {
+      cutEdge.style.transition = 'stroke-dashoffset 900ms cubic-bezier(.22,1,.36,1)'
+      cutEdge.style.strokeDashoffset = '0'
+      rig.classList.add('lit')
+      start()
+    }],
+    760,
+    [0, () => { level.to(1); tilt.kick(9) }],
+    [700, () => countUp(1000)],
+    [200, () => document.querySelectorAll('.fact').forEach((f) => f.classList.add('in'))],
+  ])
+}
+
+document.getElementById('slosh').addEventListener('click', () => {
+  if (MM.REDUCED) return
+  tilt.kick(26)
+  start()
+})
+document.getElementById('replay').addEventListener('click', () => {
+  document.querySelectorAll('.fact').forEach((f) => f.classList.remove('in'))
+  play()
+})
+
+/* leaning on the bike sloshes it, in the direction you lean */
+rig.addEventListener('pointermove', (e) => {
+  if (MM.REDUCED) return
+  const r = rig.getBoundingClientRect()
+  const x = (e.clientX - r.left) / r.width - 0.5
+  tilt.to(x * 7)
+  start()
+})
+rig.addEventListener('pointerleave', () => { tilt.to(0); tilt.kick(4) })
+
+/* The loop runs only while the section is on screen. A liquid surface
+   is the sort of thing that will happily burn a frame a tick for the
+   whole life of the page if nobody stops it. */
+measure()
+let rt = 0
+window.addEventListener('resize', () => {
+  clearTimeout(rt)
+  rt = setTimeout(() => { measure(); draw() }, 140)
+})
+
+let started = false
+new IntersectionObserver((es) => {
+  es.forEach((e) => {
+    onScreen = e.isIntersecting
+    if (!onScreen) { stop(); return }
+    start()
+    if (!started) { started = true; play() }
+  })
+}, { threshold: 0.3 }).observe(rig)
+}
+</script>
+</body>
+</html>

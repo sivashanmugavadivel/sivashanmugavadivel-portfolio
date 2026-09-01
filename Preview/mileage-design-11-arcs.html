@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Mileage · 11 · Arcs</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   ARCS — nothing here travels in a straight line.
+
+   Almost nothing in the physical world moves point to point: a hand
+   reaching, a thrown object, a head turning, all describe curves.
+   Interface motion translates in straight lines because translate() is
+   what CSS hands you, and the result is the specific deadness of
+   things sliding on rails.
+
+   Every element arrives along a quadratic, banking into its own turn —
+   the rotation is taken from the tangent of the path it is on, not
+   guessed. Turn the paths on and the geometry is drawn for you.
+   ══════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08070e; --card:#141220; --card2:#1a1828; --well:#0d0b15;
+  --bd:rgba(255,255,255,0.07); --bd2:rgba(255,255,255,0.13);
+  --off:#f0eef6; --d1:rgba(240,238,246,0.65); --d2:rgba(240,238,246,0.4); --d3:rgba(240,238,246,0.22);
+  --acc:#8b5cf6; --acc2:#a78bfa;
+  --honey:#e0bb3c;
+  --good:#4ade80; --bad:#fb7185;
+  --sans:'Inter',sans-serif; --serif:'Playfair Display',serif; --mono:'JetBrains Mono',monospace;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+body{background:var(--bg);color:var(--d1);font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--honey);color:#161018}
+.page{width:90%;max-width:1180px;margin:0 auto;padding:64px 0 90px;
+  display:flex;flex-direction:column;gap:clamp(40px,7vh,76px)}
+.stub{border:1px dashed var(--bd);border-radius:16px;padding:26px;color:var(--d3);
+  font-size:0.7rem;letter-spacing:0.16em;text-transform:uppercase;text-align:center}
+
+.sec{position:relative;background:var(--card);border:1px solid var(--bd);border-radius:16px;
+  padding:26px clamp(14px,3vw,30px) 30px;overflow:hidden}
+.sec::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(60% 45% at 50% 0%,rgba(224,187,60,0.08),transparent 70%)}
+
+.head{position:relative;z-index:2;display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;margin-bottom:16px}
+.kick{font-family:var(--mono);font-size:0.58rem;letter-spacing:0.24em;text-transform:uppercase;
+  color:var(--honey);display:block;margin-bottom:7px}
+.head h2{font-family:var(--serif);font-size:clamp(1.35rem,3.6vw,2rem);font-weight:700;color:var(--off);line-height:1.1}
+.head .note{font-size:0.76rem;color:var(--d2);line-height:1.65;max-width:440px;margin-top:8px}
+
+/* ══ the rig — the coordinate space every path is computed in ══ */
+.rig{position:relative;z-index:2;background:var(--well);border:1px solid var(--bd);border-radius:18px;
+  padding:clamp(20px,4vw,32px) clamp(16px,3vw,26px) clamp(16px,3vw,24px);
+  overflow:hidden;box-shadow:inset 0 -40px 80px -60px #000}
+
+/* the paths themselves, drawn behind everything */
+.paths{position:absolute;inset:0;pointer-events:none;z-index:0;opacity:0;
+  transition:opacity .45s var(--ease)}
+.paths.on{opacity:1}
+.paths path{fill:none;stroke:rgba(224,187,60,.34);stroke-width:1.2;stroke-linecap:round;
+  stroke-dasharray:3 4}
+.paths circle{fill:rgba(224,187,60,.5)}
+
+/* ── the reading, swung in on a pendulum ── */
+.swing{position:relative;z-index:2;display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;
+  margin-bottom:clamp(18px,3.4vw,28px);transform-origin:50% -190px;will-change:transform}
+.swing b{font-family:var(--mono);font-size:clamp(3rem,10vw,5rem);font-weight:700;color:var(--off);
+  line-height:.9;letter-spacing:-.045em;font-variant-numeric:tabular-nums}
+.swing .u{font-family:var(--mono);font-size:clamp(.68rem,1.8vw,.95rem);letter-spacing:0.2em;
+  text-transform:uppercase;color:var(--honey);padding-bottom:clamp(6px,1.4vw,12px)}
+.swing .who{margin-left:auto;font-family:var(--mono);font-size:0.5rem;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--d3);padding-bottom:8px;text-align:right;line-height:1.9}
+
+/* ── the figures ── */
+.grid{position:relative;z-index:2;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+@media(max-width:760px){ .grid{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media(max-width:440px){ .grid{grid-template-columns:1fr} }
+
+.fact{position:relative;background:var(--card2);border:1px solid var(--bd);border-radius:12px;
+  padding:13px 15px;opacity:0;will-change:transform,opacity;
+  transition:border-color .3s,box-shadow .4s var(--ease)}
+.fact.landed{opacity:1}
+.fact:hover{border-color:rgba(224,187,60,.38);box-shadow:0 18px 34px -22px rgba(224,187,60,.6)}
+.fact s{display:block;text-decoration:none;font-family:var(--mono);font-size:0.45rem;
+  letter-spacing:0.18em;text-transform:uppercase;color:var(--d3);margin-bottom:6px}
+.fact b{display:block;font-family:var(--mono);font-size:1.04rem;font-weight:700;color:var(--off);
+  line-height:1;font-variant-numeric:tabular-nums}
+.fact b u{text-decoration:none;font-size:0.56rem;color:var(--d2);margin-left:3px;font-weight:400}
+.fact em{display:block;font-style:normal;font-size:0.55rem;color:var(--d3);margin-top:6px;line-height:1.5}
+.fact.up b{color:var(--good)}
+.fact.dn b{color:var(--bad)}
+
+.method{position:relative;z-index:2;display:flex;gap:10px;align-items:flex-start;
+  font-size:0.71rem;line-height:1.7;color:var(--d1);margin-top:clamp(14px,2.6vw,20px);
+  opacity:0;will-change:transform,opacity}
+.method.landed{opacity:1}
+.method i{flex:none;width:3px;align-self:stretch;border-radius:2px;background:var(--honey);opacity:.55}
+
+/* ── bench ── */
+.bench{position:relative;z-index:2;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  margin-top:clamp(16px,3vw,22px);padding-top:14px;border-top:1px solid var(--bd)}
+.bench .lab{font-family:var(--mono);font-size:0.48rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--d3)}
+.bench button{padding:7px 14px;border:1px solid var(--bd2);background:transparent;color:var(--d2);
+  border-radius:99px;cursor:pointer;font-family:var(--mono);font-size:0.5rem;letter-spacing:0.16em;
+  text-transform:uppercase;transition:.25s var(--ease)}
+.bench button:hover{color:var(--honey);border-color:rgba(224,187,60,.45);background:rgba(224,187,60,.06)}
+.bench button.on{color:#161018;background:var(--honey);border-color:var(--honey);font-weight:700}
+.bench button:focus-visible{outline:2px solid var(--acc2);outline-offset:2px}
+.bench .hint{margin-left:auto;font-family:var(--mono);font-size:0.46rem;letter-spacing:0.14em;
+  text-transform:uppercase;color:var(--d3)}
+
+/* ══ empty ══ */
+.none{position:relative;z-index:2;border:1px dashed var(--bd2);border-radius:14px;
+  padding:38px 26px;text-align:center;color:var(--d2);font-size:0.8rem;line-height:1.75;max-width:470px;margin:0 auto}
+.none b{display:block;font-family:var(--mono);font-size:0.56rem;letter-spacing:0.24em;
+  text-transform:uppercase;color:var(--honey);margin-bottom:12px}
+.none svg{width:120px;height:52px;display:block;margin:0 auto 16px;overflow:visible}
+.none svg path{fill:none;stroke:rgba(224,187,60,.4);stroke-width:1.4;stroke-dasharray:3 4}
+.none svg circle{fill:rgba(224,187,60,.55)}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="stub">section above</div>
+
+  <section class="sec" aria-labelledby="mh">
+    <div class="head">
+      <div>
+        <span class="kick" id="kick"></span>
+        <h2 id="mh"></h2>
+        <p class="note" id="note"></p>
+      </div>
+    </div>
+    <div id="body"></div>
+  </section>
+
+  <div class="stub">section below</div>
+</div>
+
+<script src="mileage-data.js"></script>
+<script src="mileage-motion.js"></script>
+<script>
+document.getElementById('kick').textContent = MILEAGE_COPY.kicker
+document.getElementById('mh').textContent   = MILEAGE_COPY.title
+document.getElementById('note').textContent = MILEAGE_COPY.note
+
+const body = document.getElementById('body')
+
+if (MILEAGE_EMPTY) {
+  body.innerHTML = `<div class="none">
+      <svg viewBox="0 0 120 52">
+        <path d="M 4 46 Q 60 -14 116 30"/>
+        <circle cx="4" cy="46" r="3"/><circle cx="116" cy="30" r="3"/>
+      </svg>
+      <b>No arrival to plot</b>
+      ${MILEAGE_COPY.empty}
+    </div>`
+} else {
+
+body.innerHTML = `
+  <div class="rig" id="rig">
+    <svg class="paths" id="paths" aria-hidden="true"></svg>
+
+    <div class="swing" id="swing">
+      <b id="big">0.0</b>
+      <span class="u">km / l</span>
+      <span class="who">${MILEAGE_BIKE.name}<br>brim to brim · ${MILEAGE.date}</span>
+    </div>
+
+    <div class="grid" id="grid"></div>
+
+    <p class="method" id="method"><i></i><span>${MILEAGE.method}</span></p>
+  </div>
+
+  <div class="bench">
+    <span class="lab">Paths</span>
+    <button id="showPaths">Show the arcs</button>
+    <button id="replay">Replay</button>
+    <span class="hint">hover a figure — it lifts on a curve too</span>
+  </div>
+`
+
+document.getElementById('grid').innerHTML = MILEAGE_FACTS.map((f) => `
+  <div class="fact ${f.tone || ''}">
+    <s>${f.label}</s>
+    <b>${f.value}${f.unit ? `<u>${f.unit}</u>` : ''}</b>
+    <em>${f.sub}</em>
+  </div>`).join('')
+
+const rig    = document.getElementById('rig')
+const paths  = document.getElementById('paths')
+const swing  = document.getElementById('swing')
+const big    = document.getElementById('big')
+const method = document.getElementById('method')
+const facts  = [...document.querySelectorAll('.fact')]
+
+/* ── plotting ────────────────────────────────────────────────────
+   Every path is computed in the rig's own pixel space, so the arcs
+   are real geometry rather than percentages that happen to look
+   curved at one width. Re-measured on resize.
+
+   Launch points are pushed outside the rig and fanned around its
+   lower edge, so the group arrives as a spray rather than a rank. */
+let plots = []
+
+function plot() {
+  const R = rig.getBoundingClientRect()
+  paths.setAttribute('viewBox', `0 0 ${R.width} ${R.height}`)
+
+  plots = facts.map((el, i) => {
+    const b = el.getBoundingClientRect()
+    const x1 = b.left - R.left + b.width / 2
+    const y1 = b.top - R.top + b.height / 2
+
+    /* fan the launch points across the bottom edge and push them well
+       outside, so nothing is seen starting inside the frame */
+    const spread = (i / Math.max(1, facts.length - 1)) - 0.5
+    const x0 = R.width * (0.5 + spread * 1.5)
+    const y0 = R.height + 120 + Math.abs(spread) * 60
+
+    /* alternate the bend, so consecutive cards do not describe the
+       same curve and read as a mechanism */
+    const bend = (i % 2 ? 0.26 : -0.26) * (1 - Math.abs(spread) * 0.35)
+    return { el, x0, y0, x1, y1, bend, f: MM.arc(x0, y0, x1, y1, bend) }
+  })
+
+  paths.innerHTML = plots.map((p) =>
+    `<path d="${MM.arcPath(p.x0, p.y0, p.x1, p.y1, p.bend)}"/>` +
+    `<circle cx="${p.x1.toFixed(1)}" cy="${p.y1.toFixed(1)}" r="2.5"/>`
+  ).join('')
+}
+
+/* ── the flight ──────────────────────────────────────────────────
+   One rAF for the whole group. Each card walks its own curve, and its
+   rotation is read off the tangent — a thing following a curve banks
+   into it, and a thing that does not reads as being dragged. */
+let raf = 0
+function fly() {
+  cancelAnimationFrame(raf)
+  plot()
+
+  const DUR = 900
+  const EACH = 70
+  const t0 = performance.now()
+
+  facts.forEach((el) => { el.classList.remove('landed'); el.style.opacity = '0' })
+
+  const step = (now) => {
+    let allDone = true
+    plots.forEach((p, i) => {
+      const local = (now - t0 - i * EACH) / DUR
+      if (local < 0) {
+        p.el.style.opacity = '0'
+        allDone = false
+        return
+      }
+      const t = Math.min(1, local)
+      if (t < 1) allDone = false
+      /* eased along the path, not along time — the card covers ground
+         fast early and creeps into its slot */
+      const e = 1 - Math.pow(1 - t, 3.2)
+      const pt = p.f(e)
+      const bank = (pt.angle - 90) * 0.16 * (1 - e)
+      p.el.style.opacity = Math.min(1, t * 3).toFixed(3)
+      p.el.style.transform =
+        `translate3d(${(pt.x - p.x1).toFixed(2)}px, ${(pt.y - p.y1).toFixed(2)}px, 0) ` +
+        `rotate(${bank.toFixed(2)}deg) scale(${(0.9 + 0.1 * e).toFixed(4)})`
+    })
+
+    if (allDone) {
+      plots.forEach((p) => {
+        p.el.style.transform = ''
+        p.el.style.opacity = ''
+        p.el.classList.add('landed')
+      })
+      raf = 0
+      return
+    }
+    raf = requestAnimationFrame(step)
+  }
+  raf = requestAnimationFrame(step)
+}
+
+/* ── the reading swings in ───────────────────────────────────────
+   A pendulum: rotation about a pivot well above the panel, so the
+   block describes a genuine arc rather than sliding sideways while
+   tilting. Two swings, each smaller, then it hangs. */
+function swingIn() {
+  swing.animate([
+    { transform: 'rotate(-13deg)', opacity: 0 },
+    { transform: 'rotate(4.5deg)', opacity: 1, offset: .45 },
+    { transform: 'rotate(-1.6deg)', offset: .72 },
+    { transform: 'rotate(.5deg)', offset: .88 },
+    { transform: 'none', opacity: 1 },
+  ], { duration: 1150, easing: 'cubic-bezier(.36,.05,.28,1)', fill: 'both' })
+}
+
+function countUp(ms) {
+  const t0 = performance.now()
+  const step = (t) => {
+    const k = Math.min(1, (t - t0) / ms)
+    big.textContent = (MILEAGE.kmpl * (1 - Math.pow(1 - k, 4))).toFixed(1)
+    if (k < 1) requestAnimationFrame(step)
+  }
+  requestAnimationFrame(step)
+}
+
+/* ── hover lifts on a curve as well ──────────────────────────────
+   A card that rises straight up on hover contradicts everything the
+   entrance just said. It leaves along a short arc instead, in the
+   direction it came from. */
+facts.forEach((el, i) => {
+  let hraf = 0
+  const run = (dir) => {
+    cancelAnimationFrame(hraf)
+    const t0 = performance.now()
+    const D = dir > 0 ? 340 : 260
+    const side = i % 2 ? 1 : -1
+    const from = dir > 0 ? 0 : 1
+    const stepH = (now) => {
+      const k = Math.min(1, (now - t0) / D)
+      const e = dir > 0 ? 1 - Math.pow(1 - k, 3) : Math.pow(1 - k, 2)
+      const p = from === 0 ? e : e
+      /* a short quarter-arc: out to the side as it rises, back as it falls */
+      const x = Math.sin(p * Math.PI) * 3.4 * side
+      const y = -p * 5
+      el.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) rotate(${(x * 0.16).toFixed(2)}deg)`
+      if (k < 1) hraf = requestAnimationFrame(stepH)
+      else if (dir < 0) el.style.transform = ''
+    }
+    hraf = requestAnimationFrame(stepH)
+  }
+  el.addEventListener('pointerenter', () => { if (!MM.REDUCED && !raf) run(1) })
+  el.addEventListener('pointerleave', () => { if (!MM.REDUCED && !raf) run(-1) })
+})
+
+/* ── controls ────────────────────────────────────────────────────── */
+const showBtn = document.getElementById('showPaths')
+showBtn.addEventListener('click', () => {
+  const on = paths.classList.toggle('on')
+  showBtn.classList.toggle('on', on)
+  showBtn.textContent = on ? 'Hide the arcs' : 'Show the arcs'
+  if (on) plot()
+})
+document.getElementById('replay').addEventListener('click', () => {
+  if (MM.REDUCED) return
+  swingIn()
+  countUp(1000)
+  fly()
+  method.classList.remove('landed')
+  setTimeout(() => method.classList.add('landed'), 700)
+})
+
+let rt = 0
+window.addEventListener('resize', () => {
+  clearTimeout(rt)
+  rt = setTimeout(plot, 160)
+})
+
+/* ── arrival ─────────────────────────────────────────────────────── */
+function settle() {
+  big.textContent = MILEAGE.kmpl.toFixed(1)
+  facts.forEach((el) => el.classList.add('landed'))
+  method.classList.add('landed')
+}
+
+new IntersectionObserver((es, ob) => {
+  es.forEach((e) => {
+    if (!e.isIntersecting) return
+    ob.unobserve(e.target)
+    if (MM.REDUCED) { settle(); return }
+    swingIn()
+    countUp(1050)
+    fly()
+    setTimeout(() => method.classList.add('landed'), 760)
+  })
+}, { threshold: 0.3 }).observe(rig)
+}
+</script>
+</body>
+</html>

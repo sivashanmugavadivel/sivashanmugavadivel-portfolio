@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Mileage · 18 · The Drop</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   THE DROP — one drop of fuel, close enough to be the whole section,
+   with the figure held inside it.
+
+   A drop is not a circle. It is a body of liquid held together by
+   surface tension, and when it is disturbed it does not wobble like a
+   spring — it ripples around its own circumference in modes, the way a
+   struck bell does. The outline here is a circle plus two of those
+   modes running at different rates, which is why it never repeats
+   quite the same shape twice.
+
+   Everything the drop does to the reading inside it, real liquid would
+   do: the figure is magnified toward the middle, displaced when the
+   surface deforms, and doubled faintly along the bottom where a lens
+   throws a second image.
+   ══════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08070e; --card:#141220; --card2:#1a1828; --well:#0d0b15;
+  --bd:rgba(255,255,255,0.07); --bd2:rgba(255,255,255,0.13);
+  --off:#f0eef6; --d1:rgba(240,238,246,0.65); --d2:rgba(240,238,246,0.4); --d3:rgba(240,238,246,0.22);
+  --acc:#8b5cf6; --acc2:#a78bfa;
+  --honey:#e0bb3c;
+  --good:#4ade80; --bad:#fb7185;
+  --sans:'Inter',sans-serif; --serif:'Playfair Display',serif; --mono:'JetBrains Mono',monospace;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+body{background:var(--bg);color:var(--d1);font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--honey);color:#161018}
+.page{width:90%;max-width:1180px;margin:0 auto;padding:64px 0 90px;
+  display:flex;flex-direction:column;gap:clamp(40px,7vh,76px)}
+.stub{border:1px dashed var(--bd);border-radius:16px;padding:26px;color:var(--d3);
+  font-size:0.7rem;letter-spacing:0.16em;text-transform:uppercase;text-align:center}
+
+.sec{position:relative;background:var(--card);border:1px solid var(--bd);border-radius:16px;
+  padding:26px clamp(14px,3vw,30px) 30px;overflow:hidden}
+.sec::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(56% 50% at 34% 42%,rgba(224,187,60,0.13),transparent 72%)}
+
+.head{position:relative;z-index:2;display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;margin-bottom:6px}
+.kick{font-family:var(--mono);font-size:0.58rem;letter-spacing:0.24em;text-transform:uppercase;
+  color:var(--honey);display:block;margin-bottom:7px}
+.head h2{font-family:var(--serif);font-size:clamp(1.35rem,3.6vw,2rem);font-weight:700;color:var(--off);line-height:1.1}
+.head .note{font-size:0.76rem;color:var(--d2);line-height:1.65;max-width:440px;margin-top:8px}
+
+.wrap{position:relative;z-index:2;display:grid;
+  grid-template-columns:minmax(0,420px) minmax(0,1fr);gap:clamp(16px,3vw,34px);align-items:center}
+@media(max-width:820px){ .wrap{grid-template-columns:1fr} }
+
+/* ══ the drop ══ */
+.dropbox{position:relative;width:100%;max-width:420px;margin:0 auto;aspect-ratio:1;
+  cursor:pointer;touch-action:pan-y;user-select:none}
+.dropbox svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+
+/* the reading, inside the liquid */
+.inside{position:absolute;left:50%;top:50%;z-index:5;pointer-events:none;
+  transform:translate(-50%,-50%);will-change:transform}
+.inside b{display:block;font-family:var(--mono);font-size:clamp(2rem,7.5vw,3.4rem);font-weight:700;
+  color:#2a1c02;line-height:.9;letter-spacing:-.04em;font-variant-numeric:tabular-nums;
+  text-align:center;text-shadow:0 1px 0 rgba(255,240,190,.5)}
+.inside s{display:block;text-decoration:none;font-family:var(--mono);font-size:0.5rem;
+  letter-spacing:0.24em;text-transform:uppercase;color:rgba(42,28,2,.7);text-align:center;margin-top:8px}
+/* the second image a lens throws along its lower edge */
+.ghost{position:absolute;left:50%;top:50%;z-index:4;pointer-events:none;opacity:.22;
+  transform:translate(-50%,-50%);filter:blur(1.2px);will-change:transform}
+.ghost b{display:block;font-family:var(--mono);font-size:clamp(2rem,7.5vw,3.4rem);font-weight:700;
+  color:#1a1200;line-height:.9;letter-spacing:-.04em;text-align:center;transform:scaleY(-1)}
+
+.hint{position:absolute;left:50%;bottom:-4px;transform:translateX(-50%);
+  font-family:var(--mono);font-size:0.46rem;letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--d3);white-space:nowrap;pointer-events:none}
+
+/* ══ figures ══ */
+.side{display:flex;flex-direction:column;gap:12px;min-width:0}
+.facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+@media(max-width:480px){ .facts{grid-template-columns:1fr} }
+.fact{background:var(--card2);border:1px solid var(--bd);border-radius:12px;padding:13px 15px;
+  opacity:0;transform:translateY(12px);
+  transition:opacity .6s ease var(--d,0s),transform .6s var(--ease) var(--d,0s),
+             border-color .3s,box-shadow .35s var(--ease)}
+.fact.in{opacity:1;transform:none}
+.fact:hover{border-color:rgba(224,187,60,.35);box-shadow:0 14px 28px -20px rgba(224,187,60,.6)}
+.fact s{display:block;text-decoration:none;font-family:var(--mono);font-size:0.45rem;
+  letter-spacing:0.18em;text-transform:uppercase;color:var(--d3);margin-bottom:6px}
+.fact b{display:block;font-family:var(--mono);font-size:1.04rem;font-weight:700;color:var(--off);
+  line-height:1;font-variant-numeric:tabular-nums}
+.fact b u{text-decoration:none;font-size:0.56rem;color:var(--d2);margin-left:3px;font-weight:400}
+.fact em{display:block;font-style:normal;font-size:0.55rem;color:var(--d3);margin-top:6px;line-height:1.5}
+.fact.up b{color:var(--good)}
+.fact.dn b{color:var(--bad)}
+.say{display:flex;gap:10px;align-items:flex-start;font-size:0.71rem;line-height:1.7;color:var(--d1)}
+.say i{flex:none;width:3px;align-self:stretch;border-radius:2px;background:var(--honey);opacity:.55}
+
+/* ══ empty ══ */
+.none{position:relative;z-index:2;border:1px dashed var(--bd2);border-radius:14px;
+  padding:38px 26px;text-align:center;color:var(--d2);font-size:0.8rem;line-height:1.75;max-width:470px;margin:0 auto}
+.none b{display:block;font-family:var(--mono);font-size:0.56rem;letter-spacing:0.24em;
+  text-transform:uppercase;color:var(--honey);margin-bottom:12px}
+.none .d{width:42px;height:42px;border-radius:50% 50% 50% 50%/58% 58% 42% 42%;margin:0 auto 18px;
+  border:1px dashed rgba(224,187,60,.4)}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="stub">section above</div>
+
+  <section class="sec" aria-labelledby="mh">
+    <div class="head">
+      <div>
+        <span class="kick" id="kick"></span>
+        <h2 id="mh"></h2>
+        <p class="note" id="note"></p>
+      </div>
+    </div>
+    <div id="body"></div>
+  </section>
+
+  <div class="stub">section below</div>
+</div>
+
+<script src="mileage-data.js"></script>
+<script src="mileage-motion.js"></script>
+<script>
+document.getElementById('kick').textContent = MILEAGE_COPY.kicker
+document.getElementById('mh').textContent   = MILEAGE_COPY.title
+document.getElementById('note').textContent = MILEAGE_COPY.note
+
+const body = document.getElementById('body')
+
+if (MILEAGE_EMPTY) {
+  body.innerHTML = `<div class="none">
+      <div class="d"></div>
+      <b>Not a drop</b>
+      ${MILEAGE_COPY.empty}
+    </div>`
+} else {
+
+const S = 420, C = S / 2, R = 148
+
+body.innerHTML = `
+  <div class="wrap">
+    <div class="dropbox" id="dropbox" role="button" tabindex="0"
+         aria-label="A drop of fuel holding the figure ${MILEAGE.kmpl} kilometres per litre. Press to disturb it.">
+      <svg viewBox="0 0 ${S} ${S}" aria-hidden="true">
+        <defs>
+          <!-- NOT id="body": the section's own container is #body, and
+               url(#body) resolves to whichever comes first in the
+               document, which is the div — so the fill silently fails -->
+          <radialGradient id="dropFill" cx=".36" cy=".3" r=".82">
+            <stop offset="0"   stop-color="#fff0bd"/>
+            <stop offset=".34" stop-color="#f3cd63"/>
+            <stop offset=".76" stop-color="#dc9f2c"/>
+            <stop offset="1"   stop-color="#a8720f"/>
+          </radialGradient>
+          <radialGradient id="rimLight" cx=".5" cy=".5" r=".5">
+            <stop offset=".82" stop-color="rgba(255,245,205,0)"/>
+            <stop offset=".95" stop-color="rgba(255,245,205,.55)"/>
+            <stop offset="1"   stop-color="rgba(255,245,205,0)"/>
+          </radialGradient>
+          <radialGradient id="caustic" cx=".5" cy=".78" r=".42">
+            <stop offset="0"   stop-color="rgba(255,244,200,.75)"/>
+            <stop offset="1"   stop-color="rgba(255,244,200,0)"/>
+          </radialGradient>
+          <filter id="soft"><feGaussianBlur stdDeviation="7"/></filter>
+        </defs>
+
+        <!-- what it throws on the surface under it -->
+        <ellipse id="shadow" cx="${C}" cy="${C + R + 34}" rx="${R * 0.78}" ry="16"
+                 fill="rgba(0,0,0,.55)" filter="url(#soft)"/>
+        <ellipse id="pool" cx="${C}" cy="${C + R + 30}" rx="${R * 0.62}" ry="13"
+                 fill="url(#caustic)" opacity=".5"/>
+
+        <!-- the drop itself -->
+        <path id="drop" fill="url(#dropFill)"/>
+        <path id="rim" fill="url(#rimLight)" opacity=".9"/>
+
+        <!-- the two highlights: a hard specular near the top left, and
+             the soft bounce a transparent body picks up underneath -->
+        <ellipse id="spec" cx="${C - 46}" cy="${C - 56}" rx="26" ry="18" fill="#fffdf2"
+                 opacity=".85" transform="rotate(-28, ${C - 46}, ${C - 56})"/>
+        <ellipse id="spec2" cx="${C - 74}" cy="${C - 22}" rx="9" ry="6" fill="#fffdf2" opacity=".5"/>
+        <ellipse id="bounce" cx="${C + 18}" cy="${C + 82}" rx="62" ry="26"
+                 fill="rgba(255,238,180,.34)" filter="url(#soft)"/>
+      </svg>
+
+      <div class="ghost" id="ghost"><b>${MILEAGE.kmpl.toFixed(1)}</b></div>
+      <div class="inside" id="inside">
+        <b id="big">0.0</b>
+        <s>km per litre</s>
+      </div>
+      <span class="hint">tap the drop</span>
+    </div>
+
+    <div class="side">
+      <div class="facts" id="facts"></div>
+      <p class="say"><i></i><span>${MILEAGE.method}</span></p>
+    </div>
+  </div>
+`
+
+document.getElementById('facts').innerHTML = MILEAGE_FACTS.map((f, i) => `
+  <div class="fact ${f.tone || ''}" style="--d:${(MM.REDUCED ? 0 : 650 + i * 70)}ms">
+    <s>${f.label}</s>
+    <b>${f.value}${f.unit ? `<u>${f.unit}</u>` : ''}</b>
+    <em>${f.sub}</em>
+  </div>`).join('')
+
+const dropbox = document.getElementById('dropbox')
+const dropEl  = document.getElementById('drop')
+const rimEl   = document.getElementById('rim')
+const specEl  = document.getElementById('spec')
+const bounce  = document.getElementById('bounce')
+const shadow  = document.getElementById('shadow')
+const inside  = document.getElementById('inside')
+const ghost   = document.getElementById('ghost')
+const big     = document.getElementById('big')
+
+/* ── the outline ─────────────────────────────────────────────────
+   A circle plus two oscillation modes. Mode 2 is the one a real drop
+   rings in — it squashes along one axis and stretches along the other,
+   preserving area — and mode 3 gives it the slight three-lobed
+   irregularity that stops it reading as a stretched ellipse. The two
+   run at different rates and decay at different rates, so the shape
+   never repeats.
+
+   `amp` is how hard it was last hit; it bleeds away on its own. */
+let amp = 0, t = 0, spin = 0
+const STEPS = 72
+
+function outline(scale) {
+  let d = ''
+  for (let i = 0; i <= STEPS; i++) {
+    const a = (i / STEPS) * Math.PI * 2
+    const m2 = Math.cos(2 * (a - spin)) * amp * 0.16
+    const m3 = Math.cos(3 * (a + spin * 0.6) + t * 1.7) * amp * 0.055
+    /* gravity gives even a floating drop a faintly heavier bottom */
+    const sag = Math.sin(a) * 0.022
+    const r = R * scale * (1 + m2 + m3 + sag)
+    const x = C + Math.cos(a) * r
+    const y = C + Math.sin(a) * r
+    d += (i ? ' L ' : 'M ') + x.toFixed(2) + ' ' + y.toFixed(2)
+  }
+  return d + ' Z'
+}
+
+function draw() {
+  dropEl.setAttribute('d', outline(1))
+  rimEl.setAttribute('d', outline(1))
+
+  /* the highlight is on the surface, so it slides as the surface moves */
+  const hx = C - 46 + Math.cos(spin * 2) * amp * 26
+  const hy = C - 56 + Math.sin(spin * 2) * amp * 16
+  specEl.setAttribute('cx', hx.toFixed(1))
+  specEl.setAttribute('cy', hy.toFixed(1))
+  specEl.setAttribute('rx', (26 * (1 - amp * 0.3)).toFixed(1))
+  bounce.setAttribute('cy', (C + 82 + amp * 14).toFixed(1))
+
+  /* a wobbling drop presses down on what is under it */
+  shadow.setAttribute('rx', (R * 0.78 * (1 + amp * 0.2)).toFixed(1))
+  shadow.setAttribute('opacity', (0.55 - amp * 0.12).toFixed(3))
+
+  /* THE LENS. A drop magnifies what is behind it, most in the middle,
+     and shoves it about as the surface deforms. The figure is inside
+     the liquid, so it has to do both. */
+  const mag = 1.06 + amp * 0.2
+  const shiftX = Math.cos(spin * 2) * amp * 20
+  const shiftY = Math.sin(spin * 2) * amp * 13
+  inside.style.transform =
+    `translate(-50%, -50%) translate(${shiftX.toFixed(2)}px, ${shiftY.toFixed(2)}px) ` +
+    `scale(${mag.toFixed(4)}, ${(mag * (1 - amp * 0.13)).toFixed(4)})`
+  /* the second image, thrown low and inverted, moving the other way */
+  ghost.style.transform =
+    `translate(-50%, -50%) translate(${(-shiftX * 0.5).toFixed(2)}px, ` +
+    `${(48 - shiftY * 0.4).toFixed(2)}px) scale(${(0.72 - amp * 0.06).toFixed(3)})`
+}
+
+/* ── the loop ────────────────────────────────────────────────────
+   The wobble decays on its own; the idle keeps a trace of it alive so
+   the drop is never perfectly still, because a perfectly still drop
+   reads as a painted circle. */
+let raf = 0, onScreen = false, running = false
+const IDLE = 0.055
+
+function loop() {
+  t += 0.016
+  spin += 0.021
+  amp += (IDLE - amp) * 0.028
+  draw()
+  if (!onScreen) { running = false; raf = 0; return }
+  raf = requestAnimationFrame(loop)
+}
+function start() { if (running || MM.REDUCED) return; running = true; raf = requestAnimationFrame(loop) }
+function stop() { running = false; if (raf) cancelAnimationFrame(raf); raf = 0 }
+
+function hit(strength) {
+  amp = Math.min(0.62, amp + strength)
+  /* a knock also sets it turning, so the deformation travels round the
+     drop instead of pulsing in place */
+  spin += 0.5
+  start()
+}
+
+function countUp(ms) {
+  const t0 = performance.now()
+  const step = (now) => {
+    const k = Math.min(1, (now - t0) / ms)
+    big.textContent = (MILEAGE.kmpl * (1 - Math.pow(1 - k, 4))).toFixed(1)
+    if (k < 1) requestAnimationFrame(step)
+  }
+  requestAnimationFrame(step)
+}
+
+dropbox.addEventListener('pointerdown', () => { if (!MM.REDUCED) hit(0.3) })
+dropbox.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' && e.key !== ' ') return
+  e.preventDefault()
+  if (!MM.REDUCED) hit(0.3)
+})
+
+function play() {
+  if (MM.REDUCED) {
+    amp = 0.04; t = 0.6; spin = 0.4
+    draw()
+    big.textContent = MILEAGE.kmpl.toFixed(1)
+    document.querySelectorAll('.fact').forEach((f) => f.classList.add('in'))
+    return
+  }
+  start()
+  /* it arrives as if it has just landed */
+  amp = 0.55
+  MM.sequence([
+    [420, () => countUp(1050)],
+    [260, () => document.querySelectorAll('.fact').forEach((f) => f.classList.add('in'))],
+  ])
+}
+
+new IntersectionObserver((es) => {
+  es.forEach((e) => {
+    onScreen = e.isIntersecting
+    if (!onScreen) { stop(); return }
+    start()
+    if (!dropbox.dataset.ran) { dropbox.dataset.ran = '1'; play() }
+  })
+}, { threshold: 0.3 }).observe(dropbox)
+}
+</script>
+</body>
+</html>

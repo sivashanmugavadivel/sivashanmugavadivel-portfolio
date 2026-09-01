@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Mileage Section Design Picker</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0c0b12;--card:#15131f;--bd:rgba(255,255,255,0.09);
+  --acc:#e0bb3c;--off:#f0eef6;--d1:rgba(240,238,246,0.64);--d2:rgba(240,238,246,0.4);--d3:rgba(240,238,246,0.22);
+  --sans:'Inter',sans-serif;--serif:'Playfair Display',serif}
+body{background:var(--bg);color:var(--d1);font-family:var(--sans);min-height:100vh}
+.layout{display:flex;height:100vh}
+.side{width:350px;flex-shrink:0;background:#100e1a;border-right:1px solid var(--bd);
+  display:flex;flex-direction:column;overflow:hidden}
+.side h1{font-family:var(--serif);font-size:1.05rem;font-weight:700;color:var(--off);padding:16px 18px 6px}
+.side .intro{font-size:0.7rem;color:var(--d3);padding:0 18px 12px;border-bottom:1px solid var(--bd);line-height:1.6}
+.side .intro b{color:var(--acc);font-weight:600}
+.side .intro code{font-size:0.66rem;color:var(--d2)}
+.list{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:6px}
+.batch{padding:12px 8px 4px;font-size:0.58rem;font-weight:700;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--acc)}
+.batch:first-child{padding-top:2px}
+.batch small{display:block;font-size:0.55rem;font-weight:400;letter-spacing:0.02em;
+  text-transform:none;color:var(--d3);margin-top:5px;line-height:1.6}
+.item{width:100%;text-align:left;padding:12px;border-radius:11px;border:1px solid var(--bd);
+  background:transparent;color:var(--d1);font-family:var(--sans);cursor:pointer;transition:all .25s}
+.item:hover{border-color:var(--acc);background:rgba(224,187,60,0.07);color:var(--off)}
+.item.on{border-color:var(--acc);background:rgba(224,187,60,0.14);color:var(--off)}
+.item b{display:flex;align-items:center;gap:8px;font-size:0.83rem;font-weight:600;margin-bottom:5px}
+.item b i{font-style:normal;min-width:20px;height:20px;padding:0 5px;border-radius:6px;
+  display:grid;place-items:center;font-size:0.6rem;font-weight:700;
+  background:rgba(224,187,60,0.18);color:var(--acc);flex-shrink:0}
+.item .what{display:block;font-size:0.67rem;color:var(--d2);line-height:1.6}
+.item .tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+.item .tags u{font-size:0.55rem;letter-spacing:0.07em;text-transform:uppercase;text-decoration:none;
+  padding:3px 8px;border-radius:99px;background:rgba(224,187,60,0.13);color:var(--acc);
+  border:1px solid rgba(224,187,60,0.2);font-weight:600}
+.side footer{padding:11px 18px 14px;border-top:1px solid var(--bd);font-size:0.63rem;color:var(--d3);line-height:1.65}
+.side footer code{color:var(--d2)}
+.stage{flex:1;display:flex;flex-direction:column;min-width:0}
+.bar{padding:10px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:12px;
+  background:#100e1a;flex-wrap:wrap}
+.bar .now{font-size:0.8rem;font-weight:600;color:var(--off)}
+.bar .how{font-size:0.66rem;color:var(--d3)}
+.bar .views{margin-left:auto;display:flex;gap:1px;background:var(--bd);border-radius:8px;overflow:hidden}
+.bar .views button{padding:7px 12px;border:0;background:#15131f;color:var(--d2);cursor:pointer;
+  font-family:var(--sans);font-size:0.68rem;transition:.22s}
+.bar .views button.on{background:var(--acc);color:#100e1a;font-weight:600}
+.bar a{font-size:0.7rem;font-weight:600;color:var(--acc);text-decoration:none;
+  padding:7px 13px;border-radius:99px;border:1px solid rgba(224,187,60,0.28);transition:.25s;white-space:nowrap}
+.bar a:hover{background:var(--acc);color:#100e1a}
+.frameholder{flex:1;min-height:0;display:flex;align-items:flex-start;justify-content:center;
+  overflow:auto;background:#08070d;padding:0}
+.frameholder.phone{padding:22px;background:
+  radial-gradient(40vw 40vw at 50% 20%,rgba(224,187,60,0.07),transparent 70%),#08070d}
+iframe{width:100%;height:100%;border:0;background:#08070e;display:block}
+.frameholder.phone iframe{width:390px;height:844px;max-height:100%;border-radius:26px;
+  border:8px solid #1c1a26;box-shadow:0 30px 60px -20px rgba(0,0,0,0.9);flex-shrink:0}
+@media(max-width:900px){
+  .layout{flex-direction:column;height:auto}
+  .side{width:100%}
+  .frameholder{height:78vh}
+  .frameholder.phone{padding:12px}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="side">
+    <h1>Mileage section — eighteen designs</h1>
+    <div class="intro">Eighteen ways to put <b>one mileage reading</b> on <em>/mygarage</em>.
+      No fuel log, no history — the figure the Bear actually returns, plus the handful
+      of things that fall out of it. Every design reads the same numbers from
+      <code>mileage-data.js</code>; change the reading there and all eighteen follow.
+      Flip <b>Empty</b> to see how each behaves before a reading has been taken.</div>
+    <div class="list" id="list"></div>
+    <footer>Standalone HTML in this folder. Open from the file system —
+      <code>mileage-data.js</code> and <code>mileage-motion.js</code> load as
+      sibling scripts. Both are classic scripts, not modules, so
+      <code>file://</code> works.</footer>
+  </aside>
+  <main class="stage">
+    <div class="bar">
+      <span class="now" id="now"></span>
+      <span class="how" id="how"></span>
+      <div class="views">
+        <button id="vDesk" class="on">Desktop</button>
+        <button id="vPhone">Phone</button>
+      </div>
+      <div class="views">
+        <button id="sFull" class="on">Reading</button>
+        <button id="sEmpty">Empty</button>
+      </div>
+      <a id="open" href="#" target="_blank">Full screen ↗</a>
+    </div>
+    <div class="frameholder" id="holder"><iframe id="frame" title="preview"></iframe></div>
+  </main>
+</div>
+<script>
+const DESIGNS = [
+  { batch: 'Batch one · the object',
+    blurb: 'Each one is a different thing the reading could be — a dial, a pump, a tank. The motion serves the object.' },
+
+  { n: 1, file: 'mileage-design-1-cluster.html', name: 'Instrument Cluster',
+    what: 'The section as the bike’s own dial. It boots the way a real cluster boots — the needle sweeps the full arc, drops back, and only then settles on the reading, while six odometer drums roll up behind it. The claimed figure is ruled on the dial so the number sits against something.',
+    how: 'Watch it boot · Run self-test', tags: ['Analog gauge', 'Rolling drum', 'Self-test'] },
+
+  { n: 2, file: 'mileage-design-2-pump.html', name: 'Pump Terminal',
+    what: 'The dispenser at the pump. Three seven-segment displays — built segment by segment, not typed in a font — run a lamp test and then dispense a full tank: amount fastest, volume behind it. The hose carries fuel, the nozzle clicks off, and the receipt prints out of the slot with the mileage on it.',
+    how: 'Fill the tank · watch the receipt', tags: ['Seven-segment', 'Receipt print', 'Loud'] },
+
+  { n: 3, file: 'mileage-design-3-tank.html', name: 'Tank Level',
+    what: 'One tank, filling, with the level marker riding up on the surface of the fuel. Two crests at different speeds, a meniscus clinging to the glass, bubbles off the bottom, and a slosh when the fill stops. Tilt it with the pointer — the surface stays level, because a surface does. The ruler beside it walks the tank out in kilometres.',
+    how: 'Move the pointer over the tank', tags: ['Liquid', 'Tilt / parallax', 'Range ruler'] },
+
+  { n: 4, file: 'mileage-design-4-range-road.html', name: 'Range Road',
+    what: 'The only one that spends the tank instead of showing it. Scrolling rides one full tank: the road runs past in three parallax layers, the bar gauge drains, the trip counter climbs, distance markers arrive, and the figure resolves as the tank runs dry. The scroll position is the timeline.',
+    how: 'Scroll — hold it anywhere', tags: ['Scroll-driven', 'Parallax', 'Tallest'] },
+
+  { n: 5, file: 'mileage-design-5-stamped-plate.html', name: 'Stamped Plate',
+    what: 'The figure punched into brushed steel the way a frame number is. A die comes down on each character in turn, the plate rings, sparks come off the strike, and the character sinks in. When the last one lands a raking light runs across and the depth of the stamping is what you read.',
+    how: 'Watch it strike · tilt the plate', tags: ['Tactile', 'Steel', 'Per-character'] },
+
+  { n: 6, file: 'mileage-design-6-bento.html', name: 'Bento Cluster',
+    what: 'The quiet one. A mosaic with the reading holding the big tile and everything it implies packed around it, each tile shaped like the thing it measures — fuel fills a glass, range runs down a road, the odometer turns on drums. No sequence to sit through.',
+    how: 'Nothing to do — it deals itself in', tags: ['Compact', 'Glanceable', 'Easiest to drop in'] },
+
+  { batch: 'Batch two · the motion',
+    blurb: 'Same restraint, same palette. Here the animation is the subject: real springs, follow-through, FLIP, holds, arcs. All six share one motion library — mileage-motion.js.' },
+
+  { n: 7, file: 'mileage-design-7-weighted.html', name: 'Weighted Readout',
+    what: 'The reading has mass. One spring integrator drives the whole panel — it winds up, overshoots once, settles. Grab the figure and throw it and the same spring catches it, because a spring can be retargeted mid-flight and a bezier can never be. The figures below read its position from N frames ago, so they genuinely trail it.',
+    how: 'Drag it · throw it · change the spring', tags: ['Real physics', 'Throwable', 'Follow-through'] },
+
+  { n: 8, file: 'mileage-design-8-repack.html', name: 'Repack',
+    what: 'Promote any figure and the whole wall re-packs around it — measured before, measured after, animated across the difference. Nothing jumps, nothing cross-fades. The part most FLIP work gets wrong is that scaling a box stretches the type inside it; every card counter-scales its content by the exact inverse, so the box grows while the words hold still.',
+    how: 'Click any figure to promote it', tags: ['FLIP', 'No cross-fades', 'Counter-scaled type'] },
+
+  { n: 9, file: 'mileage-design-9-follow-through.html', name: 'Follow-Through',
+    what: 'Five plates on a chain, each nested in the one above so rotations compound, each trying to hang vertically and always a beat late. Disturb the top and the correction travels down as a wave: they do not all start together and they do not all stop together. Scrolling past hands it an impulse too.',
+    how: 'Push it · scroll past it · nudge', tags: ['Coupled chain', 'Overlapping action', 'Scroll impulse'] },
+
+  { n: 10, file: 'mileage-design-10-staged.html', name: 'Staged',
+    what: 'The reveal directed as a shot. Every move has a wind-up in the opposite direction first, and it stops twice — hard, for longer than is comfortable to write — because motion that never rests has no emphasis. The beat sheet under it is the real timing drawn to scale, holds hatched. Run it at a quarter speed.',
+    how: 'Replay · ½× · ¼×', tags: ['Anticipation', 'Real holds', 'Inspectable timing'] },
+
+  { n: 11, file: 'mileage-design-11-arcs.html', name: 'Arcs',
+    what: 'Nothing travels in a straight line. Every element arrives along a quadratic and banks into its turn — the rotation is read off the tangent of the path, not guessed at. The reading swings in on a pendulum. Turn the paths on and the geometry is drawn for you.',
+    how: 'Show the arcs · hover a figure', tags: ['Curved paths', 'Banking', 'Pendulum'] },
+
+  { n: 12, file: 'mileage-design-12-morph.html', name: 'Morph',
+    what: 'One reading said four ways, and not one opacity keyframe in the file. Each line is matched character by character against the next, so shared glyphs are the same elements travelling to new positions. Leaving glyphs collapse in place, arriving ones grow into the gap the others opened.',
+    how: 'It cycles · pick a framing · pause', tags: ['Shared glyphs', 'Zero fades', 'LCS matched'] },
+
+  { batch: 'Batch three · the machine',
+    blurb: 'Fuel you can see, and the figure floating in it. Two of these use the real Bear 650 product frame from /public/bear650, with the tank cut open where the tank actually is.' },
+
+  { n: 13, file: 'mileage-design-13-glass-tank.html', name: 'Glass Tank',
+    what: 'The actual Bear, with its tank cut away. A photograph cannot be made transparent, so a cutaway is punched into it the way a technical illustration does — bright cut edge, bodywork dimmed around it, fuel moving inside. The cut line was traced off the frame\'s own pixels, so it sits on painted tank the whole way round. The figure hangs above it, tethered down to the surface, and rides it.',
+    how: 'Move over the bike to slosh it', tags: ['Real product frame', 'Cutaway', 'Floating figure'] },
+
+  { n: 14, file: 'mileage-design-14-fuel-gun.html', name: 'Fuel Gun',
+    what: 'The nozzle drawn to your reference artwork — red body with its darker facet, white ribbed spout, amber drop at the tip — rebuilt as vector paths so the drop can actually leave it. It swells until surface tension gives, necks, pinches off and falls under gravity, so it accelerates. The pool is a one-dimensional wave simulation: an impact pushes one column down and the ripple genuinely travels out and reflects off the ends. The readout reads the surface at its own position, so a wave passing under lifts it.',
+    how: 'Watch it drip · click the pool', tags: ['Your artwork', 'Wave simulation', 'Real gravity'] },
+
+  { n: 15, file: 'mileage-design-15-xray.html', name: 'X-Ray',
+    what: 'A scan runs across the Bear and shows through what it has passed. Two copies of the frame — the photograph, and the photograph filtered until it reads as a blueprint — separated by one clip edge, and that edge is the beam. The tank\'s contents appear behind it. The figure is assembled by the line passing over it, character by character.',
+    how: 'Drag across the bike to scrub', tags: ['Real product frame', 'Blueprint', 'Scrubbable'] },
+
+  { n: 16, file: 'mileage-design-16-filler.html', name: 'Filler Cap',
+    what: 'Shot straight down the neck while it fills. The only one here seen from above, where a surface is a disc rather than a line and it rises toward you instead of up the frame — so the figure floating on it grows very slightly as the fuel comes up. The ring\'s shadow is the only depth cue, and it tightens as the surface climbs to meet it.',
+    how: 'Fill it · drain it', tags: ['Overhead', 'Depth by light', 'Floating figure'] },
+
+  { n: 17, file: 'mileage-design-17-sender.html', name: 'Sender Float',
+    what: 'The mechanism that actually knows. Inside every tank is a float on a pivoted arm, and the angle of that arm IS the fuel gauge. Cut open: the float rides the surface, the wiper travels its resistance track, the needle is driven by the arm rather than by a number. The reading is bolted to the float, so it swings through the arc the arm swings through.',
+    how: 'Fill · drain · watch the needle', tags: ['Real mechanism', 'One source of truth', 'Literal float'] },
+
+  { n: 18, file: 'mileage-design-18-drop.html', name: 'The Drop',
+    what: 'One drop of fuel, close enough to be the whole section, with the figure held inside it. A drop is not a circle — struck, it rings in modes around its own circumference, so the outline is a circle plus two of those running at different rates and it never repeats. The liquid magnifies the figure, shoves it about as the surface deforms, and throws a faint second image along the bottom.',
+    how: 'Tap the drop', tags: ['Surface tension', 'Lensing', 'Figure inside'] },
+]
+
+const list = document.getElementById('list')
+list.innerHTML = DESIGNS.map(d =>
+  d.batch
+    ? `<div class="batch">${d.batch}<small>${d.blurb}</small></div>`
+    : `<button class="item" data-file="${d.file}" data-name="${d.name}" data-how="${d.how}">
+         <b><i>${d.n}</i>${d.name}</b>
+         <span class="what">${d.what}</span>
+         <span class="tags">${d.tags.map(t => `<u>${t}</u>`).join('')}</span>
+       </button>`).join('')
+
+let current = DESIGNS.find(d => d.file).file, empty = false
+
+function render() {
+  const url = current + (empty ? '?empty=1' : '')
+  document.getElementById('frame').src = url
+  document.getElementById('open').href = url
+}
+function show(btn) {
+  document.querySelectorAll('.item').forEach(b => b.classList.toggle('on', b === btn))
+  current = btn.dataset.file
+  document.getElementById('now').textContent = btn.dataset.name
+  document.getElementById('how').textContent = '— ' + btn.dataset.how
+  render()
+}
+list.addEventListener('click', e => {
+  const btn = e.target.closest('.item')
+  if (btn) show(btn)
+})
+
+/* desktop / phone frame toggle */
+const holder = document.getElementById('holder')
+const vDesk = document.getElementById('vDesk'), vPhone = document.getElementById('vPhone')
+vDesk.addEventListener('click', () => {
+  holder.classList.remove('phone'); vDesk.classList.add('on'); vPhone.classList.remove('on')
+})
+vPhone.addEventListener('click', () => {
+  holder.classList.add('phone'); vPhone.classList.add('on'); vDesk.classList.remove('on')
+})
+
+/* reading / empty toggle — how a design behaves before a reading exists
+   is half of what is being judged */
+const sFull = document.getElementById('sFull'), sEmpty = document.getElementById('sEmpty')
+sFull.addEventListener('click', () => {
+  empty = false; sFull.classList.add('on'); sEmpty.classList.remove('on'); render()
+})
+sEmpty.addEventListener('click', () => {
+  empty = true; sEmpty.classList.add('on'); sFull.classList.remove('on'); render()
+})
+
+show(document.querySelector('.item'))
+</script>
+</body>
+</html>

@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Mileage · 15 · X-Ray</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   X-RAY — a scan runs across the Bear, and what it has passed is
+   shown through.
+
+   Two copies of the same frame: the photograph, and the photograph
+   pushed through a filter until it reads as a blueprint. A single
+   clip edge separates them, and that edge is the scan line. Ahead of
+   it, a motorcycle; behind it, the drawing of one — with the tank's
+   contents visible, because that is the point of an x-ray.
+
+   Drag across the bike to scrub the scan by hand. The figure does not
+   fade in: it is assembled by the line passing over it, character by
+   character, so the scan is what produces the reading rather than
+   something that happens near it.
+   ══════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08070e; --card:#141220; --card2:#1a1828; --well:#0d0b15;
+  --bd:rgba(255,255,255,0.07); --bd2:rgba(255,255,255,0.13);
+  --off:#f0eef6; --d1:rgba(240,238,246,0.65); --d2:rgba(240,238,246,0.4); --d3:rgba(240,238,246,0.22);
+  --acc:#8b5cf6; --acc2:#a78bfa;
+  --honey:#e0bb3c;
+  --good:#4ade80; --bad:#fb7185;
+  --sans:'Inter',sans-serif; --serif:'Playfair Display',serif; --mono:'JetBrains Mono',monospace;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+body{background:var(--bg);color:var(--d1);font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--honey);color:#161018}
+.page{width:90%;max-width:1180px;margin:0 auto;padding:64px 0 90px;
+  display:flex;flex-direction:column;gap:clamp(40px,7vh,76px)}
+.stub{border:1px dashed var(--bd);border-radius:16px;padding:26px;color:var(--d3);
+  font-size:0.7rem;letter-spacing:0.16em;text-transform:uppercase;text-align:center}
+
+.sec{position:relative;background:var(--card);border:1px solid var(--bd);border-radius:16px;
+  padding:26px clamp(14px,3vw,30px) 30px;overflow:hidden}
+.sec::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(60% 45% at 50% 0%,rgba(139,92,246,0.10),transparent 70%)}
+
+.head{position:relative;z-index:2;display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;margin-bottom:8px}
+.kick{font-family:var(--mono);font-size:0.58rem;letter-spacing:0.24em;text-transform:uppercase;
+  color:var(--acc2);display:block;margin-bottom:7px}
+.head h2{font-family:var(--serif);font-size:clamp(1.35rem,3.6vw,2rem);font-weight:700;color:var(--off);line-height:1.1}
+.head .note{font-size:0.76rem;color:var(--d2);line-height:1.65;max-width:440px;margin-top:8px}
+
+/* ══ the scanner ══ */
+.rig{position:relative;z-index:2;width:100%;max-width:880px;margin:0 auto;
+  aspect-ratio:800 / 501;cursor:ew-resize;touch-action:pan-y;user-select:none;
+  border-radius:16px;overflow:hidden;
+  background:radial-gradient(60% 60% at 50% 55%,rgba(139,92,246,.06),transparent 70%)}
+.rig img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none}
+
+/* ahead of the line — the photograph, held down so the scan reads bright */
+.plain{filter:brightness(.5) saturate(.55)}
+/* behind it — the same frame as a drawing */
+.xray{filter:grayscale(1) invert(1) brightness(.62) sepia(1) hue-rotate(212deg)
+      saturate(5.5) contrast(1.25);
+  will-change:clip-path}
+
+/* the grid the drawing is laid over, so it reads as a plan and not a
+   photographic negative */
+.grid{position:absolute;inset:0;pointer-events:none;opacity:.5;will-change:clip-path;
+  background-image:
+    linear-gradient(rgba(167,139,250,.16) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(167,139,250,.16) 1px,transparent 1px);
+  background-size:34px 34px}
+
+.rig svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+
+/* the line itself */
+.beam{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;pointer-events:none;
+  background:linear-gradient(180deg,transparent,rgba(199,178,255,.95) 12%,
+             rgba(255,255,255,.98) 50%,rgba(199,178,255,.95) 88%,transparent);
+  box-shadow:0 0 22px 3px rgba(167,139,250,.75);will-change:left}
+.beam::before{content:'';position:absolute;top:0;bottom:0;right:0;width:70px;
+  background:linear-gradient(90deg,transparent,rgba(167,139,250,.16))}
+
+/* ══ the readout ══ */
+.float{position:absolute;z-index:6;left:50%;top:12%;transform:translate(-50%,0);
+  pointer-events:none}
+.chip{display:flex;align-items:flex-end;gap:8px;padding:10px 16px 11px;border-radius:13px;
+  background:rgba(12,10,20,.82);border:1px solid rgba(167,139,250,.42);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  box-shadow:0 20px 40px -22px #000,0 0 30px -8px rgba(167,139,250,.5);white-space:nowrap}
+.chip b{display:flex;font-family:var(--mono);font-size:clamp(1.5rem,4.4vw,2.5rem);font-weight:700;
+  color:var(--off);line-height:.9;letter-spacing:-.035em;font-variant-numeric:tabular-nums}
+.chip b span{display:inline-block;opacity:0;transform:translateY(-6px) scaleY(.6);
+  transition:opacity .18s linear,transform .32s var(--ease)}
+.chip b span.on{opacity:1;transform:none}
+.chip s{text-decoration:none;font-family:var(--mono);font-size:0.5rem;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--acc2);padding-bottom:3px}
+/* the leader down to the tank it is reading */
+.lead{position:absolute;left:50%;top:100%;width:1px;height:0;transform:translateX(-50%);
+  background:linear-gradient(180deg,rgba(167,139,250,.6),rgba(167,139,250,.05));
+  transition:height .5s var(--ease)}
+/* a fixed length, not a percentage — the leader's containing block is
+   the chip, so a percentage here would measure the wrong thing */
+.float.on .lead{height:clamp(38px,7vw,72px)}
+
+/* ══ figures ══ */
+.facts{position:relative;z-index:2;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:9px;margin-top:clamp(8px,1.6vw,14px)}
+@media(max-width:760px){ .facts{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media(max-width:440px){ .facts{grid-template-columns:1fr} }
+.fact{background:var(--card2);border:1px solid var(--bd);border-radius:12px;padding:13px 15px;
+  opacity:0;transform:translateY(12px);
+  transition:opacity .6s ease var(--d,0s),transform .6s var(--ease) var(--d,0s),
+             border-color .3s,box-shadow .35s var(--ease)}
+.fact.in{opacity:1;transform:none}
+.fact:hover{border-color:rgba(167,139,250,.4);box-shadow:0 14px 28px -20px rgba(167,139,250,.6)}
+.fact s{display:block;text-decoration:none;font-family:var(--mono);font-size:0.45rem;
+  letter-spacing:0.18em;text-transform:uppercase;color:var(--d3);margin-bottom:6px}
+.fact b{display:block;font-family:var(--mono);font-size:1.04rem;font-weight:700;color:var(--off);
+  line-height:1;font-variant-numeric:tabular-nums}
+.fact b u{text-decoration:none;font-size:0.56rem;color:var(--d2);margin-left:3px;font-weight:400}
+.fact em{display:block;font-style:normal;font-size:0.55rem;color:var(--d3);margin-top:6px;line-height:1.5}
+.fact.up b{color:var(--good)}
+.fact.dn b{color:var(--bad)}
+
+.bench{position:relative;z-index:2;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  margin-top:clamp(14px,2.6vw,20px);padding-top:14px;border-top:1px solid var(--bd)}
+.bench .say{flex:1 1 300px;display:flex;gap:10px;align-items:flex-start;
+  font-size:0.71rem;line-height:1.7;color:var(--d1)}
+.bench .say i{flex:none;width:3px;align-self:stretch;border-radius:2px;background:var(--acc2);opacity:.6}
+.bench button{flex:none;padding:7px 14px;border:1px solid var(--bd2);background:transparent;color:var(--d2);
+  border-radius:99px;cursor:pointer;font-family:var(--mono);font-size:0.5rem;letter-spacing:0.16em;
+  text-transform:uppercase;transition:.25s var(--ease)}
+.bench button:hover{color:var(--acc2);border-color:rgba(167,139,250,.5);background:rgba(139,92,246,.08)}
+.bench button:focus-visible{outline:2px solid var(--acc2);outline-offset:2px}
+.bench .hint{font-family:var(--mono);font-size:0.46rem;letter-spacing:0.14em;
+  text-transform:uppercase;color:var(--d3)}
+
+/* ══ empty ══ */
+.none{position:relative;z-index:2;border:1px dashed var(--bd2);border-radius:14px;
+  padding:38px 26px;text-align:center;color:var(--d2);font-size:0.8rem;line-height:1.75;max-width:470px;margin:0 auto}
+.none b{display:block;font-family:var(--mono);font-size:0.56rem;letter-spacing:0.24em;
+  text-transform:uppercase;color:var(--acc2);margin-bottom:12px}
+.none .ln{width:2px;height:56px;margin:0 auto 18px;background:rgba(167,139,250,.55);
+  box-shadow:0 0 18px 2px rgba(167,139,250,.5)}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="stub">section above</div>
+
+  <section class="sec" aria-labelledby="mh">
+    <div class="head">
+      <div>
+        <span class="kick" id="kick"></span>
+        <h2 id="mh"></h2>
+        <p class="note" id="note"></p>
+      </div>
+    </div>
+    <div id="body"></div>
+  </section>
+
+  <div class="stub">section below</div>
+</div>
+
+<script src="mileage-data.js"></script>
+<script src="mileage-motion.js"></script>
+<script>
+document.getElementById('kick').textContent = 'X-ray · real-world figure'
+document.getElementById('mh').textContent   = MILEAGE_COPY.title
+document.getElementById('note').textContent = MILEAGE_COPY.note
+
+const BIKE = '../public/bear650/wild-honey06.png'
+const body = document.getElementById('body')
+
+if (MILEAGE_EMPTY) {
+  body.innerHTML = `<div class="none">
+      <div class="ln"></div>
+      <b>Nothing to scan</b>
+      ${MILEAGE_COPY.empty}
+    </div>`
+} else {
+
+/* the same tank geometry as design 13, measured off this frame */
+const VB = { w: 800, h: 501 }
+const TANK = 'M 363 172 C 371 163 385 153 401 146 C 419 138 440 132 451 130 ' +
+             'L 455 134 L 455 185 C 452 187 448 188 444 188 ' +
+             'L 371 188 C 365 186 362 179 363 172 Z'
+const FUEL = { top: 132, bottom: 186 }
+const LEVEL = 0.74
+const TANK_MID = 409                 /* where the readout points */
+const CHARS = MILEAGE.kmpl.toFixed(1).split('')
+
+body.innerHTML = `
+  <div class="rig" id="rig">
+    <img class="plain" src="${BIKE}"
+         alt="Royal Enfield Bear 650, side profile, being scanned to show the fuel tank">
+    <img class="xray" id="xray" src="${BIKE}" alt="" aria-hidden="true">
+    <div class="grid" id="grid"></div>
+
+    <svg viewBox="0 0 ${VB.w} ${VB.h}" aria-hidden="true">
+      <defs>
+        <clipPath id="tankClip"><path d="${TANK}"/></clipPath>
+        <linearGradient id="fuelGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0"   stop-color="#ffd76b"/>
+          <stop offset=".14" stop-color="#e8a93a"/>
+          <stop offset="1"   stop-color="#5c3d07"/>
+        </linearGradient>
+      </defs>
+      <!-- Two clips, and they must be on two elements: the tank shape as
+           an SVG attribute on the outer group, the scan edge as a CSS
+           inset on the inner one. On the same element the CSS property
+           wins outright and the tank silhouette is simply lost. -->
+      <g clip-path="url(#tankClip)">
+        <g id="tankG">
+          <rect x="350" y="118" width="130" height="82" fill="#0a0818"/>
+          <g id="fuelG">
+            <path id="fuelBody" fill="url(#fuelGrad)" d="M 340 0 L 500 0 L 500 120 L 340 120 Z"/>
+            <path id="wave1" fill="#ffe9a8" opacity=".75" d=""/>
+          </g>
+        </g>
+      </g>
+      <path id="tankEdge" d="${TANK}" fill="none" stroke="rgba(199,178,255,.9)" stroke-width="1.8"/>
+    </svg>
+
+    <div class="beam" id="beam"></div>
+
+    <div class="float" id="float">
+      <div class="chip">
+        <b id="big">${CHARS.map((c) => `<span>${c}</span>`).join('')}</b>
+        <s>km / l</s>
+      </div>
+      <span class="lead"></span>
+    </div>
+  </div>
+
+  <div class="facts" id="facts"></div>
+
+  <div class="bench">
+    <p class="say"><i></i><span>${MILEAGE.method}</span></p>
+    <span class="hint">drag across the bike to scrub</span>
+    <button id="again">Scan again</button>
+  </div>
+`
+
+document.getElementById('facts').innerHTML = MILEAGE_FACTS.map((f, i) => `
+  <div class="fact ${f.tone || ''}" style="--d:${(MM.REDUCED ? 0 : 200 + i * 70)}ms">
+    <s>${f.label}</s>
+    <b>${f.value}${f.unit ? `<u>${f.unit}</u>` : ''}</b>
+    <em>${f.sub}</em>
+  </div>`).join('')
+
+const rig    = document.getElementById('rig')
+const xray   = document.getElementById('xray')
+const grid   = document.getElementById('grid')
+const beam   = document.getElementById('beam')
+const tankG  = document.getElementById('tankG')
+const tankEdge = document.getElementById('tankEdge')
+const fuelG  = document.getElementById('fuelG')
+const wave1  = document.getElementById('wave1')
+const floatEl = document.getElementById('float')
+const glyphs = [...document.querySelectorAll('.chip b span')]
+
+/* the readout hangs above the tank and points at it */
+floatEl.style.left = ((TANK_MID / VB.w) * 100).toFixed(2) + '%'
+
+/* ── the scan position, 0 to 1 across the frame ──────────────────
+   A spring rather than a tween, so a hand grabbing it mid-sweep takes
+   it over smoothly instead of the sweep fighting the pointer. */
+const scan = new MM.Spring({ stiffness: 120, damping: 26, from: 0, to: 0 })
+let t = 0, raf = 0, onScreen = false, running = false
+
+const surfaceY = FUEL.bottom - (FUEL.bottom - FUEL.top) * LEVEL
+
+function wavePath(time) {
+  let d = 'M 340 0'
+  for (let i = 0; i <= 26; i++) {
+    const x = 340 + (160 * i) / 26
+    d += ` L ${x.toFixed(1)} ${(Math.sin(x / 12 + time * 1.4) * 1.4).toFixed(2)}`
+  }
+  return d + ' L 500 120 L 340 120 Z'
+}
+
+function draw() {
+  const p = Math.max(0, Math.min(1, scan.x))
+  const pct = (p * 100).toFixed(3)
+
+  /* everything the line has passed is drawn; everything ahead is not */
+  const clip = `inset(0 ${(100 - p * 100).toFixed(3)}% 0 0)`
+  xray.style.clipPath = clip
+  grid.style.clipPath = clip
+  /* the tank's contents are revealed by the same edge, expressed in the
+     SVG's own units, so the two edges are exactly the same edge */
+  const cutX = p * VB.w
+  tankG.style.clipPath = `inset(0 ${Math.max(0, VB.w - cutX).toFixed(1)}px 0 0)`
+  tankEdge.style.opacity = cutX > 363 ? Math.min(1, (cutX - 363) / 40).toFixed(2) : '0'
+
+  beam.style.left = pct + '%'
+  beam.style.opacity = p > 0.002 && p < 0.998 ? '1' : '0'
+
+  fuelG.setAttribute('transform', `translate(0, ${surfaceY})`)
+  wave1.setAttribute('d', wavePath(t))
+
+  /* the figure is assembled by the line passing over it, not faded in */
+  const chipX = TANK_MID / VB.w
+  glyphs.forEach((g, i) => {
+    const at = chipX - 0.045 + i * 0.022
+    g.classList.toggle('on', p >= at)
+  })
+  floatEl.classList.toggle('on', p >= chipX - 0.05)
+}
+
+function loop() {
+  t += 0.016
+  draw()
+  if (!onScreen) { running = false; raf = 0; return }
+  raf = requestAnimationFrame(loop)
+}
+function start() { if (running || MM.REDUCED) return; running = true; raf = requestAnimationFrame(loop) }
+function stop() { running = false; if (raf) cancelAnimationFrame(raf); raf = 0 }
+
+/* ── scrubbing by hand ───────────────────────────────────────────── */
+let dragging = false
+function at(e) {
+  const r = rig.getBoundingClientRect()
+  return Math.max(0, Math.min(1, (e.clientX - r.left) / r.width))
+}
+rig.addEventListener('pointerdown', (e) => {
+  if (MM.REDUCED) return
+  dragging = true
+  rig.setPointerCapture?.(e.pointerId)
+  scan.snap(at(e)); scan.to(at(e))
+  start()
+})
+window.addEventListener('pointermove', (e) => {
+  if (!dragging) return
+  scan.hold(at(e))
+})
+window.addEventListener('pointerup', () => { dragging = false })
+window.addEventListener('pointercancel', () => { dragging = false })
+
+function sweep() {
+  if (MM.REDUCED) {
+    scan.snap(1); draw()
+    document.querySelectorAll('.fact').forEach((f) => f.classList.add('in'))
+    return
+  }
+  scan.snap(0)
+  start()
+  /* out and back: the scan runs the length of the bike, hesitates at
+     the tank, and finishes. The hesitation is where the reading is. */
+  MM.sequence([
+    [140, () => scan.to(0.52)],
+    900,
+    [0, () => scan.to(1)],
+    [700, () => document.querySelectorAll('.fact').forEach((f) => f.classList.add('in'))],
+  ])
+}
+
+document.getElementById('again').addEventListener('click', sweep)
+
+new IntersectionObserver((es) => {
+  es.forEach((e) => {
+    onScreen = e.isIntersecting
+    if (!onScreen) { stop(); return }
+    start()
+    if (!rig.dataset.ran) { rig.dataset.ran = '1'; sweep() }
+  })
+}, { threshold: 0.3 }).observe(rig)
+}
+</script>
+</body>
+</html>

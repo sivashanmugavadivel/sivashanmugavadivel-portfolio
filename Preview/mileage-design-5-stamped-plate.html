@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Mileage · 5 · Stamped Plate</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   STAMPED PLATE — the figure punched into a brushed steel plate, the
+   way a frame number is. Each character is struck by a die: the plate
+   takes the blow, the character sinks in, and a spark or two comes off
+   the strike. When the last one lands, a raking light runs across the
+   plate and the depth of the stamping is the only thing showing you
+   what the number is.
+
+   Riveted to the section, tilting under the pointer so the light moves
+   with it. Nothing prints — everything is struck.
+   ══════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08070e; --card:#141220; --card2:#1a1828; --well:#0d0b15;
+  --bd:rgba(255,255,255,0.07); --bd2:rgba(255,255,255,0.13);
+  --off:#f0eef6; --d1:rgba(240,238,246,0.65); --d2:rgba(240,238,246,0.4); --d3:rgba(240,238,246,0.22);
+  --acc:#8b5cf6; --acc2:#a78bfa;
+  --honey:#e0bb3c;
+  --good:#4ade80; --bad:#fb7185;
+  /* the steel */
+  --st1:#8e8fa0; --st2:#5c5d70; --st3:#3a3b4d; --st-ink:#22222e;
+  --sans:'Inter',sans-serif; --serif:'Playfair Display',serif; --mono:'JetBrains Mono',monospace;
+  --ease:cubic-bezier(.22,1,.36,1);
+  --hit:cubic-bezier(.2,1.7,.36,1);
+}
+body{background:var(--bg);color:var(--d1);font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--honey);color:#161018}
+.page{width:90%;max-width:1180px;margin:0 auto;padding:64px 0 90px;
+  display:flex;flex-direction:column;gap:clamp(40px,7vh,76px)}
+.stub{border:1px dashed var(--bd);border-radius:16px;padding:26px;color:var(--d3);
+  font-size:0.7rem;letter-spacing:0.16em;text-transform:uppercase;text-align:center}
+
+.sec{position:relative;background:var(--card);border:1px solid var(--bd);border-radius:16px;
+  padding:26px clamp(14px,3vw,30px) 32px;overflow:hidden;
+  opacity:0;transform:translateY(32px);animation:rise .8s var(--ease) .1s forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+.sec::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(60% 45% at 50% 0%,rgba(224,187,60,0.07),transparent 70%)}
+
+.head{position:relative;z-index:2;display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;margin-bottom:24px}
+.kick{font-family:var(--mono);font-size:0.58rem;letter-spacing:0.24em;text-transform:uppercase;
+  color:var(--honey);display:block;margin-bottom:7px}
+.head h2{font-family:var(--serif);font-size:clamp(1.35rem,3.6vw,2rem);font-weight:700;color:var(--off);line-height:1.1}
+.head .note{font-size:0.76rem;color:var(--d2);line-height:1.65;max-width:440px;margin-top:8px}
+
+/* Stacked, not side by side. The plate is wide and short; beside a
+   six-tall column of figures it leaves half the section empty. */
+.wrap{position:relative;z-index:2;display:flex;flex-direction:column;gap:clamp(14px,2.6vw,20px)}
+
+/* ══ the plate ══ */
+.mount{position:relative;perspective:1100px}
+.plate{position:relative;border-radius:12px;padding:clamp(20px,4vw,34px) clamp(18px,3.6vw,32px);
+  transform-style:preserve-3d;
+  transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));
+  transition:transform .45s var(--ease);
+  /* brushed steel: a base gradient with a fine grain over it */
+  background:
+    repeating-linear-gradient(94deg,
+      rgba(255,255,255,.045) 0 1px, transparent 1px 2px, rgba(0,0,0,.05) 2px 3px, transparent 3px 5px),
+    linear-gradient(148deg, var(--st1) 0%, var(--st2) 34%, var(--st3) 66%, var(--st2) 100%);
+  box-shadow:
+    0 26px 50px -26px #000,
+    inset 0 1px 0 rgba(255,255,255,.42),
+    inset 0 -2px 0 rgba(0,0,0,.5),
+    inset 0 0 0 1px rgba(0,0,0,.35);
+  /* the whole plate rings when it is struck */
+  will-change:transform}
+.plate.ring{animation:ring .34s cubic-bezier(.36,.07,.19,.97)}
+@keyframes ring{
+  0%{transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translate(0,0)}
+  22%{transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translate(-2px,2px)}
+  48%{transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translate(2px,-1px)}
+  74%{transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translate(-1px,1px)}
+  100%{transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translate(0,0)}
+}
+/* the raking light that runs across once the stamping is done */
+.plate::after{content:'';position:absolute;inset:0;border-radius:12px;pointer-events:none;z-index:6;
+  background:linear-gradient(106deg,transparent 34%,rgba(255,255,255,.34) 46%,
+             rgba(255,255,255,.09) 52%,transparent 64%);
+  background-size:280% 100%;background-position:150% 0;opacity:0}
+.plate.rake::after{opacity:1;animation:rake 1.5s var(--ease)}
+@keyframes rake{from{background-position:150% 0}to{background-position:-70% 0}}
+
+/* rivets in the corners */
+.riv{position:absolute;width:13px;height:13px;border-radius:50%;
+  background:radial-gradient(circle at 34% 30%,#c9cad8,#4c4d60 62%,#26273a);
+  box-shadow:0 1px 2px rgba(0,0,0,.7),inset 0 -1px 1px rgba(0,0,0,.5)}
+.riv.tl{left:11px;top:11px} .riv.tr{right:11px;top:11px}
+.riv.bl{left:11px;bottom:11px} .riv.br{right:11px;bottom:11px}
+
+/* the engraved header line */
+.plate .who{position:relative;z-index:3;font-family:var(--mono);font-size:0.53rem;
+  letter-spacing:0.28em;text-transform:uppercase;text-align:center;
+  color:rgba(16,16,24,.78);
+  text-shadow:0 1px 0 rgba(255,255,255,.38);margin-bottom:clamp(12px,2.4vw,18px)}
+.plate .rule{position:relative;z-index:3;height:2px;border-radius:2px;margin:0 auto clamp(14px,2.6vw,20px);
+  max-width:220px;background:rgba(20,20,28,.3);box-shadow:0 1px 0 rgba(255,255,255,.32)}
+
+/* ── the struck characters ── */
+.struck{position:relative;z-index:3;display:flex;align-items:flex-end;justify-content:center;
+  gap:clamp(1px,.5vw,5px);flex-wrap:wrap}
+.ch{position:relative;display:block;font-family:var(--mono);font-weight:700;line-height:.92;
+  font-size:clamp(3.2rem,13vw,6.4rem);letter-spacing:-.04em;
+  /* unstruck: sitting proud of the plate, waiting for the die */
+  color:rgba(58,59,77,.28);
+  text-shadow:none;
+  transform:translateY(-16px) scale(1.14);opacity:0;
+  transition:transform .01s,opacity .01s}
+/* struck: sunk into the steel — a dark face, a hard shadow above and a
+   lit lip below, which is what "pressed in" looks like */
+.ch.in{
+  color:var(--st-ink);
+  text-shadow:
+    0 -1px 0 rgba(0,0,0,.55),
+    0 -2px 2px rgba(0,0,0,.45),
+    0 1px 0 rgba(255,255,255,.42),
+    0 2px 3px rgba(255,255,255,.12);
+  transform:none;opacity:1;
+  transition:transform .32s var(--hit),opacity .12s linear,color .3s}
+.ch.unit{font-size:clamp(.9rem,2.8vw,1.5rem);letter-spacing:.14em;text-transform:uppercase;
+  padding-bottom:clamp(8px,2vw,16px);margin-left:clamp(6px,1.4vw,12px)}
+.ch.dot{font-size:clamp(3.2rem,13vw,6.4rem)}
+
+/* the die coming down — one block, moved over each character in turn */
+.die{position:absolute;z-index:5;pointer-events:none;width:0;height:0;left:0;top:0;opacity:0}
+.die i{position:absolute;left:50%;bottom:6px;width:clamp(30px,7vw,54px);height:clamp(46px,10vw,80px);
+  margin-left:calc(clamp(30px,7vw,54px) / -2);display:block;border-radius:4px 4px 2px 2px;
+  background:linear-gradient(180deg,#d8d9e6,#6f7086 62%,#3c3d50);
+  box-shadow:0 10px 22px rgba(0,0,0,.6);transform:translateY(-90px)}
+.die.drop{opacity:1}
+.die.drop i{animation:punch .22s cubic-bezier(.6,0,.9,1)}
+@keyframes punch{
+  0%{transform:translateY(-90px)}
+  62%{transform:translateY(4px)}
+  100%{transform:translateY(-90px)}
+}
+
+/* sparks off the strike */
+.spark{position:absolute;z-index:5;width:3px;height:3px;border-radius:50%;background:#ffd88a;
+  pointer-events:none;opacity:0;box-shadow:0 0 6px 1px rgba(255,200,100,.8)}
+.spark.go{animation:fly .5s ease-out forwards}
+@keyframes fly{
+  0%{opacity:1;transform:translate(0,0) scale(1)}
+  100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.2)}
+}
+
+/* the small print stamped underneath */
+.plate .fine{position:relative;z-index:3;display:flex;justify-content:center;gap:clamp(10px,3vw,26px);
+  flex-wrap:wrap;margin-top:clamp(14px,2.6vw,20px);
+  font-family:var(--mono);font-size:0.48rem;letter-spacing:0.16em;text-transform:uppercase;
+  color:rgba(16,16,24,.72);text-shadow:0 1px 0 rgba(255,255,255,.36)}
+.plate .fine span{opacity:0;transition:opacity .5s ease}
+.plate.done .fine span{opacity:1}
+.plate.done .fine span:nth-child(2){transition-delay:.12s}
+.plate.done .fine span:nth-child(3){transition-delay:.24s}
+
+/* ── the figures under the plate ── */
+.side{display:flex;flex-direction:column;gap:12px;min-width:0}
+.facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media(max-width:760px){ .facts{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media(max-width:440px){ .facts{grid-template-columns:1fr} }
+.tail{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+/* --d is the entrance stagger, scoped to the two properties the
+   entrance uses — on the whole shorthand it would delay hovers too */
+.fact{background:var(--card2);border:1px solid var(--bd);border-radius:12px;padding:13px 15px;
+  opacity:0;transform:translateX(12px);
+  transition:opacity .55s ease var(--d,0s),transform .55s var(--ease) var(--d,0s),border-color .3s}
+.fact.in{opacity:1;transform:none}
+.fact:hover{border-color:rgba(224,187,60,.35)}
+.fact s{display:block;text-decoration:none;font-family:var(--mono);font-size:0.45rem;
+  letter-spacing:0.18em;text-transform:uppercase;color:var(--d3);margin-bottom:6px}
+.fact b{display:block;font-family:var(--mono);font-size:1.05rem;font-weight:700;color:var(--off);
+  line-height:1;font-variant-numeric:tabular-nums}
+.fact b u{text-decoration:none;font-size:0.56rem;color:var(--d2);margin-left:3px;font-weight:400}
+.fact em{display:block;font-style:normal;font-size:0.55rem;color:var(--d3);margin-top:6px;line-height:1.5}
+.fact.up b{color:var(--good)}
+.fact.dn b{color:var(--bad)}
+
+.method{flex:1 1 300px;display:flex;gap:10px;align-items:flex-start;
+  font-size:0.71rem;line-height:1.7;color:var(--d1)}
+.method i{flex:none;width:3px;align-self:stretch;border-radius:2px;background:var(--honey);opacity:.55}
+
+.again{flex:none;font-family:var(--mono);font-size:0.5rem;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--d2);background:transparent;border:1px solid var(--bd2);
+  border-radius:99px;padding:7px 14px;cursor:pointer;transition:.28s var(--ease)}
+.again:hover{color:var(--honey);border-color:rgba(224,187,60,.45);background:rgba(224,187,60,.06)}
+.again:focus-visible{outline:2px solid var(--acc2);outline-offset:2px}
+
+/* ══ empty ══ */
+.none{position:relative;z-index:2;border:1px dashed var(--bd2);border-radius:14px;
+  padding:38px 26px;text-align:center;color:var(--d2);font-size:0.8rem;line-height:1.75;max-width:470px;margin:0 auto}
+.none b{display:block;font-family:var(--mono);font-size:0.56rem;letter-spacing:0.24em;
+  text-transform:uppercase;color:var(--honey);margin-bottom:12px}
+.none .blank{width:150px;height:56px;margin:0 auto 18px;border-radius:8px;
+  background:linear-gradient(148deg,var(--st1),var(--st3));opacity:.5;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.3)}
+
+@media(max-width:860px){ .wrap{grid-template-columns:1fr} }
+@media(prefers-reduced-motion:reduce){
+  /* the number is content; the striking is not. Hand it over stamped. */
+  *{animation:none!important;transition-duration:.01ms!important}
+  .sec{opacity:1;transform:none}
+  .ch{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="stub">section above</div>
+
+  <section class="sec" aria-labelledby="mh">
+    <div class="head">
+      <div>
+        <span class="kick" id="kick"></span>
+        <h2 id="mh"></h2>
+        <p class="note" id="note"></p>
+      </div>
+    </div>
+    <div id="body"></div>
+  </section>
+
+  <div class="stub">section below</div>
+</div>
+
+<script src="mileage-data.js"></script>
+<script>
+document.getElementById('kick').textContent = MILEAGE_COPY.kicker
+document.getElementById('mh').textContent   = MILEAGE_COPY.title
+document.getElementById('note').textContent = MILEAGE_COPY.note
+
+const body = document.getElementById('body')
+
+if (MILEAGE_EMPTY) {
+  body.innerHTML = `<div class="none">
+      <div class="blank"></div>
+      <b>Plate blank</b>
+      ${MILEAGE_COPY.empty}
+    </div>`
+} else {
+
+/* the characters to strike, in order. The unit is struck too — it is
+   part of the reading, not a caption bolted on afterwards. */
+const CHARS = MILEAGE.kmpl.toFixed(1).split('')
+  .map(c => ({ c, cls: c === '.' ? 'dot' : '' }))
+  .concat([{ c: 'km/l', cls: 'unit' }])
+
+body.innerHTML = `
+  <div class="wrap">
+    <div class="mount" id="mount">
+      <div class="plate" id="plate">
+        <span class="riv tl"></span><span class="riv tr"></span>
+        <span class="riv bl"></span><span class="riv br"></span>
+
+        <div class="who">${MILEAGE_BIKE.name}</div>
+        <div class="rule"></div>
+
+        <div class="struck" id="struck" role="img"
+             aria-label="${MILEAGE.kmpl} kilometres per litre, stamped">
+          ${CHARS.map((x, i) => `<span class="ch ${x.cls}" id="ch${i}">${x.c}</span>`).join('')}
+        </div>
+
+        <div class="fine">
+          <span>Measured ${MILEAGE.date}</span>
+          <span>Odo ${fmtKm(MILEAGE.odo)} km</span>
+          <span>Claimed ${MILEAGE_BIKE.claimed}</span>
+        </div>
+
+        <div class="die" id="die"><i></i></div>
+      </div>
+    </div>
+
+    <div class="side">
+      <div class="facts" id="facts"></div>
+      <div class="tail">
+        <p class="method"><i></i><span>${MILEAGE.method}</span></p>
+        <button class="again" id="again">Strike it again</button>
+      </div>
+    </div>
+  </div>
+`
+
+document.getElementById('facts').innerHTML = MILEAGE_FACTS.map((f, i) => `
+  <div class="fact ${f.tone || ''}" style="--d:${(MILEAGE_REDUCED ? 0 : i * 70)}ms">
+    <s>${f.label}</s>
+    <b>${f.value}${f.unit ? `<u>${f.unit}</u>` : ''}</b>
+    <em>${f.sub}</em>
+  </div>`).join('')
+
+const plate  = document.getElementById('plate')
+const struck = document.getElementById('struck')
+const die    = document.getElementById('die')
+const chars  = CHARS.map((_, i) => document.getElementById('ch' + i))
+let timers = []
+
+/* one strike: the die comes down over a character, the plate rings,
+   sparks come off the corner of the die, the character sinks in */
+function strike(el) {
+  const p = plate.getBoundingClientRect()
+  const b = el.getBoundingClientRect()
+  die.style.left = `${b.left - p.left + b.width / 2}px`
+  die.style.top  = `${b.top - p.top + b.height}px`
+  die.classList.remove('drop')
+  void die.offsetWidth
+  die.classList.add('drop')
+
+  timers.push(setTimeout(() => {
+    el.classList.add('in')
+    plate.classList.remove('ring')
+    void plate.offsetWidth
+    plate.classList.add('ring')
+
+    /* three sparks, thrown at their own angles */
+    for (let i = 0; i < 3; i++) {
+      const s = document.createElement('span')
+      s.className = 'spark'
+      s.style.left = `${b.left - p.left + b.width / 2}px`
+      s.style.top  = `${b.top - p.top + b.height * 0.35}px`
+      const a = (-40 - i * 45 - Math.random() * 30) * Math.PI / 180
+      const d = 22 + Math.random() * 26
+      s.style.setProperty('--dx', `${Math.cos(a) * d}px`)
+      s.style.setProperty('--dy', `${Math.sin(a) * d}px`)
+      plate.appendChild(s)
+      requestAnimationFrame(() => s.classList.add('go'))
+      setTimeout(() => s.remove(), 700)
+    }
+  }, 140))
+}
+
+function stampAll() {
+  /* the stamped plate, handed over at once — the striking is the
+     decoration, the number on it is the content */
+  if (MILEAGE_REDUCED) {
+    chars.forEach(c => c.classList.add('in'))
+    plate.classList.add('done')
+    document.querySelectorAll('.fact').forEach(f => f.classList.add('in'))
+    return
+  }
+  timers.forEach(clearTimeout); timers = []
+  plate.classList.remove('rake', 'done')
+  chars.forEach(c => c.classList.remove('in'))
+  document.querySelectorAll('.fact').forEach(f => f.classList.remove('in'))
+  die.classList.remove('drop')
+
+  chars.forEach((el, i) => {
+    timers.push(setTimeout(() => strike(el), 260 + i * 340))
+  })
+
+  /* once the last one has landed, the light rakes across and the rest
+     of the plate — and the figures beside it — arrive */
+  const end = 260 + chars.length * 340 + 200
+  timers.push(setTimeout(() => {
+    die.classList.remove('drop')
+    plate.classList.add('rake', 'done')
+    document.querySelectorAll('.fact').forEach(f => f.classList.add('in'))
+  }, end))
+}
+
+document.getElementById('again').addEventListener('click', stampAll)
+
+new IntersectionObserver((es, ob) => {
+  es.forEach((e) => {
+    if (!e.isIntersecting) return
+    ob.unobserve(e.target)
+    setTimeout(stampAll, 260)
+  })
+}, { threshold: 0.35 }).observe(plate)
+
+/* ── tilt, so the light on the steel moves with the plate ───────── */
+const mount = document.getElementById('mount')
+mount.addEventListener('pointermove', (e) => {
+  const r = mount.getBoundingClientRect()
+  const x = (e.clientX - r.left) / r.width - 0.5
+  const y = (e.clientY - r.top) / r.height - 0.5
+  plate.style.setProperty('--ry', `${(x * 11).toFixed(2)}deg`)
+  plate.style.setProperty('--rx', `${(-y * 7).toFixed(2)}deg`)
+})
+mount.addEventListener('pointerleave', () => {
+  plate.style.setProperty('--ry', '0deg')
+  plate.style.setProperty('--rx', '0deg')
+})
+}
+</script>
+</body>
+</html>

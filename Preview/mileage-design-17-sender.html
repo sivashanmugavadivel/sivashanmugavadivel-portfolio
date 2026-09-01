@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Mileage · 17 · Sender Float</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   SENDER FLOAT — the mechanism that actually knows.
+
+   Inside every fuel tank there is a float on a pivoted arm, and the
+   angle of that arm is the entire fuel gauge. This is that, cut open:
+   the float rides the surface, the arm swings about its pivot, the
+   wiper travels a resistance track, and the needle on the gauge is
+   driven by the arm rather than by a number.
+
+   The reading is carried ON the float. It is the one design here where
+   the figure is not placed near the fuel but bolted to the part that
+   measures it, so it swings through the arc the arm swings through and
+   never leaves the end of it.
+   ══════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08070e; --card:#141220; --card2:#1a1828; --well:#0d0b15;
+  --bd:rgba(255,255,255,0.07); --bd2:rgba(255,255,255,0.13);
+  --off:#f0eef6; --d1:rgba(240,238,246,0.65); --d2:rgba(240,238,246,0.4); --d3:rgba(240,238,246,0.22);
+  --acc:#8b5cf6; --acc2:#a78bfa;
+  --honey:#e0bb3c;
+  --good:#4ade80; --bad:#fb7185;
+  --sans:'Inter',sans-serif; --serif:'Playfair Display',serif; --mono:'JetBrains Mono',monospace;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+body{background:var(--bg);color:var(--d1);font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--honey);color:#161018}
+.page{width:90%;max-width:1180px;margin:0 auto;padding:64px 0 90px;
+  display:flex;flex-direction:column;gap:clamp(40px,7vh,76px)}
+.stub{border:1px dashed var(--bd);border-radius:16px;padding:26px;color:var(--d3);
+  font-size:0.7rem;letter-spacing:0.16em;text-transform:uppercase;text-align:center}
+
+.sec{position:relative;background:var(--card);border:1px solid var(--bd);border-radius:16px;
+  padding:26px clamp(14px,3vw,30px) 30px;overflow:hidden}
+.sec::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(60% 45% at 50% 0%,rgba(224,187,60,0.08),transparent 70%)}
+
+.head{position:relative;z-index:2;display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;margin-bottom:14px}
+.kick{font-family:var(--mono);font-size:0.58rem;letter-spacing:0.24em;text-transform:uppercase;
+  color:var(--honey);display:block;margin-bottom:7px}
+.head h2{font-family:var(--serif);font-size:clamp(1.35rem,3.6vw,2rem);font-weight:700;color:var(--off);line-height:1.1}
+.head .note{font-size:0.76rem;color:var(--d2);line-height:1.65;max-width:440px;margin-top:8px}
+
+/* ══ the tank interior ══ */
+.rig{position:relative;z-index:2;width:100%;max-width:720px;margin:0 auto;aspect-ratio:660 / 380;
+  background:var(--well);border:1px solid var(--bd);border-radius:18px;overflow:hidden;
+  box-shadow:inset 0 -40px 80px -60px #000}
+.rig svg{position:absolute;inset:0;width:100%;height:100%}
+
+/* the readout, bolted to the float */
+.float{position:absolute;z-index:6;pointer-events:none;transform:translate(-50%,-50%);
+  will-change:transform,left,top}
+.chip{display:flex;align-items:flex-end;gap:6px;padding:8px 12px 9px;border-radius:11px;
+  background:rgba(12,10,18,.88);border:1px solid rgba(224,187,60,.5);
+  box-shadow:0 16px 30px -18px #000,0 0 22px -6px rgba(224,187,60,.45);white-space:nowrap}
+.chip b{font-family:var(--mono);font-size:clamp(1.1rem,3vw,1.7rem);font-weight:700;color:var(--off);
+  line-height:.9;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.chip s{text-decoration:none;font-family:var(--mono);font-size:0.44rem;letter-spacing:0.16em;
+  text-transform:uppercase;color:var(--honey);padding-bottom:2px}
+
+/* ══ figures ══ */
+.facts{position:relative;z-index:2;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:9px;margin-top:clamp(14px,2.6vw,20px)}
+@media(max-width:760px){ .facts{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media(max-width:440px){ .facts{grid-template-columns:1fr} }
+.fact{background:var(--card2);border:1px solid var(--bd);border-radius:12px;padding:13px 15px;
+  opacity:0;transform:translateY(12px);
+  transition:opacity .6s ease var(--d,0s),transform .6s var(--ease) var(--d,0s),
+             border-color .3s,box-shadow .35s var(--ease)}
+.fact.in{opacity:1;transform:none}
+.fact:hover{border-color:rgba(224,187,60,.35);box-shadow:0 14px 28px -20px rgba(224,187,60,.6)}
+.fact s{display:block;text-decoration:none;font-family:var(--mono);font-size:0.45rem;
+  letter-spacing:0.18em;text-transform:uppercase;color:var(--d3);margin-bottom:6px}
+.fact b{display:block;font-family:var(--mono);font-size:1.04rem;font-weight:700;color:var(--off);
+  line-height:1;font-variant-numeric:tabular-nums}
+.fact b u{text-decoration:none;font-size:0.56rem;color:var(--d2);margin-left:3px;font-weight:400}
+.fact em{display:block;font-style:normal;font-size:0.55rem;color:var(--d3);margin-top:6px;line-height:1.5}
+.fact.up b{color:var(--good)}
+.fact.dn b{color:var(--bad)}
+
+.bench{position:relative;z-index:2;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  margin-top:clamp(14px,2.6vw,20px);padding-top:14px;border-top:1px solid var(--bd)}
+.bench .say{flex:1 1 280px;display:flex;gap:10px;align-items:flex-start;
+  font-size:0.71rem;line-height:1.7;color:var(--d1)}
+.bench .say i{flex:none;width:3px;align-self:stretch;border-radius:2px;background:var(--honey);opacity:.55}
+.bench button{flex:none;padding:7px 14px;border:1px solid var(--bd2);background:transparent;color:var(--d2);
+  border-radius:99px;cursor:pointer;font-family:var(--mono);font-size:0.5rem;letter-spacing:0.16em;
+  text-transform:uppercase;transition:.25s var(--ease)}
+.bench button:hover{color:var(--honey);border-color:rgba(224,187,60,.45);background:rgba(224,187,60,.06)}
+.bench button:focus-visible{outline:2px solid var(--acc2);outline-offset:2px}
+
+/* ══ empty ══ */
+.none{position:relative;z-index:2;border:1px dashed var(--bd2);border-radius:14px;
+  padding:38px 26px;text-align:center;color:var(--d2);font-size:0.8rem;line-height:1.75;max-width:470px;margin:0 auto}
+.none b{display:block;font-family:var(--mono);font-size:0.56rem;letter-spacing:0.24em;
+  text-transform:uppercase;color:var(--honey);margin-bottom:12px}
+.none .arm{width:80px;height:2px;background:rgba(224,187,60,.4);margin:0 auto 20px;
+  transform-origin:0 50%;transform:rotate(20deg);position:relative}
+.none .arm::after{content:'';position:absolute;right:-9px;top:-8px;width:18px;height:18px;
+  border-radius:50%;border:1px dashed rgba(224,187,60,.5)}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="stub">section above</div>
+
+  <section class="sec" aria-labelledby="mh">
+    <div class="head">
+      <div>
+        <span class="kick" id="kick"></span>
+        <h2 id="mh"></h2>
+        <p class="note" id="note"></p>
+      </div>
+    </div>
+    <div id="body"></div>
+  </section>
+
+  <div class="stub">section below</div>
+</div>
+
+<script src="mileage-data.js"></script>
+<script src="mileage-motion.js"></script>
+<script>
+document.getElementById('kick').textContent = MILEAGE_COPY.kicker
+document.getElementById('mh').textContent   = MILEAGE_COPY.title
+document.getElementById('note').textContent = MILEAGE_COPY.note
+
+const body = document.getElementById('body')
+
+if (MILEAGE_EMPTY) {
+  body.innerHTML = `<div class="none">
+      <div class="arm"></div>
+      <b>Float on the floor</b>
+      ${MILEAGE_COPY.empty}
+    </div>`
+} else {
+
+/* ── the mechanism, in the rig's own units ─────────────────────── */
+const W = 660, H = 380
+const PIVOT = { x: 176, y: 118 }     // where the arm hangs from
+const ARM = 178                       // its length
+const A_EMPTY = 62, A_FULL = -6       // arm angle, degrees, at each end
+const TANK = { left: 40, right: 470, top: 74, floor: 330 }
+const N = 72                          // wave columns
+
+body.innerHTML = `
+  <div class="rig" id="rig">
+    <svg viewBox="0 0 ${W} ${H}" aria-hidden="true">
+      <defs>
+        <linearGradient id="fuelGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0"   stop-color="#ffd76b"/>
+          <stop offset=".12" stop-color="#e8a93a"/>
+          <stop offset="1"   stop-color="#4a3106"/>
+        </linearGradient>
+        <linearGradient id="shell" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#3a3448"/>
+          <stop offset="1" stop-color="#1a1724"/>
+        </linearGradient>
+        <radialGradient id="ballG" cx=".35" cy=".3" r=".75">
+          <stop offset="0" stop-color="#f6f2ff"/>
+          <stop offset=".5" stop-color="#9d94b4"/>
+          <stop offset="1" stop-color="#4a4359"/>
+        </radialGradient>
+      </defs>
+
+      <!-- the tank shell, cut open -->
+      <path d="M ${TANK.left} ${TANK.top + 26} Q ${TANK.left} ${TANK.top} ${TANK.left + 26} ${TANK.top}
+               L ${TANK.right - 26} ${TANK.top} Q ${TANK.right} ${TANK.top} ${TANK.right} ${TANK.top + 26}
+               L ${TANK.right} ${TANK.floor - 20} Q ${TANK.right} ${TANK.floor} ${TANK.right - 22} ${TANK.floor}
+               L ${TANK.left + 22} ${TANK.floor} Q ${TANK.left} ${TANK.floor} ${TANK.left} ${TANK.floor - 20} Z"
+            fill="#0a0810" stroke="rgba(224,187,60,.35)" stroke-width="1.6"/>
+
+      <clipPath id="tankClip">
+        <path d="M ${TANK.left} ${TANK.top + 26} Q ${TANK.left} ${TANK.top} ${TANK.left + 26} ${TANK.top}
+                 L ${TANK.right - 26} ${TANK.top} Q ${TANK.right} ${TANK.top} ${TANK.right} ${TANK.top + 26}
+                 L ${TANK.right} ${TANK.floor - 20} Q ${TANK.right} ${TANK.floor} ${TANK.right - 22} ${TANK.floor}
+                 L ${TANK.left + 22} ${TANK.floor} Q ${TANK.left} ${TANK.floor} ${TANK.left} ${TANK.floor - 20} Z"/>
+      </clipPath>
+
+      <!-- the fuel -->
+      <g clip-path="url(#tankClip)">
+        <path id="fuel" fill="url(#fuelGrad)" d=""/>
+        <path id="skin" fill="none" stroke="rgba(255,240,190,.8)" stroke-width="1.5" d=""/>
+      </g>
+
+      <!-- ── the sender unit ── -->
+      <!-- its body, bolted to the top of the tank -->
+      <rect x="${PIVOT.x - 26}" y="${TANK.top - 16}" width="52" height="42" rx="8" fill="url(#shell)"/>
+      <rect x="${PIVOT.x - 16}" y="${TANK.top - 24}" width="32" height="12" rx="4" fill="#4f4860"/>
+
+      <!-- the resistance track the wiper sweeps -->
+      <path id="trackBg" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="7"
+            stroke-linecap="round" d=""/>
+      <path id="trackLive" fill="none" stroke="rgba(224,187,60,.85)" stroke-width="7"
+            stroke-linecap="round" d="" pathLength="1" stroke-dasharray="1"/>
+
+      <!-- the arm, and the float on the end of it -->
+      <g id="armG">
+        <line x1="${PIVOT.x}" y1="${PIVOT.y}" x2="${PIVOT.x + ARM}" y2="${PIVOT.y}"
+              stroke="#8b8399" stroke-width="5" stroke-linecap="round"/>
+        <circle id="ball" cx="${PIVOT.x + ARM}" cy="${PIVOT.y}" r="24" fill="url(#ballG)"/>
+        <ellipse cx="${PIVOT.x + ARM - 7}" cy="${PIVOT.y - 8}" rx="7" ry="5"
+                 fill="rgba(255,255,255,.5)"/>
+      </g>
+      <circle cx="${PIVOT.x}" cy="${PIVOT.y}" r="8" fill="#5b5470" stroke="#8b8399" stroke-width="2"/>
+      <circle cx="${PIVOT.x}" cy="${PIVOT.y}" r="2.5" fill="#c9c2d8"/>
+
+      <!-- ── the gauge the arm drives ── -->
+      <g id="gauge" transform="translate(${W - 128}, ${H / 2 - 8})">
+        <circle r="78" fill="#0d0b15" stroke="rgba(255,255,255,.12)" stroke-width="2"/>
+        <path d="M -56 34 A 66 66 0 1 1 56 34" fill="none"
+              stroke="rgba(255,255,255,.08)" stroke-width="10"/>
+        <path id="gaugeArc" d="M -56 34 A 66 66 0 1 1 56 34" fill="none"
+              stroke="url(#fuelGrad)" stroke-width="10" pathLength="1"
+              stroke-dasharray="1" stroke-dashoffset="1"/>
+        <text x="-58" y="52" fill="rgba(240,238,246,.5)" font-family="monospace" font-size="15">E</text>
+        <text x="46" y="52" fill="rgba(240,238,246,.5)" font-family="monospace" font-size="15">F</text>
+        <g id="needleG">
+          <line x1="0" y1="10" x2="0" y2="-52" stroke="#e0bb3c" stroke-width="3"
+                stroke-linecap="round"/>
+        </g>
+        <circle r="9" fill="#2a2536" stroke="#5b5470" stroke-width="1.5"/>
+        <text y="-24" text-anchor="middle" fill="rgba(240,238,246,.32)"
+              font-family="monospace" font-size="9" letter-spacing="2">FUEL</text>
+      </g>
+    </svg>
+
+    <div class="float" id="float">
+      <div class="chip"><b id="big">0.0</b><s>km / l</s></div>
+    </div>
+  </div>
+
+  <div class="facts" id="facts"></div>
+
+  <div class="bench">
+    <p class="say"><i></i><span>${MILEAGE.method}</span></p>
+    <button id="fill">Fill</button>
+    <button id="drain">Drain</button>
+  </div>
+`
+
+document.getElementById('facts').innerHTML = MILEAGE_FACTS.map((f, i) => `
+  <div class="fact ${f.tone || ''}" style="--d:${(MM.REDUCED ? 0 : 700 + i * 70)}ms">
+    <s>${f.label}</s>
+    <b>${f.value}${f.unit ? `<u>${f.unit}</u>` : ''}</b>
+    <em>${f.sub}</em>
+  </div>`).join('')
+
+const fuelEl  = document.getElementById('fuel')
+const skinEl  = document.getElementById('skin')
+const armG    = document.getElementById('armG')
+const needleG = document.getElementById('needleG')
+const gaugeArc = document.getElementById('gaugeArc')
+const trackBg = document.getElementById('trackBg')
+const trackLive = document.getElementById('trackLive')
+const floatEl = document.getElementById('float')
+const big     = document.getElementById('big')
+
+/* the wiper track: the arc the arm's wiper sweeps near the pivot */
+const TR = 44
+function arcAt(deg) {
+  const a = (deg * Math.PI) / 180
+  return [PIVOT.x + Math.cos(a) * TR, PIVOT.y + Math.sin(a) * TR]
+}
+const [tx0, ty0] = arcAt(A_FULL)
+const [tx1, ty1] = arcAt(A_EMPTY)
+const trackD = `M ${tx0.toFixed(1)} ${ty0.toFixed(1)} A ${TR} ${TR} 0 0 1 ${tx1.toFixed(1)} ${ty1.toFixed(1)}`
+trackBg.setAttribute('d', trackD)
+trackLive.setAttribute('d', trackD)
+
+/* ── state ───────────────────────────────────────────────────────
+   One number again: how full it is. The arm angle, the wiper, the
+   needle and the float's position are all read off it, so they cannot
+   disagree with each other — which is the point of drawing the
+   mechanism rather than four separate widgets. */
+const level = new MM.Spring({ stiffness: 30, damping: 9.5, from: 0, to: 0 })
+let t = 0, raf = 0, onScreen = false, running = false
+
+const h = new Float64Array(N)
+function ambient(i) {
+  const x = i / (N - 1)
+  return Math.sin(x * 6.4 + t * 0.6) * 1.3 + Math.sin(x * 2.7 - t * 0.4) * 1.8
+}
+
+function surfaceY(k) {
+  return TANK.floor - (TANK.floor - (TANK.top + 20)) * k
+}
+
+function draw() {
+  const k = Math.max(0, Math.min(1, level.x))
+  const sy = surfaceY(k)
+
+  /* the fuel, with a live surface */
+  let d = `M ${TANK.left - 10} ${(sy + ambient(0)).toFixed(2)}`
+  let s = d
+  for (let i = 1; i < N; i++) {
+    const x = TANK.left - 10 + ((TANK.right + 10 - TANK.left + 10) * i) / (N - 1)
+    const y = sy + ambient(i)
+    d += ` L ${x.toFixed(1)} ${y.toFixed(2)}`
+    s += ` L ${x.toFixed(1)} ${y.toFixed(2)}`
+  }
+  d += ` L ${TANK.right + 10} ${TANK.floor + 20} L ${TANK.left - 10} ${TANK.floor + 20} Z`
+  fuelEl.setAttribute('d', d)
+  skinEl.setAttribute('d', s)
+
+  /* THE ARM IS THE GAUGE. Its angle comes from the level, and the
+     needle and the wiper are read off the arm — not computed
+     separately from the same number, which would let them drift. */
+  const deg = A_EMPTY + (A_FULL - A_EMPTY) * k
+  armG.setAttribute('transform', `rotate(${deg.toFixed(2)}, ${PIVOT.x}, ${PIVOT.y})`)
+  trackLive.setAttribute('stroke-dashoffset', (1 - k).toFixed(4))
+
+  /* the needle: 240 degrees of sweep, driven by the same arm angle */
+  const swept = (deg - A_EMPTY) / (A_FULL - A_EMPTY)
+  needleG.setAttribute('transform', `rotate(${(-120 + swept * 240).toFixed(2)})`)
+  gaugeArc.setAttribute('stroke-dashoffset', (1 - swept).toFixed(4))
+
+  /* the readout is bolted to the float, so it goes where the float
+     goes — around the pivot, on the arc the arm describes */
+  const a = (deg * Math.PI) / 180
+  const fx = PIVOT.x + Math.cos(a) * ARM
+  const fy = PIVOT.y + Math.sin(a) * ARM
+  floatEl.style.left = ((fx / W) * 100).toFixed(3) + '%'
+  floatEl.style.top = (((fy - 52) / H) * 100).toFixed(3) + '%'
+  floatEl.style.transform = `translate(-50%, -50%) rotate(${(deg * 0.14).toFixed(2)}deg)`
+}
+
+function loop() {
+  t += 0.016
+  draw()
+  if (!onScreen) { running = false; raf = 0; return }
+  raf = requestAnimationFrame(loop)
+}
+function start() { if (running || MM.REDUCED) return; running = true; raf = requestAnimationFrame(loop) }
+function stop() { running = false; if (raf) cancelAnimationFrame(raf); raf = 0 }
+
+function countUp(ms) {
+  const t0 = performance.now()
+  const step = (now) => {
+    const k = Math.min(1, (now - t0) / ms)
+    big.textContent = (MILEAGE.kmpl * (1 - Math.pow(1 - k, 4))).toFixed(1)
+    if (k < 1) requestAnimationFrame(step)
+  }
+  requestAnimationFrame(step)
+}
+
+document.getElementById('fill').addEventListener('click', () => { level.to(0.92); start() })
+document.getElementById('drain').addEventListener('click', () => { level.to(0.06); start() })
+
+function play() {
+  if (MM.REDUCED) {
+    level.snap(0.92); t = 1.2; draw()
+    big.textContent = MILEAGE.kmpl.toFixed(1)
+    document.querySelectorAll('.fact').forEach((f) => f.classList.add('in'))
+    return
+  }
+  level.snap(0.04)
+  start()
+  MM.sequence([
+    [300, () => level.to(0.92)],
+    [620, () => countUp(1100)],
+    [220, () => document.querySelectorAll('.fact').forEach((f) => f.classList.add('in'))],
+  ])
+}
+
+new IntersectionObserver((es) => {
+  es.forEach((e) => {
+    onScreen = e.isIntersecting
+    if (!onScreen) { stop(); return }
+    start()
+    if (!floatEl.dataset.ran) { floatEl.dataset.ran = '1'; play() }
+  })
+}, { threshold: 0.3 }).observe(document.getElementById('rig'))
+}
+</script>
+</body>
+</html>
