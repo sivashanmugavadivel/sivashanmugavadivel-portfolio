@@ -14,7 +14,12 @@ const MILEAGE_BIKE = {
   tank: 13.7,            // litres, usable
   currency: '₹',
   claimed: 30.0,         // the maker's figure, km/l — the line to beat
-  fuel: 'Petrol · 95 RON',
+  fuel: '95-octane petrol',
+  /* what actually goes in it: always a 95-octane premium, whichever
+     bunk the ride passes — HPCL's poWer 95, BPCL's Speed 95, or
+     Indian Oil's XP95. Never regular. */
+  grade: 'poWer 95 / Speed 95 / XP95',
+  gradeOnPump: 'POWER 95',
 }
 
 /* the reading. `rate` is what a litre cost when it was taken, which is
@@ -24,7 +29,9 @@ const READING = {
   odo: 787,                    // odometer at the reading, km
   date: '22 Aug 2026',
   rate: 103.20,                // ₹ per litre
-  method: 'Full tank to full tank, measured on the highway run to Pollachi.',
+  method: 'Full tank to full tank on the highway run to Pollachi — always '
+        + 'a 95-octane premium: poWer, Speed or XP95, whichever bunk the '
+        + 'ride passes.',
 }
 
 /* ── derive ─────────────────────────────────────────────────────────── */
@@ -51,7 +58,7 @@ const MILEAGE_FACTS = [
   { key: 'cost',   label: 'Cost per km', value: MILEAGE_BIKE.currency + MILEAGE.costPerKm.toFixed(2), unit: '',
     sub: `at ${MILEAGE_BIKE.currency}${MILEAGE.rate.toFixed(2)} a litre` },
   { key: 'fill',   label: 'A full tank', value: MILEAGE_BIKE.currency + MILEAGE.tankCost.toLocaleString('en-IN'), unit: '',
-    sub: `${MILEAGE_BIKE.tank} L of ${MILEAGE_BIKE.fuel}` },
+    sub: `${MILEAGE_BIKE.tank} L of ${MILEAGE_BIKE.grade}` },
   { key: 'claim',  label: 'Against the claim', value: (MILEAGE.vsClaimed >= 0 ? '+' : '') + MILEAGE.vsClaimed, unit: '%',
     sub: `maker says ${MILEAGE_BIKE.claimed} km/l`,
     tone: MILEAGE.vsClaimed >= 0 ? 'up' : 'dn' },
