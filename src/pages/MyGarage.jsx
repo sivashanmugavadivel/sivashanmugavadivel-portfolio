@@ -18,6 +18,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import MaintenanceLog from '../components/garage/MaintenanceLog'
 import FollowTheJourney from '../components/garage/FollowTheJourney'
 import BearFireworks from '../components/garage/BearFireworks'
+import MileageRefuel from '../components/garage/MileageRefuel'
 import RouteReel from '../components/garage/RouteReel'
 import {
   RecommendedAccessories, RideGallery, RidesAndRoutes, DreamGarageJourney,
@@ -777,6 +778,9 @@ export default function MyGarage() {
         <RevealRow id="vlogs"><RouteReel /></RevealRow>
         <RevealRow id="gallery"><RideGallery /></RevealRow>
         <RevealRow id="rides"><RidesAndRoutes /></RevealRow>
+        {/* The mileage figure, measured rather than quoted. Builds and
+            drives its own SVG, and only starts once it is on screen. */}
+        <RevealRow id="mileage"><MileageRefuel /></RevealRow>
         <RevealRow id="journey"><DreamGarageJourney /></RevealRow>
         <RevealRow id="maintenance"><MaintenanceLog /></RevealRow>
         <RevealRow id="follow"><FollowTheJourney /></RevealRow>

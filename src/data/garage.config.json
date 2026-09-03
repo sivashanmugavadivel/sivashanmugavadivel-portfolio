@@ -42,7 +42,7 @@
         "odometer": 787,
         "type": "Free Service",
         "workshop": "Royal Enfield Senthur Motors, Dharapuram",
-        "invoice": "RJC007749JK01396",
+        "invoice": "RJC007749Jxxxxxx",
         "items": [
           { "label": "Engine oil, 10W50 API SN", "qty": "3.10 L", "amount": 2154.25 },
           { "label": "Engine oil filter", "qty": "1", "amount": 422.88 },
@@ -70,6 +70,24 @@
       "pauseOnHover": true
     },
     "photos": []
+  },
+  "mileage": {
+    "kicker": "Real-world figure",
+    "title": "Mileage",
+    "note": "What the Bear actually returns — measured full tank to full tank, not read off a brochure.",
+    "currency": "₹",
+    "tank": 13.7,
+    "claimed": 30.0,
+    "grade": "poWer 95 / Speed 95 / XP95",
+    "gradeOnPump": "POWER 95 / SPEED 95 / XP95",
+    "_reading_note": "One reading, not a log. Range, cost per km, tank cost, the comparison against `claimed` and litres per 100km are all DERIVED from this in src/data/mileage.js — change the reading and they all follow.",
+    "reading": {
+      "kmpl": 22.6,
+      "odo": 1207,
+      "date": "03 Sep 2026",
+      "rate": 116.20,
+      "method": "Full tank to full tank on the highway run — always a 95-octane premium: poWer 95, Speed 95 or XP95, whichever bunk the ride passes."
+    }
   },
   "accessories": {
     "note": "The gear actually bolted to the bike. Links go straight to where each one was bought.",
