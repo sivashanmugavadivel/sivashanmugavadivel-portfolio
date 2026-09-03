@@ -48,11 +48,14 @@ const dueLabel = due =>
   [due?.km > 0 ? km(due.km) : null, due?.date || null].filter(Boolean).join(' · ')
 
 export default function MaintenanceLog({ title = maintenanceTitle }) {
-  /* Newest service open on arrival, so the receipt has something on it. */
-  const [openId, setOpenId] = useState(services[0]?.id ?? null)
+  /* Nothing open on arrival. The section leads with the lifetime summary
+     — total spent, services, average, cost per kilometre — and a bill is
+     opened only by asking for one. Opening the newest by default put a
+     single service's full receipt in front of a reader who had not asked
+     to see it, and made the log look like it held one record. */
+  const [openId, setOpenId] = useState(null)
   const receiptRef = useRef(null)
-  /* Only a pick scrolls the receipt up — the section arriving with one already
-     open must not drag the page to itself as it mounts. */
+  /* Only a pick scrolls the receipt up; nothing should move on mount. */
   const picked = useRef(false)
   const reduce = useReducedMotion()
 
