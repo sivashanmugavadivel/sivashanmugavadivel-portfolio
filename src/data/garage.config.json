@@ -3,10 +3,12 @@
     "title": "Rides & Routes",
     "note": "Every road has a story.",
     "folder": "mygarage/rideandroute",
+    "_modes": "`stamp` is the word the rubber stamp carries on the all-rides page, and it is deliberately NOT the label: a stamp says what happened to the ride, where a label names the bucket it sits in. Keep it to one or two short words — it is set in Bebas Neue on one line. Anything without a `stamp` falls back to its label, so a new tier still renders.",
     "modes": [
-      { "key": "completed", "label": "Completed", "plural": "Completed Rides", "color": "#22c55e" },
-      { "key": "upcoming", "label": "Upcoming", "plural": "Upcoming Rides", "color": "#f59e0b" },
-      { "key": "planned", "label": "Planned", "plural": "Planned Rides", "color": "#8b5cf6" }
+      { "key": "completed", "label": "Completed", "plural": "Completed Rides", "stamp": "Ridden", "color": "#22c55e" },
+      { "key": "upcoming", "label": "Upcoming", "plural": "Upcoming Rides", "stamp": "Scheduled", "color": "#f59e0b" },
+      { "key": "planned", "label": "Planned", "plural": "Planned Rides", "stamp": "Planned", "color": "#8b5cf6" },
+      { "key": "cancelled", "label": "Cancelled", "plural": "Cancelled Rides", "stamp": "Called Off", "color": "#9ca3af" }
     ]
   },
   "vlogs": {

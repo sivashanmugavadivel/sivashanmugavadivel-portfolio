@@ -12,13 +12,17 @@
  *  - Other rides sidebar
  */
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import Lightbox from 'yet-another-react-lightbox'
 import 'yet-another-react-lightbox/styles.css'
-import { routes, ridesByMode, ridesInOrder, RIDE_MODES } from '../data/garage'
-import { labelFromSeconds } from '../data/rides'
+import { routes, ridesInOrder, RIDE_MODES } from '../data/garage'
+import { labelFromSeconds, placeLabel, routeLabel } from '../data/rides'
+import OrganizerMark from '../components/garage/OrganizerMark'
+import {
+  groupByScene, SCENE_ART, SCENE_DEFS, SCENE_CSS,
+} from '../components/garage/complimentScenes'
 import { addBasemap, BASEMAP_CREDIT } from '../utils/basemap'
 
 /**
@@ -131,6 +135,7 @@ const STOP_COLORS = ['#22c55e', '#f59e0b', '#ef4444', '#38bdf8', '#a78bfa', '#ec
 const PLACE_ICONS = {
   // faith
   temple: '🛕', kovil: '🛕', church: '⛪', mosque: '🕌', gurudwara: '🛕',
+  monastery: '☸️', stupa: '☸️', gompa: '☸️',
   // living and working
   home: '🏠', house: '🏠', office: '🏢', work: '🏢', factory: '🏭',
   // eating and staying
@@ -601,7 +606,7 @@ function DetailMap({ ride, onEstimate }) {
         ? ride.stops
         : ride.osrm
           ? [{ lat: ride.osrm.fromLat, lng: ride.osrm.fromLng, label: ride.fromCity || 'Start' },
-             { lat: ride.osrm.toLat,   lng: ride.osrm.toLng,   label: ride.toCity   || 'End' }]
+             { lat: ride.osrm.toLat,   lng: ride.osrm.toLng,   label: ride.endCity  || 'End' }]
           : []
 
       if (chain.length > 1) {
@@ -790,89 +795,1779 @@ function DetailMap({ ride, onEstimate }) {
   )
 }
 
-// ─── All Rides list page ───────────────────────────────────────────────────────
-export function GarageV7AllRides() {
-  const navigate = useNavigate()
-  const root = useGarageRoot()
-  // One group per tier, empty ones dropped so the page never shows a bare heading
-  const groups = RIDE_MODES
-    .map(m => ({ ...m, rides: ridesByMode(m.key) }))
-    .filter(g => g.rides.length > 0)
+/* ═══ All Rides — "Horizon" ═══════════════════════════════════════════════════
+   One ride per full screen, seen from the saddle.
 
-  const RideCard = ({ r }) => (
-    <motion.div
-      onClick={() => navigate(`${root.rides}/${r.id}`)}
-      whileHover={{ y: -3 }}
-      style={{ background: BG2, border: `1px solid ${BD}`, borderRadius: 14, overflow: 'hidden', cursor: 'pointer', borderTop: `3px solid ${r.color}` }}
-    >
-      {/* Photo */}
-      <div style={{ position: 'relative', aspectRatio: '16/9', background: BG3, overflow: 'hidden' }}>
-        {r.photos?.[0] ? (
-          <img src={r.photos[0]} alt={r.name} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.75, transition: 'transform 0.5s' }}
-            onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
-            onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-          />
-        ) : (
-          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '3rem', opacity: 0.2 }}>🏍️</div>
-        )}
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top,rgba(13,11,20,0.85) 0%,transparent 55%)' }} />
-        <div style={{ position: 'absolute', top: 10, left: 10 }}>
-          <span style={{ fontSize: '0.62rem', fontWeight: 800, padding: '3px 9px', background: MODE_COLOR[r.mode] || r.color, color: '#fff', borderRadius: 4, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{r.mode}</span>
+   No ride carries a photo — every `photos` array is empty and will be for a
+   while — so the view is BUILT rather than shown: a road running to a vanishing
+   point, ridgelines and stars behind it, and a sky graded out of the ride's own
+   colour. The whole page re-tints as each chapter takes the screen.
+
+   The road is not decoration. Each stop stands at its true share of the ride's
+   length, so the Coimbatore run crowds its stops into the near distance and the
+   Chennai haul shows two, far apart. You can read the shape of a ride off the
+   road itself.
+
+   Every stop near enough to carry words gets a NAME BOARD — the place, and how
+   far into the ride it is — with a header band on the two that matter, where
+   the ride starts and where it ends. Stops too far up the road for a legible
+   name drop to a bare verge marker rather than printing type nobody can read;
+   the shape survives, the mush does not.
+
+   One Ride 2026 has a single stop and no course, so its road simply runs into
+   the haze with nothing marked on it — every road, which is the point.
+
+   ── how this sits inside the site ──
+   · Scroll snapping goes on the DOCUMENT, not on a nested scroller. The site's
+     ScrollProgress, BackToTop and back-navigation restore all read window
+     scroll, and a nested scroll container would silently break all three.
+     The class is added on mount and removed on the way out so no other route
+     inherits it, and it is `proximity` rather than `mandatory` because the
+     site Footer follows this page and mandatory would fight anyone scrolling
+     into it.
+   · The chapter rail sits on the LEFT. The right edge is already taken by the
+     feedback tab (fixed, top 42%) and the social / back-to-top buttons.
+   · There is no fixed header of its own — the site navbar already owns that
+     strip, so the chapter counter lives bottom-left instead.
+════════════════════════════════════════════════════════════════════════════ */
+
+// ─── Scene geometry ───────────────────────────────────────────────────────────
+/* The scene is drawn in a fixed 1200 × 800 space and sliced to fill whatever
+   the viewport is. HZ is the horizon; the vanishing point is dead centre. */
+const VW = 1200, VH = 800, HZ = 430, VPX = VW / 2
+const R_KM = 6371
+
+/* ── the rider on the road ────────────────────────────────────────────────
+   public/riding_back.png is the shot from behind, but it ships with a solid
+   black background and no alpha, so dropped straight onto the scene it is a
+   rectangle sitting on the tarmac. `riding_back_cut.png` beside it is the same
+   photograph with the background flood-filled out from the edges — flood-
+   filled rather than colour-keyed, because the tyres, jacket and shadow are
+   black too and a global key punches holes through the bike.
+
+   THE SPRITE'S ASPECT IS NOT ASSUMED. It is drawn into a SQUARE box that is
+   `RIDER_H` on a side, with `xMidYMax meet`: the image fits inside, centred on
+   the road and sitting ON it, whatever shape the file happens to be. An
+   earlier version hard-coded 1:2 and a re-cut 2:3 file then fitted to width
+   instead of height — which both shrank the bike by a quarter and floated it
+   a few units above the tarmac. A box that cannot be wrong is worth the one
+   extra attribute. */
+const RIDER_SRC = 'riding_back_cut.png'
+const RIDER_H = 430                       // height in scene units at the near end
+
+/* THE BIKE STAYS WITH YOU, but it does pull ahead. It used to run all the way
+   to the vanishing point across a chapter, so by the end of a ride it was a
+   speck and then gone — you were watching it leave rather than following it.
+   Now it draws away over the ride and stops while it is still plainly a
+   motorcycle.
+   NEAR and FAR are depths down the road, and FAR is the one to turn. At 0.675
+   the bike ends a ride 59% smaller than it started, still large enough to read
+   as a motorcycle rather than a dot. Raise it to push the bike further away. */
+const RIDER_NEAR = 0.20
+const RIDER_FAR = 0.675
+
+/**
+ * Where something sits on the road at depth `d`, and how big it is there.
+ * d = 0 is at your own front wheel, d = 1 is the vanishing point.
+ *
+ * The scale is tied to the ROAD'S OWN half-width rather than to a chosen
+ * curve, so the rider shrinks at exactly the rate the road narrows. Any other
+ * falloff and it slides across the tarmac instead of travelling down it — the
+ * one thing that gives the illusion away.
+ */
+const roadAt = d => ({
+  y: VH - (VH - HZ - 8) * d,
+  s: (620 * (1 - d) + 7 * d) / 620,
+})
+
+const riderAt = d => {
+  const { y, s } = roadAt(d)
+  return `translate(${VPX} ${y.toFixed(1)}) scale(${s.toFixed(4)})`
+}
+
+/** Great-circle distance between two stops, in km. */
+function crowKm(a, b) {
+  const rad = d => (d * Math.PI) / 180
+  const dLat = rad(b.lat - a.lat), dLng = rad(b.lng - a.lng)
+  const s = Math.sin(dLat / 2) ** 2 +
+    Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLng / 2) ** 2
+  return 2 * R_KM * Math.asin(Math.sqrt(s))
+}
+
+/** Initial bearing a → b, degrees clockwise from true north. */
+function bearingDeg(a, b) {
+  const rad = d => (d * Math.PI) / 180
+  const y = Math.sin(rad(b.lng - a.lng)) * Math.cos(rad(b.lat))
+  const x = Math.cos(rad(a.lat)) * Math.sin(rad(b.lat)) -
+    Math.sin(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.cos(rad(b.lng - a.lng))
+  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360
+}
+
+const POINTS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE',
+  'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
+const compassOf = deg => POINTS[Math.round(deg / 22.5) % 16]
+
+/** Running distance at each stop — what spaces the posts along the road. */
+function marksOf(stops) {
+  let run = 0
+  return stops.map((s, i) => {
+    if (i) run += crowKm(stops[i - 1], s)
+    return { stop: s, at: run }
+  })
+}
+
+/* ── the signboard palette ────────────────────────────────────────────────
+   A Tamil Nadu Highways place-name board: green ground, a white keyline set in
+   from the edge, the department line in yellow across the top, and two posts
+   banded black and white.
+
+   THESE COLOURS DO NOT FOLLOW THE RIDE'S ACCENT, which every other element in
+   the scene does. Real signage does not restyle itself for the sunset, and a
+   board that changed colour per chapter would read as interface rather than as
+   something standing by the road. The accent appears on it once, as the
+   roundel the department emblem occupies, so the chapter still claims it. */
+const SIGN_BOARD = '#0c6b36'
+const SIGN_EDGE = '#084d27'
+const SIGN_RULE = '#f4f3ee'
+const SIGN_TEXT = '#ffffff'
+const SIGN_KICK = '#f6c714'
+const SIGN_POST_D = '#16161c'
+const SIGN_POST_L = '#eceae2'
+
+/* ── where a board sits, at a given moment ────────────────────────────────
+   The boards STREAM. Each one's depth is its own place along the ride offset
+   by how far the chapter has scrolled, so signs rise out of the haze, sweep
+   past and are gone — and over the length of a chapter you see every stop,
+   two or three at a time.
+
+   That is what buys the room. Laid out all at once they cannot fit: the
+   usable depth band is about 167 scene units and a board face is 45 of them,
+   so four is the ceiling however they are arranged. Dhondenling has eleven
+   stops. Alternating verges would double it and still not be enough, and the
+   left verge is not free anyway — the chapter's own copy is 1180px wide,
+   which is past the centre line of the road.
+
+   NEAR stops short of the viewer and FAR stops short of the vanishing point,
+   for the same reasons the static version did: below 0.30 there is no verge
+   left to stand on, and at the vanishing point there is no ground under the
+   board to plant it in. */
+const SIGN_NEAR = 0.30
+const SIGN_FAR = 0.86
+/* Two stops five kilometres apart on a four-hundred kilometre ride occupy the
+   same patch of road; drawing both just prints one over the other.
+   0.08 rather than something smaller because it has to beat the BOARD's own
+   height: at this gap two signs are about 48 scene units apart down the road
+   and a board face is 45 tall, so consecutive signs clear each other instead
+   of overlapping by half a name. Measured, not guessed. */
+const SIGN_MIN_GAP = 0.08
+
+/**
+ * How much of the ride is on screen at once.
+ *
+ * Scaled to the stop count so every ride shows a similar NUMBER of boards
+ * rather than a similar length of road — otherwise a two-stop ride spends the
+ * whole chapter with an empty verge while an eleven-stop one is still a wall.
+ * Floored, so a long ride's window never closes to a slot.
+ */
+function signWindow(items) {
+  const n = items.length
+  if (n < 2) return 1.15
+  /* AT LEAST AS WIDE AS THE BIGGEST GAP between two boards, or the road empties
+     out. On the first-service ride the stops sit at 0, 13%, 39% and then
+     nothing until the finish — a 61% stretch with no sign in it — so a window
+     sized only by stop count left a quarter of that chapter with a bare verge,
+     which reads as the boards having broken rather than as an empty road. */
+  let maxGap = 0
+  for (let i = 1; i < n; i++) maxGap = Math.max(maxGap, items[i].share - items[i - 1].share)
+  return Math.max(0.34, 1.15 / (n - 1), maxGap * 1.06)
+}
+
+/**
+ * Which stops get a board, as shares of the ride.
+ *
+ * Shared, because the chapter needs the COUNT to decide how tall it has to be
+ * before the scene can decide what to draw — a ride with seven boards needs
+ * more road to ride past than one with two.
+ */
+function signShares(stops) {
+  const marks = marksOf(stops)
+  const chain = marks.length ? marks[marks.length - 1].at : 0
+  if (stops.length < 2 || chain <= 0) return []
+  const out = []
+  let lastShare = -1
+  marks.forEach(({ stop, at }, k) => {
+    const first = k === 0
+    const last = k === marks.length - 1
+    const share = at / chain
+    /* Too close to the stop before it — or to the FINISH, which is always kept
+       and so would be crowded by anything arriving just ahead of it. */
+    if (!first && !last
+      && (share - lastShare < SIGN_MIN_GAP || 1 - share < SIGN_MIN_GAP)) return
+    lastShare = share
+    out.push({ stop, k, at, share, first, last })
+  })
+  return out
+}
+
+/**
+ * How many viewport-heights a ride chapter is worth.
+ *
+ * The chapter is pinned while you scroll through it, and THAT scroll is the
+ * ride: 1 for the screen it occupies, plus the road you travel. Without the
+ * extra height a chapter has no scroll of its own — it snaps into place, sits
+ * at one fixed position however long you look at it, and the whole journey
+ * has to happen in the instant between one chapter and the next. Which is
+ * exactly what it was doing: boards flashed past and at rest none showed at
+ * all.
+ */
+const chapterSpan = boards => 1 + Math.min(2.4, Math.max(1, boards * 0.3))
+
+/**
+ * How far the ride actually advances across a chapter's scroll.
+ *
+ * NOT all the way to 1. At 1 the finish board has swept right down to your own
+ * front wheel, which meant the chapter kept demanding scroll long after the
+ * ride had visibly ended — you had arrived, and were still winding the board
+ * down past the bottom of the screen before the next ride would start.
+ *
+ * Stopping half a window short leaves the FINISH board sitting mid-road, at
+ * the size and place where you read it, exactly as the chapter hands over.
+ */
+const journeyEnd = win => 1 - 0.5 * win
+
+/**
+ * And where it BEGINS — behind the start line, by half a window.
+ *
+ * Starting at 0 put the START board at the near end of the road the instant
+ * you landed: bottom corner of the frame, already half swept past, as if you
+ * had missed it. Backing up half a window sets it down mid-road instead — the
+ * same place, and the same size, the FINISH board occupies when the chapter
+ * hands over. You arrive at one board and leave on another, both centred.
+ */
+const journeyStart = win => -0.5 * win
+
+/**
+ * How far the centre line travels across one chapter, in path units.
+ *
+ * POSITIVE, so the marks run DOWN the road toward you — the same direction the
+ * boards travel. The old CSS loop ran it negative, sending the marks away
+ * toward the horizon, which is what a road does when you are reversing.
+ *
+ * The stripe path is 366 units long and its dash cycle is 104, so 900 is about
+ * two and a half lengths of road, or nine marks, per chapter. Tuned to read at
+ * roughly the rate the boards close on you; raise it and the road runs faster
+ * than the signs, which is the one thing that looks wrong.
+ */
+const STRIPE_TRAVEL = 900
+
+/* ── the sky turns over while you ride ────────────────────────────────────
+   Everything else answered to scroll and the sky did not, which left the one
+   element that should sell "hours in the saddle" sitting perfectly still.
+
+   Chapters ALTERNATE: the first runs day into night, the next night into
+   dawn, and so on down the page. A run of seven sunsets would read as one
+   long evening, and rides genuinely do start at both ends of the day — the
+   Dhondenling muster is 5:30 AM. */
+const dawnRide = index => index % 2 === 1
+
+/**
+ * The lit part of the moon, as a path centred on its own origin.
+ *
+ * Two arcs: the outer limb, which is always a half-circle of radius r, and the
+ * TERMINATOR, which is an ellipse whose semi-minor axis is how far from full
+ * the moon is. At f = 1 that ellipse is a half-circle bulging the other way
+ * and the two close into a full disc; at f = 0.5 it collapses to a straight
+ * edge; below that it bows back the same way as the limb and leaves a
+ * crescent. One expression covers every phase, which is why it is drawn
+ * rather than masked.
+ */
+function moonPath(r, f) {
+  const x = r * (1 - 2 * f)
+  /* SWEEP: the limb is drawn down the right side, so the terminator has to
+     come back up the LEFT to enclose anything — sweep 1, continuing the same
+     way round. Only below half does it bow back through the lit side, and
+     that is the one case that flips to 0. Getting this the wrong way round
+     traces the limb back over itself: a full moon encloses no area at all and
+     renders as an empty disc, which is exactly what it did. */
+  return `M0 ${-r}A${r} ${r} 0 0 1 0 ${r}A${Math.abs(x).toFixed(2)} ${r} 0 0 ${x > 0 ? 0 : 1} 0 ${-r}Z`
+}
+
+/* A different moon over every ride, cycled rather than random so a chapter
+   always has the same one. Full over the first, a thin crescent over the
+   next — the sky is a way of telling the rides apart at a glance. */
+const MOON_PHASES = [1, 0.3, 0.66, 0.45, 0.85, 0.18, 0.55]
+
+/* Where the sun and moon sit, from broad day (0) to full night (1). They
+   trade places across the horizon: one sinks behind the ridges as the other
+   climbs out from behind them. */
+const sunY = night => HZ - 195 + 265 * night
+const moonY = night => HZ + 70 - 275 * night
+
+/**
+ * Where a stop's board is when the chapter is `p` of the way past.
+ *
+ * `u` is how far ahead of you the stop still is, as a fraction of the ride.
+ * Behind you (negative) or beyond the window and it is not on screen at all.
+ * Returns null in that case, which is the caller's cue to hide it.
+ */
+function signPlace(share, p, win, w, first) {
+  const u = share - p
+  if (u < -0.03 || u > win) return null
+  const t = SIGN_NEAR + (SIGN_FAR - SIGN_NEAR) * (Math.max(0, u) / win)
+  const y = VH - (VH - HZ - 8) * t
+  const halfW = 620 * (1 - t) + 7 * t
+  /* 0.52, not 0.56: at the near end the widest boards were being pushed left
+     by the frame clamp until their inner edge crossed the road. Four units of
+     scale buys the clearance back. */
+  const sc = Math.min(0.52, Math.max(1 - t * 0.82, 0.34))
+  const half = (w * sc) / 2
+  const x = Math.min(VPX + halfW + half + 8, VW - 8 - half)
+  /* fades up out of the haze and back down as it sweeps past the camera —
+     without both ends a board pops into and out of existence */
+  let op = Math.max(0, Math.min(1, (win - u) / 0.07, (u + 0.03) / 0.05))
+
+  /* YOU LAND ON THE START BOARD AND NOTHING ELSE.
+     A stop close behind the start — Kangayam is 7 km into an 80 km ride — is
+     already inside the window the moment the chapter arrives, so it stood
+     there beside the START board before a single pixel of scroll. The window
+     cannot simply be narrowed to exclude it: it has to stay wide enough to
+     span the ride's biggest gap or the road empties out later on.
+     So boards that would otherwise be present at landing are held back and
+     brought up over the first few percent of the ride instead. Only the START
+     board is exempt, because it is the one you are meant to arrive on. */
+  const j0 = journeyStart(win)
+  if (!first && share - win < j0) {
+    op *= Math.max(0, Math.min(1, (p - j0) / 0.06))
+  }
+  return { op, tr: `translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${sc.toFixed(3)})` }
+}
+
+/**
+ * The pair of banded posts a place-name board stands on.
+ *
+ * Two, not one: a single stem reads as a shop sign, and the paired posts are
+ * most of what makes the silhouette recognisable from a distance — which is
+ * the only thing left of these once perspective has taken the type away.
+ *
+ * `cx` is the board's centre, `w` its width, `h` how far the posts drop to the
+ * road. Bands are counted rather than sized so a short post and a tall one
+ * carry the same number of stripes instead of one ending mid-band.
+ */
+function signPosts(cx, w, h) {
+  const PW = Math.max(6, w * 0.046)
+  const BANDS = 6
+  const bh = h / BANDS
+  return [-1, 1].map(sideSign => {
+    const px = cx + sideSign * w * 0.27 - PW / 2
+    return (
+      <g key={sideSign}>
+        {/* THE WHOLE POST FIRST, OUTLINED, then the pale bands over it. Drawn
+            as alternating dark and light rects instead, the dark ones vanish
+            into a near-black road and leave the light ones floating in the air
+            like a column of loose tiles — which is exactly how it looked. A
+            rim light is also what a real post has at dusk. */}
+        <rect x={px} y={-h} width={PW} height={h} fill={SIGN_POST_D}
+          stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
+        {Array.from({ length: Math.ceil(BANDS / 2) }, (_, b) => (
+          <rect key={b} x={px} y={-h + (b * 2 + 1) * bh} width={PW} height={bh}
+            fill={SIGN_POST_L} />
+        ))}
+      </g>
+    )
+  })
+}
+
+/**
+ * Trim a place name to what a roadside board can carry.
+ *
+ * Backs off to a WORD BOUNDARY rather than cutting at the character count:
+ * "Royal Enfield Senthur Mot…" reads as a broken string, where "Royal Enfield
+ * Senthur…" reads as a name that has been shortened. Only when the boundary is
+ * so early that it would throw most of the name away does it cut hard.
+ */
+const clip = (s, n) => {
+  const t = String(s || '').trim()
+  if (t.length <= n) return t
+  const cut = t.slice(0, n)
+  const sp = cut.lastIndexOf(' ')
+  return `${(sp > n * 0.55 ? cut.slice(0, sp) : cut).trimEnd()}…`
+}
+
+/**
+ * A place name across at most two lines, balanced.
+ *
+ * Real boards are TALL — two lines of big type in a roughly 2:1 rectangle.
+ * Setting every name on one line instead produced a 4.5:1 strip with small
+ * type, which is the single thing that stopped these reading as signage.
+ *
+ * The break is chosen to leave the LONGEST line shortest, not at the middle
+ * word: "Royal Enfield, Dharapuram" wants to break after "Enfield," (14/10),
+ * where a naive midpoint gives 5/20 and a board still half the screen wide.
+ *
+ * `titleLines` above looks similar and is not interchangeable — it breaks on
+ * word COUNT for ride titles and leaves any three-word name on one line, which
+ * is every long stop name in the folder.
+ */
+function signLines(name, per) {
+  const t = String(name || '').trim()
+  if (t.length <= per) return [t]
+  const words = t.split(/\s+/)
+  if (words.length === 1) return [clip(t, per)]
+  let best = 1
+  let bestMax = Infinity
+  for (let i = 1; i < words.length; i++) {
+    const m = Math.max(words.slice(0, i).join(' ').length, words.slice(i).join(' ').length)
+    if (m < bestMax) { bestMax = m; best = i }
+  }
+  return [
+    clip(words.slice(0, best).join(' '), per + 6),
+    clip(words.slice(best).join(' '), per + 6),
+  ]
+}
+
+/** Deterministic pseudo-random from a string, so a chapter never reshuffles. */
+function seeder(seed) {
+  let h = 0
+  for (const ch of String(seed)) h = (h * 31 + ch.charCodeAt(0)) % 99991
+  return () => { h = (h * 1103515245 + 12345) % 2147483648; return (h >>> 9) / 4194304 }
+}
+
+/** Mix a hex toward black (t < 0) or white (t > 0). */
+function shade(hex, t) {
+  const n = parseInt(String(hex).slice(1), 16)
+  if (Number.isNaN(n)) return hex
+  const f = c => Math.max(0, Math.min(255, Math.round(t < 0 ? c * (1 + t) : c + (255 - c) * t)))
+  return '#' + ((1 << 24) + (f((n >> 16) & 255) << 16) + (f((n >> 8) & 255) << 8) + f(n & 255))
+    .toString(16).slice(1)
+}
+
+/* Everything the reel needs. Injected rather than written as style objects
+   because it is nearly all pseudo-elements, keyframes, scroll-snap and media
+   queries — none of which inline styles can express. Prefixed `hz-` so it
+   cannot reach anything else on the site. */
+/* The distress that makes a border read as rubber rather than as a box, shared
+   by every stamp on this page — the COMPLETED mark on a chapter and the
+   INCLUDED mark on a compliments ticket.
+   The trailing pair is a THRESHOLD: alpha = -20 x noise + 13.5, so ink holds
+   until the noise passes about 0.625. Tuned by rendering it. Defined up here
+   because both stylesheets below need it, and a second copy is a second set of
+   numbers to keep in step. */
+const STAMP_MASK =
+  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='s'%3E" +
+  "%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E" +
+  "%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -20 13.5'/%3E" +
+  "%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3C/svg%3E\")"
+
+const EASE = 'cubic-bezier(.19,1,.22,1)'
+const HORIZON_CSS = `
+html.hz-snap { scroll-snap-type: y proximity; }
+
+/* the bike and the boards are moved by a scroll handler on every tick —
+   promote them once rather than letting the compositor rediscover it each
+   frame. The signs also get a short opacity ease so a board that is only
+   fading (rather than travelling) does not step. */
+.hz-rider { will-change: transform, opacity; }
+.hz-sign { will-change: transform, opacity; transition: opacity .18s linear; }
+.hz-night, .hz-glow, .hz-stars, .hz-dark { will-change: opacity; }
+.hz-sun, .hz-moon { will-change: transform, opacity; }
+
+/* Stars blink on their own clock — this one IS ambient rather than travel, so
+   it is the one thing in the scene that does not answer to scroll. Each star
+   carries its own period and delay, or forty-six of them pulse as one sheet. */
+.hz-star { animation: hz-twinkle var(--d, 3s) ease-in-out var(--dl, 0s) infinite; }
+@keyframes hz-twinkle { 0%, 100% { opacity: .9 } 50% { opacity: .18 } }
+/* the bright ones flare as well as fade — a star that only changes opacity
+   reads as a dimmer, where a real one seems to catch and let go */
+.hz-spark { transform-box: fill-box; transform-origin: 50% 50%;
+  animation: hz-flare var(--d, 3s) ease-in-out var(--dl, 0s) infinite; }
+@keyframes hz-flare {
+  0%, 100% { opacity: .95; transform: scale(1) }
+  50% { opacity: .3; transform: scale(.55) }
+}
+
+/* Defensive, not corrective: a page of full-bleed scenes should never scroll
+   sideways, and the figures row carries values as long as "Hindusthan College
+   of Arts and Sciences, Coimbatore". The min-width/overflow-wrap rules on
+   .hz-figs let those shrink and break instead of setting a floor on the row. */
+.hz-wrap { position: relative; overflow-x: clip; }
+.hz-wash { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: .16;
+  transition: background 1.1s ${EASE}; }
+
+.hz-ch { position: relative; z-index: 1; min-height: 100vh; min-height: 100svh;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  overflow: hidden; isolation: isolate;
+  scroll-snap-align: start; scroll-snap-stop: always; }
+
+/* ── a ride chapter is a PINNED SCENE WITH SCROLL BEHIND IT ────────────────
+   The section is --span screens tall and everything in it is stuck to the top
+   for the whole of that, so scrolling the chapter does not move the scene off
+   — it rides the road through it. The cover and the closing chapter keep the
+   plain full-screen rule above.
+
+   overflow:clip, NOT overflow:hidden — hidden makes the section a scroll
+   container, and a sticky child inside one has nothing left to stick to, so
+   the whole effect silently does nothing. Clip crops the same way without
+   creating that container. */
+.hz-ride { display: block; overflow: clip;
+  min-height: calc(100vh * var(--span, 1)); min-height: calc(100svh * var(--span, 1)); }
+.hz-ride .hz-stick { position: sticky; top: 0; overflow: hidden;
+  height: 100vh; height: 100svh;
+  display: flex; flex-direction: column; justify-content: flex-end; }
+.hz-view { position: absolute; inset: 0; z-index: 0; }
+.hz-view svg { width: 100%; height: 100%; display: block; }
+.hz-haze { position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(to bottom, transparent 34%, rgba(13,11,20,.16) 48%,
+    rgba(13,11,20,.72) 78%, ${BG} 100%); }
+.hz-body { position: relative; z-index: 3; width: 100%; max-width: 1180px; min-width: 0;
+  padding: 0 clamp(18px,5vw,72px) calc(clamp(34px,6vw,78px) + env(safe-area-inset-bottom)); }
+
+/* ── reveals ───────────────────────────────────────────────────────────────
+   Every revealed element is VISIBLE by default and is hidden only under
+   .hz-js — the class this page adds to itself once its script has run. So the
+   failure mode of anything going wrong with the observer, the animation or the
+   script is a page that is merely static, never a page that is blank. The
+   first cut had these hidden in the base rule and revealed by an animation,
+   and the title genuinely never appeared. */
+/* Top-right, in the empty sky. Bottom-right is where the site's social button
+   and its tooltip live, and the numeral sat behind them. */
+.hz-no { position: absolute; right: clamp(18px,5vw,72px); top: 15%;
+  z-index: 2; pointer-events: none; user-select: none;
+  font-family: 'Playfair Display', serif; font-weight: 700;
+  font-size: clamp(4rem,16vw,11rem); line-height: .78; color: transparent;
+  -webkit-text-stroke: 1.4px rgba(240,238,232,.16);
+  transition: opacity 1s ${EASE} .15s, transform 1s ${EASE} .15s; }
+
+.hz-tier { display: inline-flex; align-items: center; gap: 9px; font-size: .6rem;
+  font-weight: 700; letter-spacing: .24em; text-transform: uppercase; margin-bottom: 16px;
+  transition: opacity .8s ${EASE} .1s, transform .8s ${EASE} .1s; }
+.hz-tier i { width: 7px; height: 7px; border-radius: 50%; background: currentColor;
+  box-shadow: 0 0 12px currentColor; }
+
+/* ── the status, as the mark it is ─────────────────────────────────────────
+   A ride's status is not a field to read, it is something that happened TO the
+   ride — so a chapter is stamped rather than labelled: RIDDEN, SCHEDULED,
+   PLANNED, CALLED OFF. Both the word and the colour come from the tier in
+   garage.config.json, so adding a status stamps itself with no change here.
+
+   It keeps .hz-tier alongside, so the reveal rules below still find it and ONE
+   place still decides when the kicker arrives.
+
+   IT LANDS ON THE HEADING, not above it. A stamp is applied TO a document; one
+   sitting politely in the space above it is a label again. It sits at the
+   heading's START — where the eye lands and where the title's first line
+   reliably has text under it. The ragged right end does not: .hz-head hugs the
+   longest line, which is often not the first one, and anchoring there left the
+   mark floating in the gap beside a short opening line.
+
+   Out of flow, which costs nothing here: the copy block is anchored to the
+   BOTTOM of the scene, so everything's position is set by what sits below it,
+   and the stamp sits above the title. The title does not move.
+
+   THE LANDING IS THE TRANSITION, not a keyframe. The reveal already flips
+   .is-live, so the stamp only has to declare a different hidden state — dropped
+   in oversized and over-rotated — and an eased-back curve turns that into a
+   thump. A keyframe here would be a second mechanism fighting for the same
+   transform. It grows from its left edge rather than its centre so the
+   oversized first frame expands INTO the heading instead of out past the
+   gutter, where the scene would clip it.
+
+   No ink-shock ring, deliberately: the distress mask is clipped to the border
+   box, so a ring drawn outside the stamp would simply be erased. */
+/* the box the mark is positioned against — it exists only so the stamp is
+   anchored to the HEADING and travels with it, rather than to the copy column */
+.hz-head { position: relative; }
+.hz-stamp { --tilt: -3.5deg;
+  position: absolute; top: -22px; left: -12px; z-index: 2;
+  display: block; text-align: center;
+  letter-spacing: 0; padding: 9px 16px 7px;
+  border: 2.5px solid currentColor; border-radius: 4px;
+  transform: rotate(var(--tilt)); transform-origin: left center;
+  transition: opacity .45s ${EASE} .06s, transform .6s cubic-bezier(.2,1.55,.5,1) .06s;
+  -webkit-mask-image: ${STAMP_MASK}; mask-image: ${STAMP_MASK}; }
+/* The inner keyline every official stamp has. Inset 4, not the ticket stamp's
+   2: this mark is half again as big, and at that size a keyline any tighter
+   merges into the border and just reads as a thicker frame. */
+.hz-stamp::before { content: ''; position: absolute; inset: 4px;
+  border: 1px solid currentColor; border-radius: 2px; opacity: .55; }
+.hz-stamp b { display: block; font-family: 'Bebas Neue', sans-serif; font-weight: 400;
+  font-size: clamp(1.1rem,3vw,1.38rem); line-height: 1; letter-spacing: .1em;
+  text-indent: .1em; }
+/* The date, the way a date stamp carries one — under a hairline, so it reads as
+   part of the mark rather than as a caption sitting beneath it. */
+.hz-stamp u { display: block; text-decoration: none; margin-top: 4px; padding-top: 4px;
+  border-top: 1px solid currentColor; font-size: .52rem; letter-spacing: .16em;
+  opacity: .88; font-variant-numeric: tabular-nums; }
+
+.hz-title, .hz-h1 { font-family: 'Playfair Display', serif; font-weight: 700; color: ${OFF};
+  letter-spacing: -.03em; line-height: 1.02; margin: 0 0 14px; max-width: 16ch; }
+.hz-title { font-size: clamp(1.9rem,6.4vw,4.6rem); }
+.hz-h1 { font-size: clamp(2.4rem,9vw,6rem); margin-bottom: 22px; }
+.hz-title .w, .hz-h1 .w { display: block; overflow: hidden; }
+.hz-title .w i, .hz-h1 .w i { display: block; font-style: normal;
+  transition: transform 1.05s ${EASE}; }
+/* The cover carries is-live from the first render and simply IS there — no
+   entrance. It sits above the fold, so there is nothing to reveal it to, and
+   an animated reveal here is the one place a stalled animation could leave the
+   page's own title invisible. The chapters below still animate on scroll. */
+
+/* WHERE the ride went, under WHAT it was for.
+   The title above is the ride's purpose — the marathon, the first service — so
+   the road it took needs a line of its own rather than being folded back into
+   the heading. Deliberately quiet: small, spaced caps in the same key as
+   .hz-tier, so it reads as a label on the title and not as a second one. */
+.hz-where { display: block; max-width: 48ch; margin: -4px 0 18px;
+  font-size: clamp(.68rem,1.1vw,.78rem); font-weight: 600; letter-spacing: .14em;
+  line-height: 1.75; text-transform: uppercase; color: ${D2};
+  transition: opacity .9s ${EASE} .38s, transform .9s ${EASE} .38s; }
+
+.hz-lede { font-size: clamp(.9rem,1.5vw,1.05rem); line-height: 1.8; max-width: 52ch;
+  color: ${D1}; margin: 0 0 24px;
+  transition: opacity .9s ${EASE} .45s, transform .9s ${EASE} .45s; }
+
+.hz-org { display: inline-flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin: 0 0 22px; padding: 8px 16px 8px 12px; border-radius: 999px;
+  border: 1px solid ${BD2}; background: rgba(255,255,255,.03);
+  font-size: .78rem; font-weight: 600; color: ${OFF};
+  transition: opacity .9s ${EASE} .52s, transform .9s ${EASE} .52s; }
+.hz-org .k { font-size: .55rem; letter-spacing: .22em; text-transform: uppercase;
+  color: ${D3}; font-weight: 500; }
+
+.hz-figs { display: flex; flex-wrap: wrap; gap: 0; border-top: 1px solid ${BD2};
+  transition: opacity .9s ${EASE} .58s, transform .9s ${EASE} .58s; }
+
+/* the hidden state: only ever applied when the script is running */
+.hz-js .hz-ch:not(.is-live) .hz-no,
+.hz-js .hz-ch:not(.is-live) .hz-tier,
+.hz-js .hz-ch:not(.is-live) .hz-where,
+.hz-js .hz-ch:not(.is-live) .hz-lede,
+.hz-js .hz-ch:not(.is-live) .hz-org,
+.hz-js .hz-ch:not(.is-live) .hz-figs,
+.hz-js .hz-ch:not(.is-live) .hz-row { opacity: 0; transform: translateY(18px); }
+.hz-js .hz-ch:not(.is-live) .hz-no { transform: translateY(30px); }
+.hz-js .hz-ch:not(.is-live) .hz-title .w i { transform: translateY(104%); }
+/* The stamp's hidden state has to come AFTER the block above, which also
+   matches it through .hz-tier — same specificity, so the later rule wins. It
+   waits oversized and hard over-rotated, and lands on its resting tilt. */
+.hz-js .hz-ch:not(.is-live) .hz-stamp { opacity: 0; transform: rotate(-22deg) scale(1.9); }
+.hz-figs > div { padding: 14px 24px 0 0; margin-right: 24px; border-right: 1px solid ${BD};
+  min-width: 0; flex: 0 1 auto; }
+.hz-figs > div:last-child { border-right: 0; margin-right: 0; padding-right: 0; }
+.hz-figs .k { display: block; font-size: .55rem; letter-spacing: .22em; text-transform: uppercase;
+  color: ${D3}; margin-bottom: 6px; }
+.hz-figs .v { display: block; font-family: 'Playfair Display', serif;
+  font-size: clamp(1.2rem,2.6vw,1.9rem); color: ${OFF}; line-height: 1;
+  font-variant-numeric: tabular-nums; }
+.hz-figs .v.sm { font-size: clamp(.92rem,1.7vw,1.2rem); line-height: 1.25;
+  overflow-wrap: anywhere; }
+
+.hz-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 24px;
+  transition: opacity .9s ${EASE} .7s, transform .9s ${EASE} .7s; }
+.hz-go { display: inline-flex; align-items: center; gap: 10px; padding: 14px 26px;
+  border-radius: 999px; background: ${OFF}; color: ${BG}; text-decoration: none;
+  font-size: .74rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  transition: .32s ${EASE}; }
+.hz-go:hover { background: var(--c); color: ${OFF}; transform: translateY(-3px);
+  box-shadow: 0 16px 34px -12px var(--c); }
+.hz-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.hz-tags u { text-decoration: none; font-size: .58rem; letter-spacing: .12em;
+  text-transform: uppercase; padding: 6px 11px; border-radius: 999px;
+  border: 1px solid ${BD2}; color: ${D1}; }
+
+/* cover + closing */
+.hz-cover { justify-content: center; padding-top: 92px; }
+.hz-cover .hz-body { padding-bottom: 0; }
+.hz-kick { font-size: .62rem; letter-spacing: .2em; text-transform: uppercase; color: ${D3};
+  margin-bottom: 18px; }
+.hz-kick a { color: ${D2}; text-decoration: none; transition: color .2s; }
+.hz-kick a:hover { color: ${OFF}; }
+.hz-cue { display: flex; align-items: center; gap: 12px; margin-top: 34px; font-size: .6rem;
+  letter-spacing: .22em; text-transform: uppercase; color: ${D3}; }
+.hz-cue i { width: 1px; height: 34px; background: linear-gradient(var(--c), transparent);
+  animation: hz-drop 2.1s ${EASE} infinite; }
+@keyframes hz-drop { 50% { transform: translateY(9px); } }
+.hz-end { justify-content: center; }
+.hz-end .hz-title { max-width: 12ch; }
+
+/* the road's centre line, running away from the rider */
+/* The centre line is driven by SCROLL, not by a clock — see STRIPE_TRAVEL.
+   Running it on its own loop meant the road kept flowing while the page stood
+   still, which reads as the scene playing a video rather than as you riding
+   it, and it disagreed with the rider and the boards the moment those started
+   answering to scroll. */
+.hz-stripe { will-change: stroke-dashoffset; }
+
+/* chapter index — left edge; the right edge belongs to the feedback tab */
+.hz-rail { position: fixed; left: clamp(10px,2vw,22px); top: 50%; transform: translateY(-50%);
+  z-index: 40; display: flex; flex-direction: column; gap: 13px; align-items: flex-start; }
+.hz-rail button { display: flex; align-items: center; gap: 9px; background: none; border: 0;
+  cursor: pointer; padding: 2px 0; color: ${D3}; font-family: inherit; font-size: .6rem;
+  letter-spacing: .1em; transition: .35s ${EASE}; }
+.hz-rail button i { width: 22px; height: 2px; background: currentColor; flex-shrink: 0;
+  transition: .35s ${EASE}; }
+.hz-rail button span { opacity: 0; max-width: 0; overflow: hidden; white-space: nowrap;
+  transition: .35s ${EASE}; text-align: left; }
+.hz-rail button:hover { color: ${OFF}; }
+/* The name shows on hover only. Expanding it for the ACTIVE chapter reads well
+   until the rail and the chapter's own kicker land on the same line — which
+   they do on any chapter whose copy sits high — and then two labels overlap. */
+.hz-rail button:hover span { opacity: 1; max-width: 190px; }
+.hz-rail button.on { color: ${OFF}; }
+.hz-rail button.on i { width: 42px; background: var(--rc); }
+
+/* Top-left, in the band under the navbar. The bottom-left corner looks empty
+   but is not: the site's back-to-top button is fixed there, and the chapter's
+   own call-to-action reaches down into it. This strip is clear on every
+   chapter, and it is the only position indicator on phones, where the rail
+   is hidden. */
+.hz-count { position: fixed; left: 28px; top: 88px;
+  z-index: 40; font-size: .66rem; letter-spacing: .18em; color: ${D2};
+  font-variant-numeric: tabular-nums; pointer-events: none; }
+.hz-count b { color: ${OFF}; font-weight: 700; }
+
+@media (max-width: 860px) {
+  .hz-rail { display: none; }
+  .hz-figs > div { padding-right: 14px; margin-right: 14px; }
+  .hz-no { font-size: 5rem; }
+  .hz-title, .hz-h1 { max-width: none; }
+  /* The gutter is down to ~20px here, so the overhang has nowhere to go — pull
+     the mark flush with the title, and sit it higher, because a stamp that
+     covers half of a 1.9rem line covers most of the word under it. */
+  .hz-stamp { top: -26px; left: 0; }
+  /* clear the back-to-top and social buttons, which sit in the bottom corners */
+  .hz-body { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  html.hz-snap { scroll-snap-type: none; }
+  .hz-ch { scroll-snap-align: none; }
+  .hz-stripe, .hz-cue i { animation: none; }
+  /* drop the whole hidden state, so nothing is waiting on a reveal to arrive */
+  .hz-js .hz-ch:not(.is-live) .hz-no,
+  .hz-js .hz-ch:not(.is-live) .hz-tier,
+  .hz-js .hz-ch:not(.is-live) .hz-where,
+  .hz-js .hz-ch:not(.is-live) .hz-lede,
+  .hz-js .hz-ch:not(.is-live) .hz-org,
+  .hz-js .hz-ch:not(.is-live) .hz-figs,
+  .hz-js .hz-ch:not(.is-live) .hz-row,
+  .hz-js .hz-ch:not(.is-live) .hz-title .w i {
+    opacity: 1; transform: none; }
+  /* the stamp keeps its tilt — transform:none above would stand it upright, and
+     a mark that arrives square is not a mark, it is a box */
+  .hz-js .hz-ch:not(.is-live) .hz-stamp { opacity: 1; transform: rotate(var(--tilt)); }
+  .hz-wash { transition: none; }
+}
+`
+
+/* ══════════════════════════════════════════════════════════════════════════
+   What the ride comes with, drawn as the ticket it is.
+
+   Every other block on this page is a card: flat ground, hairline border,
+   small uppercase kicker. This one deliberately is not, because the content
+   isn't the page's own reporting — it is a promise the organiser printed, and
+   an organised ride's perks ARE a ticket: you paid the registration, this is
+   what it admits you to.
+
+   The shapes are real, not suggested:
+     PERFORATION  a dashed seam plus half-circle bites masked out of the card's
+                  edges in the PAGE's colour, so the holes show what is behind
+                  them rather than being painted dots.
+     WINDOWS      each row's punched hole is a window onto that perk's own
+                  animated scene, chosen from its text — see complimentScenes.
+                  Emoji were fine at 26px; shaded illustration needs 62px, and
+                  that one measurement is what every other size here follows.
+     STAMP        an INCLUDED mark, always on. Its mask is a threshold:
+                  alpha = -20 x noise + 13.5, tuned by rendering it rather than
+                  by eye. More negative is a cleaner stamp, less is rougher.
+     ROSETTE      the stub's "admit one", as the badge it means. The teeth are
+                  generated (see ROSETTE_PATH) because a hand-placed zigzag
+                  never has even points, and at 90px that reads as a wobble.
+
+   THE STUB IS MIXED FROM THE RIDE'S OWN COLOUR, so it arrives warm on a yellow
+   ride and deep red on One Ride without any of them being authored. Only about
+   a fifth accent: the rosette and the vertical title sit on top of it at full
+   strength, and the tint is there to say which ride this is, not to shout.
+
+   Every color-mix has a plain declaration before it. A browser without support
+   drops the later one and keeps a sensible grey rather than breaking.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * The rosette's sawtooth edge.
+ *
+ * Generated rather than written out: a hand-placed zigzag never has even teeth,
+ * and the tooth count stays a number to tune instead of 44 coordinates to redo.
+ * Starts at −90° so a tooth sits at top dead centre, which is what makes the
+ * badge look upright rather than rotated by half a tooth.
+ */
+const ROSETTE_PATH = ((cx, cy, outer, inner, teeth) => {
+  const pts = []
+  for (let i = 0; i < teeth * 2; i++) {
+    const a = (i * Math.PI) / teeth - Math.PI / 2
+    const rad = i % 2 === 0 ? outer : inner
+    pts.push(`${(cx + Math.cos(a) * rad).toFixed(2)} ${(cy + Math.sin(a) * rad).toFixed(2)}`)
+  }
+  return `M${pts.join('L')}Z`
+})(50, 46, 36, 29, 22)
+
+const TICKET_CSS = `
+.v7c-defs{position:absolute;width:0;height:0;overflow:hidden}
+.v7c-ticket{position:relative;display:grid;grid-template-columns:132px 1fr;
+  filter:drop-shadow(0 24px 44px rgba(0,0,0,.7))}
+
+.v7c-stub{border-radius:14px 0 0 14px;padding:22px 12px;display:flex;
+  flex-direction:column;align-items:center;justify-content:space-between;gap:16px;
+  overflow:hidden;position:relative;
+  background:linear-gradient(155deg,#211d2e,#131120);
+  background:linear-gradient(155deg,
+    color-mix(in srgb, var(--acc) 20%, #0f0d18),
+    color-mix(in srgb, var(--acc) 7%, #08070e))}
+.v7c-stub::before{content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(135deg,transparent 0 9px,rgba(255,255,255,.02) 9px 18px);
+  background:repeating-linear-gradient(135deg,transparent 0 9px,
+    color-mix(in srgb, var(--acc) 12%, transparent) 9px 18px)}
+/* light falling off towards the tear, so the halves read as one object */
+.v7c-stub::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(270deg,rgba(0,0,0,.34),transparent 38%)}
+
+/* A TINT of the accent, not the accent. Measured across the ride palette: raw
+   accent on this stub is 6.9:1 for yellow but 3.4:1 for red, because a dark
+   accent and a stub mixed from it share a hue. Lifting the text 30% toward
+   white clears 5:1 for every accent; bright ones barely move. */
+.v7c-vert{writing-mode:vertical-rl;transform:rotate(180deg);position:relative;
+  font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:.16em;white-space:nowrap;
+  color:var(--acc);
+  color:color-mix(in srgb, var(--acc) 70%, #fff)}
+.v7c-barcode{display:flex;align-items:flex-end;gap:1.5px;height:36px;position:relative}
+.v7c-barcode i{display:block;width:2px;background:${OFF};opacity:.82;
+  animation:v7c-scan 2.6s ease-in-out infinite}
+@keyframes v7c-scan{0%,100%{opacity:.28}18%{opacity:.95}}
+
+.v7c-rose{width:clamp(72px,7.4vw,94px);height:auto;position:relative;
+  filter:drop-shadow(0 6px 11px rgba(0,0,0,.65))}
+.v7c-rose .v7c-swing{transform-origin:50% 10%;animation:v7c-swing 5.4s ease-in-out infinite}
+@keyframes v7c-swing{0%,100%{transform:rotate(-2.6deg)}50%{transform:rotate(2.6deg)}}
+
+/* the tear: a dashed seam and two bites, both in the PAGE's colour */
+.v7c-seam{position:absolute;top:0;bottom:0;left:132px;width:2px;transform:translateX(-1px);
+  z-index:3;background:repeating-linear-gradient(to bottom,${BG} 0 7px,transparent 7px 14px)}
+.v7c-bite{position:absolute;left:132px;width:20px;height:20px;border-radius:50%;
+  background:${BG};transform:translateX(-50%);z-index:4}
+.v7c-bite.t{top:-10px}.v7c-bite.b{bottom:-10px}
+
+.v7c-body{background:linear-gradient(150deg,${BG2},#121019);border-radius:0 14px 14px 0;
+  padding:clamp(20px,3.4vw,30px)}
+.v7c-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;
+  flex-wrap:wrap;padding-bottom:16px;border-bottom:1px dashed rgba(255,255,255,.14)}
+.v7c-kicker{font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--acc);
+  font-weight:700;margin-bottom:5px}
+.v7c-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(1.5rem,4vw,2.2rem);
+  line-height:.95;color:${OFF};letter-spacing:.01em}
+.v7c-when{font-size:.64rem;color:${D2};text-align:right;line-height:1.9}
+.v7c-when b{display:block;color:${OFF};font-size:.76rem}
+
+.v7c-list{list-style:none;margin:6px 0 0;padding:0}
+.v7c-row{display:flex;align-items:center;gap:14px;padding:13px 0;position:relative;
+  border-bottom:1px solid rgba(255,255,255,.06)}
+.v7c-row:hover{background:rgba(255,255,255,.02)}
+/* the punched window, with the scene inside and the ring snapping out round it */
+.v7c-hole{position:relative;flex-shrink:0;width:62px;height:62px;border-radius:50%;
+  background:${BG};display:grid;place-items:center;color:var(--acc);padding:7px;
+  box-shadow:inset 0 2px 7px rgba(0,0,0,.9)}
+.v7c-hole::after{content:'';position:absolute;inset:-5px;border-radius:50%;
+  border:1px solid var(--acc);opacity:0;animation:v7c-ring .9s ease-out both;
+  animation-delay:calc(.25s + var(--i) * .09s)}
+@keyframes v7c-ring{from{opacity:.85;transform:scale(.6)}to{opacity:0;transform:scale(1.35)}}
+.v7c-hole .sc{transition:transform .35s cubic-bezier(.16,1,.3,1)}
+.v7c-row:hover .v7c-hole .sc{transform:scale(1.12)}
+
+.v7c-txt{flex:1;min-width:0;font-size:clamp(.82rem,1.9vw,.92rem);color:${OFF};
+  font-weight:500;line-height:1.5}
+/* perks sharing one window: the hairline says the lines belong to the picture
+   beside them rather than looking like one sentence that wrapped */
+.v7c-txt b{display:block;font-weight:500}
+.v7c-txt b + b{margin-top:6px;padding-top:6px;border-top:1px dashed rgba(255,255,255,.13)}
+
+/* THE STAMP — always on. Hiding it until hover made it a tooltip; the point of
+   a stamp is that it has already been applied. Red on purpose, outside the
+   accent: against the ride's own colour the two would compete. */
+.v7c-stamp{position:relative;flex-shrink:0;
+  font-family:'Bebas Neue',sans-serif;font-size:clamp(.76rem,1.9vw,.95rem);
+  letter-spacing:.11em;line-height:1;text-transform:uppercase;white-space:nowrap;
+  color:#e3342a;border:2.5px solid #e3342a;border-radius:3px;
+  padding:6px 12px 4px;transform:rotate(-8deg);
+  -webkit-mask-image:${STAMP_MASK};mask-image:${STAMP_MASK}}
+.v7c-stamp::before{content:'';position:absolute;inset:2px;border:1px solid currentColor;
+  border-radius:2px;opacity:.75}
+
+.v7c-foot{margin-top:18px;display:flex;justify-content:space-between;align-items:center;
+  gap:12px;flex-wrap:wrap;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;
+  color:${D2};font-weight:700}
+.v7c-foot .v7c-org{display:flex;align-items:center;gap:9px;text-transform:none;letter-spacing:.04em}
+.v7c-pay{color:var(--acc);border:1px solid var(--acc);padding:4px 10px;border-radius:5px;
+  letter-spacing:.1em}
+
+@media(max-width:640px){
+  .v7c-ticket{grid-template-columns:1fr}
+  .v7c-stub{border-radius:14px 14px 0 0;flex-direction:row;padding:12px 16px}
+  .v7c-vert{writing-mode:horizontal-tb;transform:none;font-size:1.2rem}
+  .v7c-barcode{height:24px}
+  .v7c-rose{width:56px}
+  .v7c-body{border-radius:0 0 14px 14px}
+  .v7c-seam{left:0;right:0;top:auto;bottom:auto;width:auto;height:2px;
+    background:repeating-linear-gradient(to right,${BG} 0 7px,transparent 7px 14px)}
+  .v7c-bite{left:auto;top:auto;transform:translateY(-50%)}
+  .v7c-bite.t{left:-10px}.v7c-bite.b{right:-10px;bottom:auto}
+  /* let the stamp drop below the text rather than squeezing it to two words */
+  .v7c-row{flex-wrap:wrap}
+  .v7c-txt{flex:1 1 58%}
+  .v7c-stamp{font-size:.72rem;padding:5px 10px 3px}
+}
+@media(prefers-reduced-motion:reduce){
+  .v7c-barcode i,.v7c-hole::after,.v7c-rose .v7c-swing{animation:none}
+  .v7c-hole::after{opacity:0}
+}`
+
+function ComplimentsPoster({ ride }) {
+  const items = ride.compliments
+  const c = ride.color
+
+  /* One window per PICTURE, not per perk: two inclusions that both draw a cup
+     of tea share the window and stack their lines beside it. The foot still
+     counts PERKS — four inclusions in three rows is four inclusions. */
+  const groups = useMemo(() => groupByScene(items), [items])
+
+  /* Bars hashed from the ride, so no two rides carry the same barcode and a
+     reload never reshuffles one. */
+  const bars = useMemo(() => {
+    let h = 0
+    for (const ch of String(ride.id) + String(ride.date)) h = (h * 31 + ch.charCodeAt(0)) >>> 0
+    /* a plain loop rather than Array.from(…, cb): the callback would close over
+       `h` and mutate it, which reads as state escaping the render */
+    const out = []
+    for (let i = 0; i < 24; i++) {
+      h = (h * 1103515245 + 12345) >>> 0
+      out.push(36 - (h % 3) * 9)
+    }
+    return out
+  }, [ride.id, ride.date])
+
+  if (!items?.length) return null
+  const org = ride.organizer && ride.organizer !== 'Self' ? ride.organizer : null
+  const reg = ride.stats?.registration
+
+  return (
+    <motion.div {...up(0.15)} style={{ '--acc': c }}>
+      <style>{SCENE_CSS + TICKET_CSS}</style>
+      {/* the shared gradients, once for the whole page */}
+      <svg className="v7c-defs" aria-hidden="true"
+        dangerouslySetInnerHTML={{ __html: `<defs>${SCENE_DEFS}</defs>` }} />
+
+      <div className="v7c-ticket">
+        <div className="v7c-stub">
+          <span className="v7c-vert">Compliments</span>
+          <div className="v7c-barcode" aria-hidden="true">
+            {bars.map((h, i) => <i key={i} style={{ height: `${h}%`, animationDelay: `${i * 0.045}s` }} />)}
+          </div>
+          <svg className="v7c-rose" viewBox="0 0 100 150" aria-hidden="true">
+            <g className="v7c-swing">
+              {/* ribbons first: they hang from behind the badge */}
+              <path d="M38 46L53 46L47 132L30 143Z" fill={c} />
+              <path d="M62 46L47 46L53 132L70 143Z" fill={c} />
+              <path d="M47 46L53 46L50 90Z" fill="#000" fillOpacity=".22" />
+              <path d={ROSETTE_PATH} fill={c} />
+              <circle cx="50" cy="46" r="27" fill={c} />
+              <circle cx="50" cy="46" r="27" fill="#000" fillOpacity=".12" />
+              <circle cx="50" cy="46" r="23" fill="none" stroke="#fff" strokeWidth="1.1" strokeOpacity=".45" />
+              {/* Sized against the r=23 ring, not the badge: about 42px usable.
+                  "ADMIT 1" at a readable weight runs over the ring in any
+                  non-condensed fallback, so the numeral carries it alone. */}
+              <text x="50" y="52" textAnchor="middle" fontFamily="'Bebas Neue',sans-serif"
+                fontSize="30" fill="#0b0a12">1</text>
+              <text x="50" y="63" textAnchor="middle" fontSize="6.8" fontWeight="800"
+                letterSpacing="1.3" fill="#0b0a12">PER RIDER</text>
+            </g>
+          </svg>
         </div>
-        <div style={{ position: 'absolute', top: 10, right: 10 }}>
-          <span style={{ fontSize: '0.72rem', fontWeight: 700, color: OFF, background: 'rgba(0,0,0,0.7)', padding: '2px 8px', borderRadius: 4 }}>{r.distance}</span>
-        </div>
-      </div>
-      <div style={{ padding: '16px 18px 18px' }}>
-        <div style={{ fontSize: '0.62rem', letterSpacing: '0.16em', textTransform: 'uppercase', color: D3, marginBottom: 4 }}>{r.fromCity} → {r.toCity}</div>
-        <h3 style={{ margin: '0 0 4px', fontSize: '1rem', fontFamily: "'Playfair Display',serif", color: OFF, fontWeight: 700, lineHeight: 1.3 }}>{r.name}</h3>
-        <p style={{ margin: '0 0 12px', fontSize: '0.78rem', color: D2, lineHeight: 1.5 }}>{r.description}</p>
-        <div style={{ display: 'flex', gap: 16, fontSize: '0.7rem', color: D3, flexWrap: 'wrap' }}>
-          <span>⏱ {r.time}</span>
-          <span>📅 {r.date}</span>
-          {r.rating && <span style={{ color: '#f59e0b' }}>★ {r.rating}</span>}
+
+        <span className="v7c-seam" aria-hidden="true" />
+        <span className="v7c-bite t" aria-hidden="true" />
+        <span className="v7c-bite b" aria-hidden="true" />
+
+        <div className="v7c-body">
+          <div className="v7c-head">
+            <div>
+              <div className="v7c-kicker">What the ride comes with</div>
+              <div className="v7c-title">{ride.name}</div>
+            </div>
+            <div className="v7c-when">
+              <b>{ride.date}</b>
+              {org || 'Self organised'}
+            </div>
+          </div>
+
+          <ul className="v7c-list">
+            {groups.map((g, i) => (
+              <li className="v7c-row" key={g.kind} style={{ '--i': i }}>
+                <span className="v7c-hole" aria-hidden="true">
+                  <svg className="sc" viewBox="0 0 64 64"
+                    dangerouslySetInnerHTML={{ __html: SCENE_ART[g.kind] || SCENE_ART.tick }} />
+                </span>
+                <span className="v7c-txt">
+                  {g.texts.map(t => <b key={t}>{t}</b>)}
+                </span>
+                <span className="v7c-stamp">Included</span>
+              </li>
+            ))}
+          </ul>
+
+          <div className="v7c-foot">
+            {org ? (
+              <span className="v7c-org">
+                <span style={{ textTransform: 'uppercase', letterSpacing: '0.16em', color: D2 }}>
+                  Included with
+                </span>
+                <OrganizerMark name={ride.organizer} logo={ride.organizerLogo} size={16} logoOnly
+                  style={{ color: OFF, letterSpacing: '0.04em' }} />
+              </span>
+            ) : (
+              <span>{items.length} inclusion{items.length === 1 ? '' : 's'}</span>
+            )}
+            {reg
+              ? <span className="v7c-pay">Entry {reg}</span>
+              : org && <span>{items.length} inclusion{items.length === 1 ? '' : 's'}</span>}
+          </div>
         </div>
       </div>
     </motion.div>
   )
+}
+
+/** The view out of one chapter. Memoised on the ride — it never needs redrawing. */
+function HorizonView({ ride, index, rider = true }) {
+  return useMemo(() => {
+    const c = ride.color
+    const rnd = seeder(ride.id || String(index))
+
+    /* Ridgelines, far to near. Drawn before the stars are pulled from `rnd`
+       so the sequence — and therefore the scene — is stable. */
+    const ridges = [
+      { y: HZ - 4, amp: 54, op: 0.5, col: shade(c, -0.5) },
+      { y: HZ + 6, amp: 34, op: 0.68, col: shade(c, -0.66) },
+      { y: HZ + 22, amp: 20, op: 0.85, col: '#0b0b11' },
+    ].map((g, k) => {
+      let d = `M0 ${VH}L0 ${g.y}`
+      for (let x = 0; x <= VW; x += 110) {
+        d += ` Q${x + 55} ${(g.y - rnd() * g.amp).toFixed(1)} ${x + 110} ${(g.y - rnd() * g.amp * 0.55).toFixed(1)}`
+      }
+      return <path key={k} d={`${d}L${VW} ${VH}Z`} fill={g.col} opacity={g.op} />
+    })
+
+    /* Each star gets its own period and delay, so they blink independently
+       instead of pulsing as one sheet. Seeded, so a chapter's sky is the same
+       sky every time you come back to it.
+       ONE IN SIX IS A SPARKLE rather than a dot — four points drawn with a
+       pinched waist, which is how a bright star actually reads to the eye.
+       A field of plain dots twinkling is a field of dots changing opacity. */
+    const stars = Array.from({ length: 52 }, (_, k) => {
+      const x = rnd() * VW
+      const y = rnd() * (HZ - 90)
+      const r = 0.6 + rnd() * 1.6
+      const style = {
+        '--d': `${(2.1 + rnd() * 3.6).toFixed(1)}s`,
+        '--dl': `${(-rnd() * 5).toFixed(1)}s`,
+      }
+      if (k % 6 !== 0) {
+        return <circle key={k} className="hz-star" cx={x.toFixed(0)} cy={y.toFixed(0)}
+          r={r.toFixed(1)} fill="#fbfaf7" style={style} />
+      }
+      const R = (3.4 + rnd() * 3).toFixed(1)
+      const w = (R * 0.16).toFixed(2)
+      /* The translate lives on a wrapper and the flare on the path inside it.
+         Putting both on one node means a `transform` attribute and a CSS
+         transform on the same element, and which one survives is a question
+         not worth having. */
+      return (
+        <g key={k} transform={`translate(${x.toFixed(0)} ${y.toFixed(0)})`}>
+          <path className="hz-star hz-spark" fill="#fdfcf8" style={style}
+            d={`M0 ${-R}Q${w} ${-w} ${R} 0Q${w} ${w} 0 ${R}Q${-w} ${w} ${-R} 0Q${-w} ${-w} 0 ${-R}Z`} />
+        </g>
+      )
+    })
+
+    const road = `M${VPX - 620} ${VH} L${VPX - 7} ${HZ + 4} L${VPX + 7} ${HZ + 4} L${VPX + 620} ${VH} Z`
+
+    /* Milestone posts, at each stop's true share of the ride. Perspective
+       compresses toward the horizon, so depth grows non-linearly. */
+    const marks = marksOf(ride.stops)
+    const chain = marks.length ? marks[marks.length - 1].at : 0
+    /* ── roadside boards ────────────────────────────────────────────────
+       A bare number told you a ride was 21 km long somewhere, but not where
+       you were. These are name boards: the place, and how far into the ride
+       it is. The two that matter — where the ride starts and where it ends —
+       carry a header band saying so.
+
+       Each board is authored at scale 1 inside a <g> that translates to its
+       spot on the verge and scales for depth, so the numbers below read as
+       the board's real proportions rather than as pre-multiplied soup.
+
+       ALL OF THEM RIDE THE RIGHT VERGE, which is why the old numbered posts
+       did too. The chapter's own copy — title, standfirst, the figures row and
+       the button — owns the left of the screen, and a near board over there
+       lands squarely behind it: the nearest board is the biggest and the
+       furthest out, so it is the one guaranteed to collide. The stops' own
+       `dir` is honoured on the maps, where both verges are free. */
+    const NAME_F = 26
+    const LH = 30
+
+    /* Geometry for EVERY stop, worked out before anything is drawn — the
+       overlap pass below has to know how tall each board is before it can
+       decide which ones survive. */
+    const signs = signShares(ride.stops).map(({ stop, k, at, share, first, last }) => {
+
+      /* DEPTH IS COMPRESSED INTO [0.34, 0.80], and BOTH ends of that matter.
+         Below 0.34 the road fills the frame edge to edge, leaving no verge to
+         stand a sign on — a board there sat on the tarmac and hung off the
+         canvas at once. Above 0.80 is the vanishing point, where the road is a
+         fourteen-unit sliver: a board planted there is geometrically correct
+         and reads as hanging in the sky, because there is no ground under it
+         to plant it on. The finish board is the FARTHEST VISIBLE sign, not the
+         one at infinity. */
+
+      /* TWO LINES OF BIG TYPE IN A TALL RECTANGLE is what makes a place-name
+         board read as one. One line of smaller type gave a 4.5:1 strip that
+         looked like a UI chip whatever colour it was painted. */
+      const lines = signLines(stop.label, 15)
+      /* Nothing to count at the start — a board reading "0 KM" is noise. */
+      const km = first ? '' : `${Math.round(at)} KM`
+      /* The line a real board gives the Highways Department. Here it carries
+         the only thing on the sign that is about the RIDE rather than the
+         place, so the slot earns itself instead of quoting a government
+         department this site has nothing to do with. */
+      const kick = first ? 'START' : last ? 'FINISH' : (ride.states?.[0] || '').toUpperCase()
+
+      const h = 38 + lines.length * LH + (km ? 22 : 0) + 9
+      /* Width is ESTIMATED from the character count of the LONGEST line: SVG
+         cannot measure text without laying it out first, so this is generous
+         on purpose. It has to clear not just the board edge but the inset
+         white rule and its own gutter. */
+      const longest = lines.reduce((a, b) => (b.length > a.length ? b : a), '')
+      const w = Math.max(190, longest.length * NAME_F * 0.62 + 64,
+        kick.length * 11 * 0.72 + 76)
+      /* Posts about as tall as the board, as on the real thing — carried up
+         out of the verge rather than perched on two stubs. */
+      return { stop, k, share, first, lines, km, kick, h, w, postH: Math.round(h * 0.95) }
+    })
+
+    const win = signWindow(signs)
+
+    /* FARTHEST FIRST, and this one sort holds forever: relative depth never
+       changes, because a stop further along the ride is always further away.
+       So the nearer board occludes the farther at every scroll position and
+       the DOM never has to be reordered. */
+    const posts = (ride.stops.length > 1 && chain > 0)
+      ? [...signs].sort((a, b) => b.share - a.share).map(s => {
+        const { stop, k, share, first, lines, km, kick, h, w, postH } = s
+        /* Where it rests on arrival — the START board standing beside you,
+           before a single pixel of scroll. Also where it stays for anyone who
+           has asked for reduced motion. The scroll handler takes it from
+           here. */
+        const at0 = signPlace(share, journeyStart(win), win, w, first)
+
+        return (
+          <g key={`${stop.id}-${k}`} className="hz-sign"
+            data-share={share.toFixed(5)} data-w={w} data-win={win.toFixed(4)}
+            data-first={first ? '1' : '0'}
+            opacity={at0 ? at0.op.toFixed(2) : 0}
+            transform={at0 ? at0.tr : `translate(${VPX} ${VH}) scale(0.001)`}>
+            {signPosts(0, w, postH)}
+
+            <g transform={`translate(${(-w / 2).toFixed(1)} ${-postH - h})`}>
+            {/* the board's own shadow — what stops the sign reading as a flat
+                sticker on the sky */}
+            <rect x="4" y="5" width={w} height={h} rx="6" fill="#000" opacity="0.4" />
+
+            {/* green ground, and the white keyline set in from the edge that
+                every Indian place-name board carries */}
+            <rect width={w} height={h} rx="6" fill={SIGN_BOARD}
+              stroke={SIGN_EDGE} strokeWidth="3" />
+            {/* a touch of sky along the upper lip: flat green over the whole
+                face reads as a swatch rather than as painted metal */}
+            <path d={`M9 9h${w - 18}v12H9z`} fill="#fff" opacity="0.07" />
+            <rect x="9" y="9" width={w - 18} height={h - 18} rx="3"
+              fill="none" stroke={SIGN_RULE} strokeWidth="3.4" />
+
+            {/* the department line: type between two roundels. The left one is
+                the ride's accent — the single place the chapter's colour
+                touches the sign. */}
+            <circle cx="24" cy="26" r="6" fill={c} />
+            <circle cx={w - 24} cy="26" r="6" fill={SIGN_KICK} />
+            <text x={w / 2} y="30" textAnchor="middle" fill={SIGN_KICK}
+              fontFamily="'Inter',system-ui,sans-serif" fontWeight="800"
+              fontSize="11" letterSpacing="2.2">{kick}</text>
+            <path d={`M20 40h${w - 40}`} stroke={SIGN_RULE} strokeWidth="1"
+              opacity="0.38" />
+
+            {lines.map((ln, li) => (
+              <text key={ln} x={w / 2} y={38 + LH * (li + 0.72)} textAnchor="middle"
+                fill={SIGN_TEXT} fontFamily="'Inter',system-ui,sans-serif"
+                fontWeight="700" fontSize={NAME_F}>{ln}</text>
+            ))}
+            {km && (
+              <text x={w / 2} y={38 + lines.length * LH + 16} textAnchor="middle"
+                fill={SIGN_TEXT} fontFamily="'Inter',system-ui,sans-serif"
+                fontWeight="600" fontSize="14" letterSpacing="1.4"
+                opacity="0.9">{km}</text>
+            )}
+            </g>
+          </g>
+        )
+      })
+      : null
+
+    const g = `hz${index}`
+    return (
+      <svg viewBox={`0 0 ${VW} ${VH}`} preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+        <defs>
+          {/* DAY: the ride's colour opened up toward white, brightest just
+              above the horizon where the light actually comes from. */}
+          <linearGradient id={`skyD-${g}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor={shade(c, 0.12)} />
+            <stop offset="0.44" stopColor={shade(c, 0.42)} />
+            <stop offset="0.66" stopColor={shade(c, 0.72)} />
+            <stop offset="0.8" stopColor={shade(c, 0.3)} />
+          </linearGradient>
+          {/* NIGHT: the same colour taken down instead of up, so the two skies
+              are recognisably one ride at either end of a day. */}
+          <linearGradient id={`skyN-${g}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor={BG} />
+            <stop offset="0.44" stopColor={shade(c, -0.74)} />
+            <stop offset="0.66" stopColor={shade(c, -0.4)} />
+            <stop offset="0.8" stopColor={shade(c, -0.7)} />
+          </linearGradient>
+          {/* ── the sun ──────────────────────────────────────────────────
+              WARM, AND NOT THE RIDE'S COLOUR. It used to carry an accent wash
+              at a third opacity, which on a teal ride produced a pale green
+              disc — a circle, not a sun. Only the corona is allowed to pick up
+              the chapter's tint, and faintly, because that IS the sky it is
+              shining through. */}
+          <radialGradient id={`sunCore-${g}`} cx="0.44" cy="0.38" r="0.72">
+            <stop offset="0" stopColor="#fffdf3" />
+            <stop offset="0.42" stopColor="#ffeaa4" />
+            <stop offset="0.82" stopColor="#ffc25a" />
+            <stop offset="1" stopColor="#ffa236" />
+          </radialGradient>
+          <radialGradient id={`corona-${g}`}>
+            <stop offset="0" stopColor="#ffe6a8" stopOpacity="0.6" />
+            <stop offset="0.3" stopColor="#ffbe5c" stopOpacity="0.26" />
+            <stop offset="0.62" stopColor={shade(c, 0.45)} stopOpacity="0.12" />
+            <stop offset="1" stopColor={c} stopOpacity="0" />
+          </radialGradient>
+
+          {/* ── the moon ─────────────────────────────────────────────────
+              Lit from the upper right, cool rather than white, and darkening
+              toward the limb so the disc reads as a SPHERE. A flat fill is
+              what made the half moon look like a half circle. */}
+          <radialGradient id={`moonSurf-${g}`} cx="0.64" cy="0.34" r="0.86">
+            <stop offset="0" stopColor="#ffffff" />
+            <stop offset="0.5" stopColor="#e6ecf5" />
+            <stop offset="0.86" stopColor="#c6d0e0" />
+            <stop offset="1" stopColor="#aab6c9" />
+          </radialGradient>
+          <radialGradient id={`moonHalo-${g}`}>
+            <stop offset="0" stopColor="#e2ecff" stopOpacity="0.42" />
+            <stop offset="0.34" stopColor="#bacdf2" stopOpacity="0.15" />
+            <stop offset="1" stopColor="#8fa6d0" stopOpacity="0" />
+          </radialGradient>
+          {/* NIGHT FALLING ON THE LAND, as a gradient rather than a fill.
+              This was a flat rect, and a flat rect has a top edge: as its
+              opacity came up with the night it drew a dead-straight black line
+              right across the hills, worst at full dark. Fading in from
+              nothing above the highest ridge means there is no edge to see. */}
+          <linearGradient id={`landDark-${g}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#04050a" stopOpacity="0" />
+            <stop offset="0.22" stopColor="#04050a" stopOpacity="0.55" />
+            <stop offset="0.45" stopColor="#04050a" stopOpacity="0.9" />
+            <stop offset="1" stopColor="#04050a" stopOpacity="1" />
+          </linearGradient>
+
+          {/* the maria are drawn across the whole disc and cut to whatever is
+              lit, so they hold still through the phase instead of sliding */}
+          <clipPath id={`moonLit-${g}`}>
+            <path d={moonPath(34, MOON_PHASES[index % MOON_PHASES.length])} />
+          </clipPath>
+          <radialGradient id={`sun-${g}`} cx="0.5" cy={(HZ / VH).toFixed(3)} r="0.42">
+            <stop offset="0" stopColor={c} stopOpacity="0.92" />
+            <stop offset="0.5" stopColor={c} stopOpacity="0.2" />
+            <stop offset="1" stopColor={c} stopOpacity="0" />
+          </radialGradient>
+          <linearGradient id={`tar-${g}`} x1="0" y1="1" x2="0" y2="0">
+            <stop offset="0" stopColor="#16161d" />
+            <stop offset="1" stopColor={shade(c, -0.72)} />
+          </linearGradient>
+        </defs>
+
+        {/* DAY UNDERNEATH, NIGHT CROSS-FADED OVER IT. Two flat rects rather
+            than one gradient whose stops get rewritten every frame: an opacity
+            is a compositor property and stop colours are not. */}
+        <rect width={VW} height={VH} fill={`url(#skyD-${g})`} />
+        <rect className="hz-night" width={VW} height={VH} fill={`url(#skyN-${g})`}
+          opacity={dawnRide(index) ? 1 : 0} />
+
+        {/* the sun's haze on the horizon, which belongs to the day */}
+        <ellipse className="hz-glow" cx={VPX} cy={HZ} rx={VW * 0.44} ry={230}
+          fill={`url(#sun-${g})`} opacity={dawnRide(index) ? 0 : 1} />
+
+        <g className="hz-stars" opacity={dawnRide(index) ? 1 : 0}>{stars}</g>
+
+        {/* Sun and moon trade places behind the ridges. Both are drawn before
+            the ridgelines, so they rise and set BEHIND the hills rather than
+            sliding over them. */}
+        <g className="hz-sun" opacity={dawnRide(index) ? 0 : 1}
+          transform={`translate(${(VW * 0.74).toFixed(0)} ${sunY(dawnRide(index) ? 1 : 0).toFixed(0)})`}>
+          <circle r="165" fill={`url(#corona-${g})`} />
+          <circle r="46" fill={`url(#sunCore-${g})`} />
+          {/* the rim a low sun always has, a shade hotter than its middle */}
+          <circle r="46" fill="none" stroke="#ffb247" strokeWidth="2" strokeOpacity="0.5" />
+        </g>
+
+        <g className="hz-moon" opacity={dawnRide(index) ? 1 : 0}
+          transform={`translate(${(VW * 0.27).toFixed(0)} ${moonY(dawnRide(index) ? 1 : 0).toFixed(0)})`}>
+          <circle r="108" fill={`url(#moonHalo-${g})`} />
+          {/* NO EARTHSHINE. There was a faint full disc behind the lit part —
+              the unlit hemisphere, which is a real thing you can see on a thin
+              crescent and which sold the moon as a ball rather than a shape.
+              It only works against a black sky. Over the lighter half of the
+              cycle it read as a translucent second half stuck to the first,
+              which is worse than losing the roundness. The surface gradient
+              and the craters carry that on their own. */}
+          <path d={moonPath(34, MOON_PHASES[index % MOON_PHASES.length])}
+            fill={`url(#moonSurf-${g})`} />
+          <g clipPath={`url(#moonLit-${g})`} fill="#93a1b8">
+            <circle cx="9" cy="-13" r="8" fillOpacity="0.3" />
+            <circle cx="-5" cy="3" r="10" fillOpacity="0.24" />
+            <circle cx="15" cy="11" r="5.5" fillOpacity="0.28" />
+            <circle cx="2" cy="17" r="6.5" fillOpacity="0.2" />
+            <circle cx="19" cy="-3" r="3.4" fillOpacity="0.32" />
+            <circle cx="-3" cy="-19" r="4.2" fillOpacity="0.22" />
+            <circle cx="24" cy="4" r="2.6" fillOpacity="0.26" />
+          </g>
+        </g>
+
+        {ridges}
+        {/* The land loses its light too, or the hills stay noon-bright at
+            midnight and give the whole thing away. Starts well ABOVE the
+            tallest ridge — they peak around y=372 — so the gradient has room
+            to come up from nothing before it reaches anything. */}
+        <rect className="hz-dark" y={HZ - 150} width={VW} height={VH - HZ + 150}
+          fill={`url(#landDark-${g})`} opacity={dawnRide(index) ? 0.55 : 0} />
+
+        <path d={road} fill={`url(#tar-${g})`} />
+        <path d={`M${VPX - 620} ${VH} L${VPX - 7} ${HZ + 4}`} fill="none"
+          stroke="rgba(251,250,247,0.3)" strokeWidth="3" />
+        <path d={`M${VPX + 620} ${VH} L${VPX + 7} ${HZ + 4}`} fill="none"
+          stroke="rgba(251,250,247,0.3)" strokeWidth="3" />
+        <path className="hz-stripe" d={`M${VPX} ${VH} L${VPX} ${HZ + 4}`} fill="none"
+          stroke="rgba(251,250,247,0.72)" strokeWidth="7"
+          strokeDasharray="58 46" strokeLinecap="round"
+          strokeDashoffset="0" />
+        {posts}
+
+        {/* The rider, drawn INSIDE the scene rather than layered over it in
+            CSS. The svg is `xMidYMax slice`, so a positioned <img> would have
+            to re-derive that crop to stay on the road at every viewport; in
+            here it shares the road's own coordinate space and cannot drift.
+            The group's origin is the bike's contact patch, so scaling it grows
+            the bike out of the tarmac rather than about its middle.
+
+            The transform is set again from the scroll handler in
+            GarageV7AllRides — this is only where it starts. */}
+        {rider && (
+          <g className="hz-rider" transform={riderAt(RIDER_NEAR)}>
+            <image href={`${import.meta.env.BASE_URL}${RIDER_SRC}`}
+              x={-RIDER_H / 2} y={-RIDER_H} width={RIDER_H} height={RIDER_H}
+              preserveAspectRatio="xMidYMax meet" />
+          </g>
+        )}
+      </svg>
+    )
+  }, [ride, index, rider])
+}
+
+/**
+ * Break a ride name into at most two lines, so each can rise from its own mask.
+ *
+ * Splitting every three words is what a mock-up gets away with and real names
+ * do not: a name like "Home to Dharapuram — First Service" lands the em dash at
+ * the head of line two. So the break goes near the middle and then walks forward
+ * off any word that doesn't start with a letter or a number.
+ */
+function titleLines(name) {
+  const words = String(name || '').trim().split(/\s+/).filter(Boolean)
+  if (words.length <= 3) return [words.join(' ')]
+  let cut = Math.ceil(words.length / 2)
+  while (cut < words.length - 1 && /^[^\p{L}\p{N}]/u.test(words[cut])) cut++
+  return [words.slice(0, cut).join(' '), words.slice(cut).join(' ')]
+}
+
+/** One ride, one screen. */
+function HorizonChapter({ ride: r, index, root, tier }) {
+  const mapped = r.stops.length > 1
+  const heading = mapped
+    ? (() => {
+        const d = bearingDeg(r.stops[0], r.stops[r.stops.length - 1])
+        return `${compassOf(d)} ${Math.round(d)}°`
+      })()
+    : 'Open'
+
+  const lines = titleLines(r.name)
+  const timeLabel = r.time || r.estimateTime
+
+  /* The chapter is TALLER THAN THE SCREEN and its contents are pinned inside
+     it. That extra height is the ride: you arrive at the start board, and
+     scrolling it is what rides the road past you. A ride with more boards
+     gets more of it. */
+  const span = chapterSpan(signShares(r.stops).length)
 
   return (
-    <div style={{ background: BG, minHeight: '100vh', paddingTop: 80 }}>
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: 'clamp(20px,4vw,48px)' }}>
-        {/* Breadcrumb */}
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: '0.78rem', color: D3, marginBottom: 32 }}>
-          <Link to={root.garage} style={{ color: D3, textDecoration: 'none', transition: 'color 0.2s' }}
-            onMouseEnter={e => e.currentTarget.style.color = OFF}
-            onMouseLeave={e => e.currentTarget.style.color = D3}>{root.label}</Link>
-          <span>›</span>
-          <span style={{ color: OFF }}>All Rides</span>
+    <section className="hz-ch hz-ride" data-i={index + 1}
+      data-win={signWindow(signShares(r.stops)).toFixed(4)}
+      data-dawn={dawnRide(index) ? '1' : '0'}
+      style={{ '--c': r.color, '--span': span }}>
+      <div className="hz-stick">
+        <div className="hz-view"><HorizonView ride={r} index={index} /></div>
+        <div className="hz-haze" />
+        <span className="hz-no" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+
+        <div className="hz-body">
+        {/* The stamp is stuck to the heading, so the two share a box — the mark
+            is placed against the title, not against the copy column. */}
+        <div className="hz-head">
+          {/* The status, stamped. `stamp` is the tier's own word — RIDDEN rather
+              than "Completed" — because the stamp says what became of the ride,
+              where the label only names the bucket it is filed under. A tier
+              without one falls back to its label, so nothing goes blank.
+              The date rides inside the mark the way a date stamp carries one,
+              and drops out on a planned ride, which has none yet. */}
+          <span className="hz-tier hz-stamp" style={{ color: tier?.color || r.color }}>
+            <b>{tier?.stamp || tier?.label || r.mode}</b>
+            {r.date && <u>{r.date}</u>}
+          </span>
+
+          <h2 className="hz-title">
+            {lines.map((l, k) => (
+              <span className="w" key={k}>
+                <i style={{ transitionDelay: `${(0.18 + k * 0.09).toFixed(2)}s` }}>{l}</i>
+              </span>
+            ))}
+          </h2>
         </div>
 
-        <motion.div {...up()}>
-          <h1 style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', fontFamily: "'Playfair Display',serif", fontWeight: 700, color: OFF, margin: '0 0 6px', lineHeight: 1.05, letterSpacing: '-0.03em' }}>
-            Rides &amp; Journeys
-          </h1>
-          <p style={{ fontSize: '0.92rem', color: D2, margin: '0 0 40px', lineHeight: 1.7 }}>
-            Every road has a story. {groups.map(g => `${g.rides.length} ${g.label.toLowerCase()}`).join(' · ')}.
-          </p>
-        </motion.div>
+        {/* The title says what the ride was FOR; this says where it went. Falls
+            back to the compact city pair so a ride file that never wrote a
+            subtitle still gets its road named. */}
+        {(r.subtitle || routeLabel(r.fromCity, r.destCity, r.roundTrip)) && (
+          <p className="hz-where">{r.subtitle || routeLabel(r.fromCity, r.destCity, r.roundTrip)}</p>
+        )}
 
-        {groups.map((g, gi) => (
-          <div key={g.key} style={{ marginBottom: gi === groups.length - 1 ? 0 : 48 }}>
-            <div style={{ fontSize: '0.62rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: g.color, fontWeight: 700, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: g.color, display: 'inline-block' }} />
-              {g.plural}
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 18 }}>
-              {g.rides.map((r, i) => (
-                <motion.div key={r.id} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07, duration: 0.5 }}>
-                  <RideCard r={r} />
-                </motion.div>
-              ))}
-            </div>
+        {r.description && <p className="hz-lede">{r.description}</p>}
+
+        {/* Whose ride it is. Sits between the lede and the figures because it is
+            a credit, not a measurement — the figures row is numbers, and a logo
+            in it would break that rhythm. Absent on your own rides. */}
+        {r.organizer !== 'Self' && (
+          <div className="hz-org">
+            <span className="k">Organised by</span>
+            <OrganizerMark name={r.organizer} logo={r.organizerLogo} size={22} logoOnly />
           </div>
-        ))}
+        )}
+
+        <div className="hz-figs">
+          <div><span className="k">Distance</span><span className="v">{r.distance || '—'}</span></div>
+          <div><span className="k">From</span><span className="v sm">{r.fromCity || '—'}</span></div>
+          <div><span className="k">To</span><span className="v sm">{r.destCity || '—'}</span></div>
+          <div><span className="k">Heading</span><span className="v">{heading}</span></div>
+          <div>
+            <span className="k">
+              {r.time ? 'Saddle time' : r.estimateTime ? 'Estimated' : 'Waypoints'}
+            </span>
+            <span className="v sm">{timeLabel || r.stops.length}</span>
+          </div>
+        </div>
+
+        <div className="hz-row">
+          <Link className="hz-go" to={`${root.rides}/${r.id}`}>
+            Open the ride <span aria-hidden="true">→</span>
+          </Link>
+          {r.highlights?.length > 0 && (
+            <span className="hz-tags">
+              {r.highlights.slice(0, 3).map(h => <u key={h}>{h}</u>)}
+            </span>
+          )}
+          </div>
+        </div>
       </div>
+    </section>
+  )
+}
+
+export function GarageV7AllRides() {
+  const root = useGarageRoot()
+  const rides = useMemo(() => ridesInOrder(), [])
+  const tiers = useMemo(() => Object.fromEntries(RIDE_MODES.map(m => [m.key, m])), [])
+  const tally = useMemo(() => RIDE_MODES
+    .map(m => ({ m, n: rides.filter(r => r.mode === m.key).length }))
+    .filter(x => x.n > 0)
+    .map(x => `${x.n} ${x.m.label.toLowerCase()}`)
+    .join(' · '), [rides])
+
+  const wrapRef = useRef(null)
+  /* 0 = cover, 1..n = rides, n + 1 = the closing chapter */
+  const [active, setActive] = useState(0)
+
+  /* The cover borrows the first ride's colour but none of its stops — no posts
+     on an opening shot. Its own id keeps the scene's seed distinct, so the
+     ridgeline behind the title isn't a repeat of chapter one's. Built once:
+     a fresh object every render would defeat HorizonView's memo. */
+  const coverRide = useMemo(
+    () => (rides[0] ? { ...rides[0], id: 'cover', stops: [] } : null),
+    [rides])
+
+  /* Snapping belongs to the document, and only while this page is on it. */
+  useEffect(() => {
+    const el = document.documentElement
+    el.classList.add('hz-snap')
+    return () => el.classList.remove('hz-snap')
+  }, [])
+
+  /* One observer for every chapter. The reveal class is written straight to the
+     node rather than held in state — six chapters re-rendering on every scroll
+     tick would be six scene trees reconciled for nothing. Only the active index
+     is state, because the tint and the rail genuinely read from it. */
+  useEffect(() => {
+    const secs = Array.from(wrapRef.current?.querySelectorAll('.hz-ch') ?? [])
+    if (!secs.length) return undefined
+    /* A BAND ACROSS THE MIDDLE OF THE SCREEN, not a share of the section.
+       Ride chapters are now several screens tall, so "more than half of it is
+       visible" can never be true of one — the reveals would never fire and the
+       rail would never light. Collapsing the root to the centre line asks the
+       right question instead: which chapter is the reader actually looking at.
+       It also guarantees exactly one at a time. */
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        e.target.classList.toggle('is-live', e.isIntersecting)
+        if (e.isIntersecting) setActive(Number(e.target.dataset.i))
+      })
+    }, { rootMargin: '-50% 0px -50% 0px', threshold: 0 })
+    secs.forEach(s => io.observe(s))
+    return () => io.disconnect()
+  }, [rides])
+
+  /* ── the rider travels its chapter's road ──────────────────────────────
+     Each chapter draws its own road, so each gets its own bike on it, and the
+     bike's depth is that chapter's progress through the viewport.
+
+     WHY PROGRESS IS MEASURED ACROSS THE WHOLE VIEWPORT rather than from the
+     chapter's own top: these sections snap. A chapter holding the screen sits
+     at top ≈ 0 for as long as you look at it, so anything keyed off its own
+     offset would be frozen exactly when it is being read, then lurch as you
+     scrolled away. Measured bottom-of-viewport to top, the bike is already
+     mid-road when the chapter arrives and keeps riding the whole time.
+
+     Written straight to the node, like the reveal classes above. This runs on
+     every scroll tick, and six chapters re-rendering for it would reconcile
+     six scene trees for nothing. */
+  useEffect(() => {
+    const still = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    if (still) return undefined
+
+    const secs = Array.from(wrapRef.current?.querySelectorAll('.hz-ch') ?? [])
+    if (!secs.length) return undefined
+    /* queried once — this runs on every scroll tick and re-walking the tree
+       each time would be the expensive part of it */
+    const live = secs.map(sec => ({
+      sec,
+      rider: sec.querySelector('.hz-rider'),
+      stripe: sec.querySelector('.hz-stripe'),
+      signs: Array.from(sec.querySelectorAll('.hz-sign')),
+      sky: {
+        night: sec.querySelector('.hz-night'),
+        glow: sec.querySelector('.hz-glow'),
+        stars: sec.querySelector('.hz-stars'),
+        sun: sec.querySelector('.hz-sun'),
+        moon: sec.querySelector('.hz-moon'),
+        dark: sec.querySelector('.hz-dark'),
+        dawn: sec.dataset.dawn === '1',
+      },
+    })).filter(o => o.rider || o.stripe || o.signs.length || o.sky.night)
+
+    let raf = null
+    const paint = () => {
+      raf = null
+      const vh = window.innerHeight
+      for (const { sec, rider, stripe, signs, sky } of live) {
+        const r = sec.getBoundingClientRect()
+        /* nowhere near the screen — leave everything where it is */
+        if (r.bottom < -vh || r.top > vh * 2) continue
+
+        /* HOW FAR THROUGH THE RIDE YOU ARE, measured against the chapter's own
+           pinned scroll rather than against its pass across the viewport.
+           p = 0 the moment the chapter locks to the top — so you arrive on the
+           START board and it stays there while you read the title — and p = 1
+           as its last screen clears, the FINISH board having just gone by.
+           Measured the old way, p sat at 0.5 for as long as you looked at a
+           chapter and ran the entire ride during the flick to the next one. */
+        const travel = r.height - vh
+        const p = travel > 8
+          ? Math.min(1, Math.max(0, -r.top / travel))
+          : Math.min(1, Math.max(0, (vh - r.top) / (vh + r.height)))
+
+        /* Scroll turned into distance ridden. It stops short of the end of the
+           ride so the chapter finishes with the FINISH board mid-road — see
+           `journeyEnd`. */
+        const win = Number(sec.dataset.win) || 0.34
+        const j0 = journeyStart(win)
+        const j = j0 + p * (journeyEnd(win) - j0)
+
+        /* the centre line runs with the road, not on a clock of its own —
+           measured from the start of the ride so it begins at zero */
+        if (stripe) stripe.style.strokeDashoffset = ((j - j0) * STRIPE_TRAVEL).toFixed(1)
+
+        /* THE SKY TURNS OVER. `night` runs 0 to 1 across the ride, or the
+           other way on a dawn chapter, and everything above the ridgeline
+           reads from it: the night sky fades up, the stars come out, the sun
+           sinks behind the hills and the moon climbs out from behind them. */
+        if (sky.night) {
+          const night = sky.dawn ? 1 - p : p
+          sky.night.setAttribute('opacity', night.toFixed(3))
+          if (sky.glow) sky.glow.setAttribute('opacity', (1 - night).toFixed(3))
+          if (sky.stars) sky.stars.setAttribute('opacity', night.toFixed(3))
+          if (sky.dark) sky.dark.setAttribute('opacity', (night * 0.55).toFixed(3))
+          if (sky.sun) {
+            sky.sun.setAttribute('opacity', Math.max(0, 1 - night * 1.25).toFixed(3))
+            sky.sun.setAttribute('transform',
+              `translate(${(VW * 0.74).toFixed(0)} ${sunY(night).toFixed(1)})`)
+          }
+          if (sky.moon) {
+            sky.moon.setAttribute('opacity', Math.max(0, night * 1.25 - 0.25).toFixed(3))
+            sky.moon.setAttribute('transform',
+              `translate(${(VW * 0.27).toFixed(0)} ${moonY(night).toFixed(1)})`)
+          }
+        }
+
+        /* The bike drifts back a little across the ride and no further — it is
+           what you are following, not something leaving. */
+        if (rider) {
+          rider.setAttribute('transform',
+            riderAt(RIDER_NEAR + (RIDER_FAR - RIDER_NEAR) * p))
+        }
+
+        /* THE BOARDS STREAM. `p` is how far through the ride you are, so a
+           stop's board sits at its own distance ahead of you and closes as you
+           scroll — rising out of the haze, sweeping past, gone. Every stop
+           gets seen; only two or three share the road at once. */
+        for (const g of signs) {
+          const at = signPlace(
+            Number(g.dataset.share), j, Number(g.dataset.win), Number(g.dataset.w),
+            g.dataset.first === '1')
+          if (!at) { g.style.opacity = '0'; continue }
+          g.setAttribute('transform', at.tr)
+          g.style.opacity = at.op.toFixed(3)
+        }
+      }
+    }
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(paint) }
+
+    paint()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+      if (raf) cancelAnimationFrame(raf)
+    }
+  }, [rides])
+
+  const activeRide = active >= 1 && active <= rides.length ? rides[active - 1] : null
+  const tint = activeRide?.color || '#8b5cf6'
+
+  return (
+    /* `hz-js` is what arms every reveal. It is set here, in the render that
+       also mounts the observer, so the hidden state can only ever exist while
+       something is running that will undo it. */
+    <div className="hz-wrap hz-js" ref={wrapRef} style={{ background: BG }}>
+      <style>{HORIZON_CSS}</style>
+
+      {/* the tint that follows whichever chapter holds the screen */}
+      <div className="hz-wash" style={{ background:
+        `radial-gradient(120vw 78vh at 50% 108%, ${tint}, transparent 62%)` }} />
+
+      {/* chapter index — left, because the right edge is taken by the feedback tab */}
+      <nav className="hz-rail" aria-label="Rides">
+        {rides.map((r, i) => (
+          <button
+            key={r.id}
+            className={active === i + 1 ? 'on' : ''}
+            style={{ '--rc': r.color }}
+            onClick={() => wrapRef.current
+              ?.querySelector(`.hz-ch[data-i="${i + 1}"]`)
+              ?.scrollIntoView({ behavior: 'smooth' })}
+          >
+            <i /><span>{r.name}</span>
+          </button>
+        ))}
+      </nav>
+
+      <div className="hz-count" aria-hidden="true">
+        <b>{String(Math.min(Math.max(active, 1), rides.length)).padStart(2, '0')}</b>
+        <span> / {String(rides.length).padStart(2, '0')}</span>
+      </div>
+
+      {/* ── cover ── */}
+      <section className="hz-ch hz-cover is-live" data-i="0" style={{ '--c': rides[0]?.color || '#8b5cf6' }}>
+        {/* no bike on the opening shot — the cover is a title card, and a rider
+            parked under the headline reads as a chapter that lost its name */}
+        {coverRide && <div className="hz-view"><HorizonView ride={coverRide} index={99} rider={false} /></div>}
+        <div className="hz-haze" />
+        <div className="hz-body">
+          <div className="hz-kick">
+            <Link to={root.garage}>{root.label}</Link> <span aria-hidden="true">›</span> All Rides
+          </div>
+          <h1 className="hz-h1">
+            <span className="w"><i>Rides &amp;</i></span>
+            <span className="w"><i style={{ animationDelay: '.13s' }}>Journeys</i></span>
+          </h1>
+          <p className="hz-lede">
+            Every road has a story{tally ? `. ${tally[0].toUpperCase()}${tally.slice(1)}` : ''}.
+            One screen each, from the saddle.
+          </p>
+          <div className="hz-cue"><i />Scroll to ride</div>
+        </div>
+      </section>
+
+      {/* ── one chapter per ride ── */}
+      {rides.map((r, i) => (
+        <HorizonChapter key={r.id} ride={r} index={i} root={root} tier={tiers[r.mode]} />
+      ))}
+
+      {/* ── closing ── */}
+      <section className="hz-ch hz-end" data-i={rides.length + 1} style={{ '--c': '#8b5cf6' }}>
+        <div className="hz-haze" />
+        <div className="hz-body">
+          <h2 className="hz-title"><span className="w"><i>The road keeps going</i></span></h2>
+          <p className="hz-lede">
+            {/* Ahead means ahead: a ride that was called off is neither ridden
+                nor coming, so counting everything that isn't completed would
+                quietly put cancelled rides back on the calendar. */}
+            {rides.filter(r => r.mode === 'upcoming' || r.mode === 'planned').length} of
+            the {rides.length} are still ahead of the front wheel. The roads are picked;
+            the dates are not.
+          </p>
+          <div className="hz-row">
+            <Link className="hz-go" to={root.garage}>
+              <span aria-hidden="true">←</span> Back to {root.label}
+            </Link>
+          </div>
+        </div>
+      </section>
     </div>
   )
 }
@@ -958,7 +2653,15 @@ export default function GarageV7RideDetail() {
                 ['🧭', 'Est. Time', estimate],
                 ['⏱️', 'Actual Time', ride.time],
                 ['📅', 'Date', ride.date],
-                ...(ride.fromCity && ride.toCity ? [['🛣️', 'Route', `${ride.fromCity} → ${ride.toCity}`]] : []),
+                ...(ride.fromCity && ride.destCity ? [['🛣️', 'Route', routeLabel(ride.fromCity, ride.destCity, ride.roundTrip)]] : []),
+                /* Only when someone else ran it. "Self" is the default and the
+                   usual answer, so printing it here would put the same word on
+                   almost every ride — the sidebar carries it unconditionally,
+                   this strip is for what makes a ride different. */
+                ...(ride.organizer !== 'Self'
+                  ? [['👥', 'Organizer',
+                      <OrganizerMark key="org" name={ride.organizer} logo={ride.organizerLogo} size={22} logoOnly />]]
+                  : []),
                 /* Drop anything not filled in yet rather than printing a heading
                    over a blank — a planned ride has no duration or rating, and an
                    empty "Duration" reads as a broken page instead of an unridden
@@ -984,7 +2687,7 @@ export default function GarageV7RideDetail() {
             <div className="detail-map-head" style={{ padding: '16px 20px', background: BG2, borderBottom: `1px solid ${BD}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <div style={{ fontSize: '0.6rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--accent)', fontWeight: 700, marginBottom: 2 }}>Route Map</div>
-                <div style={{ fontSize: '0.85rem', fontWeight: 600, color: OFF }}>{ride.fromCity} → {ride.toCity}</div>
+                <div style={{ fontSize: '0.85rem', fontWeight: 600, color: OFF }}>{routeLabel(ride.fromCity, ride.destCity, ride.roundTrip)}</div>
                 {ride.via && <div style={{ fontSize: '0.68rem', color: D3, marginTop: 2 }}>via {ride.via.join(' → ')}</div>}
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
@@ -1019,6 +2722,9 @@ export default function GarageV7RideDetail() {
               </div>
             </motion.div>
           )}
+
+          {/* COMPLIMENTS — renders nothing unless the ride has perks listed */}
+          <ComplimentsPoster ride={ride} />
 
           {/* VIDEO */}
           {ride.videoId && (
@@ -1093,13 +2799,24 @@ export default function GarageV7RideDetail() {
                 ['Est. Time', estimate || '—'],
                 ['Actual Time', ride.time || '—'],
                 ['Date', ride.date],
-                ['Start', ride.fromCity || '—'],
-                ['End',   ride.toCity   || '—'],
+                ['Organizer',
+                  <OrganizerMark key="org" name={ride.organizer} logo={ride.organizerLogo} size={18} logoOnly
+                    style={{ justifyContent: 'flex-end' }} />],
+                /* Place AND city — "Kariya Kattu Valasu, Kangayam". This is the
+                   one spot with room for the full answer; everywhere tighter
+                   shows the city alone. */
+                /* End, not destination — on a loop the ride finishes back at
+                   the start, and `end*` is the pair that says so. */
+                ['Start', placeLabel(ride.fromPlace, ride.fromCity)],
+                ['End',   placeLabel(ride.endPlace,  ride.endCity)],
                 ['Mode',  ride.mode],
               ].map(([k, v]) => (
-                <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '9px 0', borderBottom: `1px solid ${BD}` }}>
-                  <span style={{ fontSize: '0.68rem', color: D3, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{k}</span>
-                  <span style={{ fontSize: '0.82rem', fontWeight: 600, color: OFF, textTransform: 'capitalize' }}>{v}</span>
+                <div key={k} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '9px 0', borderBottom: `1px solid ${BD}` }}>
+                  <span style={{ fontSize: '0.68rem', color: D3, letterSpacing: '0.1em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{k}</span>
+                  {/* Right-aligned because a two-part place name wraps to a
+                      second line, and a ragged left edge under the first line
+                      reads as broken. */}
+                  <span style={{ fontSize: '0.82rem', fontWeight: 600, color: OFF, textTransform: 'capitalize', textAlign: 'right' }}>{v}</span>
                 </div>
               ))}
               {ride.via && (
@@ -1121,7 +2838,7 @@ export default function GarageV7RideDetail() {
           {/* Other rides */}
           <div style={{ background: BG2, border: `1px solid ${BD}`, borderRadius: 14, overflow: 'hidden' }}>
             <div style={{ padding: '14px 18px', borderBottom: `1px solid ${BD}`, fontSize: '0.6rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: D3, fontWeight: 700 }}>More Rides</div>
-            {otherRides.map((r, i) => (
+            {otherRides.map(r => (
               <div key={r.id} onClick={() => navigate(`${root.rides}/${r.id}`)}
                 style={{ display: 'flex', gap: 10, padding: '12px 18px', borderBottom: `1px solid ${BD}`, cursor: 'pointer', transition: 'background 0.18s', alignItems: 'flex-start' }}
                 onMouseEnter={e => e.currentTarget.style.background = BG3}

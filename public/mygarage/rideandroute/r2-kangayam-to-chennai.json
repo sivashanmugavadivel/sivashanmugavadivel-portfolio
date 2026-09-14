@@ -2,8 +2,8 @@
   "order": 30,
   "id": "r2",
 
-  "name": "Kangayam to Chennai",
-  "subtitle": "Home to the City",
+  "name": "The 450 KM Run",
+  "subtitle": "Home (Kariya Kattu Valasu), Kangayam → Erode → Salem → Ulundurpet → Chennai",
   "mode": "planned",
 
   "distance": "450 KM",
@@ -11,8 +11,10 @@
   "date": "Planned",
   "rating": null,
 
+  "fromPlace": "Kariya Kattu Valasu",
   "fromCity": "Kangayam",
-  "toCity": "Chennai",
+  "destPlace": "Chennai",
+  "destCity": "Chennai",
   "states": ["Tamil Nadu"],
   "color": "#f97316",
 

@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Rides · 16 · Atlas</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Azeret+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   ATLAS — one map, and the scroll drives the camera.
+
+   Every other map in this folder is either fixed (the survey chart) or
+   moved by hand (the transit map, the diorama). Here the map is a single
+   continuous surface and SCROLLING flies it: the camera interpolates
+   between framings, so leaving the Coimbatore run for the Chennai haul
+   is one continuous zoom out across Tamil Nadu, not a cut. You feel the
+   distance between rides because you travel it.
+
+   The whole thing is one projection — RD.fit() over every stop — so the
+   camera is only ever panning and scaling a single truth. Each ride's
+   framing is computed from its own bounding box, which is why the short
+   western runs get a tight frame and Chennai pulls the camera way back.
+
+   Contours are drawn once, in map space, so they scale with the terrain
+   as you fly rather than sitting on the glass like a vignette.
+
+   One Ride 2026 has a single point, so it cannot be framed by a bounding
+   box. Its framing is a fixed radius around home, and the camera holds
+   there while the panel explains why there is nothing else to show.
+   ══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#060b0d; --deep:#0a1316; --off:#e6f2f0;
+  --d1:rgba(230,242,240,0.64); --d2:rgba(230,242,240,0.4); --d3:rgba(230,242,240,0.22);
+  --bd:rgba(230,242,240,0.12);
+  --teal:#5eead4; --sand:#d9c48c;
+  --sans:'Sora',system-ui,sans-serif; --mono:'Azeret Mono',ui-monospace,monospace;
+  --ease:cubic-bezier(.2,.9,.25,1); --c:#ef4444;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--d1);font-family:var(--sans);
+  -webkit-font-smoothing:antialiased}
+::selection{background:var(--teal);color:var(--bg)}
+
+/* ── the sticky stage ── */
+.stage{position:sticky;top:0;height:100svh;overflow:hidden;z-index:0;
+  background:radial-gradient(90vw 70vh at 50% 40%,var(--deep),var(--bg) 72%)}
+.stage svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+/* the camera group is what moves; everything inside is in map space */
+#cam{transition:transform 1s cubic-bezier(.3,.1,.2,1)}
+
+.grain{position:absolute;inset:0;pointer-events:none;z-index:2;
+  background:radial-gradient(70% 70% at 50% 46%,transparent 46%,rgba(6,11,13,0.9));}
+.edgefade{position:absolute;inset:0;pointer-events:none;z-index:2;
+  background:linear-gradient(180deg,rgba(6,11,13,0.9),transparent 22%,transparent 72%,rgba(6,11,13,0.95))}
+
+/* readouts pinned to the glass */
+.hud{position:absolute;inset:0;z-index:4;pointer-events:none;
+  padding:clamp(14px,2.4vw,28px);display:flex;flex-direction:column}
+.hud .row{display:flex;align-items:flex-start;gap:14px}
+.hud .mark{font-weight:600;font-size:0.92rem;color:var(--off);letter-spacing:-0.02em}
+.hud .mark em{font-style:normal;color:var(--c);transition:color .9s var(--ease)}
+.hud .mark span{display:block;font-family:var(--mono);font-size:0.52rem;letter-spacing:0.2em;
+  text-transform:uppercase;color:var(--d3);margin-top:5px;font-weight:400}
+.hud a{pointer-events:auto;margin-left:auto;font-family:var(--mono);font-size:0.54rem;
+  letter-spacing:0.16em;text-transform:uppercase;color:var(--d2);text-decoration:none;
+  border:1px solid var(--bd);padding:7px 12px;border-radius:99px;transition:.24s}
+.hud a:hover{color:var(--bg);background:var(--off);border-color:var(--off)}
+.hud .foot{margin-top:auto;display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+.hud .scalebar{font-family:var(--mono);font-size:0.52rem;letter-spacing:0.14em;color:var(--d2)}
+.hud .scalebar i{display:block;height:5px;border:1px solid var(--bd);border-top:0;margin-top:5px;
+  background:repeating-linear-gradient(90deg,var(--bd) 0 1px,transparent 1px 25%);
+  transition:width .9s var(--ease)}
+.hud .coords{margin-left:auto;font-family:var(--mono);font-size:0.52rem;letter-spacing:0.12em;
+  color:var(--d3);text-align:right;line-height:1.7}
+
+/* the rail of ride ticks */
+.rail{position:absolute;right:clamp(12px,2vw,24px);top:50%;transform:translateY(-50%);z-index:5;
+  display:flex;flex-direction:column;gap:11px;align-items:flex-end}
+.rail a{display:flex;align-items:center;gap:9px;text-decoration:none;color:var(--d3);
+  font-family:var(--mono);font-size:0.52rem;letter-spacing:0.1em;transition:.34s var(--ease)}
+.rail a span{opacity:0;max-width:0;overflow:hidden;white-space:nowrap;transition:.34s var(--ease)}
+.rail a:hover span,.rail a.on span{opacity:1;max-width:170px}
+.rail a i{width:20px;height:2px;background:currentColor;transition:.34s var(--ease)}
+.rail a.on{color:var(--off)}
+.rail a.on i{width:40px;background:var(--rc)}
+
+/* ── the scrolling text over the map ── */
+.scroller{position:relative;z-index:3;margin-top:-100svh}
+.beat{min-height:100svh;display:flex;align-items:center;
+  padding:0 clamp(18px,5vw,70px)}
+.beat .card{max-width:min(430px,86vw);
+  background:rgba(6,11,13,0.72);backdrop-filter:blur(14px);
+  border:1px solid var(--bd);border-left:3px solid var(--c);
+  padding:clamp(18px,2.6vw,30px);
+  opacity:0;transform:translateY(34px);transition:.9s var(--ease)}
+.beat.live .card{opacity:1;transform:none}
+.beat .tier{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);
+  font-size:0.5rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--tc);margin-bottom:12px}
+.beat .tier i{width:6px;height:6px;border-radius:50%;background:currentColor;
+  box-shadow:0 0 10px currentColor}
+.beat h2{font-weight:600;font-size:clamp(1.35rem,3.4vw,2.1rem);color:var(--off);line-height:1.1;
+  letter-spacing:-0.032em;margin-bottom:9px}
+.beat .kick{font-family:var(--mono);font-size:0.58rem;color:var(--d2);letter-spacing:0.05em;
+  line-height:1.7;margin-bottom:15px}
+.beat p{font-size:0.87rem;line-height:1.78;color:var(--d1);margin-bottom:17px}
+.beat .figs{display:flex;flex-wrap:wrap;gap:0;border-top:1px solid var(--bd);margin-bottom:16px}
+.beat .figs div{padding:12px 18px 0 0;margin-right:18px;border-right:1px solid var(--bd)}
+.beat .figs div:last-child{border-right:0;margin-right:0;padding-right:0}
+.beat .figs k{display:block;font-family:var(--mono);font-size:0.45rem;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--d3);margin-bottom:5px}
+.beat .figs v{display:block;font-weight:600;font-size:1.16rem;color:var(--off);line-height:1}
+.beat .go{display:inline-flex;align-items:center;gap:9px;padding:11px 20px;border-radius:99px;
+  background:var(--c);color:var(--bg);text-decoration:none;font-family:var(--mono);
+  font-size:0.55rem;font-weight:500;letter-spacing:0.16em;text-transform:uppercase;
+  transition:.28s var(--ease)}
+.beat .go:hover{transform:translateY(-3px);box-shadow:0 14px 28px -12px var(--c)}
+
+/* opening + closing beats */
+.beat.open .card,.beat.close .card{border-left-color:var(--teal);max-width:min(540px,88vw)}
+.beat.open h1{font-weight:700;font-size:clamp(1.9rem,6vw,3.6rem);color:var(--off);
+  letter-spacing:-0.045em;line-height:1;margin-bottom:14px}
+.beat.open h1 em{font-style:normal;color:var(--teal)}
+.beat .cue{display:flex;align-items:center;gap:11px;margin-top:20px;font-family:var(--mono);
+  font-size:0.52rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--d3)}
+.beat .cue i{width:1px;height:28px;background:linear-gradient(var(--teal),transparent);
+  animation:drop 2.1s var(--ease) infinite}
+@keyframes drop{50%{transform:translateY(8px)}}
+
+/* map furniture */
+.contour{fill:none;stroke:rgba(94,234,212,0.1);stroke-width:1}
+.contour.deep{stroke:rgba(94,234,212,0.16)}
+.graticule{stroke:rgba(230,242,240,0.055);stroke-width:1}
+.gtext{font-family:'Azeret Mono',monospace;font-size:6px;fill:rgba(230,242,240,0.22)}
+.rt .halo{fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:11;opacity:0;
+  transition:opacity .8s var(--ease)}
+.rt .line{fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:2.4;
+  transition:opacity .8s var(--ease),stroke-width .8s var(--ease)}
+.rt.on .line{stroke-width:3.6}
+.rt.on .halo{opacity:0.34}
+.rt.off .line{opacity:0.16}
+.nd circle{transition:opacity .7s var(--ease)}
+.nd text{font-family:'Azeret Mono',monospace;font-size:7px;fill:rgba(230,242,240,0.5);
+  transition:opacity .7s var(--ease);opacity:0}
+.rt.on .nd text{opacity:1}
+.rt.off .nd circle{opacity:0.22}
+
+@media(max-width:700px){
+  .rail{display:none}
+  .beat{padding:0 16px;align-items:flex-end;padding-bottom:14svh}
+  .beat .card{max-width:none;width:100%}
+}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *{animation-duration:.01ms!important;animation-iteration-count:1!important}
+  #cam{transition:none}
+  .beat .card{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <svg id="map" aria-label="One map, flown between rides"></svg>
+  <div class="grain"></div>
+  <div class="edgefade"></div>
+  <div class="hud">
+    <div class="row">
+      <div class="mark">Rides <em id="hEm">&amp;</em> Journeys<span>Atlas · one map</span></div>
+      <a href="#">← Garage</a>
+    </div>
+    <div class="foot">
+      <div class="scalebar"><span id="scaleTxt">—</span><i id="scaleBar" style="width:90px"></i></div>
+      <div class="coords" id="coords"></div>
+    </div>
+  </div>
+  <nav class="rail" id="rail"></nav>
+</div>
+
+<div class="scroller" id="scroller"></div>
+
+<script src="rides-data.js"></script>
+<script>
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches
+const S = RD.summary
+const W = 1200, H = 800
+
+/* ── one projection for everything ────────────────────────────────────── */
+const P = RD.fit(W, H, 150)
+const svg = document.getElementById('map')
+svg.setAttribute('viewBox', `0 0 ${W} ${H}`)
+
+const all = RD.rides.flatMap(r => r.stops)
+const latMin = Math.min(...all.map(s => s.lat)), latMax = Math.max(...all.map(s => s.lat))
+const lngMin = Math.min(...all.map(s => s.lng)), lngMax = Math.max(...all.map(s => s.lng))
+
+/* km per map unit, measured once by projecting a known degree of longitude */
+const kmPerUnit = (() => {
+  const a = { lat: (latMin + latMax) / 2, lng: lngMin }
+  const b = { lat: (latMin + latMax) / 2, lng: lngMin + 1 }
+  return RD.crow(a, b) / Math.abs(P.of(b)[0] - P.of(a)[0])
+})()
+
+/* ── map furniture ────────────────────────────────────────────────────── */
+let grat = ''
+for (let d = Math.floor(lngMin); d <= Math.ceil(lngMax); d++) {
+  const [x] = P.of({ lat: latMin, lng: d })
+  grat += `<line class="graticule" x1="${x.toFixed(1)}" y1="-400" x2="${x.toFixed(1)}" y2="${H + 400}"/>
+    <text class="gtext" x="${(x + 3).toFixed(1)}" y="${H - 6}">${d}°E</text>`
+}
+for (let d = Math.floor(latMin); d <= Math.ceil(latMax); d++) {
+  const [, y] = P.of({ lat: d, lng: lngMin })
+  grat += `<line class="graticule" x1="-400" y1="${y.toFixed(1)}" x2="${W + 400}" y2="${y.toFixed(1)}"/>
+    <text class="gtext" x="8" y="${(y - 4).toFixed(1)}">${d}°N</text>`
+}
+
+/* contours in MAP space, so they scale with the terrain as the camera flies */
+function contours() {
+  let h = 20260914
+  const rnd = () => { h = (h * 1103515245 + 12345) % 2147483648; return (h >> 9) / 4194304 }
+  let out = ''
+  for (let i = 0; i < 13; i++) {
+    const cx = rnd() * W, cy = rnd() * H
+    const base = 26 + rnd() * 70
+    for (let k = 0; k < 4; k++) {
+      const rr = base + k * (12 + rnd() * 9)
+      let d = ''
+      for (let a = 0; a <= 360; a += 24) {
+        const rad = a * Math.PI / 180
+        const wob = rr * (0.84 + rnd() * 0.3)
+        const x = cx + Math.cos(rad) * wob, y = cy + Math.sin(rad) * wob * 0.68
+        d += (a ? 'L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1)
+      }
+      out += `<path class="contour${k === 0 ? ' deep' : ''}" d="${d}Z"/>`
+    }
+  }
+  return out
+}
+
+const routes = RD.rides.filter(r => r.mapped).map(r => {
+  const pts = r.stops.map(s => P.of(s))
+  const d = RD.curve(pts)
+  const nodes = pts.map((p, i) => {
+    const s = r.stops[i]
+    const edge = i === 0 || i === pts.length - 1
+    return `<g class="nd">
+      <circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${edge ? 3.6 : 2.2}"
+        fill="${r.color}" stroke="#060b0d" stroke-width="1.2"/>
+      <text x="${(p[0] + 6).toFixed(1)}" y="${(p[1] - 5).toFixed(1)}">${s.label}</text>
+    </g>`
+  }).join('')
+  return `<g class="rt" data-id="${r.id}">
+    <path class="halo" d="${d}" stroke="${r.color}"/>
+    <path class="line" d="${d}" stroke="${r.color}"
+      stroke-dasharray="${r.done ? 'none' : '5 5'}"/>
+    ${nodes}</g>`
+}).join('')
+
+const solo = RD.rides.filter(r => !r.mapped).map(r => {
+  const [x, y] = P.of(r.stops[0])
+  return `<g class="rt" data-id="${r.id}">
+    <circle class="halo" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="26"
+      stroke="${r.color}" fill="none"/>
+    <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.4" fill="${r.color}"
+      stroke="#060b0d" stroke-width="1.2"/>
+    <g class="nd"><text x="${(x + 8).toFixed(1)}" y="${(y - 7).toFixed(1)}">One Ride — course open</text></g>
+  </g>`
+}).join('')
+
+svg.innerHTML = `<g id="cam">
+  <g>${contours()}</g>${grat}${routes}${solo}
+</g>`
+
+const cam = document.getElementById('cam')
+
+/* ── framings ─────────────────────────────────────────────────────────── */
+/* A framing is a target box in map space. The camera transform is whatever
+   translate+scale puts that box in the middle of the viewport. A one-stop
+   ride has no box, so it gets a fixed radius around its single point. */
+function frameOf(r) {
+  const pts = r.stops.map(s => P.of(s))
+  if (pts.length === 1) {
+    const [x, y] = pts[0]
+    return { x0: x - 110, y0: y - 110, x1: x + 110, y1: y + 110 }
+  }
+  const xs = pts.map(p => p[0]), ys = pts.map(p => p[1])
+  const pad = 90
+  return {
+    x0: Math.min(...xs) - pad, y0: Math.min(...ys) - pad,
+    x1: Math.max(...xs) + pad, y1: Math.max(...ys) + pad,
+  }
+}
+const WHOLE = { x0: -40, y0: -40, x1: W + 40, y1: H + 40 }
+
+function flyTo(f) {
+  const bw = f.x1 - f.x0, bh = f.y1 - f.y0
+  const k = Math.min(W / bw, H / bh)
+  const cx = (f.x0 + f.x1) / 2, cy = (f.y0 + f.y1) / 2
+  cam.setAttribute('transform',
+    `translate(${(W / 2 - cx * k).toFixed(1)} ${(H / 2 - cy * k).toFixed(1)}) scale(${k.toFixed(4)})`)
+  /* the scale bar reports what 90px of screen now covers */
+  const km = 90 * (W / (svg.clientWidth || W)) / k * kmPerUnit
+  document.getElementById('scaleTxt').textContent =
+    (km >= 10 ? Math.round(km) : km.toFixed(1)) + ' KM'
+  return k
+}
+
+/* ── the beats ────────────────────────────────────────────────────────── */
+const beats = [
+  { kind: 'open' },
+  ...RD.rides.map(r => ({ kind: 'ride', r })),
+  { kind: 'close' },
+]
+
+document.getElementById('scroller').innerHTML = beats.map((b, i) => {
+  if (b.kind === 'open') {
+    return `<section class="beat open" data-i="${i}">
+      <div class="card">
+        <h1>Every road<br/><em>has a story</em></h1>
+        <p>${RD.tally.replace(/^./, c => c.toUpperCase())} — ${S.doneKm} km ridden and
+          ${S.aheadKm} km still ahead, all on one map. Scroll, and the map flies to each of them
+          in turn.</p>
+        <div class="cue"><i></i>Scroll to fly</div>
+      </div></section>`
+  }
+  if (b.kind === 'close') {
+    return `<section class="beat close" data-i="${i}">
+      <div class="card">
+        <h2>${S.stopCount} places, ${S.legCount} legs</h2>
+        <p>Pulled back out to the whole sheet. Three of the six are ridden; the rest are
+          drawn and waiting. Every line here comes from coordinates in the ride files —
+          nothing on this map is illustrative.</p>
+        <a class="go" href="#">← Back to My Garage</a>
+      </div></section>`
+  }
+  const r = b.r
+  const dest = r.tbd && /decided/i.test(r.toCity) ? 'anywhere' : r.toCity
+  return `<section class="beat" data-i="${i}" data-id="${r.id}" style="--c:${r.color};--tc:${r.tier.color}">
+    <div class="card">
+      <span class="tier"><i></i>${r.tier.label} · ${r.date}</span>
+      <h2>${r.name}</h2>
+      <div class="kick">${r.fromCity} → ${dest}${r.via.length ? '<br/>via ' + r.via.join(' · ') : ''}</div>
+      <p>${r.story}</p>
+      <div class="figs">
+        <div><k>Distance</k><v>${r.distance}</v></div>
+        <div><k>Heading</k><v>${r.mapped ? r.compass : 'Open'}</v></div>
+        <div><k>Waypoints</k><v>${r.stops.length}</v></div>
+      </div>
+      <a class="go" href="#">Open the ride →</a>
+    </div></section>`
+}).join('')
+
+/* ── the rail ─────────────────────────────────────────────────────────── */
+document.getElementById('rail').innerHTML = RD.rides.map((r, i) =>
+  `<a href="#" data-go="${i + 1}" style="--rc:${r.color}"><span>${r.name}</span><i></i></a>`).join('')
+document.querySelectorAll('.rail a').forEach(a =>
+  a.addEventListener('click', e => {
+    e.preventDefault()
+    const t = document.querySelector(`.beat[data-i="${a.dataset.go}"]`)
+    if (t) t.scrollIntoView({ behavior: REDUCED ? 'auto' : 'smooth' })
+  }))
+
+/* ── drive the camera from scroll position ────────────────────────────── */
+const beatEls = [...document.querySelectorAll('.beat')]
+const railEls = [...document.querySelectorAll('.rail a')]
+let current = -1
+
+function activate(i) {
+  if (i === current) return
+  current = i
+  const b = beats[i]
+  beatEls.forEach((el, k) => el.classList.toggle('live', k === i))
+
+  if (b.kind === 'ride') {
+    flyTo(frameOf(b.r))
+    document.documentElement.style.setProperty('--c', b.r.color)
+    document.getElementById('hEm').style.color = b.r.color
+    document.querySelectorAll('.rt').forEach(g => {
+      g.classList.toggle('on', g.dataset.id === b.r.id)
+      g.classList.toggle('off', g.dataset.id !== b.r.id)
+    })
+    const s = b.r.stops[0]
+    document.getElementById('coords').innerHTML =
+      `${s.lat.toFixed(4)}°N ${s.lng.toFixed(4)}°E<br/>${
+        b.r.mapped ? b.r.compass + ' ' + b.r.bearing.toFixed(0) + '° · ' + b.r.crow + ' km crow' : 'no course set'}`
+  } else {
+    flyTo(WHOLE)
+    document.querySelectorAll('.rt').forEach(g => {
+      g.classList.remove('on'); g.classList.remove('off')
+    })
+    document.getElementById('hEm').style.color = ''
+    document.getElementById('coords').innerHTML =
+      `${latMin.toFixed(2)}–${latMax.toFixed(2)}°N<br/>${lngMin.toFixed(2)}–${lngMax.toFixed(2)}°E`
+  }
+  railEls.forEach((a, k) => a.classList.toggle('on', beats[i].kind === 'ride' && k === i - 1))
+}
+
+const io = new IntersectionObserver(es => {
+  es.forEach(e => {
+    if (e.isIntersecting && e.intersectionRatio > 0.5) activate(+e.target.dataset.i)
+  })
+}, { threshold: [0.5] })
+beatEls.forEach(el => io.observe(el))
+
+addEventListener('resize', () => { const c = current; current = -1; activate(c) })
+activate(0)
+</script>
+</body>
+</html>

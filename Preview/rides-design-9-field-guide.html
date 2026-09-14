@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Rides · 9 · Field Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   FIELD GUIDE — the only light one, and the only one you query.
+
+   Every other design presents a fixed sequence. This one hands over the
+   controls: filter by tier, drag the distance range, toggle states, sort
+   by five keys, or type. The results do not reload — they MOVE. Each
+   card records where it was, the list re-filters, and every survivor
+   animates from its old position to its new one (a FLIP), so you can see
+   what left and what merely shifted.
+
+   Faceting this data honestly meant handling two things a naive filter
+   gets wrong. One Ride 2026 has no distance, so a range filter would
+   silently eat it — instead "TBD" is its own state, kept unless you
+   exclude it deliberately. And two rides have no date, so sorting by
+   date has to put them somewhere defensible rather than at epoch zero.
+
+   Light, dense, and typographic: closer to a printed reference than to
+   a web page, which is what a guide should be.
+   ══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --paper:#fbfaf7; --paper2:#f2efe9; --line:#e0dcd3; --line2:#c9c3b6;
+  --ink:#15130f; --ink2:#4a453c; --faint:#8a8378;
+  --red:#c8352a; --blue:#1d4ed8; --green:#15803d;
+  --sans:'Archivo',system-ui,sans-serif; --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --ease:cubic-bezier(.2,.9,.25,1);
+}
+body{background:var(--paper);color:var(--ink2);font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;min-height:100vh}
+::selection{background:var(--ink);color:var(--paper)}
+
+.guide{max-width:1280px;margin:0 auto;padding:0 clamp(14px,3vw,32px)
+  calc(60px + env(safe-area-inset-bottom))}
+
+/* ── masthead ── */
+.mast{border-bottom:2px solid var(--ink);padding:clamp(20px,4vw,42px) 0 14px;
+  display:flex;align-items:flex-end;gap:20px;flex-wrap:wrap}
+.mast .t{flex:1;min-width:260px}
+.mast .kick{font-family:var(--mono);font-size:0.58rem;letter-spacing:0.3em;text-transform:uppercase;
+  color:var(--red);margin-bottom:11px}
+.mast h1{font-weight:800;font-size:clamp(2rem,6.4vw,4rem);line-height:0.92;color:var(--ink);
+  letter-spacing:-0.045em}
+.mast h1 .w{display:block;overflow:hidden}
+.mast h1 .w i{display:block;font-style:normal;transform:translateY(104%);
+  animation:rise .95s var(--ease) forwards}
+@keyframes rise{to{transform:none}}
+.mast p{font-size:0.86rem;line-height:1.7;max-width:50ch;margin-top:12px;color:var(--ink2)}
+.mast a{font-family:var(--mono);font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;
+  color:var(--ink);text-decoration:none;border:1px solid var(--line2);padding:9px 15px;
+  transition:.24s var(--ease);flex-shrink:0}
+.mast a:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+/* ── the query bar ── */
+.controls{position:sticky;top:0;z-index:30;background:var(--paper);
+  border-bottom:1px solid var(--line);padding:12px 0;margin-bottom:0}
+.controls .grid{display:grid;grid-template-columns:1.2fr 1.5fr 1fr 1fr;gap:clamp(12px,2vw,26px);
+  align-items:start}
+.fld{min-width:0}
+.fld > k{display:block;font-family:var(--mono);font-size:0.5rem;letter-spacing:0.2em;
+  text-transform:uppercase;color:var(--faint);margin-bottom:8px}
+
+.search{width:100%;border:0;border-bottom:1.5px solid var(--ink);background:transparent;
+  font-family:var(--sans);font-size:0.92rem;color:var(--ink);padding:5px 0 7px;outline:none}
+.search::placeholder{color:var(--faint)}
+.search:focus{border-color:var(--red)}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--mono);font-size:0.58rem;letter-spacing:0.08em;padding:6px 11px;
+  border:1px solid var(--line2);background:transparent;color:var(--ink2);cursor:pointer;
+  border-radius:99px;transition:.2s var(--ease);display:inline-flex;align-items:center;gap:6px}
+.chip i{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:0.45;transition:.2s}
+.chip:hover{border-color:var(--ink)}
+.chip.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.chip.on i{opacity:1;background:var(--cc,currentColor)}
+.chip u{text-decoration:none;opacity:0.55;font-size:0.9em}
+
+/* the range slider — two thumbs over one rail */
+.range{padding-top:4px}
+.range .rail{position:relative;height:26px;display:flex;align-items:center;touch-action:none}
+.range .rail::before{content:'';position:absolute;left:0;right:0;height:2px;background:var(--line)}
+.range .sel{position:absolute;height:2px;background:var(--ink)}
+.range .th{position:absolute;width:15px;height:15px;border-radius:50%;background:var(--paper);
+  border:2px solid var(--ink);cursor:grab;transform:translateX(-7.5px);transition:transform .12s}
+.range .th:active{cursor:grabbing;transform:translateX(-7.5px) scale(1.22)}
+.range .out{font-family:var(--mono);font-size:0.62rem;color:var(--ink);margin-top:3px;
+  display:flex;justify-content:space-between}
+.range .out em{font-style:normal;color:var(--faint)}
+
+.sel-sort{width:100%;font-family:var(--mono);font-size:0.66rem;color:var(--ink);
+  background:transparent;border:0;border-bottom:1.5px solid var(--ink);padding:6px 0;
+  outline:none;cursor:pointer}
+
+/* ── result head ── */
+.rhead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;
+  padding:16px 0 12px;border-bottom:1px solid var(--line)}
+.rhead b{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.12em;color:var(--ink)}
+.rhead span{font-family:var(--mono);font-size:0.62rem;color:var(--faint)}
+.rhead button{margin-left:auto;font-family:var(--mono);font-size:0.58rem;letter-spacing:0.12em;
+  text-transform:uppercase;background:transparent;border:0;border-bottom:1px solid var(--line2);
+  color:var(--ink2);cursor:pointer;padding:2px 0;transition:.2s}
+.rhead button:hover{color:var(--red);border-color:var(--red)}
+
+/* ── results ── */
+.results{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));
+  gap:0;border-left:1px solid var(--line)}
+.card{border-right:1px solid var(--line);border-bottom:1px solid var(--line);
+  padding:18px 18px 16px;display:flex;flex-direction:column;gap:9px;position:relative;
+  background:var(--paper);text-decoration:none;color:inherit;
+  transition:background .24s var(--ease)}
+.card:hover{background:var(--paper2)}
+.card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--c);
+  transform:scaleY(0);transform-origin:top;transition:transform .35s var(--ease)}
+.card:hover::before{transform:scaleY(1)}
+.card.out{display:none}
+
+.card .no{position:absolute;top:16px;right:16px;font-family:var(--mono);font-size:0.56rem;
+  color:var(--line2);letter-spacing:0.1em}
+.card .tier{font-family:var(--mono);font-size:0.5rem;letter-spacing:0.2em;text-transform:uppercase;
+  display:inline-flex;align-items:center;gap:6px;color:var(--tc)}
+.card .tier i{width:6px;height:6px;border-radius:50%;background:currentColor}
+.card h3{font-weight:700;font-size:1.02rem;line-height:1.2;color:var(--ink);letter-spacing:-0.022em;
+  padding-right:34px}
+.card .via{font-family:var(--mono);font-size:0.6rem;color:var(--faint);line-height:1.55}
+.card p{font-size:0.78rem;line-height:1.62;color:var(--ink2);flex:1}
+
+/* the small shape of the route, as a specimen would carry a silhouette */
+.card .shape{height:56px;margin:2px 0}
+.card .shape svg{width:100%;height:100%;display:block;overflow:visible}
+
+.card .facts{display:flex;gap:0;border-top:1px solid var(--line);padding-top:9px}
+.card .facts div{flex:1;min-width:0}
+.card .facts k{display:block;font-family:var(--mono);font-size:0.46rem;letter-spacing:0.16em;
+  text-transform:uppercase;color:var(--faint);margin-bottom:3px}
+.card .facts v{display:block;font-weight:700;font-size:0.86rem;color:var(--ink);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .facts v.tbd{color:var(--faint);font-weight:500;font-style:italic}
+
+mark{background:#fde68a;color:var(--ink);padding:0 1px}
+
+/* nothing matched */
+.none{padding:60px 20px;text-align:center;grid-column:1/-1;border-right:1px solid var(--line);
+  border-bottom:1px solid var(--line)}
+.none b{display:block;font-weight:700;font-size:1.2rem;color:var(--ink);margin-bottom:8px}
+.none span{font-size:0.84rem;color:var(--faint)}
+
+@media(max-width:900px){
+  .controls .grid{grid-template-columns:1fr 1fr;gap:16px}
+  .controls{padding:10px 0}
+}
+@media(max-width:560px){
+  .controls .grid{grid-template-columns:1fr}
+  .results{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;transition-duration:.01ms!important}
+  .mast h1 .w i{transform:none}
+}
+</style>
+</head>
+<body>
+
+<div class="guide">
+  <header class="mast">
+    <div class="t">
+      <div class="kick">My Garage · Field guide to the rides</div>
+      <h1><span class="w"><i style="animation-delay:.1s">Rides &amp;</i></span>
+        <span class="w"><i style="animation-delay:.22s">Journeys</i></span></h1>
+      <p id="lede"></p>
+    </div>
+    <a href="#">← Garage</a>
+  </header>
+
+  <div class="controls">
+    <div class="grid">
+      <div class="fld">
+        <k>Search</k>
+        <input class="search" id="q" type="search" placeholder="Place, road, anything…"
+               autocomplete="off" />
+      </div>
+      <div class="fld">
+        <k>Status</k>
+        <div class="chips" id="tiers"></div>
+      </div>
+      <div class="fld">
+        <k>Distance</k>
+        <div class="range">
+          <div class="rail" id="rail">
+            <div class="sel" id="sel"></div>
+            <div class="th" id="thA"></div>
+            <div class="th" id="thB"></div>
+          </div>
+          <div class="out"><span id="outA">0 km</span><em id="outB">450 km</em></div>
+        </div>
+      </div>
+      <div class="fld">
+        <k>Sort</k>
+        <select class="sel-sort" id="sort">
+          <option value="order">Ride order</option>
+          <option value="km-desc">Longest first</option>
+          <option value="km-asc">Shortest first</option>
+          <option value="date-desc">Most recent first</option>
+          <option value="stops-desc">Most waypoints</option>
+          <option value="name">Name, A–Z</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="rhead">
+    <b id="count"></b>
+    <span id="note"></span>
+    <button id="reset">Clear filters</button>
+  </div>
+
+  <main class="results" id="results"></main>
+</div>
+
+<script src="rides-data.js"></script>
+<script>
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches
+const S = RD.summary
+const MAXKM = Math.max(...RD.rides.map(r => r.km))
+
+document.getElementById('lede').textContent =
+  `All ${RD.rides.length} rides, filterable. ${RD.tally}. ` +
+  `${S.doneKm} km ridden, ${S.aheadKm} km still ahead, across ${S.states.join(' and ')}.`
+
+/* ── state ────────────────────────────────────────────────────────────── */
+const state = {
+  q: '',
+  tiers: new Set(RD.modes.map(m => m.key)),
+  /* TBD is its own facet, not a number — a range filter would eat One Ride
+     silently, so it is kept unless you switch it off on purpose */
+  tbd: true,
+  lo: 0, hi: MAXKM,
+  sort: 'order',
+}
+
+/* ── the tier chips (+ the TBD chip) ──────────────────────────────────── */
+document.getElementById('tiers').innerHTML =
+  RD.modes.map(m => `<button class="chip on" data-tier="${m.key}" style="--cc:${m.color}">
+      <i></i>${m.label}<u>${RD.byMode(m.key).length}</u></button>`).join('') +
+  `<button class="chip on" data-tbd="1" style="--cc:#8a8378"><i></i>No distance yet<u>1</u></button>`
+
+document.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => {
+  if (c.dataset.tbd) { state.tbd = !state.tbd; c.classList.toggle('on', state.tbd) }
+  else {
+    const k = c.dataset.tier
+    state.tiers.has(k) ? state.tiers.delete(k) : state.tiers.add(k)
+    c.classList.toggle('on', state.tiers.has(k))
+  }
+  run()
+}))
+
+/* ── the two-thumb range ──────────────────────────────────────────────── */
+const rail = document.getElementById('rail')
+const thA = document.getElementById('thA'), thB = document.getElementById('thB')
+
+function paintRange() {
+  const a = state.lo / MAXKM * 100, b = state.hi / MAXKM * 100
+  thA.style.left = a + '%'; thB.style.left = b + '%'
+  document.getElementById('sel').style.left = a + '%'
+  document.getElementById('sel').style.width = (b - a) + '%'
+  document.getElementById('outA').textContent = Math.round(state.lo) + ' km'
+  document.getElementById('outB').textContent = Math.round(state.hi) + ' km'
+}
+
+function grabThumb(th, which) {
+  th.addEventListener('pointerdown', e => {
+    th.setPointerCapture(e.pointerId)
+    const move = ev => {
+      const b = rail.getBoundingClientRect()
+      const v = Math.max(0, Math.min(1, (ev.clientX - b.left) / b.width)) * MAXKM
+      if (which === 'lo') state.lo = Math.min(v, state.hi)
+      else state.hi = Math.max(v, state.lo)
+      paintRange(); run()
+    }
+    const up = () => {
+      th.removeEventListener('pointermove', move)
+      th.removeEventListener('pointerup', up)
+    }
+    th.addEventListener('pointermove', move)
+    th.addEventListener('pointerup', up)
+  })
+}
+grabThumb(thA, 'lo'); grabThumb(thB, 'hi')
+paintRange()
+
+document.getElementById('q').addEventListener('input', e => { state.q = e.target.value.trim(); run() })
+document.getElementById('sort').addEventListener('change', e => { state.sort = e.target.value; run() })
+document.getElementById('reset').addEventListener('click', () => {
+  state.q = ''; state.tbd = true; state.lo = 0; state.hi = MAXKM; state.sort = 'order'
+  state.tiers = new Set(RD.modes.map(m => m.key))
+  document.getElementById('q').value = ''
+  document.getElementById('sort').value = 'order'
+  document.querySelectorAll('.chip').forEach(c => c.classList.add('on'))
+  paintRange(); run()
+})
+
+/* ── cards, built once and then only re-ordered ───────────────────────── */
+const results = document.getElementById('results')
+
+function shape(r) {
+  const w = 210, h = 56
+  if (!r.mapped) {
+    return `<svg viewBox="0 0 ${w} ${h}">
+      <line x1="8" y1="${h / 2}" x2="${w - 8}" y2="${h / 2}" stroke="var(--line2)"
+        stroke-width="1.5" stroke-dasharray="3 5"/>
+      <circle cx="8" cy="${h / 2}" r="5" fill="${r.color}"/>
+      <text x="20" y="${h / 2 + 4}" font-family="IBM Plex Mono,monospace" font-size="9"
+        fill="#8a8378" letter-spacing="1.4">ROUTE NOT SET</text></svg>`
+  }
+  const P = RD.one(r, w, h, 9)
+  return `<svg viewBox="0 0 ${w} ${h}">
+    <path d="${RD.curve(P.pts)}" fill="none" stroke="${r.color}" stroke-width="2.2"
+      stroke-linecap="round" stroke-linejoin="round"/>
+    ${P.pts.map((p, i) => {
+      const edge = i === 0 || i === P.pts.length - 1
+      return `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${edge ? 3.6 : 2}"
+        fill="${edge ? r.color : '#fbfaf7'}" stroke="${r.color}" stroke-width="1.3"/>`
+    }).join('')}</svg>`
+}
+
+results.innerHTML = RD.rides.map((r, i) => `
+  <a class="card" href="#" data-id="${r.id}" style="--c:${r.color};--tc:${r.tier.color}">
+    <span class="no">${String(i + 1).padStart(2, '0')}</span>
+    <span class="tier"><i></i>${r.tier.label}</span>
+    <h3 data-f="name">${r.name}</h3>
+    <div class="via" data-f="via">${r.fromCity} → ${r.tbd && /decided/i.test(r.toCity) ? 'anywhere' : r.toCity}${
+      r.via.length ? '<br/>via ' + r.via.join(', ') : ''}</div>
+    <div class="shape">${shape(r)}</div>
+    <p data-f="desc">${r.description}</p>
+    <div class="facts">
+      <div><k>Distance</k><v class="${r.tbd ? 'tbd' : ''}">${r.tbd ? 'TBD' : r.km + ' km'}</v></div>
+      <div><k>When</k><v>${r.date}</v></div>
+      <div><k>Stops</k><v>${r.stops.length}</v></div>
+    </div>
+  </a>`).join('')
+
+const cards = new Map([...results.querySelectorAll('.card')].map(c => [c.dataset.id, c]))
+
+/* ── filter + sort + FLIP ─────────────────────────────────────────────── */
+function matches(r) {
+  if (!state.tiers.has(r.mode)) return false
+  if (r.tbd ? !state.tbd : (r.km < state.lo - 0.5 || r.km > state.hi + 0.5)) return false
+  if (state.q) {
+    const hay = [r.name, r.subtitle, r.description, r.story, r.fromCity, r.toCity,
+      ...r.via, ...r.highlights, ...r.states, ...r.stops.map(s => s.label)]
+      .join(' ').toLowerCase()
+    if (!hay.includes(state.q.toLowerCase())) return false
+  }
+  return true
+}
+
+const SORTS = {
+  order: (a, b) => a.order - b.order,
+  'km-desc': (a, b) => b.km - a.km,
+  'km-asc': (a, b) => a.km - b.km,
+  /* undated rides are not "the oldest" — they have no date at all, so they
+     sort to the end of a date sort rather than to 1970 */
+  'date-desc': (a, b) => (a.dated ? 0 : 1) - (b.dated ? 0 : 1) ||
+    (b.when && a.when ? b.when - a.when : 0),
+  'stops-desc': (a, b) => b.stops.length - a.stops.length,
+  name: (a, b) => a.name.localeCompare(b.name),
+}
+
+function run() {
+  const keep = RD.rides.filter(matches).sort(SORTS[state.sort])
+
+  /* FIRST: where every visible card is right now */
+  const first = new Map()
+  cards.forEach((el, id) => {
+    if (!el.classList.contains('out')) first.set(id, el.getBoundingClientRect())
+  })
+
+  /* re-order and hide in one pass */
+  keep.forEach(r => results.appendChild(cards.get(r.id)))
+  cards.forEach((el, id) => el.classList.toggle('out', !keep.some(r => r.id === id)))
+  highlight()
+
+  /* LAST + INVERT + PLAY: survivors slide from where they were */
+  if (!REDUCED) {
+    cards.forEach((el, id) => {
+      const was = first.get(id)
+      if (!was || el.classList.contains('out')) return
+      const now = el.getBoundingClientRect()
+      const dx = was.left - now.left, dy = was.top - now.top
+      if (!dx && !dy) return
+      el.animate(
+        [{ transform: `translate(${dx}px,${dy}px)` }, { transform: 'none' }],
+        { duration: 420, easing: 'cubic-bezier(.2,.9,.25,1)' })
+    })
+    /* newly arrived cards fade up rather than popping */
+    keep.forEach(r => {
+      if (first.has(r.id)) return
+      cards.get(r.id).animate(
+        [{ opacity: 0, transform: 'translateY(14px)' }, { opacity: 1, transform: 'none' }],
+        { duration: 380, easing: 'cubic-bezier(.2,.9,.25,1)' })
+    })
+  }
+
+  /* the empty state */
+  const old = results.querySelector('.none')
+  if (old) old.remove()
+  if (!keep.length) {
+    results.insertAdjacentHTML('beforeend',
+      `<div class="none"><b>No ride matches that.</b>
+       <span>Widen the distance range, switch a status back on, or clear the search.</span></div>`)
+  }
+
+  document.getElementById('count').textContent =
+    keep.length === RD.rides.length
+      ? `All ${keep.length} rides`
+      : `${keep.length} of ${RD.rides.length} rides`
+  const km = keep.filter(r => !r.tbd).reduce((n, r) => n + r.km, 0)
+  const hidden = RD.rides.length - keep.length
+  document.getElementById('note').textContent =
+    `${km} km shown${keep.some(r => r.tbd) ? ' + 1 with no distance yet' : ''}` +
+    (hidden ? ` · ${hidden} filtered out` : '')
+}
+
+/* mark the search term inside the text fields */
+function highlight() {
+  cards.forEach(el => {
+    el.querySelectorAll('[data-f]').forEach(n => {
+      if (!n.dataset.raw) n.dataset.raw = n.innerHTML
+      if (!state.q) { n.innerHTML = n.dataset.raw; return }
+      const safe = state.q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      /* only outside tags, so the <br/> in the via line survives */
+      n.innerHTML = n.dataset.raw.replace(
+        new RegExp(`(?![^<]*>)(${safe})`, 'gi'), '<mark>$1</mark>')
+    })
+  })
+}
+
+run()
+</script>
+</body>
+</html>

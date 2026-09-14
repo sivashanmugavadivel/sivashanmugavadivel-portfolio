@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Rides · 10 · Diorama</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   DIORAMA — the rides as a model on a table you can walk around.
+
+   One tilted plane holds every route in true relative position, and you
+   orbit it: drag to spin, wheel to zoom, arrow keys to nudge. The routes
+   are laid out by the same Mercator projection as the flat designs, so
+   spinning the table is spinning the actual map — the three western runs
+   really do huddle together while Chennai sits far off to the north-east.
+
+   The trick that makes it read as a model rather than a skewed picture:
+   the plane is rotated in 3D, but every marker counter-rotates on each
+   frame so the pins and labels stay upright and legible however far you
+   have spun. That is what a physical diorama does, and it is the only
+   way the labels survive a 360° orbit.
+
+   One Ride 2026 has no route to lay down, so it stands on the table as a
+   single lit beacon at home with its rays turning — no course, just a
+   date and a place to leave from.
+   ══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --sky:#e8eef7; --sky2:#cfdcee; --felt:#f7f3ea;
+  --ink:#232833; --ink2:#5b6472; --faint:#8e97a6; --line:rgba(35,40,51,0.12);
+  --mint:#3fbf9a; --coral:#f4795b; --violet:#7c6bd4;
+  --disp:'Fredoka',system-ui,sans-serif; --mono:'DM Mono',ui-monospace,monospace;
+  --ease:cubic-bezier(.2,.9,.25,1); --c:#ef4444;
+}
+html,body{height:100%}
+body{background:var(--sky);color:var(--ink2);font-family:var(--disp);overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(90vw 70vh at 50% 0%,#fdfcfa,transparent 62%),
+    radial-gradient(70vw 60vh at 84% 100%,rgba(124,107,212,0.12),transparent 66%)}
+::selection{background:var(--mint);color:#fff}
+
+.room{display:grid;grid-template-columns:minmax(0,1fr) 320px;height:100svh}
+
+/* ── the table ── */
+.table{position:relative;overflow:hidden;display:grid;place-items:center;
+  perspective:1400px;perspective-origin:50% 42%;cursor:grab;touch-action:none}
+.table:active{cursor:grabbing}
+.table::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(60% 60% at 50% 46%,transparent 58%,rgba(35,40,51,0.13))}
+
+.plane{position:relative;width:min(78vmin,620px);aspect-ratio:1;
+  transform-style:preserve-3d;
+  transform:rotateX(var(--tilt,58deg)) rotateZ(var(--spin,-22deg)) scale(var(--zoom,1));
+  transition:transform .16s linear}
+.plane.ease{transition:transform .8s var(--ease)}
+
+/* the felt top, and a slab of thickness under it */
+.felt{position:absolute;inset:0;border-radius:18px;background:var(--felt);
+  box-shadow:0 0 0 1px rgba(35,40,51,0.1),0 34px 44px -14px rgba(35,40,51,0.34);
+  background-image:
+    linear-gradient(rgba(35,40,51,0.05) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(35,40,51,0.05) 1px,transparent 1px);
+  background-size:34px 34px;overflow:hidden}
+.felt::after{content:'';position:absolute;inset:0;
+  background:radial-gradient(70% 70% at 40% 30%,rgba(255,255,255,0.7),transparent 70%)}
+.slab{position:absolute;inset:0;border-radius:18px;background:#ddd6c8;
+  transform:translateZ(-16px)}
+
+.routes{position:absolute;inset:0}
+.routes svg{width:100%;height:100%;display:block;overflow:visible}
+.rt{cursor:pointer}
+.rt .cast{stroke:rgba(35,40,51,0.16);stroke-linecap:round;stroke-linejoin:round;fill:none}
+.rt .ribbon{stroke-linecap:round;stroke-linejoin:round;fill:none;
+  transition:stroke-width .35s var(--ease),opacity .35s var(--ease)}
+.rt .ribbon.base{stroke-width:13;opacity:0.24}
+.rt .ribbon.top{stroke-width:6}
+.rt.dim .ribbon{opacity:0.12}
+.rt.on .ribbon.base{stroke-width:18;opacity:0.4}
+.rt.on .ribbon.top{stroke-width:8}
+
+/* pins stand up off the plane and billboard toward the viewer */
+.pin{position:absolute;transform-style:preserve-3d;pointer-events:none;
+  transform:translate(-50%,-50%) translateZ(var(--z,0px)) rotateZ(var(--anti,0deg)) rotateX(var(--unTilt,-58deg))}
+.pin .stalk{position:absolute;left:50%;bottom:-2px;width:2px;height:var(--h,26px);
+  background:linear-gradient(rgba(35,40,51,0.42),rgba(35,40,51,0.1));transform:translateX(-50%)}
+.pin .head{position:relative;display:flex;align-items:center;gap:6px;
+  background:#fff;border-radius:99px;padding:4px 10px 4px 5px;white-space:nowrap;
+  box-shadow:0 5px 12px -4px rgba(35,40,51,0.45),0 0 0 1px rgba(35,40,51,0.08);
+  font-family:var(--mono);font-size:0.56rem;color:var(--ink);
+  transform:translateY(calc(-1 * var(--h,26px)));
+  transition:transform .3s var(--ease),opacity .3s}
+.pin .head i{width:9px;height:9px;border-radius:50%;background:var(--pc);flex-shrink:0;
+  box-shadow:0 0 0 2px #fff}
+.pin.minor .head{padding:3px 7px 3px 4px;font-size:0.5rem;opacity:0.7;background:#fffdf8}
+.pin.minor .head i{width:6px;height:6px}
+.pin.hide{opacity:0;pointer-events:none}
+
+/* the beacon for the ride with no route */
+.beacon{position:absolute;transform-style:preserve-3d;pointer-events:none;
+  transform:translate(-50%,-50%)}
+.beacon .glow{position:absolute;left:50%;top:50%;width:118px;height:118px;
+  transform:translate(-50%,-50%);border-radius:50%;
+  background:radial-gradient(circle,rgba(220,38,38,0.3),transparent 68%);
+  animation:breathe 3.4s ease-in-out infinite}
+@keyframes breathe{50%{transform:translate(-50%,-50%) scale(1.28);opacity:.55}}
+.beacon .sweep{position:absolute;left:50%;top:50%;width:132px;height:132px;
+  transform:translate(-50%,-50%);border-radius:50%;
+  background:conic-gradient(from 0deg,rgba(220,38,38,0.42),transparent 34%);
+  animation:turn 5s linear infinite}
+@keyframes turn{to{transform:translate(-50%,-50%) rotate(360deg)}}
+.beacon .mast{position:absolute;left:50%;bottom:0;width:3px;height:54px;transform:translateX(-50%);
+  background:linear-gradient(#dc2626,rgba(220,38,38,0.2))}
+
+/* compass rose printed on the felt */
+.northmark{position:absolute;top:14px;left:14px;font-family:var(--mono);font-size:0.52rem;
+  letter-spacing:0.22em;color:var(--faint);display:flex;align-items:center;gap:5px}
+.northmark b{font-size:0.9rem;color:var(--ink);line-height:1}
+
+/* ── viewer chrome ── */
+.chrome{position:absolute;top:0;left:0;right:0;display:flex;align-items:flex-start;gap:14px;
+  padding:clamp(14px,2.4vw,26px);pointer-events:none;z-index:5}
+.chrome > *{pointer-events:auto}
+.chrome h1{font-weight:700;font-size:clamp(1.1rem,2.6vw,1.55rem);color:var(--ink);
+  letter-spacing:-0.03em;line-height:1.05}
+.chrome h1 em{font-style:normal;color:var(--coral)}
+.chrome h1 span{display:block;font-family:var(--mono);font-size:0.55rem;letter-spacing:0.2em;
+  text-transform:uppercase;color:var(--faint);margin-top:6px;font-weight:400}
+
+.tools{position:absolute;left:50%;bottom:clamp(14px,2.4vw,26px);transform:translateX(-50%);
+  display:flex;align-items:center;gap:7px;z-index:5;
+  background:rgba(255,255,255,0.86);backdrop-filter:blur(8px);border-radius:99px;
+  padding:6px;box-shadow:0 10px 26px -10px rgba(35,40,51,0.45),0 0 0 1px rgba(35,40,51,0.07)}
+.tools button{width:34px;height:34px;border-radius:50%;border:0;background:transparent;
+  color:var(--ink2);cursor:pointer;font-size:0.82rem;transition:.22s var(--ease);
+  display:grid;place-items:center}
+.tools button:hover{background:var(--ink);color:#fff}
+.tools .sep{width:1px;height:20px;background:var(--line)}
+.tools .lab{font-family:var(--mono);font-size:0.54rem;letter-spacing:0.12em;color:var(--faint);
+  padding:0 8px;white-space:nowrap}
+
+/* ── the label panel ── */
+.panel{background:#fff;border-left:1px solid var(--line);display:flex;flex-direction:column;
+  min-width:0;box-shadow:-10px 0 30px -20px rgba(35,40,51,0.5)}
+.panel .top{padding:18px 18px 14px;border-bottom:1px solid var(--line)}
+.panel .top .r1{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.panel .top .r1 b{font-family:var(--mono);font-size:0.52rem;letter-spacing:0.22em;
+  text-transform:uppercase;color:var(--faint)}
+.panel .top .r1 a{margin-left:auto;font-family:var(--mono);font-size:0.54rem;letter-spacing:0.12em;
+  text-transform:uppercase;color:var(--ink2);text-decoration:none;transition:.2s}
+.panel .top .r1 a:hover{color:var(--coral)}
+.panel .top .tier{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);
+  font-size:0.5rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--tc);margin-bottom:8px}
+.panel .top .tier i{width:6px;height:6px;border-radius:50%;background:currentColor}
+.panel .top h2{font-weight:600;font-size:1.22rem;color:var(--ink);line-height:1.16;
+  letter-spacing:-0.024em}
+.panel .top .sub{font-family:var(--mono);font-size:0.56rem;color:var(--faint);line-height:1.6;
+  margin-top:7px}
+
+.panel .scroll{flex:1;overflow-y:auto;padding:16px 18px}
+.panel .scroll::-webkit-scrollbar{width:4px}
+.panel .scroll::-webkit-scrollbar-thumb{background:var(--line)}
+.panel p{font-size:0.82rem;line-height:1.75;color:var(--ink2);margin-bottom:14px}
+.panel .figs{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);
+  margin-bottom:14px}
+.panel .figs div{background:#fff;padding:10px 12px}
+.panel .figs k{display:block;font-family:var(--mono);font-size:0.45rem;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--faint);margin-bottom:4px}
+.panel .figs v{display:block;font-weight:600;font-size:1.08rem;color:var(--ink)}
+.panel .tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px}
+.panel .tags u{text-decoration:none;font-family:var(--mono);font-size:0.5rem;letter-spacing:0.1em;
+  text-transform:uppercase;padding:4px 8px;border-radius:99px;background:var(--cbg);color:var(--c)}
+
+.picker{border-top:1px solid var(--line);display:flex;overflow-x:auto;scrollbar-width:none}
+.picker::-webkit-scrollbar{display:none}
+.picker button{flex:1 0 auto;padding:11px 9px;border:0;border-right:1px solid var(--line);
+  background:transparent;cursor:pointer;font-family:var(--mono);font-size:0.5rem;
+  letter-spacing:0.08em;color:var(--faint);transition:.24s var(--ease);
+  display:flex;flex-direction:column;align-items:center;gap:5px;white-space:nowrap}
+.picker button i{width:8px;height:8px;border-radius:50%;background:currentColor;opacity:0.4;
+  transition:.24s}
+.picker button:hover{background:var(--felt);color:var(--ink)}
+.picker button.on{color:var(--ink);background:var(--felt)}
+.picker button.on i{opacity:1;transform:scale(1.3)}
+
+.panel .go{display:flex;align-items:center;justify-content:center;gap:8px;margin:0 18px 18px;
+  padding:12px;border-radius:99px;background:var(--ink);color:#fff;text-decoration:none;
+  font-family:var(--mono);font-size:0.58rem;letter-spacing:0.16em;text-transform:uppercase;
+  transition:.26s var(--ease)}
+.panel .go:hover{background:var(--c);transform:translateY(-2px)}
+
+@media(max-width:920px){
+  body{overflow:auto}
+  .room{grid-template-columns:1fr;height:auto}
+  .table{height:62svh;min-height:340px}
+  .panel{border-left:0;border-top:1px solid var(--line)}
+  .panel .scroll{overflow:visible}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;animation-iteration-count:1!important;
+    transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+
+<div class="room">
+  <section class="table" id="table">
+    <div class="chrome">
+      <h1>Rides &amp; <em>Journeys</em><span>Drag to walk around the table</span></h1>
+    </div>
+
+    <div class="plane" id="plane">
+      <div class="slab"></div>
+      <div class="felt">
+        <div class="northmark"><b>↑</b>N</div>
+      </div>
+      <div class="routes"><svg id="rsvg" viewBox="0 0 600 600"></svg></div>
+      <div id="pins"></div>
+    </div>
+
+    <div class="tools">
+      <button id="tLeft" title="Spin left">↺</button>
+      <button id="tRight" title="Spin right">↻</button>
+      <span class="sep"></span>
+      <button id="tOut" title="Zoom out">−</button>
+      <button id="tIn" title="Zoom in">+</button>
+      <span class="sep"></span>
+      <button id="tFlat" title="Look from above">▤</button>
+      <button id="tReset" title="Reset the view">⌂</button>
+      <span class="lab" id="lab">58° · −22°</span>
+    </div>
+  </section>
+
+  <aside class="panel">
+    <div class="top">
+      <div class="r1"><b>Label</b><a href="#">← Garage</a></div>
+      <div id="pTier"></div>
+      <h2 id="pName"></h2>
+      <div class="sub" id="pSub"></div>
+    </div>
+    <div class="scroll">
+      <div class="figs" id="pFigs"></div>
+      <p id="pStory"></p>
+      <div class="tags" id="pTags"></div>
+    </div>
+    <a class="go" id="pGo" href="#">Open the ride ↗</a>
+    <div class="picker" id="picker"></div>
+  </aside>
+</div>
+
+<script src="rides-data.js"></script>
+<script>
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches
+const SZ = 600, PAD = 74
+const plane = document.getElementById('plane')
+const table = document.getElementById('table')
+
+let tilt = 58, spin = -22, zoom = 1
+let active = RD.rides[0]
+
+/* ── lay the routes on the felt ───────────────────────────────────────── */
+/* One projection for every mapped ride, so the table holds them in true
+   relative position rather than fitting each to its own box. */
+const P = RD.fit(SZ, SZ, PAD)
+
+document.getElementById('rsvg').innerHTML = RD.rides.filter(r => r.mapped).map(r => {
+  const pts = r.stops.map(s => P.of(s))
+  const d = RD.curve(pts)
+  return `<g class="rt" data-id="${r.id}">
+    <!-- the shadow the ribbon casts on the felt, offset like a real one -->
+    <path class="cast" d="${d}" stroke-width="12" transform="translate(5,7)"/>
+    <path class="ribbon base" d="${d}" stroke="${r.color}"/>
+    <path class="ribbon top" d="${d}" stroke="${r.color}"/>
+  </g>`
+}).join('')
+
+/* ── pins, one per stop, plus the beacon ──────────────────────────────── */
+const pinBox = document.getElementById('pins')
+let pinEls = []
+
+pinBox.innerHTML = RD.rides.map(r => {
+  if (!r.mapped) {
+    const [x, y] = P.of(r.stops[0])
+    return `<div class="beacon" data-id="${r.id}"
+        style="left:${(x / SZ * 100).toFixed(2)}%;top:${(y / SZ * 100).toFixed(2)}%">
+        <div class="sweep"></div><div class="glow"></div>
+      </div>`
+  }
+  return r.stops.map((s, i) => {
+    const [x, y] = P.of(s)
+    const edge = i === 0 || i === r.stops.length - 1
+    return `<div class="pin ${edge ? '' : 'minor'}" data-id="${r.id}"
+        style="left:${(x / SZ * 100).toFixed(2)}%;top:${(y / SZ * 100).toFixed(2)}%;
+               --pc:${r.color};--h:${edge ? 30 : 16}px">
+        <span class="stalk"></span>
+        <span class="head"><i></i>${s.label}</span>
+      </div>`
+  }).join('')
+}).join('')
+
+pinEls = [...pinBox.querySelectorAll('.pin')]
+
+/* ── the orbit ────────────────────────────────────────────────────────── */
+/* The plane is rotated in 3D; each pin counter-rotates by the same amounts
+   so it stays upright and face-on however far the table has been spun. */
+function apply(ease) {
+  plane.classList.toggle('ease', !!ease)
+  plane.style.setProperty('--tilt', tilt + 'deg')
+  plane.style.setProperty('--spin', spin + 'deg')
+  plane.style.setProperty('--zoom', zoom)
+  pinEls.forEach(p => {
+    p.style.setProperty('--anti', (-spin) + 'deg')
+    p.style.setProperty('--unTilt', (-tilt) + 'deg')
+  })
+  document.querySelectorAll('.beacon').forEach(b => {
+    b.style.transform = `translate(-50%,-50%) rotateZ(${-spin}deg) rotateX(${-tilt}deg)`
+  })
+  document.getElementById('lab').textContent =
+    `${Math.round(tilt)}° · ${Math.round(((spin % 360) + 360) % 360 - 180)}°`
+}
+
+let drag = null
+table.addEventListener('pointerdown', e => {
+  drag = { x: e.clientX, y: e.clientY }
+  table.setPointerCapture(e.pointerId)
+})
+table.addEventListener('pointermove', e => {
+  if (!drag) return
+  spin += (e.clientX - drag.x) * 0.4
+  tilt = Math.max(8, Math.min(84, tilt + (e.clientY - drag.y) * 0.24))
+  drag = { x: e.clientX, y: e.clientY }
+  apply(false)
+})
+const drop = () => { drag = null }
+table.addEventListener('pointerup', drop)
+table.addEventListener('pointercancel', drop)
+
+table.addEventListener('wheel', e => {
+  e.preventDefault()
+  zoom = Math.max(0.62, Math.min(2.1, zoom - e.deltaY * 0.0013))
+  apply(false)
+}, { passive: false })
+
+document.getElementById('tLeft').addEventListener('click', () => { spin -= 45; apply(true) })
+document.getElementById('tRight').addEventListener('click', () => { spin += 45; apply(true) })
+document.getElementById('tIn').addEventListener('click', () => { zoom = Math.min(2.1, zoom + 0.22); apply(true) })
+document.getElementById('tOut').addEventListener('click', () => { zoom = Math.max(0.62, zoom - 0.22); apply(true) })
+document.getElementById('tFlat').addEventListener('click', () => { tilt = 9; apply(true) })
+document.getElementById('tReset').addEventListener('click', () => {
+  tilt = 58; spin = -22; zoom = 1; apply(true)
+})
+
+addEventListener('keydown', e => {
+  const step = e.shiftKey ? 15 : 5
+  if (e.key === 'ArrowLeft') { spin -= step; apply(true); e.preventDefault() }
+  if (e.key === 'ArrowRight') { spin += step; apply(true); e.preventDefault() }
+  if (e.key === 'ArrowUp') { tilt = Math.min(84, tilt + step); apply(true); e.preventDefault() }
+  if (e.key === 'ArrowDown') { tilt = Math.max(8, tilt - step); apply(true); e.preventDefault() }
+})
+
+/* ── selection ────────────────────────────────────────────────────────── */
+function select(r) {
+  active = r
+  document.documentElement.style.setProperty('--c', r.color)
+  document.documentElement.style.setProperty('--tc', r.tier.color)
+  document.documentElement.style.setProperty('--cbg', r.color + '1f')
+
+  document.querySelectorAll('.rt').forEach(g => {
+    g.classList.toggle('on', g.dataset.id === r.id)
+    g.classList.toggle('dim', g.dataset.id !== r.id)
+  })
+  /* only the chosen ride's minor pins show, or the table is unreadable */
+  pinEls.forEach(p => p.classList.toggle('hide',
+    p.classList.contains('minor') && p.dataset.id !== r.id))
+  document.querySelectorAll('.picker button').forEach(b =>
+    b.classList.toggle('on', b.dataset.id === r.id))
+
+  document.getElementById('pTier').innerHTML =
+    `<span class="tier"><i></i>${r.tier.label} · ${r.date}</span>`
+  document.getElementById('pName').textContent = r.name
+  document.getElementById('pSub').textContent = r.subtitle
+  document.getElementById('pStory').textContent = r.story
+  document.getElementById('pFigs').innerHTML = [
+    ['Distance', r.tbd ? 'TBD' : r.km + ' km'],
+    ['Heading', r.mapped ? r.compass + ' ' + r.bearing.toFixed(0) + '°' : 'Open'],
+    ['Waypoints', r.stops.length],
+    [r.time ? 'Saddle time' : r.estimated ? 'Estimated' : 'States',
+      r.time || r.estimate || r.states.length],
+  ].map(([k, v]) => `<div><k>${k}</k><v>${v}</v></div>`).join('')
+  document.getElementById('pTags').innerHTML = r.highlights.map(h => `<u>${h}</u>`).join('')
+
+  /* swing the table so the chosen route faces the viewer: rotate its
+     mid-bearing to the front of the plane */
+  if (r.mapped && !REDUCED) {
+    const want = -(r.bearing) + 20
+    let d = ((want - spin + 540) % 360) - 180
+    spin += d
+    apply(true)
+  }
+}
+
+document.getElementById('picker').innerHTML = RD.rides.map(r =>
+  `<button data-id="${r.id}" title="${r.name}">
+     <i style="color:${r.color}"></i>${r.mapped ? r.compass : 'OPEN'}
+   </button>`).join('')
+document.querySelectorAll('.picker button').forEach(b =>
+  b.addEventListener('click', () => select(RD.byId(b.dataset.id))))
+document.querySelectorAll('.rt').forEach(g =>
+  g.addEventListener('click', () => select(RD.byId(g.dataset.id))))
+document.querySelectorAll('.beacon').forEach(b =>
+  b.addEventListener('click', () => select(RD.byId(b.dataset.id))))
+
+apply(false)
+select(RD.rides[0])
+
+/* a slow opening turn, so it reads as a model before you touch it */
+if (!REDUCED) {
+  let t0 = 0, done = false
+  const intro = t => {
+    if (done) return
+    if (!t0) t0 = t
+    const k = Math.min(1, (t - t0) / 1600)
+    plane.classList.remove('ease')
+    plane.style.setProperty('--spin', (spin - 36 * (1 - k) ** 2) + 'deg')
+    if (k < 1) requestAnimationFrame(intro); else { done = true; apply(false) }
+  }
+  requestAnimationFrame(intro)
+  table.addEventListener('pointerdown', () => { done = true }, { once: true })
+}
+</script>
+</body>
+</html>

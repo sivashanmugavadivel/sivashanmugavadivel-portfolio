@@ -22,8 +22,8 @@
   "order": 11,
   "id": "r6",
 
-  "name": "Home to Dharapuram — First Service",
-  "subtitle": "Kariya Kattu Valasu → Kangayam → Avinashipalayam → Royal Enfield Senthur Motors, Dharapuram",
+  "name": "Bear 650 First Service",
+  "subtitle": "Home (Kariya Kattu Valasu) → Kangayam → Avinashipalayam → Senthur Motors, Dharapuram",
   "mode": "completed",
 
   "distance": "54 KM",
@@ -32,8 +32,10 @@
   "date": "22 Aug 2026",
   "rating": null,
 
-  "fromCity": "Kariya Kattu Valasu",
-  "toCity": "Royal Enfield Senthur Motors, Dharapuram",
+  "fromPlace": "Kariya Kattu Valasu",
+  "fromCity": "Kangayam",
+  "destPlace": "Royal Enfield Senthur Motors",
+  "destCity": "Dharapuram",
   "states": ["Tamil Nadu"],
   "color": "#14b8a6",
 

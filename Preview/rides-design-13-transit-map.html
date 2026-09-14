@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Rides · 13 · Transit Map</title>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   TRANSIT MAP — the one diagram the data was asking for.
+
+   These six rides are not six separate lists. They share places, and the
+   sharing is structural: Kariya Kattu Valasu appears on FIVE of the six,
+   and Dharapuram, Kangayam, Avinashipalayam and Chennai each carry two.
+   That is a network with real interchanges, and a network wants a network
+   diagram — not another card grid.
+
+   So this is drawn the way transit maps are drawn: octilinear. Every leg
+   is forced to 45° steps, distances are schematic rather than true, and
+   parallel lines through the same corridor are offset so they run side by
+   side instead of on top of each other. That is a deliberate trade — the
+   flat designs in this folder keep true geography; this one throws
+   geography away to make the CONNECTIONS legible, which is the entire
+   point of the format.
+
+   Click a line to ride it. Click an interchange to see everything that
+   calls there. One Ride 2026 has a single stop, so it is not a line at
+   all — it is a terminus flag on the hub, which is exactly what it is.
+   ══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --paper:#fdfdfb; --paper2:#f1f1ee; --ink:#111418; --ink2:#4c5460; --faint:#8b94a1;
+  --line:#e2e4e2; --line2:#c8ccc8;
+  --sans:'Hanken Grotesk',system-ui,sans-serif; --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --ease:cubic-bezier(.2,.9,.25,1); --c:#ef4444;
+}
+html,body{height:100%}
+body{background:var(--paper);color:var(--ink2);font-family:var(--sans);overflow:hidden;
+  -webkit-font-smoothing:antialiased}
+::selection{background:var(--ink);color:var(--paper)}
+
+.app{display:grid;grid-template-columns:minmax(0,1fr) 330px;height:100svh}
+
+/* ── the map ── */
+.map{position:relative;overflow:hidden;background:var(--paper);
+  background-image:linear-gradient(var(--paper2) 1px,transparent 1px),
+    linear-gradient(90deg,var(--paper2) 1px,transparent 1px);
+  background-size:30px 30px;cursor:grab}
+.map:active{cursor:grabbing}
+.map svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+
+.title{position:absolute;top:clamp(14px,2.4vw,26px);left:clamp(14px,2.6vw,30px);z-index:5;
+  pointer-events:none}
+.title h1{font-weight:800;font-size:clamp(1.2rem,2.8vw,1.7rem);color:var(--ink);
+  letter-spacing:-0.035em;line-height:1}
+.title p{font-family:var(--mono);font-size:0.56rem;letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--faint);margin-top:7px}
+
+/* the key, bottom-left */
+.key{position:absolute;left:clamp(14px,2.6vw,30px);bottom:clamp(14px,2.4vw,26px);z-index:5;
+  background:rgba(253,253,251,0.92);backdrop-filter:blur(6px);border:1px solid var(--line);
+  padding:11px 13px;max-width:250px}
+.key k{display:block;font-family:var(--mono);font-size:0.48rem;letter-spacing:0.2em;
+  text-transform:uppercase;color:var(--faint);margin-bottom:9px}
+.key div{display:flex;align-items:center;gap:9px;font-size:0.68rem;margin-bottom:6px;color:var(--ink2)}
+.key div:last-child{margin-bottom:0}
+.key .sw{width:22px;height:5px;border-radius:3px;flex-shrink:0}
+.key .ic{width:15px;height:15px;border-radius:50%;border:2.6px solid var(--ink);background:#fff;
+  flex-shrink:0}
+.key .ic.term{border-radius:3px}
+
+.zoomers{position:absolute;right:clamp(14px,2.4vw,26px);bottom:clamp(14px,2.4vw,26px);z-index:5;
+  display:flex;flex-direction:column;gap:1px;background:var(--line);border:1px solid var(--line)}
+.zoomers button{width:34px;height:34px;border:0;background:var(--paper);color:var(--ink2);
+  cursor:pointer;font-size:0.9rem;transition:.2s}
+.zoomers button:hover{background:var(--ink);color:var(--paper)}
+
+/* svg pieces */
+.lineG{cursor:pointer}
+.lineG .stroke{fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:9;
+  transition:stroke-width .3s var(--ease),opacity .3s var(--ease)}
+.lineG.dim .stroke{opacity:0.18}
+.lineG.on .stroke{stroke-width:12}
+.lineG .hit{fill:none;stroke:transparent;stroke-width:26;stroke-linecap:round}
+/* a planned line is drawn hollow, the way an under-construction line is */
+.lineG .stroke.plan{stroke-dasharray:2 13}
+
+.st{cursor:pointer}
+.st .tick{stroke:var(--ink);stroke-width:3;stroke-linecap:round}
+.st .blob{fill:#fff;stroke:var(--ink);stroke-width:2.6}
+.st .lbl{font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:11px;fill:var(--ink);
+  transition:opacity .3s}
+.st .sub{font-family:'IBM Plex Mono',monospace;font-size:8px;fill:var(--faint)}
+.st.dim .lbl,.st.dim .sub{opacity:0.25}
+.st.dim .blob{opacity:0.3}
+.st.on .blob{stroke:var(--c);stroke-width:3.4}
+.st:hover .lbl{fill:var(--c)}
+
+/* the One Ride flag on the hub */
+.flag .pole{stroke:#dc2626;stroke-width:2.4}
+.flag .cloth{fill:#dc2626}
+.flag text{font-family:'IBM Plex Mono',monospace;font-size:8px;fill:#dc2626;
+  letter-spacing:0.08em}
+
+/* ── the side ── */
+.side{background:var(--paper);border-left:1px solid var(--line2);display:flex;
+  flex-direction:column;min-width:0}
+.side .top{padding:16px 16px 13px;border-bottom:1px solid var(--line)}
+.side .top .r1{display:flex;align-items:center;gap:9px;margin-bottom:11px}
+.side .top .r1 b{font-family:var(--mono);font-size:0.5rem;letter-spacing:0.22em;
+  text-transform:uppercase;color:var(--faint)}
+.side .top .r1 a{margin-left:auto;font-family:var(--mono);font-size:0.54rem;letter-spacing:0.12em;
+  text-transform:uppercase;color:var(--ink2);text-decoration:none;transition:.2s}
+.side .top .r1 a:hover{color:var(--c)}
+.side .top .net{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--line)}
+.side .top .net div{background:var(--paper);padding:9px 10px}
+.side .top .net k{display:block;font-family:var(--mono);font-size:0.44rem;letter-spacing:0.16em;
+  text-transform:uppercase;color:var(--faint);margin-bottom:4px}
+.side .top .net v{display:block;font-weight:800;font-size:1.15rem;color:var(--ink);
+  letter-spacing:-0.02em}
+
+.lines{flex:1;overflow-y:auto}
+.lines::-webkit-scrollbar{width:4px}
+.lines::-webkit-scrollbar-thumb{background:var(--line2)}
+.ln{width:100%;text-align:left;background:transparent;border:0;border-bottom:1px solid var(--line);
+  padding:12px 16px;cursor:pointer;font-family:var(--sans);transition:background .24s var(--ease);
+  display:flex;gap:11px;align-items:flex-start}
+.ln:hover{background:var(--paper2)}
+.ln.on{background:var(--paper2)}
+.ln .bullet{width:7px;flex-shrink:0;border-radius:4px;background:var(--lc);align-self:stretch;
+  min-height:38px}
+.ln .tx{min-width:0;flex:1}
+.ln h3{font-weight:700;font-size:0.88rem;color:var(--ink);letter-spacing:-0.02em;line-height:1.2;
+  margin-bottom:4px}
+.ln .m{font-family:var(--mono);font-size:0.56rem;color:var(--faint);letter-spacing:0.05em;
+  line-height:1.6}
+.ln .m em{font-style:normal;color:var(--lc);font-weight:500}
+
+/* the station panel */
+.stat{border-top:1px solid var(--line2);padding:14px 16px;background:var(--paper2);
+  max-height:44%;overflow-y:auto}
+.stat.hide{display:none}
+.stat k{display:block;font-family:var(--mono);font-size:0.46rem;letter-spacing:0.2em;
+  text-transform:uppercase;color:var(--faint);margin-bottom:7px}
+.stat h3{font-weight:800;font-size:1.02rem;color:var(--ink);letter-spacing:-0.025em;
+  line-height:1.2;margin-bottom:4px}
+.stat .co{font-family:var(--mono);font-size:0.56rem;color:var(--faint);margin-bottom:11px}
+.stat .calls{display:flex;flex-direction:column;gap:6px}
+.stat .calls button{display:flex;align-items:center;gap:9px;background:var(--paper);
+  border:1px solid var(--line);padding:7px 9px;cursor:pointer;font-family:var(--sans);
+  font-size:0.72rem;color:var(--ink2);text-align:left;transition:.22s var(--ease)}
+.stat .calls button:hover{border-color:var(--bc);color:var(--ink)}
+.stat .calls i{width:5px;height:18px;border-radius:3px;background:var(--bc);flex-shrink:0}
+.stat .close{position:absolute;right:14px;font-size:0.7rem;background:0;border:0;cursor:pointer;
+  color:var(--faint)}
+
+.go{display:flex;align-items:center;justify-content:center;gap:8px;margin:0;padding:13px;
+  background:var(--ink);color:var(--paper);text-decoration:none;font-family:var(--mono);
+  font-size:0.56rem;letter-spacing:0.18em;text-transform:uppercase;transition:.26s var(--ease)}
+.go:hover{background:var(--c)}
+
+@media(max-width:920px){
+  body{overflow:auto}
+  .app{grid-template-columns:1fr;height:auto}
+  .map{height:58svh;min-height:340px}
+  .side{border-left:0;border-top:1px solid var(--line2)}
+  .lines{overflow:visible}
+  .stat{max-height:none}
+}
+@media(prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <section class="map" id="map">
+    <svg id="svg" aria-label="Ride network diagram"></svg>
+    <div class="title">
+      <h1>Rides &amp; Journeys</h1>
+      <p>Network diagram · not to scale</p>
+    </div>
+    <div class="key">
+      <k>Key</k>
+      <div><span class="sw" style="background:#22c55e"></span>Ridden</div>
+      <div><span class="sw" style="background:#8b5cf6;
+        background-image:repeating-linear-gradient(90deg,transparent 0 2px,#fdfdfb 2px 5px)"></span>Planned</div>
+      <div><span class="ic"></span>Interchange</div>
+      <div><span class="ic term"></span>Terminus</div>
+    </div>
+    <div class="zoomers">
+      <button id="zIn">+</button><button id="zOut">−</button><button id="zFit">⌂</button>
+    </div>
+  </section>
+
+  <aside class="side">
+    <div class="top">
+      <div class="r1"><b>Network</b><a href="#">← Garage</a></div>
+      <div class="net" id="net"></div>
+    </div>
+    <div class="lines" id="lines"></div>
+    <div class="stat hide" id="stat"></div>
+    <a class="go" id="go" href="#">Open the ride ↗</a>
+  </aside>
+</div>
+
+<script src="rides-data.js"></script>
+<script>
+const NET = RD.network()
+const W = 1000, H = 700
+const svg = document.getElementById('svg')
+svg.setAttribute('viewBox', `0 0 ${W} ${H}`)
+
+let active = RD.rides[0]
+let station = null
+
+/* ── octilinear layout ────────────────────────────────────────────────── */
+/* Start from the true projection, snap every station onto a coarse grid,
+   then walk each ride's legs and force them to 45° steps. Schematic, not
+   geographic — which is the trade a transit map exists to make. */
+const GRID = 58
+const P = RD.fit(W, H, 120)
+
+const pos = new Map()
+NET.stations.forEach(s => {
+  const [x, y] = P.of(s)
+  pos.set(s.key, {
+    x: Math.round(x / GRID) * GRID,
+    y: Math.round(y / GRID) * GRID,
+    s,
+  })
+})
+
+/* nudge any two stations that snapped onto the same cell */
+;(function spread() {
+  const seen = new Map()
+  ;[...pos.values()]
+    .sort((a, b) => b.s.lines - a.s.lines)   // hubs keep their cell
+    .forEach(p => {
+      let k = p.x + ':' + p.y, n = 0
+      while (seen.has(k)) {
+        n++
+        p.x += GRID * (n % 2 ? 1 : -1)
+        p.y += GRID * (n % 3 === 0 ? 1 : 0)
+        k = p.x + ':' + p.y
+      }
+      seen.set(k, p)
+    })
+})()
+
+/* force a leg into an octilinear run: one diagonal then one straight */
+function elbow(a, b) {
+  const dx = b.x - a.x, dy = b.y - a.y
+  const adx = Math.abs(dx), ady = Math.abs(dy)
+  if (adx < 2 || ady < 2 || Math.abs(adx - ady) < 2) return [a, b]   // already ok
+  const run = Math.min(adx, ady)
+  const mid = { x: a.x + Math.sign(dx) * run, y: a.y + Math.sign(dy) * run }
+  return [a, mid, b]
+}
+
+/* offset parallel lines so two rides sharing a corridor sit side by side */
+const corridor = new Map()
+RD.rides.filter(r => r.mapped).forEach(r => {
+  r.stops.slice(1).forEach((s, i) => {
+    const k = [NET.keyOf(r.stops[i]), NET.keyOf(s)].sort().join('|')
+    if (!corridor.has(k)) corridor.set(k, [])
+    corridor.get(k).push(r.id)
+  })
+})
+
+function offsetFor(rideId, a, b) {
+  const k = [a, b].sort().join('|')
+  const list = corridor.get(k) || []
+  if (list.length < 2) return 0
+  const i = list.indexOf(rideId)
+  return (i - (list.length - 1) / 2) * 7      // px apart, perpendicular
+}
+
+/* ── draw ─────────────────────────────────────────────────────────────── */
+function linePath(r) {
+  const pts = []
+  r.stops.forEach((s, i) => {
+    const p = pos.get(NET.keyOf(s))
+    const prev = i ? pos.get(NET.keyOf(r.stops[i - 1])) : null
+    if (!prev) { pts.push({ x: p.x, y: p.y }); return }
+    const off = offsetFor(r.id, NET.keyOf(r.stops[i - 1]), NET.keyOf(s))
+    const seg = elbow(prev, p)
+    /* shift the whole run perpendicular to its own direction */
+    const dx = p.x - prev.x, dy = p.y - prev.y
+    const len = Math.hypot(dx, dy) || 1
+    const ox = -dy / len * off, oy = dx / len * off
+    seg.slice(1).forEach(q => pts.push({ x: q.x + ox, y: q.y + oy }))
+  })
+  return pts.map((p, i) => (i ? 'L' : 'M') + p.x.toFixed(1) + ' ' + p.y.toFixed(1)).join(' ')
+}
+
+const linesHtml = RD.rides.filter(r => r.mapped).map(r => {
+  const d = linePath(r)
+  return `<g class="lineG" data-id="${r.id}">
+    <path class="hit" d="${d}"/>
+    <path class="stroke ${r.done ? '' : 'plan'}" d="${d}" stroke="${r.color}"/>
+  </g>`
+}).join('')
+
+/* stations: a tick for a through-stop, a ringed blob for an interchange */
+const stHtml = NET.stations.map(s => {
+  const p = pos.get(s.key)
+  const right = p.x < W * 0.62
+  const anchor = right ? 'start' : 'end'
+  const dx = right ? 15 : -15
+  return `<g class="st" data-key="${s.key}">
+    ${s.interchange
+      ? `<circle class="blob" cx="${p.x}" cy="${p.y}" r="${5 + s.lines * 1.5}"/>`
+      : `<circle class="blob" cx="${p.x}" cy="${p.y}" r="5"/>`}
+    <text class="lbl" x="${p.x + dx}" y="${p.y + 1}" text-anchor="${anchor}">${s.label}</text>
+    <text class="sub" x="${p.x + dx}" y="${p.y + 12}" text-anchor="${anchor}">${
+      s.interchange ? s.lines + ' lines' : ''}${s.home ? (s.interchange ? ' · home' : 'home') : ''}</text>
+  </g>`
+}).join('')
+
+/* One Ride: a single stop is not a line, so it flags the hub */
+const solo = RD.rides.filter(r => !r.mapped).map(r => {
+  const p = pos.get(NET.keyOf(r.stops[0]))
+  return `<g class="flag" data-id="${r.id}" style="cursor:pointer">
+    <line class="pole" x1="${p.x}" y1="${p.y}" x2="${p.x}" y2="${p.y - 52}"/>
+    <path class="cloth" d="M${p.x} ${p.y - 52} L${p.x + 44} ${p.y - 45} L${p.x} ${p.y - 38} Z"/>
+    <text x="${p.x + 5}" y="${p.y - 58}">ONE RIDE · 20 SEP</text>
+  </g>`
+}).join('')
+
+svg.innerHTML = `<g id="cam">${linesHtml}${solo}${stHtml}</g>`
+
+/* ── the side panel ───────────────────────────────────────────────────── */
+document.getElementById('net').innerHTML = [
+  ['Lines', RD.rides.length],
+  ['Stations', NET.stations.length],
+  ['Interchanges', NET.interchanges.length],
+].map(([k, v]) => `<div><k>${k}</k><v>${v}</v></div>`).join('')
+
+document.getElementById('lines').innerHTML = RD.rides.map(r => {
+  const inter = r.stops.filter(s => {
+    const st = NET.byKey(NET.keyOf(s))
+    return st && st.interchange
+  }).length
+  return `<button class="ln" data-id="${r.id}" style="--lc:${r.color}">
+    <span class="bullet"></span>
+    <span class="tx">
+      <h3>${r.name}</h3>
+      <span class="m">${r.mapped ? r.stops.length + ' stations · ' + inter + ' interchange' +
+        (inter === 1 ? '' : 's') : '1 station · terminus only'}<br/>
+        <em>${r.distance}</em> · ${r.tier.label} · ${r.date}</span>
+    </span>
+  </button>`
+}).join('')
+
+/* ── selection ────────────────────────────────────────────────────────── */
+function pickLine(r) {
+  active = r; station = null
+  document.documentElement.style.setProperty('--c', r.color)
+  document.querySelectorAll('.lineG').forEach(g => {
+    g.classList.toggle('on', g.dataset.id === r.id)
+    g.classList.toggle('dim', g.dataset.id !== r.id)
+  })
+  const keys = new Set(r.stops.map(s => NET.keyOf(s)))
+  document.querySelectorAll('.st').forEach(g => {
+    g.classList.toggle('dim', !keys.has(g.dataset.key))
+    g.classList.remove('on')
+  })
+  document.querySelectorAll('.ln').forEach(b => b.classList.toggle('on', b.dataset.id === r.id))
+  document.getElementById('stat').classList.add('hide')
+  document.getElementById('go').textContent = 'Open ' + r.name + ' ↗'
+}
+
+function pickStation(key) {
+  const s = NET.byKey(key)
+  if (!s) return
+  station = s
+  document.querySelectorAll('.lineG').forEach(g => {
+    const on = s.rides.includes(g.dataset.id)
+    g.classList.toggle('on', on)
+    g.classList.toggle('dim', !on)
+  })
+  document.querySelectorAll('.st').forEach(g => {
+    g.classList.toggle('on', g.dataset.key === key)
+    g.classList.remove('dim')
+  })
+  document.querySelectorAll('.ln').forEach(b =>
+    b.classList.toggle('on', s.rides.includes(b.dataset.id)))
+
+  const box = document.getElementById('stat')
+  box.classList.remove('hide')
+  box.innerHTML = `
+    <k>Station</k>
+    <h3>${s.label}</h3>
+    <div class="co">${s.lat.toFixed(4)}°N · ${s.lng.toFixed(4)}°E${s.home ? ' · home' : ''}</div>
+    <k>${s.lines === 1 ? 'Served by' : s.lines + ' lines call here'}</k>
+    <div class="calls">
+      ${s.rides.map(id => {
+        const r = RD.byId(id)
+        return `<button data-id="${id}" style="--bc:${r.color}"><i></i>${r.name}</button>`
+      }).join('')}
+    </div>`
+  box.querySelectorAll('button').forEach(b =>
+    b.addEventListener('click', () => pickLine(RD.byId(b.dataset.id))))
+}
+
+document.querySelectorAll('.lineG,.flag').forEach(g =>
+  g.addEventListener('click', () => pickLine(RD.byId(g.dataset.id))))
+document.querySelectorAll('.st').forEach(g =>
+  g.addEventListener('click', () => pickStation(g.dataset.key)))
+document.querySelectorAll('.ln').forEach(b =>
+  b.addEventListener('click', () => pickLine(RD.byId(b.dataset.id))))
+
+/* ── pan and zoom the diagram ─────────────────────────────────────────── */
+let cam = { x: 0, y: 0, k: 1 }
+const camG = document.getElementById('cam')
+const applyCam = () => {
+  camG.setAttribute('transform', `translate(${cam.x} ${cam.y}) scale(${cam.k})`)
+}
+const mapEl = document.getElementById('map')
+let drag = null
+mapEl.addEventListener('pointerdown', e => {
+  if (e.target.closest('.st,.lineG,.flag,button')) return
+  drag = { x: e.clientX, y: e.clientY, cx: cam.x, cy: cam.y }
+  mapEl.setPointerCapture(e.pointerId)
+})
+mapEl.addEventListener('pointermove', e => {
+  if (!drag) return
+  const b = mapEl.getBoundingClientRect()
+  cam.x = drag.cx + (e.clientX - drag.x) * (W / b.width)
+  cam.y = drag.cy + (e.clientY - drag.y) * (H / b.height)
+  applyCam()
+})
+const drop = () => { drag = null }
+mapEl.addEventListener('pointerup', drop)
+mapEl.addEventListener('pointercancel', drop)
+mapEl.addEventListener('wheel', e => {
+  e.preventDefault()
+  cam.k = Math.max(0.55, Math.min(2.6, cam.k * (e.deltaY > 0 ? 0.9 : 1.11)))
+  applyCam()
+}, { passive: false })
+
+document.getElementById('zIn').addEventListener('click', () => {
+  cam.k = Math.min(2.6, cam.k * 1.22); applyCam()
+})
+document.getElementById('zOut').addEventListener('click', () => {
+  cam.k = Math.max(0.55, cam.k / 1.22); applyCam()
+})
+document.getElementById('zFit').addEventListener('click', () => {
+  cam = { x: 0, y: 0, k: 1 }; applyCam()
+})
+
+pickLine(RD.rides[0])
+</script>
+</body>
+</html>

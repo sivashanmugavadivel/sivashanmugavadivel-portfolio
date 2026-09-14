@@ -333,11 +333,18 @@ window.VLOG = (function () {
        library at all. y is flipped, since latitude grows upward and screens
        grow downward.
 
-     `fromCity`/`toCity`/`via`/`osrm` — the same field names the real ride page
-       (GarageV7RideDetail) reads, so a design that wants the actual Leaflet +
-       OSRM map from /mygarage/rides/:id can hand this object straight over
-       without translating anything. `via` is the real list from garage.js:
-       the labels on the middle points here match it.
+     `fromCity`/`toCity`/`via`/`osrm` — near enough the real ride page's field
+       names (GarageV7RideDetail) that a design wanting the actual Leaflet +
+       OSRM map from /mygarage/rides/:id can hand this object over almost
+       unchanged. `via` is the real list from garage.js: the labels on the
+       middle points here match it.
+
+       ONE NAME HAS SINCE DIVERGED. The real model splits the far end in two —
+       `destCity` (where the ride was GOING) and `endCity` (where it stopped),
+       which differ on a round trip — and `toCity` below is neither: it is
+       simply the last point. Nothing here loops, so the distinction does not
+       bite, but rename it before reusing this against the live pages. See the
+       ROUND TRIPS note in src/data/rides.js.
   */
   ROUTES.forEach(r => {
     const lng = r.points.map(p => p[0]), lat = r.points.map(p => p[1])

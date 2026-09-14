@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Rides · 11 · Chronograph</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   CHRONOGRAPH — the rides on a time axis you drag and zoom.
+
+   Distance is what every other design measures. This one measures WHEN,
+   which turns out to be the more interesting axis for this garage: three
+   rides inside three weeks of August, then a gap, then One Ride sitting
+   just days away. Drag the axis to travel, wheel or pinch to change the
+   scale from days to months, and the tick marks re-granulate as you go.
+
+   The honest problem this design had to solve: two rides have no date.
+   Their `date` field is the word "Planned", not a day. Putting them at
+   the far right would be a lie (they are not scheduled for later), and
+   parsing them to zero would be a worse one. So they live in a siding
+   below the axis — on the board, clearly undated, waiting for a date to
+   be dragged onto the line.
+
+   The NOW line is live, and the gap to the next ride is counted in days.
+   ══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0f1115; --bg2:#161a21; --panel:#12151b;
+  --off:#eef1f5; --d1:rgba(238,241,245,0.64); --d2:rgba(238,241,245,0.4);
+  --d3:rgba(238,241,245,0.22); --line:rgba(238,241,245,0.1); --line2:rgba(238,241,245,0.2);
+  --cu:#d98c4a; --cu2:#f0b27f; --now:#4ade80;
+  --disp:'Bricolage Grotesque',system-ui,sans-serif; --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --ease:cubic-bezier(.2,.9,.25,1); --c:#ef4444;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--d1);font-family:var(--mono);overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(80vw 50vh at 50% -6%,rgba(217,140,74,0.07),transparent 62%)}
+::selection{background:var(--cu);color:var(--bg)}
+
+.rig{display:grid;grid-template-rows:auto minmax(0,1fr) auto;height:100svh}
+
+/* ── head ── */
+.head{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;
+  padding:clamp(14px,2.4vw,26px) clamp(14px,3vw,30px) 14px;border-bottom:1px solid var(--line)}
+.head .t{flex:1;min-width:230px}
+.head .kick{font-size:0.55rem;letter-spacing:0.3em;text-transform:uppercase;color:var(--cu);
+  margin-bottom:9px}
+.head h1{font-family:var(--disp);font-weight:800;font-size:clamp(1.5rem,4vw,2.5rem);
+  color:var(--off);letter-spacing:-0.035em;line-height:0.98}
+.head h1 em{font-style:normal;color:var(--cu2)}
+.head .next{text-align:right;flex-shrink:0}
+.head .next b{display:block;font-family:var(--disp);font-weight:800;
+  font-size:clamp(1.5rem,4vw,2.4rem);color:var(--now);line-height:0.95;
+  font-variant-numeric:tabular-nums;letter-spacing:-0.03em}
+.head .next u{display:block;text-decoration:none;font-size:0.52rem;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--d3);margin-top:6px}
+.head a{font-size:0.56rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--d2);
+  text-decoration:none;border:1px solid var(--line2);padding:8px 13px;transition:.24s;
+  flex-shrink:0}
+.head a:hover{color:var(--cu2);border-color:var(--cu)}
+
+/* ── the board ── */
+.board{position:relative;min-height:0;overflow:hidden;cursor:grab;touch-action:none;
+  display:flex;flex-direction:column}
+.board:active{cursor:grabbing}
+
+.axis{position:relative;height:52px;flex-shrink:0;border-bottom:1px solid var(--line2);
+  overflow:hidden;background:var(--panel)}
+.axis .tk{position:absolute;top:0;bottom:0;width:1px;background:var(--line)}
+.axis .tk.maj{background:var(--line2)}
+.axis .lb{position:absolute;bottom:7px;font-size:0.55rem;letter-spacing:0.1em;color:var(--d2);
+  transform:translateX(6px);white-space:nowrap;pointer-events:none}
+.axis .lb.maj{color:var(--off)}
+
+.lanes{position:relative;flex:1;min-height:0;overflow:hidden}
+.grid{position:absolute;inset:0;pointer-events:none}
+.grid .g{position:absolute;top:0;bottom:0;width:1px;background:rgba(238,241,245,0.045)}
+
+/* the live NOW line */
+.nowline{position:absolute;top:0;bottom:0;width:1px;background:var(--now);z-index:6;
+  box-shadow:0 0 14px var(--now);pointer-events:none}
+.nowline::before{content:'NOW';position:absolute;top:6px;left:6px;font-size:0.5rem;
+  letter-spacing:0.22em;color:var(--now)}
+.nowline::after{content:'';position:absolute;top:0;left:-3px;width:7px;height:7px;
+  border-radius:50%;background:var(--now)}
+
+/* an event on the axis */
+.ev{position:absolute;transform:translateX(-50%);cursor:pointer;z-index:4;
+  display:flex;flex-direction:column;align-items:center;gap:0;
+  transition:filter .3s var(--ease)}
+.ev .stem{width:1px;background:var(--ec);opacity:0.5}
+.ev .dot{width:13px;height:13px;border-radius:50%;background:var(--ec);
+  border:2.5px solid var(--bg);box-shadow:0 0 0 1px var(--ec);flex-shrink:0;
+  transition:transform .3s var(--ease)}
+.ev .flag{margin-top:7px;background:var(--bg2);border:1px solid var(--line);
+  border-left:2.5px solid var(--ec);padding:7px 10px;max-width:190px;min-width:120px;
+  transition:.3s var(--ease)}
+.ev .flag b{display:block;font-family:var(--disp);font-weight:600;font-size:0.76rem;
+  color:var(--off);line-height:1.2;letter-spacing:-0.01em;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ev .flag span{display:block;font-size:0.54rem;color:var(--d2);margin-top:4px;letter-spacing:0.06em}
+.ev:hover .dot,.ev.on .dot{transform:scale(1.42)}
+.ev:hover .flag,.ev.on .flag{background:var(--ec);border-color:var(--ec)}
+.ev:hover .flag b,.ev.on .flag b{color:var(--bg)}
+.ev:hover .flag span,.ev.on .flag span{color:rgba(0,0,0,0.66)}
+.ev.faded{opacity:0.3}
+
+/* the siding, for rides with no date at all */
+.siding{flex-shrink:0;border-top:1px dashed var(--line2);background:var(--panel);
+  padding:10px clamp(12px,2vw,20px) 12px;display:flex;align-items:center;gap:12px;
+  flex-wrap:wrap}
+.siding > k{font-size:0.5rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--d3);
+  flex-shrink:0}
+.siding .cards{display:flex;gap:8px;flex-wrap:wrap;flex:1}
+.sc{display:flex;align-items:center;gap:9px;background:var(--bg2);border:1px solid var(--line);
+  border-left:2.5px solid var(--sc);padding:7px 12px;cursor:pointer;transition:.26s var(--ease)}
+.sc:hover,.sc.on{background:var(--sc);border-color:var(--sc)}
+.sc b{font-family:var(--disp);font-weight:600;font-size:0.74rem;color:var(--off);
+  letter-spacing:-0.01em}
+.sc span{font-size:0.54rem;color:var(--d2);letter-spacing:0.06em}
+.sc:hover b,.sc.on b{color:var(--bg)}
+.sc:hover span,.sc.on span{color:rgba(0,0,0,0.66)}
+.siding em{font-style:normal;font-size:0.54rem;color:var(--d3);line-height:1.6;max-width:30ch}
+
+/* ── the detail drawer ── */
+.drawer{background:var(--panel);border-top:1px solid var(--line2);
+  padding:clamp(13px,2.2vw,20px) clamp(14px,3vw,30px) calc(14px + env(safe-area-inset-bottom));
+  display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) auto;
+  gap:clamp(14px,3vw,30px);align-items:center}
+.drawer .who .tier{display:inline-flex;align-items:center;gap:7px;font-size:0.5rem;
+  letter-spacing:0.2em;text-transform:uppercase;color:var(--tc);margin-bottom:7px}
+.drawer .who .tier i{width:6px;height:6px;border-radius:50%;background:currentColor}
+.drawer .who h2{font-family:var(--disp);font-weight:800;font-size:clamp(1.1rem,2.6vw,1.6rem);
+  color:var(--off);letter-spacing:-0.03em;line-height:1.1;margin-bottom:6px}
+.drawer .who p{font-size:0.68rem;line-height:1.7;color:var(--d1);max-width:62ch}
+.drawer .figs{display:flex;gap:0}
+.drawer .figs div{flex:1;min-width:0;padding-right:14px;border-right:1px solid var(--line)}
+.drawer .figs div:last-child{border-right:0;padding-right:0}
+.drawer .figs k{display:block;font-size:0.44rem;letter-spacing:0.18em;text-transform:uppercase;
+  color:var(--d3);margin-bottom:5px}
+.drawer .figs v{display:block;font-family:var(--disp);font-weight:800;font-size:1.2rem;
+  color:var(--off);letter-spacing:-0.02em;line-height:1}
+.drawer .go{display:flex;align-items:center;gap:8px;padding:12px 20px;background:var(--cu);
+  color:var(--bg);text-decoration:none;font-size:0.58rem;font-weight:500;letter-spacing:0.16em;
+  text-transform:uppercase;transition:.26s var(--ease);white-space:nowrap}
+.drawer .go:hover{background:var(--cu2);transform:translateY(-2px)}
+
+/* ── scale control ── */
+.scale{position:absolute;right:clamp(12px,2vw,20px);top:60px;z-index:8;display:flex;gap:1px;
+  background:var(--line);border-radius:5px;overflow:hidden}
+.scale button{padding:7px 11px;border:0;background:var(--bg2);color:var(--d2);cursor:pointer;
+  font-family:var(--mono);font-size:0.54rem;letter-spacing:0.1em;transition:.22s}
+.scale button:hover{color:var(--off)}
+.scale button.on{background:var(--cu);color:var(--bg);font-weight:500}
+.hint{position:absolute;left:clamp(12px,2vw,20px);bottom:10px;z-index:8;font-size:0.5rem;
+  letter-spacing:0.18em;text-transform:uppercase;color:var(--d3);pointer-events:none}
+
+@media(max-width:860px){
+  body{overflow:auto}
+  .rig{height:auto}
+  .board{height:56svh;min-height:330px}
+  .drawer{grid-template-columns:1fr;gap:14px}
+  .drawer .go{justify-content:center}
+  .ev .flag{max-width:140px;min-width:104px}
+}
+@media(prefers-reduced-motion:reduce){
+  *{transition-duration:.01ms!important;animation-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+
+<div class="rig">
+  <header class="head">
+    <div class="t">
+      <div class="kick">My Garage · Chronograph</div>
+      <h1>Rides &amp; <em>Journeys</em>, by when</h1>
+    </div>
+    <div class="next"><b id="cd">—</b><u id="cdl">to the next ride</u></div>
+    <a href="#">← Garage</a>
+  </header>
+
+  <section class="board" id="board">
+    <div class="axis" id="axis"></div>
+    <div class="lanes" id="lanes">
+      <div class="grid" id="grid"></div>
+      <div class="nowline" id="nowline"></div>
+      <div id="events"></div>
+    </div>
+    <div class="scale" id="scaleBtns">
+      <button data-px="14">Days</button>
+      <button data-px="4.2" class="on">Weeks</button>
+      <button data-px="1.5">Months</button>
+      <button data-px="0.5">Year</button>
+    </div>
+    <span class="hint">Drag the board · wheel to zoom</span>
+    <div class="siding">
+      <k>No date yet</k>
+      <div class="cards" id="siding"></div>
+      <em>On the board, off the line — these have a road picked but no day set.</em>
+    </div>
+  </section>
+
+  <div class="drawer">
+    <div class="who">
+      <div id="dTier"></div>
+      <h2 id="dName"></h2>
+      <p id="dStory"></p>
+    </div>
+    <div class="figs" id="dFigs"></div>
+    <a class="go" href="#">Open the ride ↗</a>
+  </div>
+</div>
+
+<script src="rides-data.js"></script>
+<script>
+const DAY = RD.DAY
+const dated = RD.rides.filter(r => r.dated).sort((a, b) => a.when - b.when)
+const undated = RD.rides.filter(r => !r.dated)
+
+let pxPerDay = 4.2          // the scale
+let originMs = 0            // the ms value pinned to x = 0
+let active = dated[0]
+
+const board = document.getElementById('board')
+const lanes = document.getElementById('lanes')
+
+/* centre the board on the span from the first ride to a month past the last */
+function home() {
+  const a = dated[0].when.getTime(), b = dated[dated.length - 1].when.getTime()
+  const mid = (a + b) / 2
+  originMs = mid - (board.clientWidth / 2) / pxPerDay * DAY
+}
+
+const xOf = ms => (ms - originMs) / DAY * pxPerDay
+const msOf = x => originMs + x / pxPerDay * DAY
+
+/* ── the countdown in the header ──────────────────────────────────────── */
+;(function () {
+  const soon = dated.filter(r => r.days >= 0).sort((a, b) => a.days - b.days)[0]
+  const el = document.getElementById('cd'), lab = document.getElementById('cdl')
+  if (!soon) { el.textContent = '—'; lab.textContent = 'nothing scheduled'; return }
+  el.textContent = soon.days === 0 ? 'TODAY' : soon.days + (soon.days === 1 ? ' day' : ' days')
+  lab.textContent = 'to ' + soon.name
+})()
+
+/* ── draw ─────────────────────────────────────────────────────────────── */
+/* Tick granularity follows the scale: at days you get days, zoomed out you
+   get weeks then months, so the axis never turns into a grey smear. */
+function step() {
+  if (pxPerDay >= 10) return { unit: 'day', n: 1 }
+  if (pxPerDay >= 3) return { unit: 'day', n: 7 }
+  if (pxPerDay >= 1) return { unit: 'month', n: 1 }
+  return { unit: 'month', n: 3 }
+}
+
+function draw() {
+  const w = board.clientWidth
+  const axis = document.getElementById('axis')
+  const grid = document.getElementById('grid')
+  const s = step()
+  let ticks = '', gridHtml = ''
+
+  const startMs = msOf(-80), endMs = msOf(w + 80)
+  const d = new Date(startMs)
+
+  if (s.unit === 'day') {
+    d.setUTCHours(0, 0, 0, 0)
+    /* land on a Monday when stepping by weeks, so the grid is stable */
+    if (s.n === 7) d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7))
+    for (let t = d.getTime(); t < endMs; t += s.n * DAY) {
+      const x = xOf(t)
+      const dt = new Date(t)
+      const maj = s.n === 7 ? dt.getUTCDate() <= 7 : dt.getUTCDay() === 1
+      ticks += `<i class="tk${maj ? ' maj' : ''}" style="left:${x.toFixed(1)}px"></i>
+        <span class="lb${maj ? ' maj' : ''}" style="left:${x.toFixed(1)}px">${
+          maj ? fmtM(dt) : dt.getUTCDate()}</span>`
+      gridHtml += `<i class="g" style="left:${x.toFixed(1)}px"></i>`
+    }
+  } else {
+    d.setUTCDate(1); d.setUTCHours(0, 0, 0, 0)
+    for (let dd = new Date(d); dd.getTime() < endMs; dd.setUTCMonth(dd.getUTCMonth() + s.n)) {
+      const x = xOf(dd.getTime())
+      const maj = dd.getUTCMonth() === 0
+      ticks += `<i class="tk${maj ? ' maj' : ''}" style="left:${x.toFixed(1)}px"></i>
+        <span class="lb${maj ? ' maj' : ''}" style="left:${x.toFixed(1)}px">${
+          maj ? dd.getUTCFullYear() : fmtM(dd)}</span>`
+      gridHtml += `<i class="g" style="left:${x.toFixed(1)}px"></i>`
+    }
+  }
+  axis.innerHTML = ticks
+  grid.innerHTML = gridHtml
+
+  /* the live now line */
+  document.getElementById('nowline').style.left = xOf(Date.now()) + 'px'
+
+  /* events, stacked so flags never sit on top of one another */
+  const laneH = lanes.clientHeight
+  const used = []
+  document.getElementById('events').innerHTML = dated.map(r => {
+    const x = xOf(r.when.getTime())
+    /* find the first row where this flag clears the previous one */
+    let row = 0
+    while (used[row] != null && x - used[row] < 200) row++
+    used[row] = x
+    const top = 30 + row * 96
+    const stem = Math.max(8, top - 18)
+    return `<div class="ev" data-id="${r.id}" style="left:${x.toFixed(1)}px;top:14px;--ec:${r.color}">
+      <span class="dot"></span>
+      <span class="stem" style="height:${(top - 26).toFixed(0)}px"></span>
+      <span class="flag">
+        <b>${r.name}</b>
+        <span>${r.date} · ${r.tbd ? 'TBD' : r.km + ' km'}</span>
+      </span>
+    </div>`.replace('top:14px', `top:${Math.min(stem, laneH - 120)}px`)
+  }).join('')
+
+  document.querySelectorAll('.ev').forEach(e =>
+    e.addEventListener('click', () => select(RD.byId(e.dataset.id))))
+  mark()
+}
+
+const MONS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const fmtM = d => MONS[d.getUTCMonth()] + (d.getUTCMonth() === 0 ? ' ' + d.getUTCFullYear() : '')
+
+/* ── the siding ───────────────────────────────────────────────────────── */
+document.getElementById('siding').innerHTML = undated.map(r =>
+  `<button class="sc" data-id="${r.id}" style="--sc:${r.color}">
+     <b>${r.name}</b><span>${r.distance}</span>
+   </button>`).join('')
+document.querySelectorAll('.sc').forEach(b =>
+  b.addEventListener('click', () => select(RD.byId(b.dataset.id))))
+
+/* ── select ───────────────────────────────────────────────────────────── */
+function mark() {
+  document.querySelectorAll('.ev').forEach(e => {
+    e.classList.toggle('on', e.dataset.id === active.id)
+    e.classList.toggle('faded', e.dataset.id !== active.id)
+  })
+  document.querySelectorAll('.sc').forEach(b =>
+    b.classList.toggle('on', b.dataset.id === active.id))
+}
+
+function select(r) {
+  active = r
+  document.documentElement.style.setProperty('--c', r.color)
+  document.documentElement.style.setProperty('--tc', r.tier.color)
+  document.getElementById('dTier').innerHTML =
+    `<span class="tier"><i></i>${r.tier.label} · ${r.date}${
+      r.dated && r.days != null
+        ? ' · ' + (r.days === 0 ? 'today'
+          : r.days > 0 ? 'in ' + r.days + ' days'
+          : Math.abs(r.days) + ' days ago')
+        : ' · no date set'}</span>`
+  document.getElementById('dName').textContent = r.name
+  document.getElementById('dStory').textContent = r.story
+  document.getElementById('dFigs').innerHTML = [
+    ['Distance', r.tbd ? 'TBD' : r.km + ' km'],
+    ['Stops', r.stops.length],
+    ['Heading', r.mapped ? r.compass : 'Open'],
+    [r.time ? 'Time' : r.estimated ? 'Est.' : 'States', r.time || r.estimate || r.states.length],
+  ].map(([k, v]) => `<div><k>${k}</k><v>${v}</v></div>`).join('')
+
+  /* bring a dated ride into view if it is off the board */
+  if (r.dated) {
+    const x = xOf(r.when.getTime())
+    if (x < 90 || x > board.clientWidth - 90) {
+      originMs = r.when.getTime() - (board.clientWidth / 2) / pxPerDay * DAY
+      draw()
+      return
+    }
+  }
+  mark()
+}
+
+/* ── pan and zoom ─────────────────────────────────────────────────────── */
+let drag = null
+board.addEventListener('pointerdown', e => {
+  if (e.target.closest('.ev,.sc,.scale,button,a')) return
+  drag = { x: e.clientX, o: originMs }
+  board.setPointerCapture(e.pointerId)
+})
+board.addEventListener('pointermove', e => {
+  if (!drag) return
+  originMs = drag.o - (e.clientX - drag.x) / pxPerDay * DAY
+  draw()
+})
+const drop = () => { drag = null }
+board.addEventListener('pointerup', drop)
+board.addEventListener('pointercancel', drop)
+
+board.addEventListener('wheel', e => {
+  e.preventDefault()
+  const b = board.getBoundingClientRect()
+  const anchor = msOf(e.clientX - b.left)     // keep the time under the cursor put
+  pxPerDay = Math.max(0.3, Math.min(26, pxPerDay * (e.deltaY > 0 ? 0.88 : 1.14)))
+  originMs = anchor - (e.clientX - b.left) / pxPerDay * DAY
+  syncScaleBtns()
+  draw()
+}, { passive: false })
+
+document.querySelectorAll('.scale button').forEach(b =>
+  b.addEventListener('click', () => {
+    const mid = msOf(board.clientWidth / 2)
+    pxPerDay = +b.dataset.px
+    originMs = mid - (board.clientWidth / 2) / pxPerDay * DAY
+    syncScaleBtns()
+    draw()
+  }))
+
+function syncScaleBtns() {
+  let best = null, bd = 1e9
+  document.querySelectorAll('.scale button').forEach(b => {
+    const d = Math.abs(Math.log(+b.dataset.px / pxPerDay))
+    if (d < bd) { bd = d; best = b }
+  })
+  document.querySelectorAll('.scale button').forEach(b => b.classList.toggle('on', b === best))
+}
+
+addEventListener('resize', draw)
+/* the now line keeps up without a redraw of everything */
+setInterval(() => { document.getElementById('nowline').style.left = xOf(Date.now()) + 'px' }, 30000)
+
+home()
+draw()
+select(dated.find(r => r.days >= 0) || dated[0])
+</script>
+</body>
+</html>

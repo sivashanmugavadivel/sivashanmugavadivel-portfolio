@@ -40,6 +40,8 @@ import 'yet-another-react-lightbox/plugins/counter.css'
 import {
   vlogs, vlogById, latestVlog, relatedVlogs, attachPosts, vlogsChannel,
 } from '../data/vlogs'
+import { placeLabel, routeLabel } from '../data/rides'
+import OrganizerMark from '../components/garage/OrganizerMark'
 import cfg from '../data/config.json'
 import { addBasemap } from '../utils/basemap'
 
@@ -227,7 +229,7 @@ function RouteMap({ ride }) {
           ? ride.mapStops
           : ride.osrm
             ? [{ lat: ride.osrm.fromLat, lng: ride.osrm.fromLng, label: ride.fromCity },
-               { lat: ride.osrm.toLat, lng: ride.osrm.toLng, label: ride.toCity }]
+               { lat: ride.osrm.toLat, lng: ride.osrm.toLng, label: ride.endCity }]
             : []
         if (chain.length < 2) { setState('straight'); return }
 
@@ -321,13 +323,13 @@ function RouteMap({ ride }) {
            named in the sidebar's `via` list; pinning all seven of the marathon
            route's would bury the map in labels.
 
-           The STOP's own label wins over `fromCity`/`toCity`. Both name the same
+           The STOP's own label wins over `fromCity`/`endCity`. Both name the same
            place, but the city fields are the ones the header and the Ride Info
            table read, so they carry the full "Royal Enfield Senthur Motors,
            Dharapuram" — and these tooltips are nowrap, so a name that long
            stretches a banner clean across the map. */
         pin(first.lat, first.lng, first.label || ride.fromCity || 'Start', true)
-        pin(last.lat, last.lng, last.label || ride.toCity || 'End', false)
+        pin(last.lat, last.lng, last.label || ride.endCity || 'End', false)
       }).catch(() => alive && setState('failed'))
     }, { rootMargin: '200px' })
 
@@ -361,7 +363,7 @@ function RouteMap({ ride }) {
                 color: colour, fontWeight: 700, marginBottom: 2,
               }}>Route Map</div>
               <div style={{ fontSize: '0.7556rem', fontWeight: 600, color: ROFF }}>
-                {ride.fromCity} → {ride.toCity}
+                {routeLabel(ride.fromCity, ride.destCity, ride.roundTrip)}
               </div>
               {ride.via?.length > 0 && (
                 <div style={{ fontSize: '0.6044rem', color: RD3, marginTop: 2 }}>
@@ -411,8 +413,15 @@ function RouteMap({ ride }) {
               ['Distance', ride.distance],
               ['Duration', ride.time || '—'],
               ['Date', ride.date],
-              ['Start', ride.fromCity || '—'],
-              ['End', ride.toCity || '—'],
+              ['Organizer',
+                <OrganizerMark key="org" name={ride.organizer} logo={ride.organizerLogo} size={18}
+                  style={{ justifyContent: 'flex-end' }} />],
+              /* Place and city together — the sidebar has the width for it,
+                 unlike the "A → B" line on the map header above. */
+              /* End, not destination — on a loop the ride finishes back at the
+                 start, and `end*` is the pair that says so. */
+              ['Start', placeLabel(ride.fromPlace, ride.fromCity)],
+              ['End', placeLabel(ride.endPlace, ride.endCity)],
               ['Mode', ride.mode],
             ].map(([k, v]) => (
               <div key={k} style={{
@@ -421,7 +430,7 @@ function RouteMap({ ride }) {
               }}>
                 <span style={{
                   fontSize: '0.6044rem', color: RD3, letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
+                  textTransform: 'uppercase', whiteSpace: 'nowrap',
                 }}>{k}</span>
                 <span style={{
                   fontSize: '0.7289rem', fontWeight: 600, color: ROFF,

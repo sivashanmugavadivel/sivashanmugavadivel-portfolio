@@ -231,6 +231,8 @@ export {
   ridesNote,
   mapCities,
   mapRoutes,
+  placeLabel,
+  routeLabel,
 } from './rides'
 
 export const dreamGarage = {

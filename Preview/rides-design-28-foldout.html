@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Rides · 28 · Foldout</title>
+<link href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500;700;800&family=Alegreya:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   FOLDOUT — the paper road map, and it actually unfolds.
+
+   Before any of this was a page it was a sheet in a tank bag, folded to
+   the panel you needed. So the rides are panels of one printed sheet,
+   and opening a ride unfolds it: the panel rotates open on its crease in
+   3D, the lit face swinging toward you while the back of the fold shows
+   through. Closing folds it flat again.
+
+   The parts that make it read as paper rather than as a flipping div:
+
+   · CREASES WEAR. Every fold line carries a bleached crease and a soft
+     shadow either side, heaviest where panels meet, exactly where a real
+     sheet goes white and furry.
+
+   · THE FOLD CASTS ON ITS NEIGHBOUR. While a panel swings, a gradient
+     rides across the panel behind it, so the moving paper throws shade.
+
+   · BOTH SIDES ARE PRINTED. The reverse of each fold carries the map
+     legend in mirror, because a real sheet is printed on both faces.
+
+   Ochre, olive and faded red on stock that has been in a pocket.
+   ══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --table:#2b2a24; --table2:#3a3830;
+  --paper:#efe6cd; --paper2:#e4d8b8; --paper3:#d8c9a3;
+  --ink:#2a2519; --ink2:#585039; --faint:#8d8468;
+  --hair:rgba(42,37,25,0.2); --olive:#6b7248; --red:#a83c2c;
+  --sans:'Alegreya Sans',system-ui,sans-serif; --serif:'Alegreya',Georgia,serif;
+  --ease:cubic-bezier(.42,.02,.2,1); --c:#ef4444;
+}
+html,body{height:100%}
+body{background:var(--table);color:var(--ink2);font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+  background-image:
+    repeating-linear-gradient(97deg,rgba(0,0,0,0.08) 0 3px,transparent 3px 9px),
+    radial-gradient(80vw 60vh at 50% -10%,rgba(255,235,190,0.06),transparent 62%)}
+::selection{background:var(--red);color:var(--paper)}
+
+.room{min-height:100svh;display:flex;flex-direction:column;
+  padding:clamp(12px,2.4vw,26px);gap:clamp(10px,1.8vw,16px)}
+
+/* ── chrome ── */
+.top{max-width:1320px;width:100%;margin:0 auto;display:flex;align-items:baseline;gap:14px;
+  flex-wrap:wrap;flex-shrink:0}
+.top h1{font-family:var(--serif);font-weight:500;color:var(--paper);
+  font-size:clamp(1.05rem,2.4vw,1.5rem);letter-spacing:-0.01em}
+.top h1 em{font-style:italic;color:#d9c48a}
+.top .sub{font-size:0.56rem;letter-spacing:0.22em;text-transform:uppercase;
+  color:rgba(239,230,205,0.36)}
+.top a{margin-left:auto;font-size:0.56rem;letter-spacing:0.16em;text-transform:uppercase;
+  color:rgba(239,230,205,0.55);text-decoration:none;border:1px solid rgba(239,230,205,0.22);
+  padding:8px 13px;transition:.24s}
+.top a:hover{background:var(--paper);color:var(--table);border-color:var(--paper)}
+
+/* ── the sheet ── */
+.sheet{flex:1;min-height:0;max-width:1320px;width:100%;margin:0 auto;
+  display:flex;perspective:2200px;perspective-origin:50% 46%;
+  background:var(--paper);border-radius:2px;overflow:hidden;
+  box-shadow:0 34px 66px -26px rgba(0,0,0,0.8),inset 0 0 60px rgba(120,100,60,0.12)}
+
+.panel{position:relative;flex:0 0 auto;width:var(--w,16.66%);min-width:0;
+  transform-style:preserve-3d;
+  transition:flex-basis .82s var(--ease),width .82s var(--ease);
+  border-right:1px solid transparent}
+.panel:last-child{border-right:0}
+
+/* the crease between panels: a bleached line with shade either side */
+.panel::after{content:'';position:absolute;right:-1px;top:0;bottom:0;width:15px;z-index:9;
+  pointer-events:none;transform:translateX(50%);
+  background:linear-gradient(90deg,rgba(42,37,25,0.11) 0%,rgba(255,252,240,0.72) 46%,
+    rgba(255,252,240,0.72) 54%,rgba(42,37,25,0.11) 100%)}
+.panel:last-child::after{display:none}
+
+/* the folded face — what you see when the panel is shut */
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  background:var(--paper);overflow:hidden;cursor:pointer;
+  transform-origin:left center;
+  transition:transform .82s var(--ease),filter .82s var(--ease)}
+.panel.open .face{pointer-events:none}
+
+/* the printed underside, revealed as the fold swings */
+.back{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  background:var(--paper2);overflow:hidden;transform-origin:left center;
+  transform:rotateY(180deg);
+  display:flex;align-items:center;justify-content:center;padding:12px;
+  background-image:repeating-linear-gradient(0deg,rgba(42,37,25,0.03) 0 1px,transparent 1px 5px)}
+.back .legend{transform:scaleX(-1);text-align:center;opacity:0.5}
+.back .legend b{display:block;font-family:var(--serif);font-size:0.8rem;color:var(--ink);
+  margin-bottom:6px}
+.back .legend span{display:block;font-size:0.5rem;letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--faint);line-height:2}
+
+/* shut panel: a vertical spine label plus the ride's tint */
+.shut{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:space-between;padding:16px 8px;gap:10px;
+  background:linear-gradient(180deg,rgba(255,255,255,0.4),transparent 40%),var(--tint)}
+.panel.open .shut{opacity:0;transition:opacity .3s}
+.shut .n{font-family:var(--serif);font-size:1.05rem;color:var(--ink);opacity:0.55;
+  font-variant-numeric:tabular-nums}
+.shut .nm{writing-mode:vertical-rl;text-orientation:mixed;transform:rotate(180deg);
+  font-family:var(--serif);font-weight:500;font-size:clamp(0.9rem,1.4vw,1.16rem);
+  color:var(--ink);letter-spacing:0.01em;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;max-height:100%}
+.shut .km{writing-mode:vertical-rl;font-size:0.54rem;letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--ink2)}
+.shut .pin{width:9px;height:9px;border-radius:50%;background:var(--pc);flex-shrink:0;
+  box-shadow:0 0 0 3px rgba(239,230,205,0.7)}
+
+/* ── the opened spread ── */
+.spread{position:absolute;inset:0;z-index:4;display:flex;opacity:0;pointer-events:none;
+  transition:opacity .5s var(--ease) .2s}
+.panel.open .spread{opacity:1;pointer-events:auto}
+
+.spread .map{flex:1 1 52%;position:relative;min-width:0;border-right:1px dashed var(--hair)}
+.spread .map svg{position:absolute;inset:0;width:100%;height:100%}
+.spread .map .grid{position:absolute;inset:0;pointer-events:none;
+  background-image:linear-gradient(rgba(42,37,25,0.055) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(42,37,25,0.055) 1px,transparent 1px);
+  background-size:34px 34px}
+.spread .map .stampbox{position:absolute;left:14px;top:12px;border:1.6px solid var(--red);
+  color:var(--red);padding:4px 9px;font-size:0.5rem;font-weight:700;letter-spacing:0.16em;
+  text-transform:uppercase;transform:rotate(-4deg);opacity:0.8}
+.spread .map .scalebar{position:absolute;left:14px;bottom:12px;font-size:0.5rem;
+  letter-spacing:0.16em;text-transform:uppercase;color:var(--faint)}
+.spread .map .scalebar i{display:block;width:88px;height:5px;border:1px solid var(--hair);
+  border-top:0;margin-top:4px;
+  background:repeating-linear-gradient(90deg,var(--hair) 0 1px,transparent 1px 25%)}
+
+.spread .read{flex:1 1 48%;min-width:0;padding:clamp(16px,2.4vw,34px);display:flex;
+  flex-direction:column;overflow-y:auto}
+.spread .read::-webkit-scrollbar{width:4px}
+.spread .read::-webkit-scrollbar-thumb{background:var(--hair)}
+.spread .tier{display:inline-flex;align-items:center;gap:8px;font-size:0.52rem;letter-spacing:0.2em;
+  text-transform:uppercase;color:var(--tc);margin-bottom:12px}
+.spread .tier i{width:7px;height:7px;border-radius:50%;background:currentColor}
+.spread h2{font-family:var(--serif);font-weight:500;color:var(--ink);
+  font-size:clamp(1.3rem,2.8vw,2rem);line-height:1.1;letter-spacing:-0.018em;margin-bottom:9px}
+.spread .rt{font-size:0.6rem;letter-spacing:0.13em;text-transform:uppercase;color:var(--faint);
+  line-height:1.85;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--hair)}
+.spread .rt b{color:var(--red)}
+.spread p{font-family:var(--serif);font-size:clamp(0.95rem,1.5vw,1.06rem);line-height:1.72;
+  color:var(--ink2);margin-bottom:18px}
+.spread .figs{display:flex;flex-wrap:wrap;gap:0;margin-bottom:18px}
+.spread .figs div{padding-right:18px;margin-right:18px;border-right:1px solid var(--hair)}
+.spread .figs div:last-child{border-right:0;margin-right:0;padding-right:0}
+.spread .figs k{display:block;font-size:0.46rem;letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--faint);margin-bottom:5px}
+.spread .figs v{display:block;font-family:var(--serif);font-weight:500;font-size:1.25rem;
+  color:var(--ink);line-height:1}
+.spread .tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:18px}
+.spread .tags u{text-decoration:none;font-size:0.5rem;letter-spacing:0.13em;text-transform:uppercase;
+  border:1px solid var(--hair);padding:4px 9px;color:var(--ink2)}
+.spread .row{margin-top:auto;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.spread .go{display:inline-flex;align-items:center;gap:9px;font-size:0.56rem;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--paper);background:var(--ink);text-decoration:none;
+  padding:12px 20px;transition:.26s var(--ease)}
+.spread .go:hover{background:var(--red);transform:translate(2px,-2px);
+  box-shadow:-3px 3px 0 rgba(42,37,25,0.3)}
+.spread .fold{font-size:0.54rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--faint);
+  background:none;border:0;border-bottom:1px solid var(--hair);cursor:pointer;padding:4px 0;
+  font-family:var(--sans);transition:.22s}
+.spread .fold:hover{color:var(--red);border-color:var(--red)}
+
+/* ── the strip of tabs along the bottom ── */
+.tabs{max-width:1320px;width:100%;margin:0 auto;display:flex;gap:2px;flex-shrink:0}
+.tabs button{flex:1;padding:10px 8px;border:0;background:rgba(239,230,205,0.13);cursor:pointer;
+  font-family:var(--sans);font-size:0.52rem;letter-spacing:0.12em;text-transform:uppercase;
+  color:rgba(239,230,205,0.55);transition:.26s var(--ease);position:relative;overflow:hidden;
+  white-space:nowrap;text-overflow:ellipsis}
+.tabs button:hover{background:rgba(239,230,205,0.28);color:var(--table)}
+.tabs button.on{background:var(--tb);color:#fff}
+
+@media(max-width:900px){
+  body{overflow-y:auto}
+  .room{height:auto}
+  .sheet{flex-direction:column;perspective:none;min-height:0}
+  .panel{width:100%!important;flex:0 0 auto}
+  .panel:not(.open){height:56px}
+  .panel.open{height:auto;min-height:72svh}
+  .panel::after{right:0;left:0;top:auto;bottom:-1px;width:auto;height:15px;
+    transform:translateY(50%);
+    background:linear-gradient(180deg,rgba(42,37,25,0.11),rgba(255,252,240,0.72) 46%,
+      rgba(255,252,240,0.72) 54%,rgba(42,37,25,0.11))}
+  .face,.back{position:relative;transform:none!important}
+  .back{display:none}
+  .shut{position:relative;flex-direction:row;padding:0 16px;justify-content:flex-start;gap:14px;
+    height:56px}
+  .shut .nm{writing-mode:horizontal-tb;transform:none;font-size:1rem}
+  .shut .km{writing-mode:horizontal-tb;margin-left:auto}
+  .spread{position:relative;flex-direction:column;opacity:1;pointer-events:auto}
+  .panel:not(.open) .spread{display:none}
+  .spread .map{flex:0 0 220px;border-right:0;border-bottom:1px dashed var(--hair)}
+  .tabs button{font-size:0.44rem}
+}
+@media(prefers-reduced-motion:reduce){
+  *{transition-duration:.01ms!important}
+  .face,.back{transform:none!important}
+}
+</style>
+</head>
+<body>
+
+<div class="room">
+  <div class="top">
+    <h1>Rides &amp; <em>Journeys</em></h1>
+    <span class="sub" id="sub"></span>
+    <a href="#">← Garage</a>
+  </div>
+
+  <div class="sheet" id="sheet"></div>
+
+  <div class="tabs" id="tabs"></div>
+</div>
+
+<script src="rides-data.js"></script>
+<script>
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches
+const S = RD.summary
+document.getElementById('sub').textContent =
+  `One sheet · ${RD.rides.length} panels · ${S.doneKm} km ridden, ${S.aheadKm} km ahead`
+
+/* ── the printed map on an open panel ─────────────────────────────────── */
+const MW = 520, MH = 560
+
+function map(r) {
+  if (!r.mapped) {
+    return `<svg viewBox="0 0 ${MW} ${MH}" preserveAspectRatio="xMidYMid meet">
+      ${Array.from({ length: 6 }, (_, i) =>
+        `<circle cx="${MW / 2}" cy="${MH / 2}" r="${34 + i * 36}" fill="none"
+          stroke="rgba(42,37,25,${(0.3 - i * 0.04).toFixed(2)})" stroke-width="1"
+          stroke-dasharray="${i % 2 ? '3 7' : 'none'}"/>`).join('')}
+      <circle cx="${MW / 2}" cy="${MH / 2}" r="8" fill="${r.color}"
+        stroke="#efe6cd" stroke-width="2.4"/>
+      <text x="${MW / 2}" y="${MH / 2 + 34}" text-anchor="middle"
+        font-family="Alegreya Sans,sans-serif" font-size="11" letter-spacing="3"
+        fill="rgba(42,37,25,0.5)">ROUTE NOT SET</text></svg>`
+  }
+  const P = RD.one(r, MW, MH, 76)
+  const d = RD.curve(P.pts)
+  return `<svg viewBox="0 0 ${MW} ${MH}" preserveAspectRatio="xMidYMid meet">
+    <!-- the road: a casing stroke with the colour laid inside it, the way
+         a printed map prints a road -->
+    <path d="${d}" fill="none" stroke="rgba(42,37,25,0.55)" stroke-width="9"
+      stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="${d}" fill="none" stroke="${r.color}" stroke-width="5.4"
+      stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="${d}" fill="none" stroke="rgba(255,252,240,0.45)" stroke-width="1.2"
+      stroke-dasharray="6 8" stroke-linecap="round"/>
+    ${P.pts.map((p, i) => {
+      const s = r.stops[i]
+      const edge = i === 0 || i === P.pts.length - 1
+      const right = p[0] < MW * 0.6
+      return `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${edge ? 7 : 4.4}"
+          fill="#efe6cd" stroke="rgba(42,37,25,0.8)" stroke-width="${edge ? 2.6 : 1.8}"/>
+        ${edge ? `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3"
+          fill="${r.color}"/>` : ''}
+        <text x="${(p[0] + (right ? 12 : -12)).toFixed(1)}" y="${(p[1] + 4).toFixed(1)}"
+          text-anchor="${right ? 'start' : 'end'}" font-family="Alegreya Sans,sans-serif"
+          font-size="10.5" font-weight="500" fill="rgba(42,37,25,0.82)">${s.label}</text>`
+    }).join('')}</svg>`
+}
+
+/* ── build the sheet ──────────────────────────────────────────────────── */
+document.getElementById('sheet').innerHTML = RD.rides.map((r, i) => {
+  const dest = r.tbd && /decided/i.test(r.toCity) ? 'anywhere' : r.toCity
+  return `<section class="panel" data-i="${i}"
+      style="--tint:${r.color}1a;--pc:${r.color};--tc:${r.tier.color}">
+    <div class="back">
+      <div class="legend">
+        <b>Sheet ${i + 1}</b>
+        <span>Kariya Kattu Valasu</span>
+        <span>${r.states.join(' · ')}</span>
+        <span>Scale approx.</span>
+      </div>
+    </div>
+    <div class="face" tabindex="0" role="button" aria-label="Unfold ${r.name}">
+      <div class="shut">
+        <span class="n">${String(i + 1).padStart(2, '0')}</span>
+        <span class="nm">${r.name}</span>
+        <span class="km">${r.distance}</span>
+        <span class="pin"></span>
+      </div>
+    </div>
+    <div class="spread">
+      <div class="map">
+        <div class="grid"></div>
+        ${map(r)}
+        <span class="stampbox">${r.tier.label}</span>
+        <span class="scalebar">${r.mapped ? r.crow + ' km straight-line' : 'no course'}<i></i></span>
+      </div>
+      <div class="read">
+        <span class="tier"><i></i>${r.tier.label} · ${r.date}</span>
+        <h2>${r.name}</h2>
+        <div class="rt">${r.fromCity} <b>→</b> ${dest}${
+          r.via.length ? '<br/>via ' + r.via.join(' · ') : ''}</div>
+        <p>${r.story}</p>
+        <div class="figs">
+          <div><k>Distance</k><v>${r.distance}</v></div>
+          <div><k>Heading</k><v>${r.mapped ? r.compass : 'Open'}</v></div>
+          <div><k>Waypoints</k><v>${r.stops.length}</v></div>
+          <div><k>${r.time ? 'Saddle' : r.estimated ? 'Est.' : 'States'}</k>
+            <v>${r.time || r.estimate || r.states.length}</v></div>
+        </div>
+        <div class="tags">${r.highlights.map(h => `<u>${h}</u>`).join('')}</div>
+        <div class="row">
+          <a class="go" href="#">Open the ride</a>
+          <button class="fold" data-fold>Fold away ✕</button>
+        </div>
+      </div>
+    </div>
+  </section>`
+}).join('')
+
+document.getElementById('tabs').innerHTML = RD.rides.map((r, i) =>
+  `<button data-i="${i}" style="--tb:${r.color}" title="${r.name}">${
+    r.name.length > 20 ? r.name.slice(0, 19) + '…' : r.name}</button>`).join('')
+
+/* ── the fold ─────────────────────────────────────────────────────────── */
+/* A shut panel keeps a narrow share; the open one takes what is left. The
+   face rotates open on its left crease and the printed back shows through
+   as it passes vertical. */
+const panels = [...document.querySelectorAll('.panel')]
+const SHUT = 8      // % of the sheet each shut panel keeps
+
+function open(i) {
+  panels.forEach((p, k) => {
+    const isOpen = k === i
+    p.classList.toggle('open', isOpen)
+    p.style.setProperty('--w', isOpen
+      ? (100 - SHUT * (panels.length - 1)) + '%'
+      : SHUT + '%')
+    const face = p.querySelector('.face')
+    const back = p.querySelector('.back')
+    if (!REDUCED) {
+      face.style.transform = isOpen ? 'rotateY(-168deg)' : 'rotateY(0deg)'
+      face.style.filter = isOpen ? 'brightness(.82)' : 'none'
+      back.style.transform = isOpen ? 'rotateY(12deg)' : 'rotateY(180deg)'
+    }
+  })
+  document.querySelectorAll('.tabs button').forEach((b, k) => b.classList.toggle('on', k === i))
+  document.documentElement.style.setProperty('--c', RD.rides[i].color)
+}
+
+function foldAll() {
+  panels.forEach(p => {
+    p.classList.remove('open')
+    p.style.setProperty('--w', (100 / panels.length) + '%')
+    if (!REDUCED) {
+      p.querySelector('.face').style.transform = 'rotateY(0deg)'
+      p.querySelector('.face').style.filter = 'none'
+      p.querySelector('.back').style.transform = 'rotateY(180deg)'
+    }
+  })
+  document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('on'))
+}
+
+panels.forEach((p, i) => {
+  const face = p.querySelector('.face')
+  face.addEventListener('click', () => open(i))
+  face.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(i) }
+    if (e.key === 'ArrowRight') { open(Math.min(panels.length - 1, i + 1)); e.preventDefault() }
+    if (e.key === 'ArrowLeft') { open(Math.max(0, i - 1)); e.preventDefault() }
+  })
+  p.querySelector('[data-fold]').addEventListener('click', foldAll)
+})
+
+document.querySelectorAll('.tabs button').forEach(b =>
+  b.addEventListener('click', () => open(+b.dataset.i)))
+
+addEventListener('keydown', e => { if (e.key === 'Escape') foldAll() })
+
+foldAll()
+open(0)
+</script>
+</body>
+</html>

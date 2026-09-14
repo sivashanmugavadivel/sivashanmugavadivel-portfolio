@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Rides · 18 · Milestones</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Roboto+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   MILESTONES — the same six rides, reframed as progress.
+
+   Every other design answers "what are the rides". This one answers
+   "how far in am I", which for this garage is the more honest question:
+   168 km ridden against 600 km already planned means most of the list is
+   still ahead, and a layout that leads with a grid of cards quietly hides
+   that. Here it is the first thing on the page.
+
+   Nothing is invented to make the numbers look better. The ring is real
+   ridden-vs-planned distance. The milestones are round-number distance
+   marks with the next one named and counted down to. The streak is the
+   actual gap between ride dates in August. And the two "locked" states
+   are locked because the data genuinely has no entry yet — no photos on
+   any ride, and only two states visited — not because a fake goal was
+   invented to leave something greyed out.
+
+   Counters animate from zero on load and the ring draws itself, because
+   progress is the subject and it should look like it is moving.
+   ══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0812; --bg2:#120f1f; --card:#171329; --card2:#1e1934;
+  --off:#f5f2ff; --d1:rgba(245,242,255,0.66); --d2:rgba(245,242,255,0.42);
+  --d3:rgba(245,242,255,0.24); --bd:rgba(245,242,255,0.1); --bd2:rgba(245,242,255,0.2);
+  --vi:#a78bfa; --cy:#22d3ee; --gr:#34d399; --am:#fbbf24; --pk:#f472b6;
+  --sans:'Outfit',system-ui,sans-serif; --mono:'Roboto Mono',ui-monospace,monospace;
+  --ease:cubic-bezier(.2,.9,.25,1); --c:#a78bfa;
+}
+body{background:var(--bg);color:var(--d1);font-family:var(--sans);min-height:100vh;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+  background-image:
+    radial-gradient(66vw 56vh at 82% -6%,rgba(167,139,250,0.16),transparent 62%),
+    radial-gradient(58vw 52vh at 6% 96%,rgba(34,211,238,0.12),transparent 64%)}
+::selection{background:var(--vi);color:var(--bg)}
+
+.wrap{max-width:1220px;margin:0 auto;
+  padding:clamp(18px,3.4vw,44px) clamp(14px,3vw,30px) calc(60px + env(safe-area-inset-bottom))}
+
+/* ── head ── */
+.head{display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;margin-bottom:clamp(18px,3vw,30px)}
+.head .t{flex:1;min-width:240px}
+.head .kick{font-family:var(--mono);font-size:0.56rem;letter-spacing:0.3em;text-transform:uppercase;
+  color:var(--vi);margin-bottom:10px}
+.head h1{font-weight:800;font-size:clamp(1.8rem,5.4vw,3.2rem);color:var(--off);
+  letter-spacing:-0.042em;line-height:0.98}
+.head h1 em{font-style:normal;
+  background:linear-gradient(96deg,var(--vi),var(--cy));-webkit-background-clip:text;
+  background-clip:text;color:transparent}
+.head a{font-family:var(--mono);font-size:0.58rem;letter-spacing:0.16em;text-transform:uppercase;
+  color:var(--d2);text-decoration:none;border:1px solid var(--bd2);border-radius:99px;
+  padding:9px 15px;transition:.24s var(--ease)}
+.head a:hover{color:var(--bg);background:var(--off);border-color:var(--off)}
+
+/* ── the hero row ── */
+.hero{display:grid;grid-template-columns:minmax(0,auto) minmax(0,1fr);gap:clamp(16px,3vw,34px);
+  align-items:center;background:var(--card);border:1px solid var(--bd);border-radius:22px;
+  padding:clamp(18px,3vw,34px);margin-bottom:clamp(14px,2.4vw,22px);position:relative;
+  overflow:hidden}
+.hero::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(70% 90% at 100% 0%,rgba(167,139,250,0.12),transparent 62%)}
+
+.ring{position:relative;width:clamp(150px,24vw,208px);aspect-ratio:1;flex-shrink:0}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .trk{fill:none;stroke:rgba(245,242,255,0.08);stroke-width:13}
+.ring .arc{fill:none;stroke-width:13;stroke-linecap:round;
+  transition:stroke-dashoffset 1.6s var(--ease)}
+.ring .mid{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:3px;text-align:center}
+.ring .mid b{font-weight:800;font-size:clamp(1.7rem,4.4vw,2.5rem);color:var(--off);
+  letter-spacing:-0.04em;line-height:1;font-variant-numeric:tabular-nums}
+.ring .mid b small{font-size:0.4em;color:var(--d2);font-weight:500;margin-left:2px}
+.ring .mid u{text-decoration:none;font-family:var(--mono);font-size:0.5rem;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--d3)}
+
+.heroTx h2{font-weight:700;font-size:clamp(1.1rem,2.6vw,1.55rem);color:var(--off);
+  letter-spacing:-0.028em;line-height:1.18;margin-bottom:9px}
+.heroTx p{font-size:0.86rem;line-height:1.75;color:var(--d1);max-width:56ch;margin-bottom:16px}
+.splits{display:flex;flex-wrap:wrap;gap:0}
+.splits div{padding-right:20px;margin-right:20px;border-right:1px solid var(--bd)}
+.splits div:last-child{border-right:0;margin-right:0;padding-right:0}
+.splits k{display:block;font-family:var(--mono);font-size:0.46rem;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--d3);margin-bottom:5px}
+.splits v{display:block;font-weight:700;font-size:1.42rem;color:var(--off);line-height:1;
+  font-variant-numeric:tabular-nums}
+.splits v small{font-size:0.44em;color:var(--d2);font-weight:500;margin-left:3px}
+
+/* ── the milestone track ── */
+.sec{margin-bottom:clamp(14px,2.4vw,22px)}
+.secHead{display:flex;align-items:baseline;gap:11px;margin-bottom:12px;flex-wrap:wrap}
+.secHead h3{font-family:var(--mono);font-size:0.58rem;letter-spacing:0.24em;text-transform:uppercase;
+  color:var(--vi)}
+.secHead span{font-family:var(--mono);font-size:0.56rem;color:var(--d3);margin-left:auto}
+
+.track{background:var(--card);border:1px solid var(--bd);border-radius:18px;
+  padding:clamp(18px,2.6vw,26px) clamp(16px,2.4vw,26px) clamp(14px,2vw,20px)}
+.bar{position:relative;height:7px;background:rgba(245,242,255,0.08);border-radius:5px;
+  margin:36px 0 14px}
+.bar .fill{position:absolute;left:0;top:0;bottom:0;border-radius:5px;width:0;
+  background:linear-gradient(90deg,var(--gr),var(--cy));
+  box-shadow:0 0 20px rgba(34,211,238,0.5);transition:width 1.8s var(--ease)}
+.bar .ms{position:absolute;top:50%;transform:translate(-50%,-50%);text-align:center}
+.bar .ms i{display:block;width:15px;height:15px;border-radius:50%;background:var(--bg2);
+  border:2.5px solid rgba(245,242,255,0.2);margin:0 auto;transition:.5s var(--ease)}
+.bar .ms.hit i{border-color:var(--gr);background:var(--gr);
+  box-shadow:0 0 16px var(--gr)}
+.bar .ms.nextup i{border-color:var(--am);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 7px rgba(251,191,36,0.14)}}
+.bar .ms b{position:absolute;top:-30px;left:50%;transform:translateX(-50%);white-space:nowrap;
+  font-family:var(--mono);font-size:0.56rem;color:var(--d2);font-weight:400}
+.bar .ms.hit b{color:var(--gr)}
+.bar .ms.nextup b{color:var(--am)}
+.bar .ms u{position:absolute;top:24px;left:50%;transform:translateX(-50%);white-space:nowrap;
+  text-decoration:none;font-size:0.62rem;color:var(--d3)}
+
+.nextline{display:flex;align-items:center;gap:11px;flex-wrap:wrap;font-size:0.82rem;
+  color:var(--d1);padding-top:12px;border-top:1px solid var(--bd)}
+.nextline b{color:var(--am);font-weight:700}
+.nextline .chip{font-family:var(--mono);font-size:0.56rem;letter-spacing:0.12em;
+  text-transform:uppercase;color:var(--am);border:1px solid currentColor;border-radius:99px;
+  padding:4px 10px}
+
+/* ── the badge grid ── */
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:11px}
+.badge{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:16px;
+  position:relative;overflow:hidden;transition:.35s var(--ease)}
+.badge:hover{transform:translateY(-3px);border-color:var(--bc)}
+.badge::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(70% 70% at 100% 0%,var(--bc),transparent 68%);opacity:0.12}
+.badge .ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;
+  font-size:1.05rem;background:var(--bc);color:var(--bg);margin-bottom:11px;font-weight:700}
+.badge h4{font-weight:700;font-size:0.9rem;color:var(--off);letter-spacing:-0.02em;
+  margin-bottom:5px;line-height:1.2}
+.badge p{font-size:0.72rem;line-height:1.6;color:var(--d2)}
+.badge .val{font-weight:800;font-size:1.5rem;color:var(--bc);line-height:1;margin-bottom:4px;
+  font-variant-numeric:tabular-nums;letter-spacing:-0.03em}
+/* locked: genuinely no data yet, not a fake goal */
+.badge.locked{opacity:0.55}
+.badge.locked .ic{background:rgba(245,242,255,0.09);color:var(--d3)}
+.badge.locked .val{color:var(--d3)}
+.badge.locked::after{opacity:0}
+.badge .lock{position:absolute;top:14px;right:14px;font-size:0.62rem;color:var(--d3)}
+
+/* ── the ride ledger ── */
+.rides{display:flex;flex-direction:column;gap:8px}
+.rr{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center;
+  background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:13px 16px;
+  text-decoration:none;color:inherit;transition:.3s var(--ease);position:relative;overflow:hidden}
+.rr:hover{transform:translateX(4px);border-color:var(--rc)}
+.rr .dot{width:11px;height:11px;border-radius:50%;background:var(--rc);flex-shrink:0;
+  box-shadow:0 0 12px var(--rc)}
+.rr .mid2{min-width:0}
+.rr h4{font-weight:600;font-size:0.92rem;color:var(--off);letter-spacing:-0.02em;line-height:1.2;
+  margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rr .m{font-family:var(--mono);font-size:0.58rem;color:var(--d3);letter-spacing:0.05em}
+.rr .m em{font-style:normal;color:var(--rc)}
+.rr .right{text-align:right;flex-shrink:0}
+.rr .right b{display:block;font-weight:700;font-size:1.02rem;color:var(--off);line-height:1;
+  font-variant-numeric:tabular-nums}
+.rr .right u{display:block;text-decoration:none;font-family:var(--mono);font-size:0.5rem;
+  letter-spacing:0.14em;text-transform:uppercase;color:var(--d3);margin-top:5px}
+/* the share of total distance, as a hairline under the row */
+.rr .share{position:absolute;left:0;bottom:0;height:2px;background:var(--rc);width:0;
+  transition:width 1.4s var(--ease);opacity:0.6}
+
+.cols{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);
+  gap:clamp(14px,2.4vw,22px);align-items:start}
+
+@media(max-width:820px){
+  .hero{grid-template-columns:1fr;justify-items:center;text-align:center}
+  .heroTx p{margin-left:auto;margin-right:auto}
+  .splits{justify-content:center}
+  .cols{grid-template-columns:1fr}
+  .bar .ms u{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="head">
+    <div class="t">
+      <div class="kick">My Garage · Bear 650 · Kangayam</div>
+      <h1>Rides &amp; <em>Journeys</em></h1>
+    </div>
+    <a href="#">← Garage</a>
+  </header>
+
+  <section class="hero">
+    <div class="ring">
+      <svg viewBox="0 0 200 200">
+        <circle class="trk" cx="100" cy="100" r="82"/>
+        <defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#34d399"/><stop offset="1" stop-color="#22d3ee"/>
+        </linearGradient></defs>
+        <circle class="arc" id="arc" cx="100" cy="100" r="82" stroke="url(#rg)"/>
+      </svg>
+      <div class="mid">
+        <b id="pct">0<small>%</small></b>
+        <u>of the plan ridden</u>
+      </div>
+    </div>
+    <div class="heroTx">
+      <h2 id="heroH"></h2>
+      <p id="heroP"></p>
+      <div class="splits" id="splits"></div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="secHead"><h3>Distance milestones</h3><span id="msNote"></span></div>
+    <div class="track">
+      <div class="bar"><div class="fill" id="fill"></div><div id="msWrap"></div></div>
+      <div class="nextline" id="nextline"></div>
+    </div>
+  </section>
+
+  <div class="cols">
+    <section class="sec">
+      <div class="secHead"><h3>The six</h3><span id="ridesNote"></span></div>
+      <div class="rides" id="rides"></div>
+    </section>
+
+    <section class="sec">
+      <div class="secHead"><h3>Unlocked</h3><span id="bNote"></span></div>
+      <div class="badges" id="badges"></div>
+    </section>
+  </div>
+</div>
+
+<script src="rides-data.js"></script>
+<script>
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches
+const S = RD.summary
+const TOTAL = S.doneKm + S.aheadKm          // everything on the books
+const pct = TOTAL ? S.doneKm / TOTAL : 0
+
+/* ── hero ─────────────────────────────────────────────────────────────── */
+document.getElementById('heroH').textContent =
+  `${S.doneKm} km behind, ${S.aheadKm} km already planned`
+document.getElementById('heroP').textContent =
+  `${RD.tally}. Most of what is written down is still ahead of the front wheel — ` +
+  `the ring is real ridden distance against the distance already committed to, not a target invented to fill it.`
+
+document.getElementById('splits').innerHTML = [
+  ['Rides done', S.done, '/ ' + RD.rides.length],
+  ['Ridden', S.doneKm, 'km'],
+  ['Planned', S.aheadKm, 'km'],
+  ['Waypoints', S.stopCount, ''],
+  ['States', S.stateCount, ''],
+].map(([k, v, u]) => `<div><k>${k}</k><v data-to="${v}">0${u ? `<small>${u}</small>` : ''}</v></div>`).join('')
+
+/* ── milestones ───────────────────────────────────────────────────────── */
+/* Round marks across the committed distance. The next one is named and
+   counted down to; anything past the ridden figure is still ahead. */
+const MARKS = [50, 100, 168, 250, 400, 600, 768].filter(m => m <= TOTAL)
+if (!MARKS.includes(TOTAL)) MARKS.push(TOTAL)
+const next = MARKS.find(m => m > S.doneKm)
+
+document.getElementById('msWrap').innerHTML = MARKS.map(m => {
+  const hit = m <= S.doneKm
+  const isNext = m === next
+  const label = m === S.doneKm ? 'here' : m + ' km'
+  /* what ride would carry you past this mark */
+  return `<span class="ms ${hit ? 'hit' : ''} ${isNext ? 'nextup' : ''}"
+      style="left:${(m / TOTAL * 100).toFixed(2)}%">
+      <b>${label}</b><i></i><u>${hit ? '✓' : ''}</u>
+    </span>`
+}).join('')
+
+document.getElementById('msNote').textContent =
+  `${MARKS.filter(m => m <= S.doneKm).length} of ${MARKS.length} passed`
+
+;(function () {
+  const el = document.getElementById('nextline')
+  if (!next) { el.innerHTML = '<b>Every milestone passed.</b>'; return }
+  const gap = next - S.doneKm
+  /* which single planned ride would clear it on its own */
+  const clears = RD.rides.filter(r => !r.done && !r.tbd && r.km >= gap)
+    .sort((a, b) => a.km - b.km)[0]
+  el.innerHTML = `<span class="chip">Next mark</span>
+    <span><b>${gap} km</b> to ${next} km.
+    ${clears ? `<strong style="color:var(--off);font-weight:600">${clears.name}</strong>
+      (${clears.km} km) clears it in one ride.`
+      : 'No single planned ride covers that on its own.'}</span>`
+})()
+
+/* ── badges ───────────────────────────────────────────────────────────── */
+/* Locked ones are locked because the data has no entry yet — not because
+   a goal was invented so something could be greyed out. */
+const soon = RD.rides.filter(r => r.dated && r.days >= 0).sort((a, b) => a.days - b.days)[0]
+const net = RD.network()
+const withPhotos = RD.rides.filter(r => r.photos.length).length
+const rated = RD.rides.filter(r => r.rating).length
+
+const BADGES = [
+  { ic: '◎', c: '#34d399', val: S.done, h: 'Rides completed',
+    p: `${S.done} of ${RD.rides.length} on the books have actually been ridden.` },
+  { ic: '⟡', c: '#22d3ee', val: S.longest ? S.longest.km + ' km' : '—', h: 'Longest ridden',
+    p: S.longest ? S.longest.name : 'Nothing ridden yet.' },
+  { ic: '✦', c: '#a78bfa', val: net.hub.lines, h: 'Busiest place',
+    p: `${net.hub.label} is on ${net.hub.lines} of the ${RD.rides.length} rides.` },
+  { ic: '⌁', c: '#fbbf24', val: soon ? (soon.days === 0 ? 'Today' : soon.days + 'd') : '—',
+    h: 'Next ride', p: soon ? `${soon.name}, ${soon.date}.` : 'Nothing dated ahead.' },
+  { ic: '◈', c: '#f472b6', val: S.stateCount, h: 'States touched',
+    p: S.states.join(' and ') + '.', locked: S.stateCount < 2 },
+  { ic: '⬡', c: '#818cf8', val: S.legCount, h: 'Legs surveyed',
+    p: `${S.stopCount} unique places joined by ${S.legCount} legs with real coordinates.` },
+  { ic: '◐', c: '#94a3b8', val: withPhotos, h: 'Rides with photos',
+    p: 'No ride carries a photo yet — every design here works without them.',
+    locked: withPhotos === 0 },
+  { ic: '★', c: '#94a3b8', val: rated, h: 'Rides rated',
+    p: 'No ride has a rating yet. The field exists and is empty on all six.',
+    locked: rated === 0 },
+]
+
+document.getElementById('badges').innerHTML = BADGES.map(b => `
+  <div class="badge ${b.locked ? 'locked' : ''}" style="--bc:${b.c}">
+    ${b.locked ? '<span class="lock">🔒</span>' : ''}
+    <div class="ic">${b.ic}</div>
+    <div class="val">${b.val}</div>
+    <h4>${b.h}</h4>
+    <p>${b.p}</p>
+  </div>`).join('')
+document.getElementById('bNote').textContent =
+  `${BADGES.filter(b => !b.locked).length} of ${BADGES.length}`
+
+/* ── the ledger ───────────────────────────────────────────────────────── */
+const maxKm = Math.max(...RD.rides.map(r => r.km)) || 1
+document.getElementById('ridesNote').textContent = `${S.done} ridden · ${S.open} ahead`
+document.getElementById('rides').innerHTML = RD.rides.map(r => `
+  <a class="rr" href="#" style="--rc:${r.color}">
+    <span class="dot"></span>
+    <span class="mid2">
+      <h4>${r.name}</h4>
+      <span class="m"><em>${r.tier.label}</em> · ${r.date} · ${
+        r.mapped ? r.compass + ' ' + r.bearing.toFixed(0) + '°' : 'course open'} · ${
+        r.stops.length} stop${r.stops.length === 1 ? '' : 's'}</span>
+    </span>
+    <span class="right"><b>${r.tbd ? 'TBD' : r.km}</b><u>${r.tbd ? 'no distance' : 'km'}</u></span>
+    <span class="share" data-w="${(r.km / maxKm * 100).toFixed(1)}"></span>
+  </a>`).join('')
+
+/* ── animate in ───────────────────────────────────────────────────────── */
+const C = 2 * Math.PI * 82
+const arc = document.getElementById('arc')
+arc.style.strokeDasharray = C
+arc.style.strokeDashoffset = C
+
+function boot() {
+  arc.style.strokeDashoffset = C * (1 - pct)
+  document.getElementById('fill').style.width = (pct * 100) + '%'
+  document.querySelectorAll('.share').forEach(s => { s.style.width = s.dataset.w + '%' })
+
+  if (REDUCED) {
+    document.getElementById('pct').innerHTML = Math.round(pct * 100) + '<small>%</small>'
+    document.querySelectorAll('.splits v').forEach(v => {
+      const small = v.querySelector('small')
+      v.textContent = v.dataset.to
+      if (small) v.appendChild(small)
+    })
+    return
+  }
+
+  countTo(document.getElementById('pct'), Math.round(pct * 100), 1600, '<small>%</small>')
+  document.querySelectorAll('.splits v').forEach((v, i) =>
+    setTimeout(() => countTo(v, +v.dataset.to, 1200, v.querySelector('small')
+      ? v.querySelector('small').outerHTML : ''), i * 90))
+}
+
+function countTo(el, to, ms, suffix) {
+  const t0 = performance.now()
+  const tick = t => {
+    const p = Math.min(1, (t - t0) / ms)
+    const eased = 1 - Math.pow(1 - p, 3)
+    el.innerHTML = Math.round(to * eased) + (suffix || '')
+    if (p < 1) requestAnimationFrame(tick)
+  }
+  requestAnimationFrame(tick)
+}
+
+requestAnimationFrame(() => requestAnimationFrame(boot))
+</script>
+</body>
+</html>

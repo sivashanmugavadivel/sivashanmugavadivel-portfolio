@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Rides · 6 · Compass</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   COMPASS — the page never scrolls. Rides sit on a brass bezel at the
+   true bearing they leave home on, and you turn the dial to pick one.
+
+   The arrangement is the data. Every marker is at its real computed
+   heading: the delivery run at 18° NNE, the Coimbatore trip due west at
+   269°, Chennai off to the north-east at 51°. You can see which way the
+   riding has actually gone — mostly west and south — before reading a
+   single word.
+
+   Two rides land 4° apart (the first-service run at 197.6° and the
+   Pondicherry leg at 201.6°). Their TICKS stay exactly where they belong;
+   only the LABELS are pushed apart, with a leader line back to the true
+   mark. That is how a real chart handles it, and it is the difference
+   between a compass and a decoration.
+
+   One Ride 2026 has no course at all, so it gets no fixed tick — it is
+   a slow sweep around the whole rim, which is what "every road" means.
+   ══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --deep:#060c17; --deep2:#0a1424; --case:#0d1727;
+  --brass:#c9a227; --brass2:#e8cf7a; --brass3:#8a6f1a;
+  --off:#eef2f7; --d1:rgba(238,242,247,0.68); --d2:rgba(238,242,247,0.44);
+  --d3:rgba(238,242,247,0.24); --bd:rgba(201,162,39,0.2); --bd2:rgba(201,162,39,0.42);
+  --serif:'Cormorant Garamond',Georgia,serif; --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --ease:cubic-bezier(.2,.9,.25,1);
+  --c:#ef4444;
+}
+html,body{height:100%}
+body{background:var(--deep);color:var(--d1);font-family:var(--mono);
+  -webkit-font-smoothing:antialiased;overflow:hidden;
+  background-image:
+    radial-gradient(70vw 70vh at 26% 40%,rgba(201,162,39,0.07),transparent 66%),
+    radial-gradient(60vw 60vh at 88% 82%,rgba(56,189,248,0.05),transparent 68%)}
+::selection{background:var(--brass);color:var(--deep)}
+
+.stage{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,0.72fr);
+  height:100svh;align-items:stretch}
+
+/* ── the instrument ── */
+.instrument{position:relative;display:grid;place-items:center;padding:clamp(12px,2.6vw,34px);
+  min-width:0;overflow:hidden}
+.instrument::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(50% 50% at 50% 50%,rgba(201,162,39,0.09),transparent 68%);
+  pointer-events:none}
+
+.dialwrap{position:relative;width:min(78vh,100%);aspect-ratio:1;max-width:640px;
+  touch-action:none;cursor:grab;user-select:none}
+.dialwrap:active{cursor:grabbing}
+.dialwrap svg{width:100%;height:100%;display:block;overflow:visible}
+
+/* the rotating half */
+#turn{transition:transform .95s var(--ease)}
+#turn.free{transition:none}
+
+/* fixed index mark at the top of the case */
+.index{position:absolute;top:-2px;left:50%;transform:translateX(-50%);z-index:4;
+  display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:none}
+.index i{width:0;height:0;border-left:9px solid transparent;border-right:9px solid transparent;
+  border-top:15px solid var(--brass2);filter:drop-shadow(0 0 8px rgba(232,207,122,0.6))}
+.index u{text-decoration:none;font-size:0.5rem;letter-spacing:0.24em;text-transform:uppercase;
+  color:var(--brass)}
+
+/* the hub readout, fixed while the bezel turns */
+.hub{position:absolute;inset:26%;border-radius:50%;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;gap:5px;z-index:3;
+  pointer-events:none;padding:6%}
+.hub .brg{font-family:var(--serif);font-size:clamp(2rem,6.4vw,3.4rem);font-weight:600;
+  color:var(--off);line-height:0.9;letter-spacing:-0.01em;font-variant-numeric:tabular-nums}
+.hub .brg small{font-size:0.38em;color:var(--brass);font-family:var(--mono);font-weight:400;
+  letter-spacing:0.1em;margin-left:2px;vertical-align:super}
+.hub .pt{font-size:0.6rem;letter-spacing:0.3em;text-transform:uppercase;color:var(--brass2)}
+.hub .nm{font-family:var(--serif);font-size:clamp(0.82rem,1.7vw,1.05rem);color:var(--d1);
+  line-height:1.25;max-width:15ch;font-weight:400}
+.hub .km{font-size:0.62rem;letter-spacing:0.16em;color:var(--d2);text-transform:uppercase}
+
+/* ── the log panel ── */
+.log{background:var(--case);border-left:1px solid var(--bd);display:flex;flex-direction:column;
+  min-width:0;position:relative}
+.log::before{content:'';position:absolute;left:0;top:0;bottom:0;width:1px;
+  background:linear-gradient(transparent,var(--brass),transparent);opacity:0.55}
+
+.log .top{padding:clamp(16px,2.6vw,26px) clamp(16px,2.4vw,26px) 15px;border-bottom:1px solid var(--bd)}
+.log .top .r1{display:flex;align-items:center;gap:10px;margin-bottom:13px}
+.log .top .r1 b{font-size:0.58rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--brass)}
+.log .top .r1 a{margin-left:auto;font-size:0.58rem;letter-spacing:0.14em;text-transform:uppercase;
+  color:var(--d2);text-decoration:none;transition:.22s}
+.log .top .r1 a:hover{color:var(--brass2)}
+.log .top h1{font-family:var(--serif);font-weight:400;color:var(--off);
+  font-size:clamp(1.5rem,3.2vw,2.3rem);line-height:1.05;letter-spacing:-0.015em}
+.log .top h1 em{font-style:italic;color:var(--brass2)}
+.log .top p{font-size:0.64rem;color:var(--d2);margin-top:9px;line-height:1.75;letter-spacing:0.03em}
+
+/* the chosen ride, filling most of the panel */
+.card{flex:1;padding:clamp(16px,2.4vw,24px);display:flex;flex-direction:column;min-height:0;
+  overflow-y:auto}
+.card::-webkit-scrollbar{width:4px}
+.card::-webkit-scrollbar-thumb{background:var(--bd2)}
+.card .tier{display:inline-flex;align-items:center;gap:8px;font-size:0.55rem;font-weight:600;
+  letter-spacing:0.22em;text-transform:uppercase;margin-bottom:11px}
+.card .tier i{width:6px;height:6px;border-radius:50%;background:currentColor;
+  box-shadow:0 0 10px currentColor}
+.card h2{font-family:var(--serif);font-weight:500;color:var(--off);
+  font-size:clamp(1.35rem,2.9vw,1.95rem);line-height:1.12;letter-spacing:-0.02em;margin-bottom:7px}
+.card .sub{font-size:0.62rem;color:var(--d2);line-height:1.7;letter-spacing:0.03em;
+  margin-bottom:15px}
+.card .story{font-family:var(--serif);font-size:clamp(0.98rem,1.8vw,1.1rem);line-height:1.68;
+  color:var(--d1);margin-bottom:16px}
+
+.card .grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--bd);
+  margin-bottom:15px}
+.card .grid div{background:var(--case);padding:10px 12px}
+.card .grid k{display:block;font-size:0.48rem;letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--d3);margin-bottom:5px}
+.card .grid v{display:block;font-family:var(--serif);font-size:1.15rem;color:var(--off);
+  line-height:1.15;font-weight:500}
+.card .grid v small{font-size:0.55em;font-family:var(--mono);color:var(--d2);margin-left:3px;
+  letter-spacing:0.06em}
+
+/* the stop chain */
+.chain{margin-bottom:15px}
+.chain k{display:block;font-size:0.48rem;letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--d3);margin-bottom:9px}
+.chain ol{list-style:none;position:relative;padding-left:17px}
+.chain ol::before{content:'';position:absolute;left:4px;top:6px;bottom:6px;width:1px;
+  background:linear-gradient(var(--c),transparent)}
+.chain li{position:relative;padding:0 0 9px;font-size:0.68rem;color:var(--d1);line-height:1.45}
+.chain li::before{content:'';position:absolute;left:-17px;top:5px;width:9px;height:9px;
+  border-radius:50%;border:1.6px solid var(--c);background:var(--case)}
+.chain li.home::before{background:var(--c)}
+.chain li u{display:block;text-decoration:none;font-size:0.54rem;color:var(--d3);
+  letter-spacing:0.08em;margin-top:2px}
+.chain .open{font-size:0.66rem;color:var(--brass2);font-style:italic;font-family:var(--serif);
+  padding-left:0}
+
+.card .tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:16px}
+.card .tags u{text-decoration:none;font-size:0.52rem;letter-spacing:0.12em;text-transform:uppercase;
+  padding:4px 9px;border:1px solid var(--bd2);color:var(--brass2)}
+.card .go{margin-top:auto;display:flex;align-items:center;justify-content:center;gap:9px;
+  padding:13px;background:var(--brass);color:var(--deep);text-decoration:none;
+  font-size:0.62rem;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;
+  transition:.28s var(--ease)}
+.card .go:hover{background:var(--brass2);transform:translateY(-2px);
+  box-shadow:0 12px 26px -10px rgba(201,162,39,0.6)}
+
+/* the strip of every ride along the bottom of the panel */
+.strip{border-top:1px solid var(--bd);display:flex;overflow-x:auto;scrollbar-width:none}
+.strip::-webkit-scrollbar{display:none}
+.strip button{flex:1 0 auto;min-width:52px;padding:11px 8px;background:transparent;border:0;
+  border-right:1px solid rgba(201,162,39,0.12);cursor:pointer;font-family:var(--mono);
+  color:var(--d3);font-size:0.55rem;letter-spacing:0.1em;transition:.26s var(--ease);
+  display:flex;flex-direction:column;align-items:center;gap:5px}
+.strip button i{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:0.5;
+  transition:.26s}
+.strip button:hover{color:var(--off);background:rgba(201,162,39,0.07)}
+.strip button.on{color:var(--brass2);background:rgba(201,162,39,0.12)}
+.strip button.on i{opacity:1;box-shadow:0 0 9px currentColor;transform:scale(1.35)}
+
+/* how-to hint */
+.hint{position:absolute;left:50%;bottom:clamp(10px,2.4vw,22px);transform:translateX(-50%);
+  font-size:0.55rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--d3);
+  white-space:nowrap;pointer-events:none;
+  opacity:0;animation:fade 1s var(--ease) 1.2s forwards}
+@keyframes fade{to{opacity:1}}
+
+/* ── svg pieces ── */
+.ring{fill:none;stroke:var(--bd);stroke-width:1}
+.ring.hard{stroke:var(--bd2)}
+.tick{stroke:rgba(201,162,39,0.4);stroke-width:1}
+.tick.major{stroke:var(--brass);stroke-width:1.6}
+.card-pt{font-family:var(--serif);font-weight:600;fill:var(--brass2)}
+.deg{font-family:'IBM Plex Mono',monospace;font-size:8px;fill:rgba(238,242,247,0.3);
+  letter-spacing:0.06em}
+.rose path{opacity:0.9}
+
+.mk{cursor:pointer}
+.mk .lead{stroke:currentColor;stroke-width:1;opacity:0.42;stroke-dasharray:2 3}
+.mk .tk{stroke:currentColor;stroke-width:3.2;stroke-linecap:round}
+.mk .dot{fill:currentColor;stroke:var(--deep);stroke-width:1.6;transition:r .3s var(--ease)}
+.mk .lbl{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.05em;
+  fill:rgba(238,242,247,0.5);transition:fill .3s}
+.mk .km{font-family:'Cormorant Garamond',serif;font-size:13px;font-weight:600;
+  fill:rgba(238,242,247,0.34);transition:fill .3s}
+.mk:hover .lbl,.mk.on .lbl{fill:var(--off)}
+.mk:hover .km,.mk.on .km{fill:currentColor}
+.mk.on .dot{r:7.5}
+.mk .halo{fill:none;stroke:currentColor;stroke-width:1.4;opacity:0}
+.mk.on .halo{opacity:0.8;animation:ping 2.4s var(--ease) infinite}
+@keyframes ping{0%{r:9;opacity:.8}80%{r:26;opacity:0}100%{opacity:0}}
+
+/* the open-heading sweep for a ride with no course */
+.sweep{transform-origin:300px 300px;animation:spin 26s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:940px){
+  body{overflow:auto}
+  .stage{grid-template-columns:1fr;height:auto}
+  .instrument{padding:22px 14px 34px}
+  .dialwrap{width:min(88vw,430px)}
+  .log{border-left:0;border-top:1px solid var(--bd)}
+  .card{overflow:visible}
+  .hint{position:static;transform:none;margin-top:16px;text-align:center;display:block}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;animation-iteration-count:1!important;
+    transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <section class="instrument">
+    <div class="dialwrap" id="dialwrap">
+      <div class="index"><i></i><u>Heading</u></div>
+      <svg id="dial" viewBox="0 0 600 600" aria-label="Compass of rides by true bearing"></svg>
+      <div class="hub">
+        <div class="brg" id="hBrg">—</div>
+        <div class="pt" id="hPt"></div>
+        <div class="nm" id="hNm"></div>
+        <div class="km" id="hKm"></div>
+      </div>
+    </div>
+    <div class="hint">Drag the bezel · scroll · ← → · or pick below</div>
+  </section>
+
+  <aside class="log">
+    <div class="top">
+      <div class="r1"><b>Ride log</b><a href="#">← Garage</a></div>
+      <h1>Rides &amp; <em>Journeys</em></h1>
+      <p id="lede"></p>
+    </div>
+    <div class="card" id="card"></div>
+    <div class="strip" id="strip"></div>
+  </aside>
+</div>
+
+<script src="rides-data.js"></script>
+<script>
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches
+const S = RD.summary
+const CX = 300, CY = 300, R_TICK = 264, R_MARK = 232, R_LBL = 196
+
+document.getElementById('lede').textContent =
+  `${RD.tally} — each one set on the bezel at the true heading it leaves on. ` +
+  `${S.doneKm} km ridden, ${S.aheadKm} km still ahead.`
+
+/* ── place the rides on the rim ───────────────────────────────────────── */
+/* A ride with a course sits at its real bearing. A ride without one gets
+   no fixed seat — it sweeps. Its `seat` is only so the keyboard and the
+   strip have somewhere to send you.                                     */
+const seats = RD.rides.map((r, i) => ({
+  r, i,
+  open: !r.mapped,
+  deg: r.mapped ? r.bearing : 0,
+}))
+
+/* De-collide the LABELS only. Ticks stay on the true bearing; a label
+   that would overlap its neighbour is pushed around the rim and joined
+   back to its tick with a leader. 16° is about the width of a label at
+   this radius. */
+const MIN = 16
+const placed = seats.filter(s => !s.open).slice().sort((a, b) => a.deg - b.deg)
+placed.forEach(s => { s.lblDeg = s.deg })
+for (let pass = 0; pass < 24; pass++) {
+  let moved = false
+  for (let i = 0; i < placed.length; i++) {
+    const a = placed[i], b = placed[(i + 1) % placed.length]
+    let gap = b.lblDeg - a.lblDeg
+    if (gap < 0) gap += 360
+    if (gap < MIN) {
+      const push = (MIN - gap) / 2
+      a.lblDeg = (a.lblDeg - push + 360) % 360
+      b.lblDeg = (b.lblDeg + push) % 360
+      moved = true
+    }
+  }
+  if (!moved) break
+}
+
+/* polar → cartesian, 0° = north = straight up */
+const pt = (deg, rad) => {
+  const a = (deg - 90) * Math.PI / 180
+  return [CX + Math.cos(a) * rad, CY + Math.sin(a) * rad]
+}
+
+/* ── draw the dial ────────────────────────────────────────────────────── */
+let ticks = ''
+for (let d = 0; d < 360; d += 2) {
+  const major = d % 30 === 0, mid = d % 10 === 0
+  if (!major && !mid && d % 2) continue
+  const [x1, y1] = pt(d, R_TICK)
+  const [x2, y2] = pt(d, R_TICK - (major ? 20 : mid ? 12 : 6))
+  ticks += `<line class="tick${major ? ' major' : ''}" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}"
+    x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`
+  if (major && d % 90) {
+    const [tx, ty] = pt(d, R_TICK - 32)
+    ticks += `<text class="deg" x="${tx.toFixed(1)}" y="${(ty + 3).toFixed(1)}"
+      text-anchor="middle">${d}</text>`
+  }
+}
+
+const cards = ['N', 'E', 'S', 'W'].map((c, i) => {
+  const [x, y] = pt(i * 90, R_TICK - 34)
+  return `<text class="card-pt" x="${x.toFixed(1)}" y="${(y + 7).toFixed(1)}"
+    text-anchor="middle" font-size="${c === 'N' ? 25 : 21}">${c}</text>`
+}).join('')
+
+/* the rose in the middle — eight points, alternating light and dark */
+const rose = Array.from({ length: 8 }, (_, i) => {
+  const d = i * 45
+  const [tipX, tipY] = pt(d, 118)
+  const [lX, lY] = pt(d - 22, 34)
+  const [rX, rY] = pt(d + 22, 34)
+  return `<path d="M${CX} ${CY} L${lX.toFixed(1)} ${lY.toFixed(1)} L${tipX.toFixed(1)} ${tipY.toFixed(1)} Z"
+      fill="${i % 2 ? 'rgba(201,162,39,0.16)' : 'rgba(201,162,39,0.3)'}"/>
+    <path d="M${CX} ${CY} L${rX.toFixed(1)} ${rY.toFixed(1)} L${tipX.toFixed(1)} ${tipY.toFixed(1)} Z"
+      fill="${i % 2 ? 'rgba(201,162,39,0.08)' : 'rgba(201,162,39,0.2)'}"/>`
+}).join('')
+
+const marks = seats.map(s => {
+  const { r } = s
+  if (s.open) {
+    /* no course — a sweeping arc instead of a seat on the rim */
+    const [ax, ay] = pt(-26, R_MARK), [bx, by] = pt(26, R_MARK)
+    return `<g class="mk sweep" data-id="${r.id}" style="color:${r.color}">
+      <path d="M${ax.toFixed(1)} ${ay.toFixed(1)} A${R_MARK} ${R_MARK} 0 0 1 ${bx.toFixed(1)} ${by.toFixed(1)}"
+        fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" opacity="0.85"/>
+      <circle class="dot" cx="${pt(0, R_MARK)[0].toFixed(1)}" cy="${pt(0, R_MARK)[1].toFixed(1)}" r="5"/>
+    </g>`
+  }
+  const [tx1, ty1] = pt(s.deg, R_TICK + 4)
+  const [tx2, ty2] = pt(s.deg, R_MARK + 6)
+  const [dx, dy] = pt(s.deg, R_MARK)
+  const [lx, ly] = pt(s.lblDeg, R_LBL)
+  const [kx, ky] = pt(s.lblDeg, R_LBL - 17)
+  /* leader only when the label actually had to move */
+  const shifted = Math.abs(((s.lblDeg - s.deg + 540) % 360) - 180) < 179.4
+  const anchor = s.lblDeg > 180 ? 'end' : 'start'
+  const off = s.lblDeg > 180 ? -7 : 7
+  return `<g class="mk" data-id="${r.id}" style="color:${r.color}">
+    ${shifted ? `<line class="lead" x1="${dx.toFixed(1)}" y1="${dy.toFixed(1)}"
+        x2="${lx.toFixed(1)}" y2="${ly.toFixed(1)}"/>` : ''}
+    <line class="tk" x1="${tx1.toFixed(1)}" y1="${ty1.toFixed(1)}"
+      x2="${tx2.toFixed(1)}" y2="${ty2.toFixed(1)}"/>
+    <circle class="halo" cx="${dx.toFixed(1)}" cy="${dy.toFixed(1)}" r="9"/>
+    <circle class="dot" cx="${dx.toFixed(1)}" cy="${dy.toFixed(1)}" r="5"/>
+    <text class="lbl" x="${(lx + off).toFixed(1)}" y="${(ly + 3).toFixed(1)}"
+      text-anchor="${anchor}">${short(r.name)}</text>
+    <text class="km" x="${(kx + off).toFixed(1)}" y="${(ky + 3).toFixed(1)}"
+      text-anchor="${anchor}">${r.tbd ? 'TBD' : r.km + ' km'}</text>
+  </g>`
+}).join('')
+
+document.getElementById('dial').innerHTML = `
+  <circle class="ring hard" cx="${CX}" cy="${CY}" r="${R_TICK + 14}"/>
+  <circle class="ring" cx="${CX}" cy="${CY}" r="${R_TICK - 40}"/>
+  <circle class="ring" cx="${CX}" cy="${CY}" r="150"/>
+  <g id="turn">
+    <g class="rose">${rose}</g>
+    ${ticks}${cards}${marks}
+  </g>
+  <circle class="ring hard" cx="${CX}" cy="${CY}" r="${R_TICK + 22}" opacity="0.5"/>`
+
+function short(n) {
+  return n.length > 22 ? n.split(/[—,]/)[0].trim().slice(0, 21).trim() + '…' : n
+}
+
+/* ── turn the bezel ───────────────────────────────────────────────────── */
+const turn = document.getElementById('turn')
+const wrap = document.getElementById('dialwrap')
+let rot = 0          // current bezel rotation, degrees
+let active = 0       // index into `seats`
+
+/* rotating by -bearing brings that marker under the fixed index at top */
+function goTo(i, snap) {
+  active = (i + seats.length) % seats.length
+  const s = seats[active]
+  const want = s.open ? rot : -s.deg
+  /* take the short way round, so the bezel never spins the long way */
+  let delta = ((want - rot + 540) % 360) - 180
+  rot += delta
+  turn.classList.toggle('free', !!snap)
+  turn.style.transform = `rotate(${rot}deg)`
+  paint()
+}
+
+function paint() {
+  const s = seats[active], r = s.r
+  document.documentElement.style.setProperty('--c', r.color)
+
+  /* hub */
+  document.getElementById('hBrg').innerHTML = s.open
+    ? '<span style="font-size:.52em">OPEN</span>'
+    : `${r.bearing.toFixed(0)}<small>°</small>`
+  document.getElementById('hPt').textContent = s.open ? 'Every road' : r.compass
+  document.getElementById('hNm').textContent = r.name
+  document.getElementById('hKm').textContent = r.distance + ' · ' + r.date
+
+  /* markers */
+  document.querySelectorAll('.mk').forEach(m =>
+    m.classList.toggle('on', m.dataset.id === r.id))
+  document.querySelectorAll('.strip button').forEach(b =>
+    b.classList.toggle('on', b.dataset.id === r.id))
+
+  /* the panel */
+  document.getElementById('card').innerHTML = `
+    <span class="tier" style="color:${r.tier.color}"><i></i>${r.tier.label} · ${r.date}</span>
+    <h2>${r.name}</h2>
+    <div class="sub">${r.subtitle}</div>
+    <div class="grid">
+      <div><k>Distance</k><v>${r.tbd ? 'TBD' : r.km + '<small>km</small>'}</v></div>
+      <div><k>Heading</k><v>${s.open ? 'Open' : r.compass + '<small>' + r.bearing.toFixed(0) + '°</small>'}</v></div>
+      <div><k>${r.time ? 'Saddle time' : r.estimate ? 'Estimated' : 'Time'}</k>
+        <v style="font-size:.95rem">${r.time || r.estimate || '—'}</v></div>
+      <div><k>As the crow flies</k><v>${r.mapped ? r.crow + '<small>km</small>' : '—'}</v></div>
+    </div>
+    <p class="story">${r.story}</p>
+    <div class="chain">
+      <k>${r.mapped ? r.stops.length + ' waypoints' : 'Fixed point'}</k>
+      <ol>${r.stops.map(st => `<li class="${st.home ? 'home' : ''}">${st.label}
+        <u>${st.lat.toFixed(4)}°N · ${st.lng.toFixed(4)}°E</u></li>`).join('')}</ol>
+      ${r.mapped ? '' : '<p class="open">No second point — One Ride sets a date, not a course.</p>'}
+    </div>
+    <div class="tags">${r.highlights.map(h => `<u>${h}</u>`).join('')}</div>
+    <a class="go" href="#">Open the ride ↗</a>`
+}
+
+/* ── the strip ────────────────────────────────────────────────────────── */
+document.getElementById('strip').innerHTML = seats.map((s, i) =>
+  `<button data-id="${s.r.id}" data-i="${i}" title="${s.r.name}">
+     <i style="color:${s.r.color}"></i>${s.open ? 'OPEN' : s.r.compass}
+   </button>`).join('')
+document.querySelectorAll('.strip button').forEach(b =>
+  b.addEventListener('click', () => goTo(+b.dataset.i)))
+document.querySelectorAll('.mk').forEach(m =>
+  m.addEventListener('click', () => goTo(seats.findIndex(s => s.r.id === m.dataset.id))))
+
+/* ── drag / wheel / keys ──────────────────────────────────────────────── */
+let dragging = false, lastAngle = 0
+
+const angleAt = e => {
+  const b = wrap.getBoundingClientRect()
+  return Math.atan2(e.clientY - (b.top + b.height / 2),
+                    e.clientX - (b.left + b.width / 2)) * 180 / Math.PI
+}
+
+wrap.addEventListener('pointerdown', e => {
+  dragging = true
+  lastAngle = angleAt(e)
+  turn.classList.add('free')
+  wrap.setPointerCapture(e.pointerId)
+})
+wrap.addEventListener('pointermove', e => {
+  if (!dragging) return
+  const a = angleAt(e)
+  let d = a - lastAngle
+  if (d > 180) d -= 360
+  if (d < -180) d += 360
+  rot += d
+  lastAngle = a
+  turn.style.transform = `rotate(${rot}deg)`
+})
+const release = () => {
+  if (!dragging) return
+  dragging = false
+  turn.classList.remove('free')
+  /* snap to whichever marker now sits nearest the index */
+  const seated = seats.filter(s => !s.open)
+  let best = seats[active], bestD = 1e9
+  seated.forEach(s => {
+    const d = Math.abs(((-s.deg - rot + 540) % 360) - 180)
+    if (d < bestD) { bestD = d; best = s }
+  })
+  goTo(seats.indexOf(best))
+}
+wrap.addEventListener('pointerup', release)
+wrap.addEventListener('pointercancel', release)
+
+wrap.addEventListener('wheel', e => {
+  e.preventDefault()
+  goTo(active + (e.deltaY > 0 ? 1 : -1))
+}, { passive: false })
+
+addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { goTo(active + 1); e.preventDefault() }
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { goTo(active - 1); e.preventDefault() }
+})
+
+/* open on the first ride, after letting the dial settle in */
+goTo(0)
+if (!REDUCED) {
+  turn.classList.add('free')
+  turn.style.transform = `rotate(${rot - 42}deg)`
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    turn.classList.remove('free')
+    turn.style.transform = `rotate(${rot}deg)`
+  }))
+}
+</script>
+</body>
+</html>

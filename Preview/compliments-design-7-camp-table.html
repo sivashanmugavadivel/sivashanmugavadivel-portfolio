@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Compliments — Camp Table</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Caveat:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════════
+   CAMP TABLE — the perks laid out on a table, as objects.
+
+   The literal reading: if the ride includes tea and snacks, put a cup on a
+   table and let it steam. Every item here is drawn from what the perk SAYS
+   (see compliments-scenes.js), so the panel is a photograph of what you get
+   rather than a list describing it.
+
+   WHAT SELLS A SURFACE, in order of how much each one matters:
+     CONTACT SHADOW  a soft ellipse directly under each object, tight and dark
+                     where it meets the wood. Objects without one float, however
+                     good the drawing is. On hover it widens and fades as the
+                     object lifts — a shadow that stays put reads as a sticker.
+     ONE LIGHT       a single warm source at the top left. Every highlight and
+                     every shadow leans the same way; two light directions and
+                     the eye stops believing the table.
+     GRAIN           plank seams and a fibre overlay, so the wood is a material
+                     rather than a brown gradient.
+
+   Dust drifts through the light. It is the cheapest possible trick and it does
+   more for the room than anything else on this page.
+   ══════════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--wood:#6b4a2f;--wood2:#52381f;--ink:#2a1c10;--acc:#eab308;--cream:#f6efe2}
+body{background:#120d09;font-family:'Inter',system-ui,sans-serif;min-height:100vh;
+  display:grid;place-items:center;padding:clamp(14px,3vw,34px)}
+
+.table{position:relative;width:100%;max-width:880px;border-radius:14px;overflow:hidden;
+  padding:clamp(24px,4vw,40px) clamp(18px,3.4vw,34px) clamp(30px,5vw,46px);
+  background:
+    /* the light, first, so everything below is lit by it */
+    radial-gradient(70% 60% at 18% 0%,rgba(255,226,168,.3),transparent 62%),
+    repeating-linear-gradient(92deg,
+      var(--wood) 0 78px, var(--wood2) 78px 80px, var(--wood) 80px 158px),
+    var(--wood);
+  box-shadow:0 34px 70px -24px #000, inset 0 0 120px rgba(0,0,0,.55);
+  animation:in .9s cubic-bezier(.16,1,.3,1) both}
+@keyframes in{from{opacity:0;transform:translateY(22px)}}
+/* fibre */
+.table::before{content:'';position:absolute;inset:0;pointer-events:none;opacity:.3;
+  mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.02 0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E")}
+/* the far corners fall away from the light */
+.table::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(80% 70% at 25% 10%,transparent 40%,rgba(0,0,0,.55))}
+
+.dust{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:2}
+.dust i{position:absolute;width:3px;height:3px;border-radius:50%;background:#ffeec6;
+  opacity:0;animation:drift var(--d) linear var(--dl) infinite}
+@keyframes drift{
+  0%{opacity:0;transform:translate(0,20px)}
+  22%{opacity:.5}
+  70%{opacity:.35}
+  100%{opacity:0;transform:translate(26px,-90px)}}
+
+.wrap{position:relative;z-index:3}
+
+/* ── the enamel sign propped at the back ────────────────────────────────── */
+.sign{margin:0 auto clamp(22px,4vw,36px);max-width:420px;text-align:center;
+  background:linear-gradient(165deg,var(--cream),#e6dcc6);border-radius:8px;
+  padding:14px 20px 16px;color:var(--ink);
+  box-shadow:0 16px 26px -12px rgba(0,0,0,.75),inset 0 0 0 3px rgba(42,28,16,.12);
+  transform:rotate(-.8deg);animation:sign-in .8s cubic-bezier(.34,1.3,.6,1) .1s both}
+@keyframes sign-in{from{opacity:0;transform:rotate(-6deg) translateY(-16px)}}
+.sign .eye{font-size:.54rem;font-weight:800;letter-spacing:.32em;text-transform:uppercase;
+  color:#8a6a2c;margin-bottom:4px}
+.sign h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(1.5rem,4.6vw,2.2rem);
+  line-height:.95;letter-spacing:.02em}
+.sign .sub{font-family:'Caveat',cursive;font-size:1rem;color:#6b533a;margin-top:2px}
+
+/* ── the objects ─────────────────────────────────────────────────────────── */
+.things{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:clamp(16px,3vw,28px) clamp(10px,2vw,18px);justify-items:center}
+
+.thing{position:relative;width:100%;max-width:170px;text-align:center;cursor:default;
+  animation:set-down .65s cubic-bezier(.34,1.35,.6,1) both;
+  animation-delay:calc(.35s + var(--i) * .11s)}
+@keyframes set-down{from{opacity:0;transform:translateY(-22px) scale(1.08)}}
+
+/* the object itself, lifted off the table by its own hover transform */
+.obj{width:clamp(62px,11vw,82px);height:clamp(62px,11vw,82px);margin:0 auto;
+  color:var(--acc);position:relative;z-index:2;
+  filter:drop-shadow(2px 3px 2px rgba(0,0,0,.45));
+  transition:transform .4s cubic-bezier(.16,1,.3,1)}
+.thing:hover .obj{transform:translateY(-9px) scale(1.04)}
+
+/* CONTACT SHADOW — see the note at the top */
+.cast{position:absolute;left:50%;top:calc(clamp(62px,11vw,82px) - 8px);
+  width:64%;height:13px;border-radius:50%;transform:translateX(-50%);
+  background:radial-gradient(closest-side,rgba(0,0,0,.62),transparent);
+  transition:.4s cubic-bezier(.16,1,.3,1);z-index:1}
+.thing:hover .cast{width:78%;opacity:.55;filter:blur(2px)}
+
+/* the label, a scrap of card weighted down on the table */
+.tag{margin-top:16px;display:inline-block;padding:7px 12px;border-radius:3px;
+  background:linear-gradient(160deg,var(--cream),#e8dfcb);color:var(--ink);
+  font-size:.72rem;font-weight:600;line-height:1.4;
+  box-shadow:0 6px 12px -6px rgba(0,0,0,.8);transform:rotate(var(--tilt));
+  transition:transform .35s cubic-bezier(.16,1,.3,1)}
+.thing:hover .tag{transform:rotate(0deg) translateY(-2px)}
+.tag b{display:block;font-family:'Caveat',cursive;font-size:.9rem;color:#8a6a2c;
+  letter-spacing:.04em;margin-bottom:1px}
+
+.foot{margin-top:clamp(26px,4.4vw,42px);text-align:center;font-size:.6rem;
+  letter-spacing:.2em;text-transform:uppercase;color:rgba(246,239,226,.62);font-weight:700;
+  text-shadow:0 1px 3px rgba(0,0,0,.8)}
+.foot b{color:var(--cream);letter-spacing:.05em;font-size:.76rem;text-transform:none}
+
+@media(prefers-reduced-motion:reduce){
+  .table,.sign,.thing{animation:none}
+  .dust{display:none}
+}
+</style>
+</head>
+<body>
+<div class="table">
+  <div class="dust" id="dust"></div>
+  <div class="wrap" id="wrap"></div>
+</div>
+
+<script src="compliments-data.js"></script>
+<script src="compliments-scenes.js"></script>
+<script>
+const r = window.COMPLIMENTS.current()
+document.documentElement.style.setProperty('--acc', r.color)
+
+/* fixed tilts, so the table is laid the same way on every reload */
+const TILTS = [-2.6, 1.9, -1.3, 2.4, -2, 1.4, -1.7, 2.1]
+
+const things = r.compliments.map((c, i) => `
+  <div class="thing" style="--i:${i};--tilt:${TILTS[i % TILTS.length]}deg">
+    <div class="obj">${window.SCENES.sceneFor(c.text)}</div>
+    <span class="cast"></span>
+    <span class="tag"><b>${String(i + 1).padStart(2, '0')}</b>${c.text}</span>
+  </div>`).join('')
+
+document.getElementById('wrap').innerHTML = `
+  <div class="sign">
+    <div class="eye">Compliments</div>
+    <h1>On the table</h1>
+    <div class="sub">${r.name} · ${r.date}</div>
+  </div>
+  <div class="things">${things}</div>
+  <div class="foot">
+    ${r.organizer !== 'Self' ? `Laid on by <b>${r.organizer}</b>` : 'Self organised'}
+    ${r.registration ? ` · Entry <b>${r.registration}</b>` : ''}
+  </div>`
+
+/* Dust in the light shaft. Positions come from an index-seeded walk rather than
+   Math.random, so the motes sit in the same places every load — a room that
+   rearranges itself on refresh is distracting in a design review. */
+let h = 20260927
+const rnd = () => ((h = (h * 1103515245 + 12345) >>> 0) % 1000) / 1000
+document.getElementById('dust').innerHTML = Array.from({ length: 22 }, () =>
+  `<i style="left:${(rnd() * 96).toFixed(1)}%;top:${(rnd() * 100).toFixed(1)}%;
+     --d:${(7 + rnd() * 9).toFixed(1)}s;--dl:${(-rnd() * 12).toFixed(1)}s"></i>`).join('')
+</script>
+</body>
+</html>

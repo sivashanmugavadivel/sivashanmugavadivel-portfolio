@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Compliments — Comic Strip</title>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════════
+   COMIC STRIP — the perks as panels on a page.
+
+   The loudest and the most legible, which is an unusual pair. Comics solved
+   "a grid of small pictures each needing a caption" decades ago, and the
+   solution is heavy black keylines, flat colour, and a caption box that sits
+   ON the art rather than under it.
+
+   WHAT MAKES IT READ AS PRINT rather than as CSS boxes:
+     THE INK IS UNEVEN. Every panel takes a slightly different border width and
+     a fraction of a degree of rotation, cycled from its index. Perfectly
+     identical 4px borders look like a table; 3.5–5px looks drawn.
+     HALFTONE IS A REAL DOT SCREEN — a repeating radial-gradient at a rotation,
+     not an opacity wash. It sits UNDER the panels and shows through the gaps,
+     which is what makes them feel printed on something.
+     BURSTS ARE CLIPPED TO THE PANEL. A star that escapes its frame turns the
+     page into stickers.
+
+   Panels deal in one at a time with a rotate-and-settle. Hover fires the burst
+   and pops the panel forward — the only interaction, and it earns the noise.
+   ══════════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--page:#f6e6c8;--ink:#14110c;--acc:#eab308;--pow:#ff3b30;--sky:#8fd3f4}
+body{background:#1a1712;font-family:'Inter',system-ui,sans-serif;min-height:100vh;
+  display:grid;place-items:center;padding:clamp(14px,3vw,34px)}
+
+.page{position:relative;width:100%;max-width:900px;border-radius:6px;overflow:hidden;
+  background:var(--page);padding:clamp(20px,3.6vw,34px);
+  border:3px solid var(--ink);
+  box-shadow:0 30px 60px -22px rgba(0,0,0,.9);
+  animation:in .8s cubic-bezier(.16,1,.3,1) both}
+@keyframes in{from{opacity:0;transform:translateY(20px) rotate(-.5deg)}}
+/* the dot screen, showing through the gutters between panels */
+.page::before{content:'';position:absolute;inset:0;pointer-events:none;opacity:.4;
+  background-image:radial-gradient(circle,rgba(20,17,12,.5) 1.1px,transparent 1.2px);
+  background-size:7px 7px;transform:rotate(8deg) scale(1.25);transform-origin:center}
+
+.wrap{position:relative;z-index:2}
+
+/* ── the title panel ─────────────────────────────────────────────────────── */
+.title{position:relative;border:4px solid var(--ink);border-radius:3px;background:var(--sky);
+  padding:16px 18px;margin-bottom:clamp(14px,2.4vw,20px);overflow:hidden;
+  box-shadow:6px 6px 0 var(--ink);transform:rotate(-.5deg);
+  animation:slam .6s cubic-bezier(.34,1.5,.5,1) .1s both}
+@keyframes slam{from{opacity:0;transform:rotate(-5deg) scale(1.2)}}
+/* speed lines behind the title */
+.title::before{content:'';position:absolute;inset:-50%;
+  background:repeating-conic-gradient(from 0deg at 50% 50%,
+    rgba(20,17,12,.14) 0deg 2deg, transparent 2deg 9deg);
+  animation:spin 34s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.title .in{position:relative}
+.title .eye{font-family:'Bangers',cursive;font-size:.8rem;letter-spacing:.12em;color:var(--pow)}
+.title h1{font-family:'Bangers',cursive;font-size:clamp(1.9rem,6.4vw,3.2rem);line-height:1;
+  color:var(--ink);letter-spacing:.02em;text-shadow:3px 3px 0 #fff,6px 6px 0 rgba(20,17,12,.25)}
+.title .sub{font-size:.68rem;font-weight:700;color:rgba(20,17,12,.66);margin-top:5px}
+
+/* ── the panels ──────────────────────────────────────────────────────────── */
+.strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+  gap:clamp(12px,2.2vw,18px)}
+
+.panel{position:relative;overflow:hidden;border-radius:3px;background:#fffaf0;
+  border:var(--bw) solid var(--ink);box-shadow:5px 5px 0 rgba(20,17,12,.85);
+  padding:16px 14px 13px;transform:rotate(var(--tilt));
+  animation:deal .55s cubic-bezier(.34,1.45,.55,1) both;
+  animation-delay:calc(.34s + var(--i) * .1s);
+  transition:transform .3s cubic-bezier(.16,1,.3,1),box-shadow .3s}
+@keyframes deal{from{opacity:0;transform:rotate(calc(var(--tilt) - 7deg)) translateY(18px) scale(.9)}}
+.panel:hover{transform:rotate(0deg) translateY(-5px) scale(1.03);
+  box-shadow:8px 8px 0 rgba(20,17,12,.9);z-index:3}
+
+/* flat colour ground, per panel, cycled */
+.panel .ground{position:absolute;inset:0;background:var(--tone);opacity:.5}
+/* the dot screen again, tighter, inside the panel */
+.panel .dots{position:absolute;inset:0;opacity:.32;
+  background-image:radial-gradient(circle,rgba(20,17,12,.55) 1px,transparent 1.1px);
+  background-size:5px 5px}
+/* BURST — clipped by the panel's own overflow, see the note up top */
+.panel .burst{position:absolute;left:50%;top:42%;width:190%;aspect-ratio:1;
+  transform:translate(-50%,-50%) scale(.2);opacity:0;pointer-events:none;
+  background:conic-gradient(from 0deg,var(--acc) 0 6deg,transparent 6deg 14deg);
+  transition:transform .45s cubic-bezier(.16,1,.3,1),opacity .45s}
+.panel:hover .burst{transform:translate(-50%,-50%) scale(1);opacity:.4}
+
+.panel .in{position:relative;z-index:2;text-align:center}
+.panel .obj{width:clamp(56px,9vw,70px);height:clamp(56px,9vw,70px);margin:0 auto 12px;
+  color:var(--ink);filter:drop-shadow(2px 2px 0 rgba(20,17,12,.28))}
+/* the caption box, sitting ON the art */
+.panel .cap{background:#fff8dc;border:2.5px solid var(--ink);border-radius:2px;
+  padding:7px 9px;font-size:.72rem;font-weight:700;color:var(--ink);line-height:1.35;
+  box-shadow:2px 2px 0 rgba(20,17,12,.7)}
+.panel .no{position:absolute;top:-2px;left:-2px;z-index:3;background:var(--ink);color:var(--page);
+  font-family:'Bangers',cursive;font-size:.76rem;letter-spacing:.08em;padding:2px 8px 1px;
+  border-radius:0 0 6px 0}
+/* the little shout, only on hover */
+.panel .pow{position:absolute;right:-6px;top:8px;z-index:4;font-family:'Bangers',cursive;
+  font-size:.9rem;color:#fff;background:var(--pow);border:2.5px solid var(--ink);
+  padding:2px 9px;border-radius:3px;transform:rotate(9deg) scale(0);
+  transition:transform .35s cubic-bezier(.34,1.6,.5,1)}
+.panel:hover .pow{transform:rotate(9deg) scale(1)}
+
+.foot{margin-top:clamp(16px,2.6vw,24px);border:3px solid var(--ink);border-radius:3px;
+  background:#fff8dc;padding:10px 14px;box-shadow:4px 4px 0 rgba(20,17,12,.8);
+  display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;
+  font-size:.68rem;font-weight:700;color:var(--ink)}
+.foot b{font-family:'Bangers',cursive;font-size:.95rem;letter-spacing:.06em}
+
+@media(prefers-reduced-motion:reduce){
+  .page,.title,.panel{animation:none}
+  .title::before{animation:none}
+}
+</style>
+</head>
+<body>
+<div class="page"><div class="wrap" id="wrap"></div></div>
+
+<script src="compliments-data.js"></script>
+<script src="compliments-scenes.js"></script>
+<script>
+const r = window.COMPLIMENTS.current()
+document.documentElement.style.setProperty('--acc', r.color)
+
+/* Cycled, never random — see WHAT MAKES IT READ AS PRINT. Uneven border weights
+   and tilts are the whole trick; matching ones look like a table. */
+const TILTS = [-1.2, .9, -.6, 1.4, -1.5, .7, -1, 1.1]
+const BORDERS = ['4px', '3.5px', '4.5px', '4px', '5px', '3.5px', '4.5px', '4px']
+const TONES = ['#ffe08a', '#b8e6c1', '#f9c7c7', '#cfd9f5', '#f6d6a8', '#c9e9e4', '#e8d3f0', '#ffd9b0']
+const SHOUTS = ['Yes!', 'Nice!', 'Ooh!', 'Sorted!', 'Ace!', 'Boom!', 'Tidy!', 'Bonus!']
+
+const panels = r.compliments.map((c, i) => `
+  <div class="panel" style="--i:${i};--tilt:${TILTS[i % TILTS.length]}deg;
+       --bw:${BORDERS[i % BORDERS.length]};--tone:${TONES[i % TONES.length]}">
+    <span class="ground"></span><span class="dots"></span><span class="burst"></span>
+    <span class="no">${String(i + 1).padStart(2, '0')}</span>
+    <span class="pow">${SHOUTS[i % SHOUTS.length]}</span>
+    <div class="in">
+      <div class="obj">${window.SCENES.sceneFor(c.text)}</div>
+      <div class="cap">${c.text}</div>
+    </div>
+  </div>`).join('')
+
+document.getElementById('wrap').innerHTML = `
+  <div class="title">
+    <div class="in">
+      <div class="eye">Compliments · issue №${String(r.compliments.length).padStart(2, '0')}</div>
+      <h1>All this comes with it!</h1>
+      <div class="sub">${r.name} · ${r.date}</div>
+    </div>
+  </div>
+  <div class="strip">${panels}</div>
+  <div class="foot">
+    <span>${r.organizer !== 'Self' ? `Brought to you by <b>${r.organizer}</b>` : 'Self organised'}</span>
+    <span>${r.registration ? `Entry <b>${r.registration}</b>` : `<b>${r.compliments.length}</b> inclusions`}</span>
+  </div>`
+</script>
+</body>
+</html>

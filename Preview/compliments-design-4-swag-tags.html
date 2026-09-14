@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Compliments — Swag Tags</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════════
+   SWAG TAGS — the inclusions list as luggage tags on a rail.
+
+   The goodie bag, hung up. Each perk is a kraft tag on twine, and the whole
+   line sways.
+
+   THE SWAY is the reason this design exists, and the reason it is easy to get
+   wrong. Every tag runs the same keyframes, but each takes its own DURATION and
+   DELAY from its index — a pendulum's period depends on its length, so a rail
+   of identical-period tags reads as a row of windscreen wipers. Varying both
+   makes them drift in and out of phase on their own, which is what a real rail
+   does. `transform-origin` sits at the eyelet, not the tag's centre, so they
+   pivot where the twine actually holds them.
+
+   Hovering a tag lifts and steadies it, as if you had taken hold of it.
+   ══════════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0b0a10;--kraft:#d8c29a;--kraft2:#c4ab7e;--ink:#2b2318;
+  --off:#f2efe7;--d2:rgba(242,239,231,.42);--acc:#eab308;--twine:#8c7a56}
+body{background:radial-gradient(65% 45% at 50% 0%,rgba(234,179,8,.08),transparent 70%),var(--bg);
+  font-family:'Inter',system-ui,sans-serif;min-height:100vh;display:grid;place-items:center;
+  padding:clamp(16px,3vw,34px)}
+
+.board{width:100%;max-width:860px;padding:clamp(20px,3.6vw,32px) clamp(16px,3vw,28px) clamp(30px,5vw,48px);
+  background:linear-gradient(165deg,#15121c,#0d0b12);border:1px solid rgba(255,255,255,.07);
+  border-radius:16px;box-shadow:0 30px 60px -24px #000;position:relative;overflow:hidden;
+  animation:in .8s cubic-bezier(.16,1,.3,1) both}
+@keyframes in{from{opacity:0;transform:translateY(22px)}}
+
+.head{text-align:center;margin-bottom:8px}
+.head .eye{font-size:.56rem;font-weight:800;letter-spacing:.34em;text-transform:uppercase;
+  color:var(--acc);margin-bottom:8px}
+.head h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(1.9rem,6.4vw,3.1rem);
+  line-height:.92;color:var(--off);letter-spacing:.02em}
+.head .sub{margin-top:8px;font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--d2)}
+
+/* ── the rail the tags hang from ─────────────────────────────────────────── */
+.rail{position:relative;margin-top:clamp(22px,4vw,34px);padding-top:26px}
+.rail::before{content:'';position:absolute;top:0;left:-40px;right:-40px;height:3px;
+  background:linear-gradient(90deg,transparent,var(--twine) 12%,#a89268 50%,var(--twine) 88%,transparent);
+  border-radius:2px;box-shadow:0 2px 5px rgba(0,0,0,.6)}
+
+.tags{display:flex;flex-wrap:wrap;justify-content:center;gap:clamp(12px,2.4vw,22px);
+  align-items:flex-start}
+
+.tag{position:relative;width:clamp(130px,20vw,168px);padding:34px 14px 16px;
+  background:linear-gradient(158deg,var(--kraft),var(--kraft2));
+  border-radius:7px;color:var(--ink);text-align:center;cursor:default;
+  /* the pivot is the eyelet at the top, not the middle of the card */
+  transform-origin:50% -22px;
+  box-shadow:0 12px 22px -10px rgba(0,0,0,.85);
+  animation:drop .7s cubic-bezier(.34,1.3,.64,1) both,
+            sway var(--dur) ease-in-out var(--delay) infinite;
+  animation-delay:calc(var(--i) * .1s), var(--delay)}
+@keyframes drop{from{opacity:0;transform:translateY(-26px) rotate(-8deg)}}
+@keyframes sway{0%,100%{transform:rotate(calc(var(--amp) * -1deg))}50%{transform:rotate(var(--amp))}}
+/* the clipped corner every luggage tag has */
+.tag::before{content:'';position:absolute;top:0;left:0;border-width:14px 14px 0 0;
+  border-style:solid;border-color:var(--bg) transparent transparent transparent;
+  border-radius:7px 0 0 0}
+/* the eyelet, and the twine going up to the rail */
+.tag .eyelet{position:absolute;top:12px;left:50%;transform:translateX(-50%);
+  width:15px;height:15px;border-radius:50%;background:var(--bg);
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.9),0 0 0 2px rgba(90,74,48,.55)}
+.tag .string{position:absolute;bottom:100%;left:50%;width:2px;height:26px;
+  background:linear-gradient(var(--twine),#a89268);transform:translateX(-50%)}
+
+/* `animation:none`, not `animation-play-state:paused` — a paused animation still
+   applies its current transform, which would win over the lift below and leave
+   the tag hanging crooked instead of coming to hand. */
+.tag:hover{animation:none;transform:translateY(-6px) rotate(0deg);
+  box-shadow:0 20px 34px -12px rgba(0,0,0,.9);z-index:3;
+  transition:transform .3s cubic-bezier(.16,1,.3,1),box-shadow .3s}
+
+.tag .mark{font-size:1.35rem;line-height:1;display:block;margin-bottom:9px}
+.tag .mark.tick{font-family:'Bebas Neue',sans-serif;color:#7a6a2a}
+.tag .txt{font-size:.76rem;font-weight:600;line-height:1.42;color:var(--ink)}
+.tag .no{position:absolute;bottom:6px;right:9px;font-family:'Bebas Neue',sans-serif;
+  font-size:.72rem;color:rgba(43,35,24,.4)}
+/* a punched-through stamp, so the kraft is not a flat swatch */
+.tag .stamp{position:absolute;bottom:8px;left:9px;font-size:.46rem;font-weight:800;
+  letter-spacing:.12em;text-transform:uppercase;color:rgba(43,35,24,.42)}
+
+.foot{margin-top:clamp(28px,5vw,44px);text-align:center;font-size:.58rem;
+  letter-spacing:.22em;text-transform:uppercase;color:var(--d2);font-weight:700}
+.foot b{color:var(--off);letter-spacing:.06em;font-size:.74rem;text-transform:none}
+
+@media(max-width:480px){
+  .tag{width:calc(50% - 8px);padding:32px 10px 14px}
+}
+@media(prefers-reduced-motion:reduce){
+  .board,.tag{animation:none}
+}
+</style>
+</head>
+<body>
+<div class="board" id="board"></div>
+
+<script src="compliments-data.js"></script>
+<script>
+const r = window.COMPLIMENTS.current()
+document.documentElement.style.setProperty('--acc', r.color)
+
+/* Each tag gets its own period and amplitude — see THE SWAY above. Derived
+   from the index rather than random, so a reload does not reshuffle the rail. */
+const tags = r.compliments.map((c, i) => {
+  const dur = (3.1 + (i % 4) * 0.42).toFixed(2) + 's'
+  const delay = (-(i * 0.63) % 3).toFixed(2) + 's'
+  const amp = (1.6 + (i % 3) * 0.5).toFixed(1) + 'deg'
+  return `
+    <div class="tag" style="--i:${i};--dur:${dur};--delay:${delay};--amp:${amp}">
+      <span class="string"></span>
+      <span class="eyelet"></span>
+      <span class="mark${c.icon ? '' : ' tick'}">${c.icon || '✓'}</span>
+      <span class="txt">${c.text}</span>
+      <span class="stamp">Incl.</span>
+      <span class="no">${String(i + 1).padStart(2, '0')}</span>
+    </div>`
+}).join('')
+
+document.getElementById('board').innerHTML = `
+  <div class="head">
+    <div class="eye">Compliments</div>
+    <h1>Everything in the bag</h1>
+    <div class="sub">${r.name} · ${r.date}</div>
+  </div>
+  <div class="rail"><div class="tags">${tags}</div></div>
+  <div class="foot">
+    ${r.organizer !== 'Self' ? `Included with <b>${r.organizer}</b>` : 'Self organised'}
+    ${r.registration ? ` · Entry <b>${r.registration}</b>` : ''}
+  </div>`
+</script>
+</body>
+</html>

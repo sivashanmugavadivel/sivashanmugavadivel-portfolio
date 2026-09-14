@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Rides · 27 · Lightbox</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   LIGHTBOX — the tile you clicked becomes the page.
+
+   A grid where opening a ride is not a navigation: the tile you pressed
+   grows into the detail view and shrinks back into its own place when you
+   close it. It is a FLIP — measure the tile, measure where it is going,
+   invert the difference, then play — so the card never jumps, cross-fades
+   or reloads. Your eye keeps hold of the same object the whole way.
+
+   Two details that separate a real shared-element transition from a
+   dressed-up modal:
+
+   · THE ROUTE DRAWING IS THE SAME ELEMENT. It is not duplicated into the
+     overlay — the SVG scales inside the growing card, so the line you
+     were looking at is the line you end up looking at.
+
+   · IT REVERSES TO ITS OWN TILE. Close, and it returns to the position
+     that tile occupies NOW — which matters, because the grid reflows at
+     every breakpoint.
+
+   Cool dark glass, frosted panels, one colour per ride borrowed from its
+   file. Restraint everywhere except the motion.
+   ══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08090c; --bg2:#0e1016; --glass:rgba(255,255,255,0.045);
+  --off:#f0f2f6; --d1:rgba(240,242,246,0.62); --d2:rgba(240,242,246,0.4);
+  --d3:rgba(240,242,246,0.22); --bd:rgba(255,255,255,0.09); --bd2:rgba(255,255,255,0.18);
+  --sans:'Geist',system-ui,sans-serif; --mono:'Geist Mono',ui-monospace,monospace;
+  --ease:cubic-bezier(.32,.72,0,1); --c:#ef4444;
+}
+body{background:var(--bg);color:var(--d1);font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden;
+  background-image:
+    radial-gradient(70vw 50vh at 80% -8%,rgba(120,150,255,0.08),transparent 62%),
+    radial-gradient(60vw 50vh at 8% 100%,rgba(255,120,180,0.06),transparent 64%)}
+body.locked{overflow:hidden}
+::selection{background:var(--off);color:var(--bg)}
+
+.wrap{max-width:1280px;margin:0 auto;
+  padding:clamp(20px,3.6vw,46px) clamp(14px,3vw,32px) calc(70px + env(safe-area-inset-bottom))}
+
+/* ── head ── */
+.head{display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;margin-bottom:clamp(18px,3vw,32px)}
+.head .t{flex:1;min-width:250px}
+.head .kick{font-family:var(--mono);font-size:0.55rem;letter-spacing:0.26em;text-transform:uppercase;
+  color:var(--d3);margin-bottom:11px}
+.head h1{font-weight:600;font-size:clamp(1.7rem,4.4vw,2.9rem);color:var(--off);
+  letter-spacing:-0.042em;line-height:1}
+.head h1 em{font-style:normal;color:var(--d3)}
+.head p{font-size:0.82rem;line-height:1.8;color:var(--d2);margin-top:10px;max-width:52ch}
+.head a{font-family:var(--mono);font-size:0.56rem;letter-spacing:0.14em;text-transform:uppercase;
+  color:var(--d2);text-decoration:none;border:1px solid var(--bd);border-radius:99px;
+  padding:9px 15px;transition:.24s}
+.head a:hover{color:var(--bg);background:var(--off);border-color:var(--off)}
+
+/* ── the grid ── */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  gap:clamp(10px,1.6vw,16px)}
+/* the first tile takes two columns — a grid that is all one size is a table */
+.grid .tile:first-child{grid-column:span 2}
+@media(max-width:620px){.grid .tile:first-child{grid-column:span 1}}
+
+.tile{position:relative;border-radius:18px;overflow:hidden;cursor:pointer;
+  background:var(--bg2);border:1px solid var(--bd);
+  aspect-ratio:1.24;display:flex;flex-direction:column;
+  transition:border-color .4s var(--ease),transform .4s var(--ease),box-shadow .4s var(--ease);
+  will-change:transform}
+.tile:hover{transform:translateY(-4px);border-color:var(--tc);
+  box-shadow:0 22px 44px -22px var(--tc)}
+.tile:focus-visible{outline:2px solid var(--tc);outline-offset:3px}
+/* the tile that is currently open is held invisible in the grid, so the
+   overlay card appears to BE it */
+.tile.ghosted{opacity:0;pointer-events:none}
+
+.tile .art{position:absolute;inset:0}
+.tile .art svg{width:100%;height:100%;display:block}
+.tile .scrim{position:absolute;inset:0;
+  background:linear-gradient(to top,rgba(8,9,12,0.94) 4%,rgba(8,9,12,0.35) 44%,transparent 74%)}
+
+.tile .top{position:relative;z-index:2;padding:14px 15px;display:flex;align-items:flex-start;gap:9px}
+.tile .tier{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);
+  font-size:0.5rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--off);
+  background:rgba(8,9,12,0.6);backdrop-filter:blur(8px);border:1px solid var(--bd);
+  border-radius:99px;padding:5px 10px}
+.tile .tier i{width:6px;height:6px;border-radius:50%;background:var(--tierC)}
+.tile .km{margin-left:auto;font-family:var(--mono);font-size:0.68rem;font-weight:500;
+  color:var(--off);background:rgba(8,9,12,0.6);backdrop-filter:blur(8px);
+  border:1px solid var(--bd);border-radius:99px;padding:5px 10px;white-space:nowrap}
+
+.tile .btm{position:relative;z-index:2;margin-top:auto;padding:15px}
+.tile h3{font-weight:600;font-size:1.02rem;color:var(--off);letter-spacing:-0.026em;
+  line-height:1.18;margin-bottom:6px}
+.tile .rt{font-family:var(--mono);font-size:0.58rem;color:var(--d2);letter-spacing:0.03em;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tile .open{position:absolute;right:15px;bottom:15px;z-index:3;width:30px;height:30px;
+  border-radius:50%;background:var(--off);color:var(--bg);display:grid;place-items:center;
+  font-size:0.8rem;opacity:0;transform:scale(.7);transition:.35s var(--ease)}
+.tile:hover .open{opacity:1;transform:none}
+
+/* ── the overlay ── */
+.scrimFull{position:fixed;inset:0;z-index:80;background:rgba(4,5,7,0.8);
+  backdrop-filter:blur(18px);opacity:0;pointer-events:none;
+  transition:opacity .45s var(--ease)}
+.scrimFull.on{opacity:1;pointer-events:auto}
+
+/* the card that flies. Positioned fixed and driven entirely by transform. */
+.flyer{position:fixed;z-index:90;border-radius:18px;overflow:hidden;background:var(--bg2);
+  border:1px solid var(--bd2);display:none;flex-direction:column;
+  transform-origin:top left;will-change:transform;
+  box-shadow:0 40px 90px -30px rgba(0,0,0,0.9)}
+.flyer.on{display:flex}
+
+.flyer .art{position:absolute;inset:0}
+.flyer .art svg{width:100%;height:100%;display:block}
+.flyer .scrim{position:absolute;inset:0;
+  background:linear-gradient(to top,rgba(8,9,12,0.95) 26%,rgba(8,9,12,0.4) 62%,transparent 88%)}
+
+.flyer .inner{position:relative;z-index:3;flex:1;min-height:0;display:flex;flex-direction:column;
+  overflow-y:auto;overscroll-behavior:contain}
+.flyer .inner::-webkit-scrollbar{width:5px}
+.flyer .inner::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:4px}
+
+.flyer .pad{padding:clamp(18px,3vw,40px);margin-top:auto;
+  opacity:0;transform:translateY(18px);transition:.5s var(--ease) .16s}
+.flyer.open .pad{opacity:1;transform:none}
+
+.flyer .tierRow{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:14px}
+.flyer .tier{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);
+  font-size:0.52rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--tierC)}
+.flyer .tier i{width:6px;height:6px;border-radius:50%;background:currentColor;
+  box-shadow:0 0 10px currentColor}
+.flyer .tierRow .dot{color:var(--d3);font-size:0.6rem}
+.flyer .tierRow span{font-family:var(--mono);font-size:0.56rem;color:var(--d2);letter-spacing:0.06em}
+
+.flyer h2{font-weight:600;font-size:clamp(1.4rem,3.6vw,2.4rem);color:var(--off);
+  letter-spacing:-0.036em;line-height:1.06;margin-bottom:10px}
+.flyer .sub{font-family:var(--mono);font-size:0.6rem;color:var(--d2);line-height:1.8;
+  margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid var(--bd)}
+.flyer .sub b{color:var(--c)}
+.flyer p{font-size:0.88rem;line-height:1.88;color:var(--d1);max-width:60ch;margin-bottom:20px}
+.flyer .figs{display:flex;flex-wrap:wrap;gap:0;margin-bottom:20px}
+.flyer .figs div{padding-right:clamp(14px,2.4vw,26px);margin-right:clamp(14px,2.4vw,26px);
+  border-right:1px solid var(--bd)}
+.flyer .figs div:last-child{border-right:0;margin-right:0;padding-right:0}
+.flyer .figs k{display:block;font-family:var(--mono);font-size:0.45rem;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--d3);margin-bottom:6px}
+.flyer .figs v{display:block;font-weight:600;font-size:1.3rem;color:var(--off);line-height:1;
+  letter-spacing:-0.02em}
+.flyer .tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px}
+.flyer .tags u{text-decoration:none;font-family:var(--mono);font-size:0.52rem;letter-spacing:0.1em;
+  text-transform:uppercase;padding:5px 10px;border-radius:99px;border:1px solid var(--bd2);
+  color:var(--d1)}
+.flyer .row{display:flex;gap:10px;flex-wrap:wrap}
+.flyer .go{display:inline-flex;align-items:center;gap:9px;padding:13px 24px;border-radius:99px;
+  background:var(--c);color:var(--bg);text-decoration:none;font-size:0.62rem;font-weight:600;
+  letter-spacing:0.14em;text-transform:uppercase;transition:.28s var(--ease)}
+.flyer .go:hover{transform:translateY(-2px);box-shadow:0 14px 28px -12px var(--c)}
+.flyer .ghost{display:inline-flex;align-items:center;gap:9px;padding:13px 20px;border-radius:99px;
+  border:1px solid var(--bd2);color:var(--d1);text-decoration:none;font-size:0.62rem;
+  letter-spacing:0.14em;text-transform:uppercase;background:transparent;cursor:pointer;
+  font-family:var(--sans);transition:.28s var(--ease)}
+.flyer .ghost:hover{background:var(--off);color:var(--bg);border-color:var(--off)}
+
+.flyer .close{position:absolute;top:14px;right:14px;z-index:6;width:38px;height:38px;
+  border-radius:50%;border:1px solid var(--bd2);background:rgba(8,9,12,0.65);
+  backdrop-filter:blur(8px);color:var(--off);cursor:pointer;font-size:0.95rem;
+  display:grid;place-items:center;opacity:0;transition:.4s var(--ease) .2s}
+.flyer.open .close{opacity:1}
+.flyer .close:hover{background:var(--off);color:var(--bg)}
+
+/* prev / next while open */
+.flyer .step{position:absolute;top:50%;z-index:6;width:40px;height:40px;border-radius:50%;
+  border:1px solid var(--bd2);background:rgba(8,9,12,0.6);backdrop-filter:blur(8px);
+  color:var(--off);cursor:pointer;font-size:1rem;display:grid;place-items:center;
+  transform:translateY(-50%);opacity:0;transition:.4s var(--ease) .22s}
+.flyer.open .step{opacity:1}
+.flyer .step:hover{background:var(--off);color:var(--bg)}
+.flyer .step.prev{left:14px}
+.flyer .step.next{right:14px}
+
+.foot{margin-top:clamp(24px,4vw,40px);display:flex;flex-wrap:wrap;gap:0;
+  border-top:1px solid var(--bd);padding-top:18px}
+.foot div{padding-right:24px;margin-right:24px;border-right:1px solid var(--bd)}
+.foot div:last-child{border-right:0;margin-right:0;padding-right:0}
+.foot k{display:block;font-family:var(--mono);font-size:0.45rem;letter-spacing:0.2em;
+  text-transform:uppercase;color:var(--d3);margin-bottom:6px}
+.foot v{display:block;font-weight:600;font-size:1.2rem;color:var(--off);line-height:1;
+  font-variant-numeric:tabular-nums}
+
+@media(max-width:620px){
+  .flyer .step{display:none}
+  .flyer .figs div:nth-child(n+4){display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  *{transition-duration:.01ms!important;animation-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="head">
+    <div class="t">
+      <div class="kick">My Garage · Bear 650 · Kangayam</div>
+      <h1>Rides <em>&amp;</em> Journeys</h1>
+      <p id="lede"></p>
+    </div>
+    <a href="#">← Garage</a>
+  </header>
+
+  <main class="grid" id="grid"></main>
+  <div class="foot" id="foot"></div>
+</div>
+
+<div class="scrimFull" id="scrim"></div>
+<article class="flyer" id="flyer" role="dialog" aria-modal="true" aria-label="Ride detail"></article>
+
+<script src="rides-data.js"></script>
+<script>
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches
+const S = RD.summary
+
+document.getElementById('lede').textContent =
+  `${RD.tally}. ${S.doneKm} km ridden, ${S.aheadKm} km still ahead. Open one — the tile grows ` +
+  `into it, and folds back into its own place when you close it.`
+
+/* ── the artwork ──────────────────────────────────────────────────────── */
+/* Drawn once per ride and reused in both the tile and the flyer, scaled by
+   viewBox rather than redrawn — so growing the card grows this drawing. */
+function art(r, id) {
+  const w = 600, h = 480
+  if (!r.mapped) {
+    return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid slice">
+      <defs><radialGradient id="g${id}" cx="0.5" cy="0.5" r="0.7">
+        <stop offset="0" stop-color="${r.color}" stop-opacity="0.4"/>
+        <stop offset="1" stop-color="${r.color}" stop-opacity="0.03"/>
+      </radialGradient></defs>
+      <rect width="${w}" height="${h}" fill="url(#g${id})"/>
+      ${Array.from({ length: 7 }, (_, i) =>
+        `<circle cx="${w / 2}" cy="${h / 2}" r="${28 + i * 30}" fill="none"
+          stroke="${r.color}" stroke-opacity="${(0.36 - i * 0.045).toFixed(3)}"
+          stroke-width="1.4" stroke-dasharray="${i % 2 ? '3 9' : 'none'}"/>`).join('')}
+      <circle cx="${w / 2}" cy="${h / 2}" r="8" fill="${r.color}"/></svg>`
+  }
+  const P = RD.one(r, w, h, 92)
+  const d = RD.curve(P.pts)
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid slice">
+    <defs><linearGradient id="g${id}" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="${r.color}" stop-opacity="0.3"/>
+      <stop offset="1" stop-color="${r.color}" stop-opacity="0.03"/>
+    </linearGradient></defs>
+    <rect width="${w}" height="${h}" fill="url(#g${id})"/>
+    <path d="${d}" fill="none" stroke="rgba(8,9,12,0.5)" stroke-width="13"
+      stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="${d}" fill="none" stroke="${r.color}" stroke-width="4.4"
+      stroke-linecap="round" stroke-linejoin="round"/>
+    ${P.pts.map((p, i) => {
+      const edge = i === 0 || i === P.pts.length - 1
+      return `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${edge ? 8 : 4.6}"
+        fill="${edge ? r.color : '#0e1016'}" stroke="${r.color}" stroke-width="2.4"/>`
+    }).join('')}</svg>`
+}
+
+/* ── the grid ─────────────────────────────────────────────────────────── */
+document.getElementById('grid').innerHTML = RD.rides.map((r, i) => {
+  const dest = r.tbd && /decided/i.test(r.toCity) ? 'anywhere' : r.toCity
+  return `<article class="tile" data-id="${r.id}" tabindex="0" role="button"
+      aria-label="Open ${r.name}" style="--tc:${r.color};--tierC:${r.tier.color}">
+    <div class="art">${art(r, 't' + i)}</div>
+    <div class="scrim"></div>
+    <div class="top">
+      <span class="tier"><i></i>${r.tier.label}</span>
+      <span class="km">${r.distance}</span>
+    </div>
+    <div class="btm">
+      <h3>${r.name}</h3>
+      <div class="rt">${r.fromCity} → ${dest}</div>
+    </div>
+    <span class="open">↗</span>
+  </article>`
+}).join('')
+
+document.getElementById('foot').innerHTML = [
+  ['Rides', RD.rides.length],
+  ['Ridden', S.doneKm + ' km'],
+  ['Ahead', S.aheadKm + ' km'],
+  ['Places', S.stopCount],
+  ['States', S.stateCount],
+].map(([k, v]) => `<div><k>${k}</k><v>${v}</v></div>`).join('')
+
+/* ── the FLIP ─────────────────────────────────────────────────────────── */
+const flyer = document.getElementById('flyer')
+const scrim = document.getElementById('scrim')
+const tiles = [...document.querySelectorAll('.tile')]
+let openId = null, busy = false
+
+/* where an open card should sit */
+function targetRect() {
+  const w = Math.min(940, innerWidth - 32)
+  const h = Math.min(innerHeight - 32, Math.max(460, innerHeight * 0.86))
+  return { left: (innerWidth - w) / 2, top: (innerHeight - h) / 2, width: w, height: h }
+}
+
+function fill(r, i) {
+  const dest = r.tbd && /decided/i.test(r.toCity) ? 'anywhere' : r.toCity
+  flyer.style.setProperty('--c', r.color)
+  flyer.style.setProperty('--tierC', r.tier.color)
+  flyer.innerHTML = `
+    <div class="art">${art(r, 'f')}</div>
+    <div class="scrim"></div>
+    <button class="close" aria-label="Close">✕</button>
+    <button class="step prev" aria-label="Previous ride">‹</button>
+    <button class="step next" aria-label="Next ride">›</button>
+    <div class="inner">
+      <div class="pad">
+        <div class="tierRow">
+          <span class="tier"><i></i>${r.tier.label}</span>
+          <span class="dot">·</span><span>${r.date}</span>
+          <span class="dot">·</span><span>${String(i + 1).padStart(2, '0')} of ${
+            String(RD.rides.length).padStart(2, '0')}</span>
+        </div>
+        <h2>${r.name}</h2>
+        <div class="sub">${r.fromCity} <b>→</b> ${dest}${
+          r.via.length ? '<br/>via ' + r.via.join(' · ') : ''}</div>
+        <p>${r.story}</p>
+        <div class="figs">
+          <div><k>Distance</k><v>${r.distance}</v></div>
+          <div><k>Heading</k><v>${r.mapped ? r.compass + ' ' + r.bearing.toFixed(0) + '°' : 'Open'}</v></div>
+          <div><k>Waypoints</k><v>${r.stops.length}</v></div>
+          <div><k>${r.time ? 'Saddle time' : r.estimated ? 'Estimated' : 'States'}</k>
+            <v style="font-size:1rem">${r.time || r.estimate || r.states.join(', ')}</v></div>
+        </div>
+        <div class="tags">${r.highlights.map(h => `<u>${h}</u>`).join('')}</div>
+        <div class="row">
+          <a class="go" href="#">Open the ride ↗</a>
+          <button class="ghost" data-close>Close</button>
+        </div>
+      </div>
+    </div>`
+
+  flyer.querySelectorAll('[data-close],.close').forEach(b =>
+    b.addEventListener('click', close))
+  flyer.querySelector('.prev').addEventListener('click', () => step(-1))
+  flyer.querySelector('.next').addEventListener('click', () => step(1))
+}
+
+function place(rect) {
+  flyer.style.left = rect.left + 'px'
+  flyer.style.top = rect.top + 'px'
+  flyer.style.width = rect.width + 'px'
+  flyer.style.height = rect.height + 'px'
+}
+
+function open(tile) {
+  if (busy) return
+  const id = tile.dataset.id
+  const i = RD.rides.findIndex(r => r.id === id)
+  const r = RD.rides[i]
+  openId = id
+  busy = true
+
+  const first = tile.getBoundingClientRect()   // FIRST
+  fill(r, i)
+  const last = targetRect()                    // LAST
+  place(last)
+  flyer.classList.add('on')
+  tile.classList.add('ghosted')
+  scrim.classList.add('on')
+  document.body.classList.add('locked')
+
+  if (REDUCED) { flyer.classList.add('open'); busy = false; return }
+
+  /* INVERT: put the flyer exactly over the tile, then PLAY to its own box */
+  const dx = first.left - last.left, dy = first.top - last.top
+  const sx = first.width / last.width, sy = first.height / last.height
+  flyer.style.transform = `translate(${dx}px,${dy}px) scale(${sx},${sy})`
+  flyer.getBoundingClientRect()                // force the start frame
+
+  const anim = flyer.animate(
+    [{ transform: `translate(${dx}px,${dy}px) scale(${sx},${sy})` },
+     { transform: 'none' }],
+    { duration: 520, easing: 'cubic-bezier(.32,.72,0,1)', fill: 'forwards' })
+  anim.onfinish = () => {
+    flyer.style.transform = 'none'
+    flyer.classList.add('open')
+    busy = false
+    const c = flyer.querySelector('.close'); if (c) c.focus()
+  }
+}
+
+function close() {
+  if (busy || !openId) return
+  const tile = tiles.find(t => t.dataset.id === openId)
+  busy = true
+  flyer.classList.remove('open')
+
+  const done = () => {
+    flyer.classList.remove('on')
+    flyer.style.transform = 'none'
+    if (tile) { tile.classList.remove('ghosted'); tile.focus() }
+    scrim.classList.remove('on')
+    document.body.classList.remove('locked')
+    openId = null
+    busy = false
+  }
+
+  if (REDUCED || !tile) { done(); return }
+
+  /* reverse to where that tile sits NOW — the grid may have reflowed */
+  const now = tile.getBoundingClientRect()
+  const box = flyer.getBoundingClientRect()
+  const dx = now.left - box.left, dy = now.top - box.top
+  const sx = now.width / box.width, sy = now.height / box.height
+
+  const anim = flyer.animate(
+    [{ transform: 'none', opacity: 1 },
+     { transform: `translate(${dx}px,${dy}px) scale(${sx},${sy})`, opacity: 0.9 }],
+    { duration: 440, easing: 'cubic-bezier(.32,.72,0,1)', fill: 'forwards' })
+  anim.onfinish = done
+}
+
+/* move between rides without closing: re-fill, then settle */
+function step(dir) {
+  if (busy || !openId) return
+  const i = RD.rides.findIndex(r => r.id === openId)
+  const n = (i + dir + RD.rides.length) % RD.rides.length
+  const r = RD.rides[n]
+  const old = tiles.find(t => t.dataset.id === openId)
+  if (old) old.classList.remove('ghosted')
+  openId = r.id
+  const next = tiles.find(t => t.dataset.id === openId)
+  if (next) next.classList.add('ghosted')
+  fill(r, n)
+  flyer.classList.add('open')
+  if (!REDUCED) {
+    flyer.animate(
+      [{ opacity: 0.25, transform: `translateX(${dir * 34}px)` }, { opacity: 1, transform: 'none' }],
+      { duration: 380, easing: 'cubic-bezier(.32,.72,0,1)' })
+  }
+}
+
+tiles.forEach(t => {
+  t.addEventListener('click', () => open(t))
+  t.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(t) }
+  })
+})
+scrim.addEventListener('click', close)
+addEventListener('keydown', e => {
+  if (!openId) return
+  if (e.key === 'Escape') close()
+  if (e.key === 'ArrowRight') step(1)
+  if (e.key === 'ArrowLeft') step(-1)
+})
+
+/* an open card must follow the window, not float over a stale box */
+addEventListener('resize', () => { if (openId && !busy) place(targetRect()) })
+</script>
+</body>
+</html>

@@ -2,8 +2,8 @@
   "order": 10,
   "id": "bear-650-delivery",
 
-  "name": "Bear 650 Delivery",
-  "subtitle": "Royal Enfield - Senthur Motors, Dharapuram -- Vattamalai Murugan Temple -- Home",
+  "name": "Bear 650 Delivery Day",
+  "subtitle": "Senthur Motors, Dharapuram → Vattamalai Murugan Temple → Home (Kariya Kattu Valasu)",
   "mode": "completed",
 
   "distance": "34 KM",
@@ -11,8 +11,10 @@
   "date": "3 Aug 2026",
   "rating": null,
 
+  "fromPlace": "Royal Enfield Senthur Motors",
   "fromCity": "Dharapuram",
-  "toCity": "Kangayam",
+  "destPlace": "Kariya Kattu Valasu",
+  "destCity": "Kangayam",
   "states": ["Tamil Nadu"],
   "color": "#ef4444",
 

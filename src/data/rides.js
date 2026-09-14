@@ -33,10 +33,13 @@
  *                 `rideSummary`, so `distance` and `states` have to be truthful.
  *   "upcoming"  — next up, with a date already set.
  *   "planned"   — decided on, no date yet.
+ *   "cancelled" — was dated, didn't happen. Keeps its page and its place in the
+ *                 list, counts towards nothing.
  *
  *   A ride graduates upward as it happens: planned → upcoming (once it has a
- *   date) → completed (fill in `time`, `rating` and `stats`). Labels and colours
- *   for each tier live in garage.config.json → `rides.modes`.
+ *   date) → completed (fill in `time`, `rating` and `stats`), or sideways to
+ *   cancelled if the day falls through. Labels, colours and the word each tier
+ *   is stamped with live in garage.config.json → `rides.modes`.
  *
  *   Any other mode still gets a detail page but appears in no list, since the
  *   lists are built from the tiers above. That is the escape hatch for a
@@ -59,6 +62,17 @@
  *     "name":     "Nathakadaiyur Temple Ride",
  *     "subtitle": "Dharapuram → Home → Nathakadaiyur",
  *     "mode":     "upcoming",
+ *     "organizer": "Biker's Club CBE",   // who is running the ride. Leave it out
+ *                                        //   for your own rides — it defaults to
+ *                                        //   "Self", so every file written before
+ *                                        //   this field existed is already right.
+ *                                        //   Shown only when it ISN'T Self.
+ *     "organizerLogo": "Royal-Enfield-Logo.png",
+ *                                        // optional. A public/ path like `photos`.
+ *                                        //   Most clubs have no logo file, so
+ *                                        //   every place that shows an organizer
+ *                                        //   reads fine from the name alone, and
+ *                                        //   a path that 404s falls back to it.
  *
  *     "distance": "38 KM",              // display string. The leading number is
  *                                       //   what gets summed, so keep the
@@ -87,8 +101,18 @@
  *     "date":     "2 Aug 2026",         // or "Planned" while there isn't one
  *     "rating":   null,                 // 1–5, once it's been ridden
  *
- *     "fromCity": "Dharapuram",
- *     "toCity":   "Nathakadaiyur",
+ *     "fromPlace": "Kariya Kattu Valasu",  // WHERE EXACTLY — a village, a
+ *     "destPlace": "Nathakadaiyur Temple", //   showroom, a temple. The name you
+ *                                          //   would actually say out loud.
+ *     "fromCity":  "Kangayam",             // WHICH TOWN it belongs to. This is
+ *     "destCity":  "Nathakadaiyur",        //   what the compact "A → B" lines
+ *                                          //   show, where a long place name
+ *                                          //   would not fit. Both pairs are
+ *                                          //   optional and fall back to each
+ *                                          //   other — see `build` below.
+ *                                          //   `dest*` is WHERE IT WAS GOING,
+ *                                          //   which on a round trip is NOT the
+ *                                          //   last stop — see ROUND TRIPS.
  *     "states":   ["Tamil Nadu"],       // counted by `rideSummary`
  *     "color":    "#a78bfa",            // the ride's accent, used for its route
  *                                       //   line, card border and pins
@@ -96,6 +120,14 @@
  *     "description": "…",               // the blurb on the ride card
  *     "story":       "…",               // the write-up on the detail page
  *     "highlights":  ["…"],             // the pill strip
+ *     "compliments": [                  // what the ride COMES WITH — the perks
+ *       "All brand bikes welcome",      //   an organised ride's poster lists.
+ *       { "icon": "☕",                  //   Plain strings or {icon,text}; the
+ *         "text": "Breakfast combo" }   //   icon is an emoji written verbatim,
+ *     ],                                //   and an entry without one gets a
+ *                                       //   tick. Rendered on the detail page
+ *                                       //   as a poster panel, skipped when
+ *                                       //   empty — which is most rides.
  *     "via":         ["Kangayam (Home)"],
  *                    // prose waypoint names for the sidebar and the map header.
  *                    // Free text — NOT coordinates, and not what the route is
@@ -116,6 +148,9 @@
  *         "lat":   10.73,
  *         "lng":   77.52,
  *         "home":  false,               //   optional; the bigger accent pin
+ *         "dest":  false,               //   optional; THE POINT OF THE RIDE, on
+ *                                       //     a ride that comes back. Only read
+ *                                       //     on a round trip — see below.
  *         "dir":   "left",              //   optional; which side the label sits.
  *                                       //     Both maps show every label always,
  *                                       //     so this is the only lever for pins
@@ -155,6 +190,33 @@
  *
  *   A ride with fewer than two stops has nothing to draw, so it gets no `osrm`
  *   and is left off the mini-map. It still has a detail page.
+ *
+ * ── ROUND TRIPS ──────────────────────────────────────────────────────────
+ *   A ride that comes home has the same place at both ends of `stops`, which
+ *   makes "where did it go?" unanswerable from the chain alone: the last stop
+ *   is the first one. Asked naively, r7 goes "Kangayam → Kangayam".
+ *
+ *   So a loop's ends are split into two different questions:
+ *
+ *     `destPlace` / `destCity`  WHAT IT WENT FOR — the turnaround. Dhondenling.
+ *     `endPlace`  / `endCity`   WHERE THE WHEELS STOPPED — home again.
+ *     `roundTrip`               true, which is what puts "· Round Trip" on the
+ *                               compact line so the split is visible, not silent.
+ *
+ *   On a one-way ride the two pairs are identical and nothing changes.
+ *
+ *   The turnaround is found by `destOf`: a stop marked `"dest": true` if there
+ *   is one, otherwise the middle of the chain, which is the far end of a
+ *   there-and-back by construction. Mark it explicitly on any loop whose route
+ *   out differs from the route back — r7's does — and it can never drift.
+ *
+ *   Pages read `dest*` for "where was it going" and `end*` for the finish. The
+ *   only two places that genuinely mean the finish are the End row in the two
+ *   sidebars and the label on the last map pin.
+ *
+ *   These were called `toPlace`/`toCity` until the split, which is why the pair
+ *   still sits opposite `from*` rather than a matching `start*`: the UI asks
+ *   "From / To", and `dest*` is the honest answer to the To.
  *
  * ── ADDING A RIDE ────────────────────────────────────────────────────────
  *   Copy _template.json, rename it after the ride, give it an `id`, a `name`,
@@ -252,6 +314,77 @@ function wordsFromMinutes(mins) {
   return out.join(' ')
 }
 
+/**
+ * An endpoint written out in full: "Kariya Kattu Valasu, Kangayam".
+ *
+ * Both detail pages show a ride's start and end this way, so the rule for
+ * joining them lives here rather than twice over in the pages. The two
+ * degenerate cases are the point of it: a place with no city named, and a place
+ * that IS its city — "Chennai, Chennai" — both collapse to the single name
+ * instead of printing the same word twice.
+ */
+export function placeLabel(place, city) {
+  const p = String(place ?? '').trim()
+  const c = String(city ?? '').trim()
+  if (!p) return c || '—'
+  if (!c || p === c) return p
+  /* The city is already inside the place name — "Dhondenling Tibetan
+     Settlement" in "Dhondenling" — so printing both says the word twice for no
+     gain. Same reason as the p === c case above, one step looser. */
+  if (new RegExp(`\\b${c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(p)) return p
+  return `${p}, ${c}`
+}
+
+/**
+ * The compact "where to where" line: "Kangayam → Chennai".
+ *
+ * `to` is the ride's DESTINATION, not the last stop — on a loop those are two
+ * different places, and the destination is the one worth naming. Pass
+ * `roundTrip` and the line says so rather than leaving the reader to guess why
+ * a ride that ends at home is billed as going somewhere else:
+ *
+ *   routeLabel('Kangayam', 'Dhondenling', true) -> "Kangayam → Dhondenling · Round Trip"
+ *
+ * A loop with no destination worked out still collapses to "Kangayam · Round
+ * Trip", rather than rendering "Kangayam → Kangayam" — which reads as a bug in
+ * the page instead of a loop in the road. Used by every tight spot that has room
+ * for one line; the sidebars use `placeLabel` instead, which has the width for
+ * the full answer.
+ */
+export function routeLabel(from, to, roundTrip = false) {
+  const a = String(from ?? '').trim()
+  const b = String(to ?? '').trim()
+  if (!a && !b) return ''
+  if (!b || a === b) return a ? `${a} · Round Trip` : b
+  if (!a) return b
+  return roundTrip ? `${a} → ${b} · Round Trip` : `${a} → ${b}`
+}
+
+/**
+ * One thing that comes with the ride — a perk off the event poster.
+ *
+ * Two shapes are accepted because most entries need nothing but words:
+ *
+ *   "All brand bikes welcome"
+ *   { "icon": "☕", "text": "Breakfast combo with tea/coffee" }
+ *
+ * `icon` is written verbatim — an emoji, not a name from a lookup table. These
+ * are perks, not places, so there is no fixed vocabulary to match against the
+ * way `stops[].icon` has one. An entry without one gets a tick from the poster
+ * panel, which is what "included" looks like anyway.
+ */
+function complimentOf(c, k) {
+  const text = String(
+    (typeof c === 'string' ? c : c?.text ?? c?.label) ?? ''
+  ).trim()
+  if (!text) return null
+  return {
+    id: (typeof c === 'object' && c?.id) || `c${k + 1}`,
+    icon: typeof c === 'object' ? String(c?.icon ?? '').trim() : '',
+    text,
+  }
+}
+
 /** Turn any label into a stop id, for stops that don't carry one. */
 const slugify = s => String(s ?? '')
   .toLowerCase()
@@ -276,6 +409,12 @@ function stopOf(s, k) {
     lat,
     lng,
     home: !!s.home,
+    /* THE POINT OF THE RIDE, on a ride that comes back. A loop's last stop is
+       its first one, so "where was it going?" cannot be answered from the chain
+       — the turnaround has to be named. See `destOf` below, which falls back to
+       the middle of the chain when no stop claims it. Meaningless on a one-way
+       ride, where the destination is simply the end. */
+    dest: !!s.dest,
     dir: s.dir || 'left',
     /* null means "use the next colour in the page's palette", so a stop only
        needs a colour when you want to pin a specific one to it. */
@@ -285,6 +424,43 @@ function stopOf(s, k) {
        detail page, which owns the glyphs; nothing here needs to know them. */
     icon: String(s.icon ?? '').trim(),
   }
+}
+
+/**
+ * Does this ride come back to where it started?
+ *
+ * Matched on the stop id first, because a loop is authored by repeating the
+ * same stop — r7's chain opens and closes on `kangayam`, deliberately identical
+ * so the two pins land as one. Coordinates are the fallback, for a chain that
+ * returns to the same spot under two different ids.
+ */
+function isRoundTrip(first, last) {
+  if (!first || !last || first === last) return false
+  if (first.id && first.id === last.id) return true
+  const near = (a, b) => Math.abs(a - b) < 0.0005   // ~50 m
+  return near(first.lat, last.lat) && near(first.lng, last.lng)
+}
+
+/**
+ * WHERE THE RIDE WAS ACTUALLY GOING, on a ride that comes back.
+ *
+ * A loop's last stop is its first one, so taking the end of the chain as the
+ * destination answers "Kangayam → Kangayam" — true, and useless. The turnaround
+ * is the answer, and there are two ways to find it:
+ *
+ *   1. A stop marked `"dest": true`. Always right, because a person said so.
+ *   2. The middle of the chain. A there-and-back is symmetric by construction,
+ *      so its midpoint IS the far end — and this is why the far end is not
+ *      computed as "the stop furthest from home", which sounds obvious and is
+ *      wrong: on r7, Kollegal is 14 km further out than Dhondenling, yet
+ *      Dhondenling is the place the day was built around.
+ *
+ * Null on a one-way ride — there the destination is just the last stop, and the
+ * caller already has it.
+ */
+function destOf(stops, roundTrip) {
+  if (!roundTrip || stops.length < 3) return null
+  return stops.find(s => s.dest) ?? stops[Math.floor(stops.length / 2)] ?? null
 }
 
 /* ── One ride ─────────────────────────────────────────────────────────────
@@ -306,6 +482,36 @@ function build(item, slug) {
 
   const idFallback = slug.replace(/^r\d+-/, '')
 
+  /* ── "dest" and "end" are the same place, until the ride loops ───────────
+     On a one-way ride the destination IS the last stop and these all collapse
+     to what they have always been. On a loop they come apart: the ride GOES to
+     Dhondenling and ENDS at home, and a page that calls both of them "to" is
+     the bug being fixed here. So:
+
+       fromPlace/fromCity — where it set off
+       destPlace/destCity — WHAT IT WENT FOR. The turnaround on a loop.
+       endPlace/endCity   — WHERE THE WHEELS STOPPED. Back home on a loop.
+
+     Everything that asks "where was this ride going" reads `dest*`; the two
+     spots that genuinely mean the finish — the End row in the sidebars and the
+     label on the last map pin — read `end*`. An authored `destPlace`/`destCity`
+     still wins over all of it, because a file that names the destination
+     outright knows better than any rule here. */
+  const roundTrip = isRoundTrip(first, last)
+  const dest = destOf(stops, roundTrip)
+
+  const fromPlace = item.fromPlace || first?.label || ''
+  const fromCity = item.fromCity || item.fromPlace || first?.label || ''
+
+  const destPlace = item.destPlace || dest?.label || last?.label || ''
+  const destCity = item.destCity || item.destPlace || dest?.label || last?.label || ''
+
+  /* A loop ends where it started, so the start is the honest answer and it is
+     taken from the START fields rather than re-derived — otherwise the two ends
+     of the same ride could print the same place two different ways. */
+  const endPlace = roundTrip ? fromPlace : destPlace
+  const endCity = roundTrip ? fromCity : destCity
+
   return {
     id: item.id || idFallback || slug,
     slug,
@@ -314,6 +520,15 @@ function build(item, slug) {
     name: item.name || '',
     subtitle: item.subtitle || '',
     mode: item.mode || 'planned',
+    /* Who put the ride together. Most of them are your own, so the absent case
+       is the common one and it answers "Self" rather than blank — which also
+       means every file written before this field existed reads correctly
+       without being touched. */
+    organizer: item.organizer || 'Self',
+    /* Optional, and genuinely so: most clubs hand out a poster and nothing else,
+       so every place that shows an organizer has to read correctly from the name
+       alone. Same public/ path treatment as `photos`. */
+    organizerLogo: srcOf(item.organizerLogo),
 
     distance: item.distance || '',
     /* `time` is the rendered label, because all eleven places that show a ride's
@@ -331,14 +546,39 @@ function build(item, slug) {
     date: item.date || '',
     rating: item.rating ?? null,
 
-    fromCity: item.fromCity || first?.label || '',
-    toCity: item.toCity || last?.label || '',
+    /* Two grains of "where": the exact spot, and the town it sits in.
+       `fromPlace` is Kariya Kattu Valasu; `fromCity` is Kangayam. The detail
+       pages show both together, the cards and map headers show the city alone
+       because a full place name does not fit on one line there.
+
+       Each falls back to the other, so a file may state either, both, or
+       neither: one that only sets `fromCity` — every file written before these
+       fields existed — behaves exactly as it did, and one that only sets
+       `fromPlace` echoes it into the city slot rather than dropping to a stop
+       label. */
+    fromPlace,
+    destPlace,
+    fromCity,
+    destCity,
+    /* where it finished, which is only different from `dest*` on a loop */
+    endPlace,
+    endCity,
+    /* Does it come back? Drives the "· Round Trip" wording, and tells a reader
+       why a ride billed as going to Dhondenling has its End row at home. */
+    roundTrip,
     states: item.states ?? [],
     color: item.color || '#a78bfa',
 
     description: item.description || '',
     story: item.story || '',
     highlights: item.highlights ?? [],
+    /* What the ride comes WITH — breakfast, a badge, a lucky draw. Straight off
+       an event poster, and rendered as one on the detail page. Empty for a ride
+       you simply went on, which is most of them, and the panel is skipped
+       entirely rather than printing an empty frame. */
+    compliments: (Array.isArray(item.compliments) ? item.compliments : [])
+      .map(complimentOf)
+      .filter(Boolean),
     via: item.via ?? [],
 
     mapCenter: Array.isArray(item.mapCenter) ? item.mapCenter : null,
@@ -376,9 +616,10 @@ export const ridesNote = block.note ?? ''
  * detail pages but appear in no list. See the MODES note at the top.
  */
 export const RIDE_MODES = block.modes ?? [
-  { key: 'completed', label: 'Completed', plural: 'Completed Rides', color: '#22c55e' },
-  { key: 'upcoming', label: 'Upcoming', plural: 'Upcoming Rides', color: '#f59e0b' },
-  { key: 'planned', label: 'Planned', plural: 'Planned Rides', color: '#8b5cf6' },
+  { key: 'completed', label: 'Completed', plural: 'Completed Rides', stamp: 'Ridden', color: '#22c55e' },
+  { key: 'upcoming', label: 'Upcoming', plural: 'Upcoming Rides', stamp: 'Scheduled', color: '#f59e0b' },
+  { key: 'planned', label: 'Planned', plural: 'Planned Rides', stamp: 'Planned', color: '#8b5cf6' },
+  { key: 'cancelled', label: 'Cancelled', plural: 'Cancelled Rides', stamp: 'Called Off', color: '#9ca3af' },
 ]
 
 /**
@@ -476,13 +717,15 @@ export const mapCities = (() => {
  * One entry per drawable ride: the stop chain to route through, its colour, and
  * where a click goes.
  *
- * `planned` is what the map draws dashed — an undated ride is a dashed line, so
- * the map reads the same way the ride list does. It's derived from the mode, not
- * authored, so a ride graduating from planned to upcoming redraws itself solid.
+ * `planned` is what the map draws dashed — a line that is not a fixed ride, so
+ * the map reads the same way the ride list does. Two modes qualify: undated
+ * (planned) and called off (cancelled), because neither is a road anyone is
+ * committed to. It's derived from the mode, not authored, so a ride graduating
+ * from planned to upcoming redraws itself solid.
  */
 export const mapRoutes = drawable().map(r => ({
   rid: r.id,
   color: r.color,
   stops: r.mapStops,
-  planned: r.mode === 'planned',
+  planned: r.mode === 'planned' || r.mode === 'cancelled',
 }))

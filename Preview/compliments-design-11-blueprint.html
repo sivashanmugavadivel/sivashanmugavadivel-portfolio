@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Compliments — Blueprint</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════════
+   BLUEPRINT — the perks as a parts drawing.
+
+   The coolest-headed design in the set, and the one that scales best: a
+   technical drawing is a layout built to carry twenty annotated items without
+   getting louder, which is exactly the problem the eight-perk fixture poses.
+
+   THE DRAWING DRAWS ITSELF. Every box outline and every leader line is an SVG
+   path with `stroke-dasharray` set to its own measured length and the offset
+   animated to zero, so the sheet is inked in front of you in the order a
+   draughtsman would work: frame, part, leader, balloon, spec. Lengths are read
+   with `getTotalLength()` after layout rather than guessed, so a box drawn at
+   390px and one at 900px both ink at the same apparent rate.
+
+   A SCAN PASS sweeps down once at the end — the sheet coming off the plotter.
+   It is a single translating gradient and it never repeats, because an
+   endlessly scanning blueprint reads as a sci-fi HUD rather than as paper.
+
+   Everything is one ink on one ground, the way a real print is. The ride's own
+   colour is allowed in at exactly one place — the revision stamp — so it still
+   belongs to the ride without breaking the conceit.
+
+   THE PART DRAWINGS ARE FULL-COLOUR ILLUSTRATIONS everywhere else they appear,
+   which would wreck that. Rather than keep a second set of line art for this
+   one sheet, `sc-ink` on the sheet flattens them to its own ink with a filter —
+   see compliments-scenes.js. One set of drawings, two contexts.
+   ══════════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--navy:#0a2540;--navy2:#0d2f4f;--ink:#7fd4ff;--ink2:rgba(127,212,255,.55);
+  --ink3:rgba(127,212,255,.26);--acc:#eab308;--mono:'JetBrains Mono',monospace}
+body{background:#061725;font-family:var(--mono);min-height:100vh;display:grid;place-items:center;
+  padding:clamp(14px,3vw,34px)}
+
+.sheet{position:relative;width:100%;max-width:900px;border-radius:6px;overflow:hidden;
+  background:
+    linear-gradient(180deg,var(--navy2),var(--navy)),
+    var(--navy);
+  border:1px solid var(--ink3);box-shadow:0 32px 64px -24px #000;
+  padding:clamp(18px,3vw,28px);
+  animation:in .8s cubic-bezier(.16,1,.3,1) both}
+@keyframes in{from{opacity:0;transform:translateY(20px)}}
+/* the grid: fine squares, heavier every fifth */
+.sheet::before{content:'';position:absolute;inset:0;pointer-events:none;opacity:.5;
+  background-image:
+    linear-gradient(var(--ink3) 1px,transparent 1px),
+    linear-gradient(90deg,var(--ink3) 1px,transparent 1px),
+    linear-gradient(rgba(127,212,255,.1) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(127,212,255,.1) 1px,transparent 1px);
+  background-size:80px 80px,80px 80px,16px 16px,16px 16px}
+/* THE SCAN PASS — once, then gone */
+.sheet::after{content:'';position:absolute;left:0;right:0;height:38%;pointer-events:none;z-index:6;
+  background:linear-gradient(180deg,transparent,rgba(127,212,255,.14) 60%,rgba(127,212,255,.3),transparent);
+  animation:scan 2.2s cubic-bezier(.4,0,.3,1) .2s both}
+@keyframes scan{from{top:-40%}to{top:105%;opacity:0}}
+
+.wrap{position:relative;z-index:3}
+
+/* ── the drawing's own header ────────────────────────────────────────────── */
+.hdr{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;
+  flex-wrap:wrap;padding-bottom:12px;border-bottom:1px solid var(--ink3);margin-bottom:clamp(16px,2.6vw,24px)}
+.hdr .eye{font-size:.55rem;letter-spacing:.26em;text-transform:uppercase;color:var(--ink2)}
+.hdr h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(1.6rem,5vw,2.6rem);line-height:.95;
+  color:var(--ink);letter-spacing:.05em;margin-top:4px}
+.hdr .rev{text-align:right;font-size:.56rem;line-height:1.9;color:var(--ink2);white-space:nowrap}
+.hdr .rev b{color:var(--ink)}
+.stamp{display:inline-block;margin-top:6px;border:1.5px solid var(--acc);color:var(--acc);
+  padding:2px 9px;border-radius:3px;font-size:.55rem;letter-spacing:.18em;
+  transform:rotate(-3deg);animation:stamp .5s cubic-bezier(.34,1.6,.5,1) 1.9s both}
+@keyframes stamp{from{opacity:0;transform:rotate(-12deg) scale(1.7)}}
+
+/* ── the parts ───────────────────────────────────────────────────────────── */
+.parts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:clamp(12px,2.2vw,20px)}
+.part{position:relative;padding:14px 14px 12px;min-height:150px}
+.part svg.frame{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.part svg.frame path,.part svg.frame rect{fill:none;stroke:var(--ink2);stroke-width:1.2}
+.part .obj{width:clamp(50px,8vw,62px);height:clamp(50px,8vw,62px);color:var(--ink);
+  margin:2px auto 12px;opacity:0;animation:fade .5s ease both;
+  animation-delay:calc(.5s + var(--i) * .13s)}
+@keyframes fade{from{opacity:0;transform:scale(.86)}to{opacity:1;transform:scale(1)}}
+.part .no{position:absolute;top:6px;left:8px;width:22px;height:22px;border-radius:50%;
+  border:1.2px solid var(--ink);color:var(--ink);display:grid;place-items:center;
+  font-size:.56rem;font-weight:700;background:var(--navy);
+  opacity:0;animation:fade .4s ease both;animation-delay:calc(.78s + var(--i) * .13s)}
+.part .spec{font-size:.65rem;line-height:1.5;color:var(--ink);opacity:0;
+  animation:fade .5s ease both;animation-delay:calc(.86s + var(--i) * .13s)}
+.part .qty{font-size:.5rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink2);
+  margin-top:6px;opacity:0;animation:fade .5s ease both;
+  animation-delay:calc(.94s + var(--i) * .13s)}
+.part:hover svg.frame path,.part:hover svg.frame rect{stroke:var(--ink)}
+
+/* ── the title block, bottom right, like a real print ────────────────────── */
+.block{margin-top:clamp(16px,2.6vw,24px);border:1px solid var(--ink2);
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}
+.block div{padding:9px 12px;border-right:1px solid var(--ink3)}
+.block div:last-child{border-right:0}
+.block u{display:block;text-decoration:none;font-size:.48rem;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--ink2);margin-bottom:3px}
+.block b{font-size:.72rem;color:var(--ink);font-weight:500}
+
+@media(prefers-reduced-motion:reduce){
+  .sheet,.sheet::after,.stamp,.part .obj,.part .no,.part .spec,.part .qty{animation:none;opacity:1}
+  .sheet::after{display:none}
+}
+</style>
+</head>
+<body>
+<!-- sc-ink flattens the colour part drawings to this sheet's single ink -->
+<div class="sheet sc-ink"><div class="wrap" id="wrap"></div></div>
+
+<script src="compliments-data.js"></script>
+<script src="compliments-scenes.js"></script>
+<script>
+const r = window.COMPLIMENTS.current()
+document.documentElement.style.setProperty('--acc', r.color)
+
+const parts = r.compliments.map((c, i) => `
+  <div class="part" style="--i:${i}">
+    <svg class="frame" preserveAspectRatio="none" aria-hidden="true">
+      <rect x="1" y="1" rx="3" />
+      <path class="lead" />
+    </svg>
+    <span class="no">${String(i + 1).padStart(2, '0')}</span>
+    <div class="obj">${window.SCENES.sceneFor(c.text)}</div>
+    <div class="spec">${c.text}</div>
+    <div class="qty">Qty 1 · supplied</div>
+  </div>`).join('')
+
+document.getElementById('wrap').innerHTML = `
+  <div class="hdr">
+    <div>
+      <div class="eye">Sheet 1 of 1 · inclusions schedule</div>
+      <h1>${r.name}</h1>
+    </div>
+    <div class="rev">
+      <b>${r.date}</b>
+      ${r.organizer !== 'Self' ? r.organizer : 'Self organised'}
+      <div class="stamp">Included</div>
+    </div>
+  </div>
+  <div class="parts">${parts}</div>
+  <div class="block">
+    <div><u>Items</u><b>${String(r.compliments.length).padStart(2, '0')}</b></div>
+    <div><u>Issued</u><b>${r.date}</b></div>
+    <div><u>Entry</u><b>${r.registration || 'None'}</b></div>
+    <div><u>Drawn by</u><b>${r.organizer !== 'Self' ? r.organizer : 'Self'}</b></div>
+  </div>`
+
+/* Ink each part's frame and leader line on, in order.
+   Lengths are MEASURED after layout rather than assumed — see THE DRAWING
+   DRAWS ITSELF. A guessed dasharray inks a narrow phone box and a wide desktop
+   one at visibly different speeds. */
+function ink() {
+  document.querySelectorAll('.part').forEach((part, i) => {
+    const svg = part.querySelector('svg.frame')
+    const box = part.getBoundingClientRect()
+    if (!box.width) return
+
+    const rect = svg.querySelector('rect')
+    rect.setAttribute('width', Math.max(0, box.width - 2))
+    rect.setAttribute('height', Math.max(0, box.height - 2))
+
+    /* the leader: out of the balloon, across, and down to the spec line */
+    const lead = svg.querySelector('path.lead')
+    lead.setAttribute('d', `M20 18 H${(box.width * 0.62).toFixed(0)} V${(box.height - 42).toFixed(0)}`)
+
+    for (const el of [rect, lead]) {
+      const len = el.getTotalLength ? el.getTotalLength() : 400
+      el.style.strokeDasharray = len
+      el.style.strokeDashoffset = len
+      el.style.transition = 'none'
+      /* two frames: one to commit the offset, one to animate off it */
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        const delay = (el === rect ? 0.18 : 0.62) + i * 0.13
+        el.style.transition = `stroke-dashoffset .8s cubic-bezier(.16,1,.3,1) ${delay}s`
+        el.style.strokeDashoffset = '0'
+      }))
+    }
+  })
+}
+ink()
+/* re-ink on resize so the frames keep fitting their boxes */
+let t
+addEventListener('resize', () => { clearTimeout(t); t = setTimeout(ink, 180) })
+</script>
+</body>
+</html>

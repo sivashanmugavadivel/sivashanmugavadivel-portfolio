@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Rides · 30 · Constellation</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   CONSTELLATION — the rides as a star chart, with real magnitudes.
+
+   A constellation is a handful of points someone decided to join, which
+   is precisely what a ride is: places, in an order, with a line drawn
+   between them because somebody rode it.
+
+   The mapping that makes this more than a pretty night sky: a star's
+   BRIGHTNESS AND SIZE come from how many rides call at that place. Kariya
+   Kattu Valasu is on five of the six, so it is the chart's first-magnitude
+   star and sits there blazing; Pondicherry is on one and is barely a
+   speck. The hierarchy you see is the real structure of the network, not
+   a design decision — the same fact the transit map states as
+   interchanges, said in the language of a star atlas.
+
+   Hovering a ride traces its constellation: the lines draw themselves
+   stroke by stroke, its stars flare, and the rest of the sky dims down.
+
+   The ride with no course has one star and nothing to join it to, so it
+   sits alone with a slow halo — an unnamed star waiting for a line.
+   ══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --void:#04060f; --void2:#070b1a; --panel:#080d1c;
+  --star:#f2f6ff; --gold:#ffd9a0; --ice:#a8c8ff;
+  --d1:rgba(242,246,255,0.6); --d2:rgba(242,246,255,0.38); --d3:rgba(242,246,255,0.2);
+  --bd:rgba(168,200,255,0.14); --bd2:rgba(168,200,255,0.3);
+  --serif:'Cormorant Garamond',Georgia,serif; --sans:'Jost',system-ui,sans-serif;
+  --ease:cubic-bezier(.2,.9,.25,1); --c:#ef4444;
+}
+html,body{height:100%}
+body{background:var(--void);color:var(--d1);font-family:var(--sans);overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+  background-image:
+    radial-gradient(70vw 60vh at 74% 8%,rgba(90,120,220,0.14),transparent 64%),
+    radial-gradient(60vw 50vh at 16% 92%,rgba(180,120,220,0.1),transparent 66%)}
+::selection{background:var(--gold);color:var(--void)}
+
+.sky{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,0.68fr);height:100svh}
+
+/* ── the chart ── */
+.chart{position:relative;overflow:hidden;cursor:crosshair}
+.chart svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+/* the faint band of the milky way, cutting across */
+.chart::before{content:'';position:absolute;inset:-20%;pointer-events:none;
+  background:linear-gradient(114deg,transparent 36%,rgba(150,180,255,0.06) 46%,
+    rgba(200,180,255,0.045) 54%,transparent 64%);filter:blur(28px)}
+.chart::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(74% 74% at 50% 48%,transparent 52%,rgba(4,6,15,0.82))}
+
+.frame{position:absolute;inset:clamp(12px,2.2vw,26px);border:1px solid var(--bd);
+  border-radius:2px;pointer-events:none;z-index:4}
+.frame::before,.frame::after{content:'';position:absolute;width:9px;height:9px;
+  border:1px solid var(--gold);opacity:0.6}
+.frame::before{top:-1px;left:-1px;border-right:0;border-bottom:0}
+.frame::after{bottom:-1px;right:-1px;border-left:0;border-top:0}
+
+.title{position:absolute;left:clamp(20px,3vw,38px);top:clamp(18px,2.8vw,34px);z-index:5;
+  pointer-events:none}
+.title h1{font-family:var(--serif);font-weight:300;color:var(--star);
+  font-size:clamp(1.3rem,3vw,1.95rem);letter-spacing:0.005em;line-height:1.05}
+.title h1 em{font-style:italic;color:var(--gold)}
+.title p{font-size:0.52rem;letter-spacing:0.26em;text-transform:uppercase;color:var(--d3);
+  margin-top:9px}
+
+.readout{position:absolute;left:clamp(20px,3vw,38px);bottom:clamp(18px,2.8vw,32px);z-index:5;
+  pointer-events:none;font-size:0.54rem;letter-spacing:0.14em;color:var(--d2);line-height:1.9}
+.readout b{color:var(--gold)}
+.readout .big{display:block;font-family:var(--serif);font-size:1.05rem;color:var(--star);
+  letter-spacing:0;margin-bottom:4px;font-weight:400}
+
+.magkey{position:absolute;right:clamp(20px,3vw,38px);bottom:clamp(18px,2.8vw,32px);z-index:5;
+  pointer-events:none;text-align:right}
+.magkey k{display:block;font-size:0.46rem;letter-spacing:0.22em;text-transform:uppercase;
+  color:var(--d3);margin-bottom:9px}
+.magkey .row{display:flex;align-items:center;justify-content:flex-end;gap:8px;
+  font-size:0.52rem;color:var(--d2);margin-bottom:5px}
+.magkey .row i{border-radius:50%;background:var(--star);flex-shrink:0;
+  box-shadow:0 0 8px rgba(242,246,255,0.7)}
+
+/* ── stars and lines ── */
+.lines path{fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:1;
+  opacity:0.12;transition:opacity .6s var(--ease),stroke-width .6s var(--ease)}
+g.con.on .lines path{opacity:0.9;stroke-width:1.6}
+g.con.dim .lines path{opacity:0.03}
+g.con{cursor:pointer}
+
+.st circle.glow{opacity:0.5;transition:opacity .6s var(--ease)}
+.st circle.core{fill:var(--star);transition:r .5s var(--ease)}
+.st text{font-family:'Jost',sans-serif;font-size:8px;letter-spacing:0.16em;
+  text-transform:uppercase;fill:rgba(242,246,255,0.4);opacity:0;
+  transition:opacity .5s var(--ease)}
+g.con.on .st text{opacity:1;fill:rgba(242,246,255,0.85)}
+g.con.dim .st circle{opacity:0.12}
+/* the hub star is always named — it is the one you navigate by */
+.st.hub text{opacity:0.75;fill:var(--gold);font-size:9px}
+
+/* the slow twinkle: a few stars only, at different rates */
+@keyframes tw{0%,100%{opacity:.35}50%{opacity:1}}
+.bgstar{fill:var(--star)}
+.bgstar.t1{animation:tw 3.4s ease-in-out infinite}
+.bgstar.t2{animation:tw 5.1s ease-in-out infinite .8s}
+.bgstar.t3{animation:tw 7.2s ease-in-out infinite 1.9s}
+
+/* the lone star with no constellation */
+.solo circle.halo{fill:none;stroke:#dc2626;stroke-width:1;
+  animation:pulse 4.2s var(--ease) infinite}
+@keyframes pulse{0%{r:12;opacity:.8}75%{opacity:0}100%{r:46;opacity:0}}
+
+/* ── the almanac ── */
+.almanac{background:var(--panel);border-left:1px solid var(--bd);display:flex;
+  flex-direction:column;min-width:0;position:relative}
+.almanac::before{content:'';position:absolute;left:0;top:0;bottom:0;width:1px;
+  background:linear-gradient(transparent,var(--bd2),transparent)}
+.almanac .top{padding:clamp(16px,2.4vw,24px) clamp(15px,2.2vw,22px) 14px;
+  border-bottom:1px solid var(--bd)}
+.almanac .top .r1{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.almanac .top .r1 b{font-size:0.52rem;letter-spacing:0.26em;text-transform:uppercase;
+  color:var(--gold)}
+.almanac .top .r1 a{margin-left:auto;font-size:0.54rem;letter-spacing:0.14em;
+  text-transform:uppercase;color:var(--d2);text-decoration:none;transition:.22s}
+.almanac .top .r1 a:hover{color:var(--star)}
+.almanac .top p{font-family:var(--serif);font-size:0.94rem;line-height:1.65;color:var(--d1)}
+
+.list{flex:1;overflow-y:auto}
+.list::-webkit-scrollbar{width:4px}
+.list::-webkit-scrollbar-thumb{background:var(--bd2)}
+.ent{width:100%;text-align:left;background:transparent;border:0;
+  border-bottom:1px solid rgba(168,200,255,0.07);padding:13px 16px;cursor:pointer;
+  font-family:var(--sans);color:var(--d1);transition:.28s var(--ease);position:relative}
+.ent::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--ec);
+  transform:scaleY(0);transition:transform .32s var(--ease)}
+.ent:hover{background:rgba(168,200,255,0.05)}
+.ent:hover::before,.ent.on::before{transform:scaleY(1)}
+.ent.on{background:rgba(168,200,255,0.08)}
+.ent .l1{display:flex;align-items:baseline;gap:9px;margin-bottom:5px}
+.ent .l1 h3{font-family:var(--serif);font-weight:400;font-size:1rem;color:var(--star);
+  line-height:1.2;flex:1;min-width:0}
+.ent .l1 .km{font-size:0.62rem;color:var(--ec);white-space:nowrap;font-variant-numeric:tabular-nums}
+.ent .l2{font-size:0.54rem;letter-spacing:0.1em;color:var(--d3);line-height:1.7}
+.ent .l2 em{font-style:normal;color:var(--d2)}
+/* how many stars this constellation joins */
+.ent .mags{display:flex;gap:3px;margin-top:7px;align-items:center}
+.ent .mags i{border-radius:50%;background:var(--d2);display:block}
+.ent.on .mags i{background:var(--ec);box-shadow:0 0 7px var(--ec)}
+
+.detail{border-top:1px solid var(--bd);padding:15px 16px;max-height:46%;overflow-y:auto;
+  background:var(--void2)}
+.detail::-webkit-scrollbar{width:4px}
+.detail::-webkit-scrollbar-thumb{background:var(--bd2)}
+.detail .tier{display:inline-flex;align-items:center;gap:7px;font-size:0.5rem;letter-spacing:0.2em;
+  text-transform:uppercase;color:var(--tc);margin-bottom:9px}
+.detail .tier i{width:6px;height:6px;border-radius:50%;background:currentColor}
+.detail h2{font-family:var(--serif);font-weight:400;font-size:1.2rem;color:var(--star);
+  line-height:1.16;margin-bottom:9px}
+.detail p{font-family:var(--serif);font-size:0.94rem;line-height:1.68;color:var(--d1);
+  margin-bottom:13px}
+.detail .figs{display:flex;flex-wrap:wrap;gap:0;margin-bottom:13px}
+.detail .figs div{padding-right:15px;margin-right:15px;border-right:1px solid var(--bd)}
+.detail .figs div:last-child{border-right:0;margin-right:0;padding-right:0}
+.detail .figs k{display:block;font-size:0.44rem;letter-spacing:0.18em;text-transform:uppercase;
+  color:var(--d3);margin-bottom:5px}
+.detail .figs v{display:block;font-family:var(--serif);font-size:1.1rem;color:var(--star);
+  line-height:1}
+.detail .go{display:inline-flex;align-items:center;gap:8px;font-size:0.54rem;letter-spacing:0.16em;
+  text-transform:uppercase;color:var(--void);background:var(--gold);text-decoration:none;
+  padding:10px 17px;transition:.26s var(--ease)}
+.detail .go:hover{background:var(--star);transform:translateY(-2px)}
+
+@media(max-width:900px){
+  body{overflow:auto}
+  .sky{grid-template-columns:1fr;height:auto}
+  .chart{height:58svh;min-height:340px}
+  .almanac{border-left:0;border-top:1px solid var(--bd)}
+  .list,.detail{overflow:visible;max-height:none}
+  .magkey{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+
+<div class="sky">
+  <section class="chart" id="chart">
+    <svg id="atlas" preserveAspectRatio="xMidYMid slice" aria-label="Rides as a star chart"></svg>
+    <div class="frame"></div>
+    <div class="title">
+      <h1>Rides &amp; <em>Journeys</em></h1>
+      <p>A chart of the roads · Kangayam</p>
+    </div>
+    <div class="readout" id="readout">
+      <span class="big">Hover a constellation</span>
+      <span id="rdSub"></span>
+    </div>
+    <div class="magkey" id="magkey"></div>
+  </section>
+
+  <aside class="almanac">
+    <div class="top">
+      <div class="r1"><b>Almanac</b><a href="#">← Garage</a></div>
+      <p id="lede"></p>
+    </div>
+    <div class="list" id="list"></div>
+    <div class="detail" id="detail"></div>
+  </aside>
+</div>
+
+<script src="rides-data.js"></script>
+<script>
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches
+const NET = RD.network()
+const S = RD.summary
+const W = 1000, H = 760
+
+const svg = document.getElementById('atlas')
+svg.setAttribute('viewBox', `0 0 ${W} ${H}`)
+
+document.getElementById('lede').innerHTML =
+  `Six constellations over ${NET.stations.length} stars. A star's brightness is how many rides ` +
+  `call there — which is why <b style="color:var(--gold);font-weight:400">${NET.hub.label}</b> ` +
+  `burns hardest: it is on ${NET.hub.lines} of the ${RD.rides.length}.`
+
+/* ── magnitude ────────────────────────────────────────────────────────── */
+/* Brightest star = most rides through that place. This is the real
+   structure of the network, said in the language of a star atlas. */
+const maxLines = Math.max(...NET.stations.map(s => s.lines))
+const magOf = st => {
+  const t = st.lines / maxLines              // 0 → 1
+  return { r: 2.4 + t * 5.4, glow: 7 + t * 26, op: 0.42 + t * 0.58 }
+}
+
+document.getElementById('magkey').innerHTML =
+  `<k>Magnitude</k>` +
+  [maxLines, Math.max(2, Math.round(maxLines / 2)), 1].map(n => {
+    const m = magOf({ lines: n })
+    return `<div class="row"><span>${n} ride${n === 1 ? '' : 's'}</span>
+      <i style="width:${(m.r * 1.6).toFixed(1)}px;height:${(m.r * 1.6).toFixed(1)}px;
+        opacity:${m.op.toFixed(2)}"></i></div>`
+  }).join('')
+
+/* ── the chart ────────────────────────────────────────────────────────── */
+const P = RD.fit(W, H, 140)
+
+/* background field — deterministic, so the sky never reshuffles */
+let seed = 30071986
+const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return (seed >> 9) / 4194304 }
+let field = ''
+for (let i = 0; i < 210; i++) {
+  const x = rnd() * W, y = rnd() * H
+  const r = 0.4 + rnd() * 1.5
+  const cls = i % 17 === 0 ? 't1' : i % 23 === 0 ? 't2' : i % 31 === 0 ? 't3' : ''
+  field += `<circle class="bgstar ${cls}" cx="${x.toFixed(0)}" cy="${y.toFixed(0)}"
+    r="${r.toFixed(1)}" opacity="${(0.1 + rnd() * 0.45).toFixed(2)}"/>`
+}
+
+/* one group per ride = one constellation */
+const cons = RD.rides.map(r => {
+  const pts = r.stops.map(s => P.of(s))
+
+  if (!r.mapped) {
+    const [x, y] = pts[0]
+    return `<g class="con solo" data-id="${r.id}" style="color:${r.color}">
+      <circle class="halo" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="12"/>
+      <g class="st">
+        <circle class="glow" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="14"
+          fill="${r.color}" opacity="0.2"/>
+        <circle class="core" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.4"/>
+        <text x="${(x + 12).toFixed(1)}" y="${(y + 20).toFixed(1)}">One Ride · unjoined</text>
+      </g></g>`
+  }
+
+  /* the joining lines, drawn leg by leg so they can draw themselves */
+  const lines = pts.slice(1).map((b, i) => {
+    const a = pts[i]
+    return `<path d="M${a[0].toFixed(1)} ${a[1].toFixed(1)} L${b[0].toFixed(1)} ${b[1].toFixed(1)}"
+      stroke="${r.color}"/>`
+  }).join('')
+
+  const stars = pts.map((p, i) => {
+    const s = r.stops[i]
+    const st = NET.byKey(NET.keyOf(s)) || { lines: 1 }
+    const m = magOf(st)
+    const hub = st.lines === maxLines
+    const flip = p[0] > W * 0.74
+    return `<g class="st ${hub ? 'hub' : ''}">
+      <circle class="glow" cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}"
+        r="${m.glow.toFixed(1)}" fill="${r.color}" opacity="${(m.op * 0.3).toFixed(2)}"/>
+      <circle class="core" cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}"
+        r="${m.r.toFixed(1)}" opacity="${m.op.toFixed(2)}"/>
+      <text x="${(p[0] + (flip ? -10 : 10)).toFixed(1)}" y="${(p[1] - 9).toFixed(1)}"
+        text-anchor="${flip ? 'end' : 'start'}">${s.label}</text>
+    </g>`
+  }).join('')
+
+  return `<g class="con" data-id="${r.id}" style="color:${r.color}">
+    <g class="lines">${lines}</g>${stars}</g>`
+}).join('')
+
+svg.innerHTML = `<g>${field}</g>${cons}`
+
+/* ── the almanac list ─────────────────────────────────────────────────── */
+document.getElementById('list').innerHTML = RD.rides.map(r => {
+  const mags = r.stops.map(s => {
+    const st = NET.byKey(NET.keyOf(s)) || { lines: 1 }
+    return magOf(st).r
+  })
+  return `<button class="ent" data-id="${r.id}" style="--ec:${r.color}">
+    <span class="l1"><h3>${r.name}</h3><span class="km">${r.distance}</span></span>
+    <span class="l2"><em>${r.tier.label}</em> · ${r.date} · ${
+      r.mapped ? r.stops.length + ' stars joined' : '1 star, unjoined'}</span>
+    <span class="mags">${mags.map(m =>
+      `<i style="width:${(m * 1.5).toFixed(1)}px;height:${(m * 1.5).toFixed(1)}px"></i>`).join('')}</span>
+  </button>`
+}).join('')
+
+/* ── focus ────────────────────────────────────────────────────────────── */
+const groups = [...svg.querySelectorAll('g.con')]
+const ents = [...document.querySelectorAll('.ent')]
+let pinned = null
+
+function trace(g) {
+  /* redraw each leg from nothing, so the constellation joins itself up */
+  if (REDUCED) return
+  g.querySelectorAll('.lines path').forEach((p, i) => {
+    const len = p.getTotalLength() || 1
+    p.animate(
+      [{ strokeDasharray: len, strokeDashoffset: len },
+       { strokeDasharray: len, strokeDashoffset: 0 }],
+      { duration: 460, delay: i * 110, easing: 'cubic-bezier(.2,.9,.25,1)' })
+  })
+}
+
+function focus(id, doTrace) {
+  const r = id && RD.byId(id)
+  groups.forEach(g => {
+    const on = g.dataset.id === id
+    g.classList.toggle('on', on)
+    g.classList.toggle('dim', !!id && !on)
+    if (on && doTrace) trace(g)
+  })
+  ents.forEach(b => b.classList.toggle('on', b.dataset.id === id))
+
+  const rd = document.getElementById('readout')
+  if (!r) {
+    rd.querySelector('.big').textContent = 'Hover a constellation'
+    document.getElementById('rdSub').innerHTML =
+      `${NET.stations.length} stars · ${NET.interchanges.length} shared · ` +
+      `brightest is <b>${NET.hub.label}</b>`
+    return
+  }
+  rd.querySelector('.big').textContent = r.name
+  document.getElementById('rdSub').innerHTML =
+    `${r.distance} · ${r.mapped ? r.compass + ' ' + r.bearing.toFixed(0) + '°' : 'no course'} · ` +
+    `<b>${r.stops.length}</b> star${r.stops.length === 1 ? '' : 's'}`
+}
+
+function detail(r) {
+  const dest = r.tbd && /decided/i.test(r.toCity) ? 'anywhere' : r.toCity
+  document.getElementById('detail').innerHTML = `
+    <span class="tier" style="--tc:${r.tier.color};color:${r.tier.color}">
+      <i></i>${r.tier.label} · ${r.date}</span>
+    <h2>${r.name}</h2>
+    <p>${r.description}</p>
+    <div class="figs">
+      <div><k>Distance</k><v>${r.distance}</v></div>
+      <div><k>Heading</k><v>${r.mapped ? r.compass : 'Open'}</v></div>
+      <div><k>Stars</k><v>${r.stops.length}</v></div>
+      <div><k>${r.time ? 'Saddle' : r.estimated ? 'Est.' : 'From'}</k>
+        <v style="font-size:.85rem">${r.time || r.estimate || r.fromCity}</v></div>
+    </div>
+    <div style="font-size:.54rem;letter-spacing:.1em;color:var(--d3);margin-bottom:13px">
+      ${r.fromCity} → ${dest}</div>
+    <a class="go" href="#">Open the ride ↗</a>`
+}
+
+ents.forEach(b => {
+  b.addEventListener('mouseenter', () => { if (!pinned) focus(b.dataset.id, true) })
+  b.addEventListener('mouseleave', () => { if (!pinned) focus(null) })
+  b.addEventListener('click', () => {
+    pinned = pinned === b.dataset.id ? null : b.dataset.id
+    focus(pinned || b.dataset.id, true)
+    detail(RD.byId(b.dataset.id))
+  })
+})
+
+groups.forEach(g => {
+  g.addEventListener('mouseenter', () => { if (!pinned) focus(g.dataset.id, true) })
+  g.addEventListener('mouseleave', () => { if (!pinned) focus(null) })
+  g.addEventListener('click', () => {
+    pinned = pinned === g.dataset.id ? null : g.dataset.id
+    focus(pinned || g.dataset.id, true)
+    detail(RD.byId(g.dataset.id))
+    const b = ents.find(x => x.dataset.id === g.dataset.id)
+    if (b) b.scrollIntoView({ block: 'nearest', behavior: REDUCED ? 'auto' : 'smooth' })
+  })
+})
+
+focus(null)
+detail(RD.rides[0])
+/* open on the first constellation, traced */
+setTimeout(() => { focus(RD.rides[0].id, true); pinned = RD.rides[0].id }, REDUCED ? 0 : 500)
+</script>
+</body>
+</html>

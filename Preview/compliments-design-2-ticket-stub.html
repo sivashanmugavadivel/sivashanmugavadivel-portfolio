@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Compliments — Ticket Stub</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════════
+   TICKET STUB — the inclusions list as an event pass.
+
+   An organised ride's perks ARE a ticket: you paid the registration, this is
+   what the ticket admits you to. So the panel is the ticket, and every perk is
+   a line the gate would punch.
+
+   The shapes are real, not drawn:
+     PERFORATION  a repeating-radial-gradient of transparent circles down the
+                  seam, and matching half-circle notches masked out of the
+                  card's own edges — so the "holes" show the page behind them
+                  rather than being painted dots.
+     PUNCH        each row's hole punches through on reveal, with the ring
+                  snapping out after it. The hole is a WINDOW cut in the card,
+                  and what shows through it is that perk's own little animated
+                  scene — tea with the bag still bobbing in it, a trophy
+                  catching the light — drawn from the perk's text by
+                  compliments-scenes.js. Emoji were fine at 26px; shaded
+                  illustration needs the window opened up to 62px, and below
+                  about 44 the shading stops reading at all. That one
+                  measurement is what every other size on this card follows.
+     BARCODE      generated from the ride id, so it differs per ride instead of
+                  being a decorative stripe pattern.
+   ══════════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0b0a12;--card:#16141f;--card2:#1d1a28;--off:#f2f0f7;
+  --d1:rgba(242,240,247,.62);--d2:rgba(242,240,247,.38);--bd:rgba(255,255,255,.09);--acc:#eab308;
+  /* stamp ink — deliberately not the ride accent, see THE STAMP below */
+  --stamp:#e3342a}
+body{background:
+    radial-gradient(70% 50% at 50% 0%,rgba(234,179,8,.07),transparent 70%),var(--bg);
+  font-family:'Inter',system-ui,sans-serif;min-height:100vh;display:grid;place-items:center;
+  padding:clamp(14px,3vw,34px)}
+
+.ticket{position:relative;width:100%;max-width:820px;display:grid;
+  grid-template-columns:132px 1fr;
+  filter:drop-shadow(0 28px 48px rgba(0,0,0,.75));
+  animation:in .85s cubic-bezier(.16,1,.3,1) both}
+@keyframes in{from{opacity:0;transform:translateY(24px) rotate(-.6deg)}}
+
+/* ── the stub ──────────────────────────────────────────────────────────────
+   ADAPTIVE, not a fixed grey: the stub is mixed from the RIDE'S OWN COLOUR, so
+   it arrives warm on a yellow ride, deep red on One Ride, cold blue on a
+   winter run — without any of them being authored. `color-mix` keeps it in
+   CSS, where the accent already lives, instead of computing hexes in JS.
+
+   Only about a fifth accent. A stub carrying much more competes with the
+   rosette and the vertical title sitting on top of it, both of which are the
+   accent at full strength; the tint is there to say which ride this is, not to
+   be the loudest thing on the card.
+
+   The plain declaration above it is the fallback. A browser without color-mix
+   drops the whole later declaration and keeps the grey, which is exactly the
+   old behaviour rather than a broken one. */
+.stub{
+  background:linear-gradient(155deg,#211d2e,#131120);
+  background:linear-gradient(155deg,
+    color-mix(in srgb, var(--acc) 20%, #0f0d18),
+    color-mix(in srgb, var(--acc) 7%, #08070e));
+  border-radius:14px 0 0 14px;padding:22px 12px;display:flex;flex-direction:column;
+  align-items:center;justify-content:space-between;gap:16px;overflow:hidden;position:relative}
+/* the weave, tinted to match rather than a neutral white wash */
+.stub::before{content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(135deg,transparent 0 9px,rgba(255,255,255,.02) 9px 18px);
+  background:repeating-linear-gradient(135deg,transparent 0 9px,
+    color-mix(in srgb, var(--acc) 12%, transparent) 9px 18px)}
+/* a little light spilling in from the torn edge, so the two halves of the
+   ticket read as one object rather than two panels butted together */
+.stub::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(270deg, rgba(0,0,0,.34), transparent 38%)}
+/* A TINT OF THE ACCENT, not the accent itself. Measured across the ride
+   palette: the raw accent on this stub runs 6.9:1 for yellow but only 3.4:1
+   for red and 3.7:1 for violet, because a dark accent and a stub mixed from
+   that same accent share a hue and sit close in luminance. Dialling the tint
+   down barely helps — red is still 3.9:1 with no tint at all, since #dc2626 is
+   only that far off black to begin with. Lifting the TEXT 30% toward white
+   fixes it at the source: every accent then clears 5:1, worst case red at
+   5.13. Bright accents barely move. */
+.stub .vert{writing-mode:vertical-rl;transform:rotate(180deg);font-family:'Bebas Neue',sans-serif;
+  font-size:1.5rem;letter-spacing:.16em;white-space:nowrap;position:relative;
+  color:var(--acc);
+  color:color-mix(in srgb, var(--acc) 70%, #fff)}
+/* ── THE ROSETTE ──────────────────────────────────────────────────────────
+   What used to be the words "admit one rider". A pass that admits one person
+   is exactly what an award rosette says without saying it, and the stub had a
+   dead corner to give it.
+
+   The teeth are GENERATED, not drawn: a hand-written zigzag path never has
+   even points, and unevenness that reads as charm on a 500px illustration
+   reads as a mistake at 90px. See `rosette()` in the script.
+
+   It hangs and sways from the top of its ribbon, which is where a rosette
+   pinned to a board actually pivots. */
+.stub .rose{width:clamp(72px,7.4vw,96px);height:auto;position:relative;
+  filter:drop-shadow(0 6px 11px rgba(0,0,0,.65));
+  animation:rose-in .7s cubic-bezier(.34,1.4,.6,1) .55s both}
+@keyframes rose-in{from{opacity:0;transform:translateY(-12px) scale(.8)}}
+.stub .rose .swing{transform-origin:50% 10%;animation:swing 5.4s ease-in-out infinite}
+@keyframes swing{0%,100%{transform:rotate(-2.6deg)}50%{transform:rotate(2.6deg)}}
+.barcode{display:flex;align-items:flex-end;gap:1.5px;height:38px;position:relative}
+.barcode i{display:block;width:2px;background:var(--off);opacity:.82;
+  animation:scan 2.6s ease-in-out infinite;animation-delay:calc(var(--b) * .045s)}
+@keyframes scan{0%,100%{opacity:.28}18%{opacity:.95}}
+
+/* ── the seam ────────────────────────────────────────────────────────────── */
+.seam{position:absolute;top:0;bottom:0;left:132px;width:2px;transform:translateX(-1px);
+  background:repeating-linear-gradient(to bottom,var(--bg) 0 7px,transparent 7px 14px);
+  z-index:3}
+/* the two bites out of the edges, which sell the tear more than the seam does */
+.bite{position:absolute;left:132px;width:20px;height:20px;border-radius:50%;
+  background:var(--bg);transform:translateX(-50%);z-index:4}
+.bite.t{top:-10px}.bite.b{bottom:-10px}
+
+/* ── the body ────────────────────────────────────────────────────────────── */
+.body{background:linear-gradient(150deg,var(--card),#121019);border-radius:0 14px 14px 0;
+  padding:clamp(20px,3.6vw,30px)}
+.head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;
+  flex-wrap:wrap;padding-bottom:16px;border-bottom:1px dashed rgba(255,255,255,.14)}
+.head h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(1.5rem,4.4vw,2.3rem);
+  line-height:.95;color:var(--off);letter-spacing:.01em}
+.head .sub{font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--acc);
+  font-weight:700;margin-bottom:5px}
+.head .when{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--d2);
+  text-align:right;line-height:1.8;white-space:nowrap}
+.head .when b{display:block;color:var(--off);font-size:.74rem}
+
+ul{list-style:none;margin-top:6px}
+li{display:flex;align-items:center;gap:14px;padding:13px 0;
+  border-bottom:1px solid rgba(255,255,255,.06);position:relative;
+  animation:row .6s cubic-bezier(.16,1,.3,1) both;
+  animation-delay:calc(.3s + var(--i) * .08s)}
+@keyframes row{from{opacity:0;transform:translateX(16px)}}
+/* the punched window: a real gap in the card, with the perk's scene inside it
+   and the ring snapping out around it */
+.hole{position:relative;flex-shrink:0;width:62px;height:62px;border-radius:50%;
+  background:var(--bg);display:grid;place-items:center;
+  color:var(--acc);padding:7px;
+  box-shadow:inset 0 2px 7px rgba(0,0,0,.9);
+  animation:punch .5s cubic-bezier(.34,1.56,.64,1) both;
+  animation-delay:calc(.34s + var(--i) * .08s)}
+@keyframes punch{from{transform:scale(0)}}
+.hole::after{content:'';position:absolute;inset:-5px;border-radius:50%;
+  border:1px solid var(--acc);opacity:0;
+  animation:ring .9s ease-out both;animation-delay:calc(.4s + var(--i) * .08s)}
+@keyframes ring{from{opacity:.85;transform:scale(.6)}to{opacity:0;transform:scale(1.35)}}
+/* the drawing leans in when you hover its row */
+.hole .sc{transition:transform .35s cubic-bezier(.16,1,.3,1)}
+li:hover .hole .sc{transform:scale(1.12)}
+li .txt{flex:1;font-size:clamp(.8rem,1.9vw,.92rem);color:var(--off);font-weight:500;
+  line-height:1.5;min-width:0}
+/* Perks sharing one window — the hairline says the two lines below belong to
+   the picture beside them, rather than looking like one sentence that wrapped. */
+li .txt b{display:block;font-weight:500}
+li .txt b + b{margin-top:6px;padding-top:6px;border-top:1px dashed rgba(255,255,255,.13)}
+/* ── THE STAMP ────────────────────────────────────────────────────────────
+   Always on, never hover-only: the whole point of a stamp is that it has
+   already been applied. Hiding it until hover made it a tooltip.
+
+   Built rather than placed. Two ink layers make it read as rubber rather than
+   as a bordered <span>: the double keyline every official stamp carries, and a
+   turbulence MASK eating into the whole element so the edges break up the way
+   ink does on fibre. It lands with a thump after its row arrives.
+
+   Red on purpose, outside the ride's accent — a stamp is red, and against the
+   ride's own colour on the same card the two would compete. Swap `--stamp` for
+   `var(--acc)` if you would rather it matched. */
+li .ok{position:relative;flex-shrink:0;
+  font-family:'Bebas Neue',sans-serif;font-size:clamp(.76rem,1.9vw,.95rem);
+  letter-spacing:.11em;line-height:1;text-transform:uppercase;white-space:nowrap;
+  color:var(--stamp);border:2.5px solid var(--stamp);border-radius:3px;
+  padding:6px 12px 4px;transform:rotate(-8deg);
+  /* THE MASK IS A THRESHOLD, and the numbers at the end are the whole of it:
+     alpha' = -20 x noise + 13.5, so a pixel stays fully inked until the noise
+     climbs past ~0.625 and is gone by ~0.675. Tuned by rendering it, not by
+     eye — the previous -2.4/1.35 left 0.1% of pixels fully opaque and a mean
+     alpha of 0.20, which is why the stamp came out as a red smudge. Make the
+     first number more negative for a cleaner stamp, less for a rougher one. */
+  -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -20 13.5'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3C/svg%3E");
+  mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -20 13.5'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3C/svg%3E");
+  animation:thump .58s cubic-bezier(.2,1.5,.45,1) both;
+  animation-delay:calc(.62s + var(--i) * .08s)}
+/* the inner keyline */
+li .ok::before{content:'';position:absolute;inset:2px;border:1px solid currentColor;
+  border-radius:2px;opacity:.75}
+@keyframes thump{
+  0%{opacity:0;transform:rotate(-26deg) scale(2.1)}
+  60%{opacity:1;transform:rotate(-8deg) scale(.92)}
+  100%{opacity:1;transform:rotate(-8deg) scale(1)}}
+li:hover{background:rgba(255,255,255,.02)}
+
+.foot{margin-top:18px;display:flex;justify-content:space-between;align-items:center;
+  gap:12px;flex-wrap:wrap;font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--d2);font-weight:700}
+.foot b{color:var(--off);letter-spacing:.06em;font-size:.72rem;text-transform:none}
+.foot .pay{font-family:'JetBrains Mono',monospace;color:var(--acc);border:1px solid var(--acc);
+  padding:4px 10px;border-radius:5px;letter-spacing:.1em}
+
+@media(max-width:560px){
+  /* let the stamp drop below the text rather than squeezing it to two words */
+  li{flex-wrap:wrap}
+  li .txt{flex:1 1 58%}
+  li .ok{font-size:.72rem;padding:5px 10px 3px}
+  .ticket{grid-template-columns:1fr}
+  .stub{border-radius:14px 14px 0 0;flex-direction:row;padding:12px 16px}
+  .stub .vert{writing-mode:horizontal-tb;transform:none;font-size:1.25rem}
+  .barcode{height:26px}
+  .body{border-radius:0 0 14px 14px}
+  .seam{left:0;right:0;top:auto;bottom:auto;width:auto;height:2px;
+    background:repeating-linear-gradient(to right,var(--bg) 0 7px,transparent 7px 14px)}
+  .bite{left:auto;top:auto;transform:translateY(-50%)}
+  .bite.t{left:-10px}.bite.b{right:-10px;bottom:auto}
+}
+@media(prefers-reduced-motion:reduce){
+  .ticket,li,.hole,.hole::after,.barcode i,li .ok,.stub .rose,.stub .rose .swing{animation:none}
+  .hole::after{opacity:0}
+  li .ok{opacity:1;transform:rotate(-8deg)}
+}
+</style>
+</head>
+<body>
+<div class="ticket" id="ticket"></div>
+
+<script src="compliments-data.js"></script>
+<script src="compliments-scenes.js"></script>
+<script>
+const r = window.COMPLIMENTS.current()
+document.documentElement.style.setProperty('--acc', r.color)
+
+/* One window per PICTURE, not per perk. Two inclusions that both draw a cup of
+   tea share the window and stack their lines beside it — see `groupByScene`.
+   The footer still counts perks, not rows: four inclusions in three rows is
+   still four inclusions. */
+const groups = window.SCENES.groupByScene(r.compliments)
+
+/**
+ * The rosette's sawtooth edge, as a path.
+ *
+ * Generated rather than written out, for two reasons. A hand-placed zigzag
+ * never has even teeth, and at 90px wide that reads as a wobble rather than as
+ * craft. And the tooth count is then a number to tune instead of forty-eight
+ * coordinates to redo — drop it to 16 for a chunkier badge, raise it for a
+ * finer one.
+ *
+ * Starts at −90° so a tooth sits at top dead centre, which is what makes the
+ * badge look upright rather than rotated by half a tooth.
+ */
+const rosette = (cx, cy, outer, inner, teeth) => {
+  const pts = []
+  for (let i = 0; i < teeth * 2; i++) {
+    const a = (i * Math.PI) / teeth - Math.PI / 2
+    const rad = i % 2 === 0 ? outer : inner
+    pts.push(`${(cx + Math.cos(a) * rad).toFixed(2)} ${(cy + Math.sin(a) * rad).toFixed(2)}`)
+  }
+  return `M${pts.join('L')}Z`
+}
+
+/* The ribbons hang from BEHIND the badge, so they are drawn first. Each has an
+   angled hem, outer corner lower than inner — the two together make the V a
+   real rosette's tails fall into. */
+const ROSETTE = `
+  <svg class="rose" viewBox="0 0 100 150" aria-hidden="true">
+    <g class="swing">
+      <path d="M38 46L53 46L47 132L30 143Z" fill="var(--acc)"/>
+      <path d="M62 46L47 46L53 132L70 143Z" fill="var(--acc)"/>
+      <!-- the inner edge of each tail, shaded, so they read as two ribbons
+           rather than one flat shape -->
+      <path d="M47 46L53 46L50 90Z" fill="#000" fill-opacity=".22"/>
+      <path d="${rosette(50, 46, 36, 29, 22)}" fill="var(--acc)"/>
+      <circle cx="50" cy="46" r="27" fill="var(--acc)"/>
+      <circle cx="50" cy="46" r="27" fill="#000" fill-opacity=".12"/>
+      <circle cx="50" cy="46" r="23" fill="none" stroke="#fff" stroke-width="1.1" stroke-opacity=".45"/>
+      <!-- Sized against the r=23 ring, not against the badge: ~42px of usable
+           width. "ADMIT 1" at a readable weight runs straight over the ring in
+           any non-condensed fallback, so the numeral carries it alone and the
+           words underneath say what it counts. -->
+      <text x="50" y="52" text-anchor="middle" font-family="'Bebas Neue',sans-serif"
+            font-size="30" fill="#0b0a12">1</text>
+      <text x="50" y="63" text-anchor="middle" font-family="'Inter',sans-serif"
+            font-size="6.8" font-weight="800" letter-spacing="1.3" fill="#0b0a12">PER RIDER</text>
+    </g>
+  </svg>`
+
+/* Bars from the ride id, so two rides never carry the same barcode. A hash
+   rather than Math.random, so a reload does not reshuffle it. */
+const bars = (() => {
+  let h = 0
+  for (const ch of r.id + r.date) h = (h * 31 + ch.charCodeAt(0)) >>> 0
+  return Array.from({ length: 26 }, (_, i) => {
+    h = (h * 1103515245 + 12345) >>> 0
+    return `<i style="--b:${i};height:${38 - (h % 3) * 9}%"></i>`
+  }).join('')
+})()
+
+document.getElementById('ticket').innerHTML = `
+  <div class="stub">
+    <span class="vert">Compliments</span>
+    <div class="barcode">${bars}</div>
+    ${ROSETTE}
+  </div>
+  <span class="seam"></span><span class="bite t"></span><span class="bite b"></span>
+  <div class="body">
+    <div class="head">
+      <div>
+        <div class="sub">What the ride comes with</div>
+        <h1>${r.name}</h1>
+      </div>
+      <div class="when"><b>${r.date}</b>${r.organizer !== 'Self' ? r.organizer : 'Self organised'}</div>
+    </div>
+    <ul>
+      ${groups.map((g, i) => `
+        <li style="--i:${i}">
+          <span class="hole">${window.SCENES.sceneFor('', g.kind)}</span>
+          <span class="txt">${g.texts.map(t => `<b>${t}</b>`).join('')}</span>
+          <span class="ok">Included</span>
+        </li>`).join('')}
+    </ul>
+    <div class="foot">
+      <span>${r.compliments.length} inclusions</span>
+      ${r.registration ? `<span class="pay">Entry ${r.registration}</span>` : '<span>No entry fee</span>'}
+    </div>
+  </div>`
+</script>
+</body>
+</html>

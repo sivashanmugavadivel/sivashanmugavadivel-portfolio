@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Compliments — Campfire</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Caveat:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════════
+   CAMPFIRE — the perks laid out round a fire at the end of the day.
+
+   Everything on this panel is lit by ONE source sitting in the middle of it,
+   and that constraint is what makes it work:
+
+     THE FLICKER drives the room. A single custom property, --flare, is animated
+     on the wrapper, and the fire's glow, the ground light and every card's rim
+     all read from it. So when the fire gulps, the whole clearing dims with it —
+     rather than a fire animating in one corner while the cards sit under
+     steady studio lighting.
+
+     THE FLAMES are four stacked shapes on deliberately MISMATCHED durations
+     (1.5s / 1.9s / 2.3s / 2.9s). Common multiples are what betray a loop: with
+     these, the silhouette does not visibly repeat for well over a minute.
+
+     EMBERS drift up and die out. Their paths are seeded from a fixed number so
+     the same sparks fly on every reload.
+
+   Cards sit in a ring around the fire on wide screens and stack below it on a
+   phone, because a ring at 390px is just a column with extra steps.
+   ══════════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--night:#0a0a14;--card:#171523;--off:#f6f0e4;--d2:rgba(246,240,228,.44);
+  --acc:#eab308;--fire:#ff8a1f;--fire2:#ffd24a}
+body{background:var(--night);font-family:'Inter',system-ui,sans-serif;min-height:100vh;
+  display:grid;place-items:center;padding:clamp(14px,3vw,34px)}
+
+.clearing{position:relative;width:100%;max-width:900px;border-radius:16px;overflow:hidden;
+  padding:clamp(22px,4vw,38px) clamp(16px,3vw,30px) clamp(28px,4.6vw,44px);
+  background:linear-gradient(180deg,#0b0b16 0%,#12101c 58%,#1a1420 100%);
+  border:1px solid rgba(255,255,255,.07);box-shadow:0 34px 68px -24px #000;
+  /* THE FLICKER — one clock the whole clearing reads from */
+  animation:in .9s cubic-bezier(.16,1,.3,1) both, flare 3.7s ease-in-out infinite}
+@keyframes in{from{opacity:0;transform:translateY(22px)}}
+@keyframes flare{0%,100%{--flare:.82}22%{--flare:1}41%{--flare:.7}63%{--flare:.95}81%{--flare:.76}}
+@property --flare{syntax:'<number>';inherits:true;initial-value:.85}
+
+/* the light the fire throws on the ground, driven by --flare */
+.clearing::after{content:'';position:absolute;left:50%;bottom:-18%;width:120%;height:70%;
+  transform:translateX(-50%);pointer-events:none;
+  background:radial-gradient(closest-side,
+    rgba(255,150,40,calc(.3 * var(--flare,.85))), transparent 72%)}
+
+/* ── stars ───────────────────────────────────────────────────────────────── */
+.stars{position:absolute;inset:0 0 45% 0;pointer-events:none;overflow:hidden}
+.stars i{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;
+  animation:twinkle var(--d) ease-in-out var(--dl) infinite}
+@keyframes twinkle{0%,100%{opacity:.12}50%{opacity:.85}}
+
+.wrap{position:relative;z-index:3}
+
+.head{text-align:center;margin-bottom:clamp(18px,3vw,26px)}
+.head .eye{font-size:.54rem;font-weight:800;letter-spacing:.34em;text-transform:uppercase;
+  color:var(--acc);margin-bottom:8px}
+.head h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(1.9rem,6vw,3.1rem);
+  line-height:.92;color:var(--off);letter-spacing:.02em;
+  text-shadow:0 0 calc(26px * var(--flare,.85)) rgba(255,140,40,.5)}
+.head .sub{font-family:'Caveat',cursive;font-size:1.05rem;color:var(--d2);margin-top:4px}
+
+/* ── the fire ────────────────────────────────────────────────────────────── */
+.fire{position:relative;width:clamp(110px,17vw,150px);height:clamp(120px,19vw,164px);
+  margin:0 auto clamp(6px,1.4vw,12px)}
+.fire .glow{position:absolute;left:50%;top:38%;width:290%;height:220%;transform:translate(-50%,-50%);
+  pointer-events:none;
+  background:radial-gradient(closest-side,
+    rgba(255,160,50,calc(.42 * var(--flare,.85))),transparent 70%)}
+.fire svg{position:relative;width:100%;height:100%;overflow:visible}
+.fl{transform-box:fill-box;transform-origin:50% 100%}
+/* MISMATCHED durations — see THE FLAMES above */
+.fl1{animation:lick 1.5s ease-in-out infinite}
+.fl2{animation:lick 1.9s ease-in-out infinite}
+.fl3{animation:lick 2.3s ease-in-out infinite}
+.fl4{animation:lick 2.9s ease-in-out infinite}
+@keyframes lick{
+  0%,100%{transform:scale(1,1) translateX(0)}
+  30%{transform:scale(.9,1.16) translateX(-2px)}
+  60%{transform:scale(1.07,.9) translateX(2px)}}
+
+.embers{position:absolute;inset:-40% 0 0 0;pointer-events:none;overflow:visible}
+.embers i{position:absolute;bottom:26%;width:3px;height:3px;border-radius:50%;
+  background:var(--fire2);opacity:0;
+  box-shadow:0 0 6px var(--fire);animation:rise var(--d) linear var(--dl) infinite}
+@keyframes rise{
+  0%{opacity:0;transform:translate(0,0) scale(1)}
+  14%{opacity:1}
+  100%{opacity:0;transform:translate(var(--dx),-150px) scale(.35)}}
+
+/* ── the cards round it ──────────────────────────────────────────────────── */
+.ring{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));
+  gap:clamp(12px,2.2vw,18px);margin-top:clamp(16px,3vw,26px)}
+.seat{display:flex;align-items:center;gap:13px;padding:13px 15px;border-radius:12px;
+  background:linear-gradient(150deg,rgba(255,255,255,.055),rgba(255,255,255,.015));
+  /* lit on the fire side, dark on the outside */
+  border:1px solid rgba(255,255,255,.07);
+  border-top-color:rgba(255,170,70,calc(.42 * var(--flare,.85)));
+  box-shadow:0 0 calc(22px * var(--flare,.85)) -12px rgba(255,140,40,.8);
+  animation:seat-in .6s cubic-bezier(.16,1,.3,1) both;
+  animation-delay:calc(.5s + var(--i) * .1s);
+  transition:transform .35s cubic-bezier(.16,1,.3,1)}
+@keyframes seat-in{from{opacity:0;transform:translateY(14px) scale(.96)}}
+.seat:hover{transform:translateY(-4px)}
+.seat .obj{flex-shrink:0;width:54px;height:54px;color:var(--fire2)}
+.seat .txt{font-size:.78rem;font-weight:600;color:var(--off);line-height:1.42;min-width:0}
+
+.foot{margin-top:clamp(22px,3.6vw,32px);text-align:center;font-size:.58rem;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--d2);font-weight:700}
+.foot b{color:var(--acc);letter-spacing:.05em;font-size:.74rem;text-transform:none}
+
+@media(prefers-reduced-motion:reduce){
+  .clearing,.seat,.fl,.stars i,.embers i{animation:none}
+  .embers{display:none}
+}
+</style>
+</head>
+<body>
+<div class="clearing">
+  <div class="stars" id="stars"></div>
+  <div class="wrap" id="wrap"></div>
+</div>
+
+<script src="compliments-data.js"></script>
+<script src="compliments-scenes.js"></script>
+<script>
+const r = window.COMPLIMENTS.current()
+document.documentElement.style.setProperty('--acc', r.color)
+
+/* one seeded walk for stars and embers alike, so the night sky is the same
+   every load rather than re-rolling itself on refresh */
+let h = 20260920
+const rnd = () => ((h = (h * 1103515245 + 12345) >>> 0) % 1000) / 1000
+
+document.getElementById('stars').innerHTML = Array.from({ length: 46 }, () =>
+  `<i style="left:${(rnd() * 99).toFixed(1)}%;top:${(rnd() * 96).toFixed(1)}%;
+     --d:${(2.2 + rnd() * 3.4).toFixed(1)}s;--dl:${(-rnd() * 5).toFixed(1)}s"></i>`).join('')
+
+const embers = Array.from({ length: 14 }, () =>
+  `<i style="left:${(28 + rnd() * 44).toFixed(0)}%;
+     --dx:${(rnd() * 46 - 23).toFixed(0)}px;
+     --d:${(2.4 + rnd() * 2.6).toFixed(1)}s;--dl:${(-rnd() * 5).toFixed(1)}s"></i>`).join('')
+
+const seats = r.compliments.map((c, i) => `
+  <div class="seat" style="--i:${i}">
+    <div class="obj">${window.SCENES.sceneFor(c.text)}</div>
+    <div class="txt">${c.text}</div>
+  </div>`).join('')
+
+document.getElementById('wrap').innerHTML = `
+  <div class="head">
+    <div class="eye">Compliments</div>
+    <h1>Round the fire</h1>
+    <div class="sub">${r.name} · ${r.date}</div>
+  </div>
+  <div class="fire">
+    <div class="glow"></div>
+    <div class="embers">${embers}</div>
+    <svg viewBox="0 0 100 120" aria-hidden="true">
+      <!-- four flames, back to front, each on its own clock -->
+      <path class="fl fl4" d="M50 6c16 22 26 30 26 46a26 26 0 0 1-52 0c0-16 10-24 26-46z"
+            fill="#7a2d05" opacity=".8"/>
+      <path class="fl fl3" d="M50 20c12 18 20 24 20 36a20 20 0 0 1-40 0c0-12 8-18 20-36z"
+            fill="var(--fire)" opacity=".9"/>
+      <path class="fl fl2" d="M50 36c8 12 13 16 13 24a13 13 0 0 1-26 0c0-8 5-12 13-24z"
+            fill="var(--fire2)"/>
+      <path class="fl fl1" d="M50 52c4 7 7 9 7 13a7 7 0 0 1-14 0c0-4 3-6 7-13z" fill="#fff6d8"/>
+      <!-- the logs -->
+      <path d="M18 96l64-14M22 82l60 16" stroke="#4a3524" stroke-width="9" stroke-linecap="round"/>
+      <path d="M18 96l64-14" stroke="#6b4a31" stroke-width="4" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <div class="ring">${seats}</div>
+  <div class="foot">
+    ${r.organizer !== 'Self' ? `Laid on by <b>${r.organizer}</b>` : 'Self organised'}
+    ${r.registration ? ` · Entry <b>${r.registration}</b>` : ''}
+  </div>`
+</script>
+</body>
+</html>

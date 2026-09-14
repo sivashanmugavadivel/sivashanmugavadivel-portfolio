@@ -1,6 +1,8 @@
 {
   "_readme": [
-    "KOVIAON MARATHON — Home to Hindusthan College of Arts and Sciences, Coimbatore.",
+    "KOVAION MARATHON — Home to Hindusthan College of Arts and Sciences, Coimbatore.",
+    "The filename stays koviaon- on purpose: it is the vlog's URL, and renaming",
+    "it would break every link already pointing at this page.",
     "Scaffolded from the route and purpose only; everything else is yours to fill.",
     "",
     "STILL TO FILL:",
@@ -32,14 +34,14 @@
   "video": "https://youtube.com/shorts/_hC_r8o0m2w?si=ZpSK-eoLmbkeB8z6",
 
   "id": "koviaon-marathon-hindusthan-college",
-  "title": "Riding to the KoviaON Marathon",
+  "title": "Riding to the KovaiON Marathon",
   "subtitle": "Kariya Kattu Valasu to Hindusthan College of Arts and Sciences, Coimbatore",
   "excerpt": "[One or two sentences for the card and the standfirst — the early start, the run down to Coimbatore, and the marathon at the other end.]",
 
   "duration": "",
   "views": "",
   "category": "Ride Stories",
-  "tags": ["KoviaON Marathon", "Coimbatore", "Bear 650", "Early Start"],
+  "tags": ["KovaiON Marathon", "Coimbatore", "Bear 650", "Early Start"],
   "featured": false,
 
   "clip": "",
@@ -49,7 +51,7 @@
   "description": [
     "[Open on whatever the video opens on — the pre-dawn start, loading the bib and shoes, or the first kilometres out of the village.]",
     { "heading": "Why this ride" },
-    "[The KoviaON marathon at Hindusthan College — what it was, why you signed up, and why riding there beat any other way of getting there.]",
+    "[The KovaiON marathon at Hindusthan College — what it was, why you signed up, and why riding there beat any other way of getting there.]",
     { "heading": "The road there" },
     "[Kangayam, Avinashipalayam, Palladam, Sulur, Singanallur. What the road was like at that hour, where you stopped, what the traffic did once Coimbatore started.]",
     {

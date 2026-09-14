@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Rides · 17 · Console</title>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   CONSOLE — you type at it, and it can answer things a page cannot.
+
+   This is the only design in the folder where the visitor asks the
+   questions. Six rides is small enough to browse, but it is exactly the
+   size where cross-cutting questions get annoying to answer by eye:
+   which rides pass through Kangayam, what heads west, what is still
+   undated, how far to the next one. Those are one line each here.
+
+     ls · open r5 · where kangayam · bearing w · stats
+     next · undated · sort km · map r2 · help
+
+   Real completion: Tab completes commands and ride ids, ↑/↓ walk the
+   history, and unknown input gets a nearest-match suggestion rather than
+   a flat error. Output is rendered, not just printed — tables align, the
+   map command draws an ASCII plot from the true projected coordinates.
+
+   Modern shell rather than retro CRT: no scanlines, no phosphor glow,
+   syntax colour doing the work. Design 7 already owns the CRT look.
+   ══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0d1117; --bg2:#161b22; --chrome:#010409;
+  --off:#e6edf3; --d1:#a8b3c0; --d2:#7d8792; --d3:#4d5560;
+  --bd:#21262d; --bd2:#30363d;
+  --blue:#79c0ff; --mag:#d2a8ff; --grn:#7ee787; --yel:#e3b341; --red:#ff7b72; --cy:#56d4dd;
+  --mono:'Fira Code',ui-monospace,SFMono-Regular,monospace;
+  --ease:cubic-bezier(.2,.9,.25,1);
+}
+html,body{height:100%}
+body{background:var(--chrome);color:var(--d1);font-family:var(--mono);overflow:hidden;
+  font-size:13px;-webkit-font-smoothing:antialiased}
+::selection{background:var(--blue);color:var(--chrome)}
+
+.win{height:100svh;display:flex;flex-direction:column;
+  padding:clamp(0px,1.4vw,18px)}
+.shell{flex:1;min-height:0;display:flex;flex-direction:column;
+  background:var(--bg);border:1px solid var(--bd2);border-radius:0;
+  box-shadow:0 30px 70px -30px rgba(0,0,0,0.9)}
+@media(min-width:760px){.shell{border-radius:9px;overflow:hidden}}
+
+/* title bar */
+.bar{display:flex;align-items:center;gap:9px;padding:9px 13px;background:var(--bg2);
+  border-bottom:1px solid var(--bd);flex-shrink:0}
+.bar .dots{display:flex;gap:6px}
+.bar .dots i{width:11px;height:11px;border-radius:50%;background:#3d4450}
+.bar .dots i:nth-child(1){background:#ff5f57}
+.bar .dots i:nth-child(2){background:#febc2e}
+.bar .dots i:nth-child(3){background:#28c840}
+.bar .path{font-size:0.72rem;color:var(--d2);letter-spacing:0.02em}
+.bar .path b{color:var(--off);font-weight:500}
+.bar a{margin-left:auto;font-size:0.66rem;color:var(--d2);text-decoration:none;
+  border:1px solid var(--bd2);padding:4px 9px;border-radius:5px;transition:.2s}
+.bar a:hover{color:var(--off);border-color:var(--blue)}
+
+/* the scroll area */
+.out{flex:1;min-height:0;overflow-y:auto;padding:14px clamp(12px,2vw,20px);
+  line-height:1.72;scroll-behavior:smooth}
+.out::-webkit-scrollbar{width:9px}
+.out::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:5px}
+.out::-webkit-scrollbar-track{background:transparent}
+
+.blk{margin-bottom:13px;animation:in .28s var(--ease)}
+@keyframes in{from{opacity:0;transform:translateY(5px)}}
+.echo{color:var(--d2)}
+.echo b{color:var(--grn);font-weight:400}
+.echo u{text-decoration:none;color:var(--off)}
+
+pre{font-family:var(--mono);white-space:pre;overflow-x:auto;font-size:0.8rem;line-height:1.6;
+  padding-bottom:2px}
+pre::-webkit-scrollbar{height:7px}
+pre::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:4px}
+
+.k{color:var(--mag)}       /* keyword */
+.s{color:var(--blue)}      /* string / name */
+.n{color:var(--yel)}       /* number */
+.g{color:var(--grn)}       /* good / done */
+.r{color:var(--red)}       /* warn */
+.c{color:var(--d3)}        /* comment */
+.cy{color:var(--cy)}
+.dim{color:var(--d2)}
+
+.tblhead{color:var(--d3);border-bottom:1px solid var(--bd);display:inline-block;
+  padding-bottom:3px;margin-bottom:4px}
+
+.card{border-left:2px solid var(--bc,var(--blue));padding:2px 0 2px 13px;margin:7px 0}
+.card h3{font-size:0.94rem;color:var(--off);font-weight:500;margin-bottom:5px}
+.card .meta{color:var(--d2);font-size:0.78rem;margin-bottom:7px}
+.card p{color:var(--d1);font-size:0.8rem;line-height:1.75;max-width:74ch;margin-bottom:7px}
+.card .tags span{display:inline-block;color:var(--bc);border:1px solid currentColor;
+  border-radius:99px;padding:1px 8px;font-size:0.66rem;margin:0 5px 5px 0;opacity:0.85}
+.card a{color:var(--blue);font-size:0.76rem}
+
+.hintbar{flex-shrink:0;display:flex;gap:7px;flex-wrap:wrap;padding:9px clamp(12px,2vw,20px);
+  border-top:1px solid var(--bd);background:var(--bg2)}
+.hintbar button{background:transparent;border:1px solid var(--bd2);border-radius:5px;
+  color:var(--d2);font-family:var(--mono);font-size:0.68rem;padding:4px 9px;cursor:pointer;
+  transition:.2s var(--ease)}
+.hintbar button:hover{color:var(--chrome);background:var(--blue);border-color:var(--blue)}
+
+/* the prompt line */
+.promptrow{flex-shrink:0;display:flex;align-items:baseline;gap:9px;
+  padding:11px clamp(12px,2vw,20px) calc(12px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--bd);background:var(--bg)}
+.promptrow .ps1{color:var(--grn);white-space:nowrap;flex-shrink:0}
+.promptrow .ps1 b{color:var(--mag);font-weight:400}
+.wrapin{position:relative;flex:1;min-width:0}
+#line{width:100%;background:transparent;border:0;outline:none;color:var(--off);
+  font-family:var(--mono);font-size:13px;caret-color:transparent;position:relative;z-index:2}
+/* the ghost completion sits behind the real input */
+#ghost{position:absolute;inset:0;pointer-events:none;color:var(--d3);z-index:1;
+  white-space:pre;overflow:hidden}
+.cursor{display:inline-block;width:7.6px;height:15px;background:var(--off);
+  vertical-align:-2px;animation:blink 1.1s steps(2,end) infinite}
+@keyframes blink{50%{opacity:0}}
+
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition-duration:.01ms!important}
+  .out{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+
+<div class="win">
+  <div class="shell">
+    <div class="bar">
+      <span class="dots"><i></i><i></i><i></i></span>
+      <span class="path">siva@garage:<b>~/mygarage/rides</b></span>
+      <a href="#">← Garage</a>
+    </div>
+    <div class="out" id="out"></div>
+    <div class="hintbar" id="hints"></div>
+    <div class="promptrow">
+      <span class="ps1">rides <b>›</b></span>
+      <span class="wrapin">
+        <span id="ghost"></span>
+        <input id="line" autocomplete="off" autocapitalize="off" spellcheck="false"
+               aria-label="command" />
+      </span>
+      <span class="cursor" id="cur"></span>
+    </div>
+  </div>
+</div>
+
+<script src="rides-data.js"></script>
+<script>
+const out = document.getElementById('out')
+const line = document.getElementById('line')
+const ghost = document.getElementById('ghost')
+const S = RD.summary
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches
+
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+const pad = (s, n) => esc(s).length >= n ? esc(s) : esc(s) + ' '.repeat(n - String(s).length)
+const padS = (s, n) => String(s).length >= n ? String(s).slice(0, n) : String(s) + ' '.repeat(n - String(s).length)
+
+function say(html, echo) {
+  const b = document.createElement('div')
+  b.className = 'blk'
+  b.innerHTML = (echo ? `<div class="echo">rides <b>›</b> <u>${esc(echo)}</u></div>` : '') + html
+  out.appendChild(b)
+  out.scrollTop = out.scrollHeight
+}
+
+/* ── ride formatting helpers ──────────────────────────────────────────── */
+const tierCls = r => r.mode === 'completed' ? 'g' : r.mode === 'upcoming' ? 'yel' : 'dim'
+const tierTxt = r => r.mode === 'completed' ? 'ridden' : r.mode === 'upcoming' ? 'upcoming' : 'planned'
+
+function card(r) {
+  const dest = r.tbd && /decided/i.test(r.toCity) ? 'anywhere' : r.toCity
+  return `<div class="card" style="--bc:${r.color}">
+    <h3>${esc(r.name)}</h3>
+    <div class="meta">
+      <span class="${tierCls(r)}">●</span> ${tierTxt(r)} ·
+      <span class="n">${esc(r.distance)}</span> ·
+      ${esc(r.date)} ·
+      ${r.mapped ? `<span class="cy">${r.compass} ${r.bearing.toFixed(0)}°</span>` : '<span class="dim">no course</span>'} ·
+      ${r.stops.length} stop${r.stops.length === 1 ? '' : 's'}
+      ${r.time ? ' · ' + esc(r.time) : r.estimated ? ' · ~' + esc(r.estimate) : ''}
+    </div>
+    <div class="meta"><span class="s">${esc(r.fromCity)}</span> → <span class="s">${esc(dest)}</span>${
+      r.via.length ? ' <span class="c">via ' + esc(r.via.join(', ')) + '</span>' : ''}</div>
+    <p>${esc(r.story)}</p>
+    <div class="tags">${r.highlights.map(h => `<span>${esc(h)}</span>`).join('')}</div>
+    <a href="#">open ride ↗</a>
+  </div>`
+}
+
+/* ── the commands ─────────────────────────────────────────────────────── */
+const CMD = {
+
+  help: () => `<pre><span class="c"># the whole vocabulary</span>
+<span class="k">ls</span>              list every ride
+<span class="k">open</span> <span class="s">&lt;id&gt;</span>       the full entry for one ride
+<span class="k">map</span>  <span class="s">[id]</span>       plot a route (or all of them) as ASCII
+<span class="k">where</span> <span class="s">&lt;place&gt;</span>  which rides call at a place
+<span class="k">bearing</span> <span class="s">&lt;dir&gt;</span>  rides heading N/NE/E/SE/S/SW/W/NW
+<span class="k">sort</span> <span class="s">&lt;key&gt;</span>      order by km · date · stops · name
+<span class="k">stats</span>           the totals
+<span class="k">next</span>            what is coming, and how soon
+<span class="k">undated</span>         rides with a road but no day
+<span class="k">check</span>           look for figures that disagree with the coordinates
+<span class="k">clear</span>           empty the screen
+
+<span class="c">tab</span> completes · <span class="c">↑ ↓</span> history</pre>`,
+
+  ls: () => {
+    const rows = RD.rides.map((r, i) =>
+      `<span class="${tierCls(r)}">●</span> ${padS(i + 1 + '.', 4)}` +
+      `<span class="s">${padS(r.id, 19)}</span>` +
+      `<span class="n">${padS(r.distance, 8)}</span>` +
+      `${padS(r.mapped ? r.compass + ' ' + r.bearing.toFixed(0) + '°' : 'open', 10)}` +
+      `${padS(r.stops.length + ' stops', 9)}` +
+      `<span class="dim">${esc(r.date)}</span>`).join('\n')
+    return `<pre><span class="tblhead">    ${padS('ID', 19)}${padS('DIST', 8)}${padS('HEADING', 10)}${padS('STOPS', 9)}WHEN</span>
+${rows}
+
+<span class="c">${RD.rides.length} rides — ${RD.tally}</span></pre>`
+  },
+
+  open: arg => {
+    if (!arg) return `<pre class="r">open needs a ride id. try <span class="k">ls</span> first.</pre>`
+    const r = findRide(arg)
+    if (!r) return notFound(arg)
+    return card(r)
+  },
+
+  where: arg => {
+    if (!arg) return `<pre class="r">where needs a place. e.g. <span class="k">where</span> <span class="s">kangayam</span></pre>`
+    const q = arg.toLowerCase()
+    const hits = []
+    RD.rides.forEach(r => r.stops.forEach((s, i) => {
+      if (s.label.toLowerCase().includes(q)) hits.push({ r, s, i })
+    }))
+    RD.rides.forEach(r => r.via.forEach(v => {
+      if (v.toLowerCase().includes(q) && !hits.some(h => h.r === r)) hits.push({ r, via: v })
+    }))
+    if (!hits.length) return `<pre>nothing calls at <span class="s">${esc(arg)}</span>.
+<span class="c">places on the network:</span>
+${RD.network().stations.map(s => '  ' + esc(s.label)).join('\n')}</pre>`
+    return `<pre>${hits.length} call${hits.length === 1 ? '' : 's'} matching <span class="s">${esc(arg)}</span>
+
+${hits.map(h => `<span class="${tierCls(h.r)}">●</span> ${padS(h.r.id, 19)}` +
+      (h.s
+        ? `<span class="cy">${padS(h.s.label, 30)}</span><span class="dim">stop ${h.i + 1}/${h.r.stops.length}` +
+          `${h.s.home ? ' · home' : ''}  ${h.s.lat.toFixed(4)}N ${h.s.lng.toFixed(4)}E</span>`
+        : `<span class="dim">${padS('via ' + h.via, 30)}no coordinates</span>`)).join('\n')}</pre>`
+  },
+
+  bearing: arg => {
+    if (!arg) return `<pre class="r">bearing needs a direction: N NE E SE S SW W NW</pre>`
+    const want = arg.toUpperCase()
+    const dirs = { N: 0, NE: 45, E: 90, SE: 135, S: 180, SW: 225, W: 270, NW: 315 }
+    if (!(want in dirs)) return `<pre class="r">"${esc(arg)}" is not a direction. use N NE E SE S SW W NW</pre>`
+    const target = dirs[want]
+    const hits = RD.rides.filter(r => r.mapped).filter(r => {
+      const d = Math.abs(((r.bearing - target + 540) % 360) - 180)
+      return d <= 22.5
+    })
+    const open = RD.rides.filter(r => !r.mapped)
+    return `<pre>rides heading <span class="cy">${want}</span> (±22.5°)
+
+${hits.length ? hits.map(r =>
+      `<span class="${tierCls(r)}">●</span> ${padS(r.id, 19)}<span class="cy">${padS(r.compass + ' ' + r.bearing.toFixed(1) + '°', 12)}</span>` +
+      `<span class="n">${padS(r.distance, 8)}</span><span class="dim">${esc(r.name)}</span>`).join('\n')
+      : '<span class="dim">  none</span>'}
+${open.length ? `\n<span class="c">${open.length} ride has no heading at all: ${open.map(r => r.id).join(', ')}</span>` : ''}</pre>`
+  },
+
+  sort: arg => {
+    const key = (arg || 'km').toLowerCase()
+    const fns = {
+      km: (a, b) => b.km - a.km,
+      date: (a, b) => (a.dated ? 0 : 1) - (b.dated ? 0 : 1) || (b.when && a.when ? b.when - a.when : 0),
+      stops: (a, b) => b.stops.length - a.stops.length,
+      name: (a, b) => a.name.localeCompare(b.name),
+    }
+    if (!fns[key]) return `<pre class="r">sort key must be one of: km date stops name</pre>`
+    const list = RD.rides.slice().sort(fns[key])
+    const max = Math.max(...list.map(r => r.km)) || 1
+    return `<pre>sorted by <span class="k">${key}</span>
+
+${list.map(r => {
+      const w = Math.round(r.km / max * 26)
+      return `<span class="${tierCls(r)}">●</span> ${padS(r.id, 19)}` +
+        `<span class="n">${padS(r.tbd ? 'TBD' : r.km + ' km', 9)}</span>` +
+        `<span style="color:${r.color}">${'█'.repeat(w)}</span>` +
+        `${r.tbd ? '<span class="dim">·····</span>' : ''}`
+    }).join('\n')}</pre>`
+  },
+
+  stats: () => `<pre>  <span class="c">totals — only ridden distance counts toward the first figure</span>
+
+  ridden        <span class="g n">${S.doneKm} km</span>  across ${S.done} rides
+  still ahead   <span class="n">${S.aheadKm} km</span>  across ${S.open} rides
+  longest       <span class="s">${esc(S.longest ? S.longest.name : '—')}</span> <span class="n">${S.longest ? S.longest.km + ' km' : ''}</span>
+  waypoints     <span class="n">${S.stopCount}</span> unique places, <span class="n">${S.legCount}</span> legs
+  states        ${S.states.map(s => esc(s)).join(', ')}
+  interchanges  <span class="n">${RD.network().interchanges.length}</span> places serve more than one ride
+  hub           <span class="cy">${esc(RD.network().hub.label)}</span> — on <span class="n">${RD.network().hub.lines}</span> of ${RD.rides.length} rides</pre>`,
+
+  next: () => {
+    const soon = RD.rides.filter(r => r.dated && r.days >= 0).sort((a, b) => a.days - b.days)
+    if (!soon.length) return `<pre>nothing dated ahead. <span class="c">${RD.rides.filter(r => !r.dated).length} rides are waiting on a date.</span></pre>`
+    return `<pre>${soon.map(r =>
+      `<span class="yel">●</span> <span class="s">${esc(r.name)}</span>\n` +
+      `  <span class="n">${r.days === 0 ? 'today' : 'in ' + r.days + ' days'}</span> · ${esc(r.date)} · ${esc(r.distance)}\n` +
+      `  <span class="c">${esc(r.description)}</span>`).join('\n\n')}</pre>`
+  },
+
+  undated: () => {
+    const u = RD.rides.filter(r => !r.dated)
+    return `<pre>${u.length} ride${u.length === 1 ? '' : 's'} with a road picked but no day set
+
+${u.map(r => `<span class="dim">●</span> ${padS(r.id, 19)}<span class="n">${padS(r.distance, 9)}</span>` +
+      `<span class="dim">${esc(r.fromCity)} → ${esc(r.toCity)}</span>`).join('\n')}
+
+<span class="c">their date field reads "${esc(u[0] ? u[0].date : '')}" — a word, not a day, so they
+cannot sit on a time axis until one is written.</span></pre>`
+  },
+
+  /* the command that reads the files back at you */
+  check: () => {
+    const bad = RD.rides.filter(r => r.mapped && !r.tbd && r.crow && r.km < r.crow)
+    const noPhoto = RD.rides.filter(r => !r.photos.length).length
+    return `<pre><span class="c"># consistency pass over the ride files</span>
+
+${bad.length
+      ? bad.map(r => `<span class="r">✗</span> <span class="s">${esc(r.id)}</span>
+    states <span class="n">${r.km} km</span> but its own coordinates put the end points
+    <span class="n">${r.crow} km</span> apart (chain via every stop: <span class="n">${r.chain} km</span>).
+    <span class="r">a road cannot be shorter than the straight line it spans.</span>`).join('\n\n')
+      : '<span class="g">✓</span> every stated distance is at least its straight-line distance'}
+
+<span class="yel">!</span> <span class="n">${noPhoto}</span> of ${RD.rides.length} rides have no photos yet — every design in this
+    folder is built to work without them.
+<span class="yel">!</span> <span class="n">${RD.rides.filter(r => !r.dated).length}</span> rides have no date, <span class="n">${RD.rides.filter(r => !r.mapped).length}</span> has no second stop.</pre>`
+  },
+
+  map: arg => {
+    const r = arg ? findRide(arg) : null
+    if (arg && !r) return notFound(arg)
+    return asciiMap(r)
+  },
+
+  clear: () => { out.innerHTML = ''; return null },
+}
+
+/* ── ASCII plot from the real projection ──────────────────────────────── */
+const COLS = 64, ROWS = 20
+
+function asciiMap(ride) {
+  const list = ride ? [ride] : RD.rides
+  const stops = list.flatMap(r => r.stops)
+  if (!stops.length) return `<pre class="r">nothing to plot</pre>`
+  const P = ride && ride.mapped
+    ? RD.one(ride, COLS, ROWS, 2)
+    : (() => {
+        /* project the chosen subset into the grid */
+        const proj = RD.fit(COLS, ROWS, 2)
+        return proj
+      })()
+
+  const grid = Array.from({ length: ROWS }, () => Array(COLS).fill(' '))
+  const put = (x, y, ch) => {
+    const cx = Math.round(x), cy = Math.round(y)
+    if (cx >= 0 && cx < COLS && cy >= 0 && cy < ROWS) grid[cy][cx] = ch
+  }
+
+  list.filter(r => r.mapped).forEach(r => {
+    const pts = r.stops.map(s => P.of(s))
+    /* draw each leg with a line of dots */
+    pts.slice(1).forEach((b, i) => {
+      const a = pts[i]
+      const steps = Math.max(2, Math.round(Math.hypot(b[0] - a[0], b[1] - a[1]) * 2))
+      for (let k = 0; k <= steps; k++) {
+        const t = k / steps
+        put(a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, '·')
+      }
+    })
+    pts.forEach((p, i) => put(p[0], p[1], i === 0 ? 'A' : i === pts.length - 1 ? 'B' : 'o'))
+  })
+  list.filter(r => !r.mapped).forEach(r => {
+    const p = P.of(r.stops[0]); put(p[0], p[1], '*')
+  })
+
+  const frame = '┌' + '─'.repeat(COLS) + '┐\n' +
+    grid.map(row => '│' + row.join('') + '│').join('\n') +
+    '\n└' + '─'.repeat(COLS) + '┘'
+
+  const legend = list.map(r =>
+    `  <span style="color:${r.color}">●</span> ${padS(r.id, 19)}` +
+    `<span class="dim">${r.mapped ? esc(r.stops[0].label) + ' → ' + esc(r.stops[r.stops.length - 1].label) : 'single point'}</span>`).join('\n')
+
+  return `<pre><span class="c">mercator · ${ride ? esc(ride.name) : 'all rides, one frame'}
+A start  B finish  o waypoint  * no course</span>
+
+<span class="cy">${frame}</span>
+
+${legend}</pre>`
+}
+
+/* ── resolve a ride from loose input ──────────────────────────────────── */
+function findRide(arg) {
+  const q = arg.toLowerCase().trim()
+  return RD.rides.find(r => r.id.toLowerCase() === q)
+    || RD.rides[+q - 1]
+    || RD.rides.find(r => r.id.toLowerCase().startsWith(q))
+    || RD.rides.find(r => r.name.toLowerCase().includes(q))
+    || null
+}
+
+function notFound(arg) {
+  /* nearest id by shared leading characters — a suggestion beats an error */
+  const q = arg.toLowerCase()
+  let best = null, score = 0
+  RD.rides.forEach(r => {
+    let n = 0
+    while (n < q.length && n < r.id.length && q[n] === r.id[n].toLowerCase()) n++
+    if (n > score) { score = n; best = r }
+  })
+  return `<pre class="r">no ride "${esc(arg)}"${
+    best && score ? `\n<span class="dim">did you mean </span><span class="s">${esc(best.id)}</span><span class="dim">?</span>` : ''}
+<span class="c">run </span><span class="k">ls</span><span class="c"> to see them all</span></pre>`
+}
+
+/* ── run a line ───────────────────────────────────────────────────────── */
+function run(raw) {
+  const input = raw.trim()
+  if (!input) return
+  hist.push(input); hp = hist.length
+  const [cmd, ...rest] = input.split(/\s+/)
+  const arg = rest.join(' ')
+  const fn = CMD[cmd.toLowerCase()]
+  if (!fn) {
+    const near = Object.keys(CMD).find(k => k.startsWith(cmd.toLowerCase()))
+    say(`<pre class="r">${esc(cmd)}: not a command${
+      near ? `\n<span class="dim">did you mean </span><span class="k">${near}</span><span class="dim">?</span>` : ''}
+<span class="c">run </span><span class="k">help</span></pre>`, input)
+    return
+  }
+  const res = fn(arg)
+  if (res !== null) say(res, input)
+  else out.scrollTop = out.scrollHeight
+}
+
+/* ── input, history, completion ───────────────────────────────────────── */
+const hist = []
+let hp = 0
+
+const WORDS = Object.keys(CMD)
+function complete(v) {
+  const parts = v.split(/\s+/)
+  if (parts.length <= 1) {
+    const m = WORDS.find(w => w.startsWith(v.toLowerCase()) && w !== v.toLowerCase())
+    return m || ''
+  }
+  const cmd = parts[0].toLowerCase()
+  const frag = parts.slice(1).join(' ').toLowerCase()
+  if (!frag) return ''
+  if (cmd === 'open' || cmd === 'map') {
+    const m = RD.rides.find(r => r.id.toLowerCase().startsWith(frag))
+    return m ? parts[0] + ' ' + m.id : ''
+  }
+  if (cmd === 'where') {
+    const m = RD.network().stations.find(s => s.label.toLowerCase().startsWith(frag))
+    return m ? parts[0] + ' ' + m.label : ''
+  }
+  if (cmd === 'sort') {
+    const m = ['km', 'date', 'stops', 'name'].find(k => k.startsWith(frag))
+    return m ? parts[0] + ' ' + m : ''
+  }
+  return ''
+}
+
+function paintGhost() {
+  const v = line.value
+  const c = complete(v)
+  ghost.textContent = c && c.toLowerCase().startsWith(v.toLowerCase()) ? v + c.slice(v.length) : ''
+}
+
+line.addEventListener('input', paintGhost)
+line.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    run(line.value); line.value = ''; paintGhost()
+  } else if (e.key === 'Tab') {
+    e.preventDefault()
+    const c = complete(line.value)
+    if (c) { line.value = c; paintGhost() }
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    if (hp > 0) { hp--; line.value = hist[hp] || ''; paintGhost() }
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    if (hp < hist.length) { hp++; line.value = hist[hp] || ''; paintGhost() }
+  } else if (e.key === 'l' && e.ctrlKey) {
+    e.preventDefault(); out.innerHTML = ''
+  }
+})
+
+/* keep focus on the prompt, but never steal a text selection */
+document.addEventListener('click', () => {
+  if (!String(getSelection())) line.focus()
+})
+
+/* the quick buttons */
+const HINTS = ['help', 'ls', 'stats', 'map', 'where kangayam', 'bearing w', 'next', 'check', 'undated', 'clear']
+document.getElementById('hints').innerHTML =
+  HINTS.map(h => `<button data-c="${h}">${h}</button>`).join('')
+document.querySelectorAll('.hintbar button').forEach(b =>
+  b.addEventListener('click', () => { run(b.dataset.c); line.focus() }))
+
+/* ── boot ─────────────────────────────────────────────────────────────── */
+say(`<pre><span class="cy">  ╭──────────────────────────────────────────────╮
+  │  RIDES &amp; JOURNEYS — Bear 650, Kangayam      │
+  ╰──────────────────────────────────────────────╯</span>
+
+  <span class="n">${RD.rides.length}</span> rides · <span class="g">${S.doneKm} km</span> ridden · <span class="n">${S.aheadKm} km</span> ahead
+  ${RD.tally}
+
+  <span class="c">type </span><span class="k">help</span><span class="c"> for the vocabulary, or </span><span class="k">ls</span><span class="c"> to see them all</span></pre>`)
+
+if (!REDUCED) setTimeout(() => run('ls'), 420)
+line.focus()
+</script>
+</body>
+</html>

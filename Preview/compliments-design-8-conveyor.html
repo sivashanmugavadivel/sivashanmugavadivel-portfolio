@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Compliments — Conveyor</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════════
+   CONVEYOR — the perks ride past you on a belt.
+
+   The only design in the set that never stops. Every perk is a crate on a
+   moving line, and the line keeps running whether you look at it or not.
+
+   HOW THE LOOP IS SEAMLESS: the track holds the items TWICE, end to end, and
+   translates itself left by exactly 50% before snapping back to 0. At the
+   moment it snaps, the second copy is sitting precisely where the first one
+   started, so there is no jump to see. This is why the track is built with
+   `items + items` and why the animation distance is 50% and not a pixel value
+   — a pixel distance would need remeasuring on every resize.
+
+   Hover anywhere on the belt and the whole line stops, which is the only way
+   to read the long entries. `animation-play-state` is enough here because
+   nothing is fighting it for the transform.
+
+   The belt itself moves by scrolling its own slat gradient at a matching rate,
+   so the crates look carried rather than slid.
+   ══════════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--steel:#1b1b24;--steel2:#24242f;--off:#eef0f6;
+  --d2:rgba(238,240,246,.4);--acc:#eab308}
+body{background:radial-gradient(75% 55% at 50% 0%,rgba(234,179,8,.08),transparent 70%),var(--bg);
+  font-family:'Inter',system-ui,sans-serif;min-height:100vh;display:grid;place-items:center;
+  padding:clamp(14px,3vw,34px)}
+
+.rig{position:relative;width:100%;max-width:900px;border-radius:16px;overflow:hidden;
+  background:linear-gradient(168deg,#14141c,#0c0c12);
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow:0 32px 64px -24px #000;
+  padding:clamp(20px,3.6vw,32px) 0 clamp(22px,3.6vw,34px);
+  animation:in .85s cubic-bezier(.16,1,.3,1) both}
+@keyframes in{from{opacity:0;transform:translateY(22px)}}
+
+.head{padding:0 clamp(20px,3.6vw,34px) clamp(18px,3vw,26px);
+  display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap}
+.head .eye{font-family:'JetBrains Mono',monospace;font-size:.58rem;font-weight:700;
+  letter-spacing:.24em;text-transform:uppercase;color:var(--acc);margin-bottom:7px;
+  display:flex;align-items:center;gap:8px}
+.head .eye::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--acc);
+  box-shadow:0 0 10px var(--acc);animation:blip 1.4s ease-in-out infinite}
+@keyframes blip{0%,100%{opacity:.35}50%{opacity:1}}
+.head h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(1.8rem,5.4vw,2.9rem);
+  line-height:.92;color:var(--off);letter-spacing:.02em}
+.head .meta{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--d2);
+  text-align:right;line-height:1.9;white-space:nowrap}
+.head .meta b{display:block;color:var(--off);font-size:.72rem}
+
+/* ── the belt ────────────────────────────────────────────────────────────── */
+.belt{position:relative;overflow:hidden;padding:18px 0 0;
+  border-top:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(255,255,255,.07);
+  background:linear-gradient(180deg,rgba(0,0,0,.35),transparent 30%,rgba(0,0,0,.5))}
+/* the rollers at each end, half in shadow */
+.belt::before,.belt::after{content:'';position:absolute;top:0;bottom:0;width:64px;z-index:4;
+  pointer-events:none}
+.belt::before{left:0;background:linear-gradient(90deg,#0c0c12,transparent)}
+.belt::after{right:0;background:linear-gradient(270deg,#0c0c12,transparent)}
+
+.track{display:flex;gap:16px;width:max-content;padding:0 16px;
+  animation:roll 26s linear infinite}
+@keyframes roll{to{transform:translateX(-50%)}}
+.belt:hover .track,.belt:hover .slats{animation-play-state:paused}
+
+.crate{width:186px;flex-shrink:0;border-radius:12px;padding:16px 14px 14px;
+  background:linear-gradient(160deg,var(--steel2),var(--steel));
+  border:1px solid rgba(255,255,255,.09);border-bottom:3px solid var(--acc);
+  box-shadow:0 14px 22px -12px rgba(0,0,0,.9);
+  text-align:center;transition:transform .35s cubic-bezier(.16,1,.3,1),box-shadow .35s}
+.crate:hover{transform:translateY(-6px);box-shadow:0 22px 30px -14px rgba(0,0,0,1)}
+.crate .obj{width:58px;height:58px;margin:0 auto 11px;color:var(--acc)}
+.crate .txt{font-size:.74rem;font-weight:600;color:var(--off);line-height:1.42}
+.crate .no{font-family:'JetBrains Mono',monospace;font-size:.5rem;letter-spacing:.16em;
+  color:var(--d2);margin-bottom:8px}
+
+/* the slats, scrolling under the crates at their own rate */
+.slats{height:26px;margin-top:16px;
+  background:repeating-linear-gradient(100deg,
+    #16161e 0 22px, #1e1e28 22px 24px, #16161e 24px 46px);
+  border-top:1px solid rgba(255,255,255,.06);
+  animation:slide 1.6s linear infinite}
+@keyframes slide{to{background-position:-46px 0}}
+
+.foot{padding:clamp(18px,3vw,26px) clamp(20px,3.6vw,34px) 0;
+  display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+  font-family:'JetBrains Mono',monospace;font-size:.58rem;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--d2)}
+.foot b{color:var(--acc)}
+.foot .hint{color:rgba(238,240,246,.28);text-transform:none;letter-spacing:.06em}
+
+@media(prefers-reduced-motion:reduce){
+  .rig{animation:none}
+  .track{animation:none;flex-wrap:wrap;width:auto;justify-content:center}
+  .slats,.head .eye::before{animation:none}
+}
+</style>
+</head>
+<body>
+<div class="rig">
+  <div class="head" id="head"></div>
+  <div class="belt">
+    <div class="track" id="track"></div>
+    <div class="slats"></div>
+  </div>
+  <div class="foot" id="foot"></div>
+</div>
+
+<script src="compliments-data.js"></script>
+<script src="compliments-scenes.js"></script>
+<script>
+const r = window.COMPLIMENTS.current()
+document.documentElement.style.setProperty('--acc', r.color)
+
+const crate = (c, i) => `
+  <div class="crate">
+    <div class="no">${String(i + 1).padStart(2, '0')} / ${String(r.compliments.length).padStart(2, '0')}</div>
+    <div class="obj">${window.SCENES.sceneFor(c.text)}</div>
+    <div class="txt">${c.text}</div>
+  </div>`
+
+/* TWICE, end to end — see HOW THE LOOP IS SEAMLESS at the top */
+const once = r.compliments.map(crate).join('')
+document.getElementById('track').innerHTML = once + once
+
+/* The belt should travel at about the same speed whatever is on it, so the
+   duration scales with how many crates there are rather than being fixed —
+   three perks on a 26s loop crawl, eight on one race. */
+document.getElementById('track').style.animationDuration =
+  (r.compliments.length * 5.2).toFixed(1) + 's'
+
+document.getElementById('head').innerHTML = `
+  <div>
+    <div class="eye">Line running</div>
+    <h1>What comes down the line</h1>
+  </div>
+  <div class="meta"><b>${r.name}</b>${r.date}</div>`
+
+document.getElementById('foot').innerHTML = `
+  <span>${r.compliments.length} inclusions · ${r.organizer !== 'Self' ? r.organizer : 'Self organised'}</span>
+  <span class="hint">Hover the belt to stop the line</span>
+  ${r.registration ? `<span>Entry <b>${r.registration}</b></span>` : ''}`
+</script>
+</body>
+</html>

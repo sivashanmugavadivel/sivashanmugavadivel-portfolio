@@ -7,6 +7,9 @@
   "name": "Ride Name",
   "subtitle": "The one-line hook under the title",
   "mode": "planned",
+  "_organizer": "Who ran the ride — a club, a dealer, an event. Leave it out for your own rides and it reads \"Self\", and nothing is shown. organizerLogo is a public/ path and is OPTIONAL: every place that shows an organizer reads fine from the name alone, and a path that 404s falls back to name-only rather than a broken image.",
+  "organizer": "Self",
+  "organizerLogo": null,
 
   "distance": "0 KM",
   "_time": "What the ride ACTUALLY took. Clock, H:MM, QUOTED — \"1:45\" shows as \"1hr 45mins\", \"0:45\" as \"45mins\". Unquoted 1:45 is invalid JSON and breaks the whole garage. null until ridden.",
@@ -16,14 +19,20 @@
   "date": "Planned",
   "rating": null,
 
+  "_place": "fromPlace/destPlace are WHERE EXACTLY — a village, a showroom, a temple. fromCity/destCity are WHICH TOWN it belongs to. Sidebars show \"Place, City\"; cards and map headers show the city alone. State either, both or neither — they fall back to each other, and to the first/last stop label.",
+  "_roundtrip": "dest* is WHERE THE RIDE WAS GOING, not where it stops. On a one-way ride those are the same place and there is nothing to think about. On a LOOP — same place at both ends of `stops` — they are not: name the turnaround here, and mark its stop \"dest\": true below. Where the ride FINISHES is derived (endPlace/endCity), so nothing about the finish is authored. See the ROUND TRIPS note in src/data/rides.js.",
+  "fromPlace": "Start",
   "fromCity": "Start",
-  "toCity": "End",
+  "destPlace": "Destination",
+  "destCity": "Destination",
   "states": [],
   "color": "#a78bfa",
 
   "description": "The short blurb on the ride card.",
   "story": "The write-up on the detail page.",
   "highlights": [],
+  "_compliments": "What the ride COMES WITH — breakfast, a badge, a lucky draw. Plain strings or {icon,text}; the icon is an emoji written verbatim and an entry without one gets a tick. Drawn on the detail page as a poster panel, skipped entirely when empty — which is most rides.",
+  "compliments": [],
   "via": [],
 
   "mapCenter": [11.5, 78.8],
@@ -33,7 +42,7 @@
   "photos": [],
   "stats": null,
 
-  "_stops": "Start → any stops to route through → end. Two or more puts the ride on both maps; fewer means no route to draw. `dir` is which side the pin's label sits on. `icon` is what kind of place it is — temple, home, office, showroom, restaurant, hotel, shop, beach, fuel, waterfall, fort, station… (full list: PLACE_ICONS in pages/GarageV7RideDetail.jsx). An emoji works verbatim. Omit it and the stop gets a lettered pin instead.",
+  "_stops": "Start → any stops to route through → end. Two or more puts the ride on both maps; fewer means no route to draw. `dir` is which side the pin's label sits on. `icon` is what kind of place it is — temple, home, office, showroom, restaurant, hotel, shop, beach, fuel, waterfall, fort, station… (full list: PLACE_ICONS in pages/GarageV7RideDetail.jsx). An emoji works verbatim. Omit it and the stop gets a lettered pin instead. \"dest\": true marks THE POINT OF THE RIDE on a loop — the turnaround. Ignored on a one-way ride, where the destination is just the last stop.",
   "stops": [
     { "id": "start", "label": "Start", "icon": "", "lat": 0, "lng": 0, "dir": "left" },
     { "id": "end", "label": "End", "icon": "", "lat": 0, "lng": 0, "dir": "right" }

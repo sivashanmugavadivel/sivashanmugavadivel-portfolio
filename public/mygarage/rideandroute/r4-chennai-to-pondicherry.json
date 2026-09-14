@@ -2,8 +2,8 @@
   "order": 40,
   "id": "r4",
 
-  "name": "Chennai to Pondicherry",
-  "subtitle": "Scenic Roads & Good Vibes",
+  "name": "East Coast Road Run",
+  "subtitle": "Chennai → Mahabalipuram → Kalpakkam → Pondicherry",
   "mode": "planned",
 
   "distance": "150 KM",
@@ -12,7 +12,7 @@
   "rating": null,
 
   "fromCity": "Chennai",
-  "toCity": "Pondicherry",
+  "destCity": "Pondicherry",
   "states": ["Tamil Nadu", "Puducherry"],
   "color": "#38bdf8",
 

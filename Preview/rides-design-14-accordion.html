@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Rides · 14 · Accordion</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:wght@300;400;500;600;700&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   ACCORDION — six panels standing side by side, one open at a time.
+
+   The page never scrolls and nothing is hidden. All six rides are always
+   on screen as narrow vertical spines; the open one takes the room the
+   others give up. Moving between rides is one continuous width transition
+   rather than a load, a slide or a scroll, so the set stays whole while
+   you read any part of it.
+
+   Two details make it feel like furniture rather than a widget. The spines
+   carry their titles rotated on the vertical, so a closed panel is still
+   a readable label and not a mystery bar. And the open panel's content is
+   staged — the rule sweeps, then the title, then the body — so opening
+   reads as unfolding rather than popping.
+
+   Jewel tones, one per ride, taken from each ride's own colour: the panel
+   is tinted by the ride rather than by a house palette.
+
+   On a phone the axis flips: the panels stack and the accordion opens
+   downward, because six vertical spines in 390px would be four letters
+   wide each.
+   ══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0b0d0c; --off:#f4f1ea; --d1:rgba(244,241,234,0.66);
+  --d2:rgba(244,241,234,0.42); --d3:rgba(244,241,234,0.22);
+  --bd:rgba(244,241,234,0.14);
+  --serif:'Cormorant',Georgia,serif; --sans:'Jost',system-ui,sans-serif;
+  --ease:cubic-bezier(.62,.02,.2,1);
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--d1);font-family:var(--sans);overflow:hidden;
+  -webkit-font-smoothing:antialiased}
+::selection{background:var(--off);color:var(--bg)}
+
+.frame{height:100svh;display:flex;flex-direction:column}
+
+/* ── head ── */
+.head{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;flex-shrink:0;
+  padding:clamp(14px,2.4vw,26px) clamp(16px,3vw,34px) clamp(12px,1.8vw,18px)}
+.head h1{font-family:var(--serif);font-weight:300;color:var(--off);
+  font-size:clamp(1.4rem,3.4vw,2.2rem);letter-spacing:-0.01em;line-height:1}
+.head h1 em{font-style:italic;color:var(--hc,#ef4444);transition:color .8s var(--ease)}
+.head .sub{font-size:0.6rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--d3)}
+.head a{margin-left:auto;font-size:0.58rem;letter-spacing:0.16em;text-transform:uppercase;
+  color:var(--d2);text-decoration:none;border-bottom:1px solid var(--bd);padding-bottom:3px;
+  transition:.24s}
+.head a:hover{color:var(--off);border-color:var(--off)}
+
+/* ── the run of panels ── */
+.run{flex:1;display:flex;min-height:0;gap:2px;padding:0 clamp(10px,2vw,22px)
+  calc(clamp(14px,2.4vw,26px) + env(safe-area-inset-bottom))}
+
+.pan{position:relative;flex:0 0 var(--w,74px);min-width:0;overflow:hidden;cursor:pointer;
+  background:var(--pc);border-radius:3px;
+  transition:flex-basis .78s var(--ease),filter .5s var(--ease);
+  display:flex}
+.pan.open{flex:1 1 auto;cursor:default}
+.pan:not(.open):hover{filter:brightness(1.28)}
+/* the tint: the ride's colour, laid over near-black so it stays jewel-like */
+.pan::before{content:'';position:absolute;inset:0;
+  background:linear-gradient(155deg,rgba(11,13,12,0.42),rgba(11,13,12,0.9));
+  pointer-events:none}
+.pan::after{content:'';position:absolute;inset:0;pointer-events:none;
+  box-shadow:inset 0 0 0 1px rgba(244,241,234,0.1)}
+
+/* the closed spine */
+.spine{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;
+  align-items:center;justify-content:space-between;padding:16px 0;
+  transition:opacity .4s var(--ease)}
+.pan.open .spine{opacity:0;pointer-events:none}
+.spine .n{font-family:var(--serif);font-size:1.05rem;color:var(--off);opacity:0.55;
+  font-variant-numeric:tabular-nums}
+.spine .nm{writing-mode:vertical-rl;text-orientation:mixed;transform:rotate(180deg);
+  font-family:var(--serif);font-size:clamp(0.95rem,1.5vw,1.24rem);font-weight:500;
+  color:var(--off);letter-spacing:0.02em;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;max-height:100%}
+.spine .km{writing-mode:vertical-rl;font-size:0.56rem;letter-spacing:0.22em;text-transform:uppercase;
+  color:rgba(244,241,234,0.5)}
+.spine .dot{width:7px;height:7px;border-radius:50%;background:var(--tc);flex-shrink:0;
+  box-shadow:0 0 10px var(--tc)}
+
+/* the open face */
+.face{position:relative;z-index:2;flex:1;min-width:0;display:flex;
+  opacity:0;transition:opacity .45s var(--ease) .16s;pointer-events:none}
+.pan.open .face{opacity:1;pointer-events:auto}
+
+.face .art{position:relative;flex:1 1 46%;min-width:0}
+.face .art svg{position:absolute;inset:0;width:100%;height:100%}
+.face .art .no{position:absolute;left:clamp(16px,2vw,28px);top:clamp(14px,2vw,22px);
+  font-family:var(--serif);font-size:clamp(3rem,8vw,6rem);line-height:0.8;
+  color:transparent;-webkit-text-stroke:1px rgba(244,241,234,0.2)}
+
+.face .txt{flex:1 1 54%;min-width:0;padding:clamp(18px,2.6vw,40px) clamp(18px,2.6vw,40px)
+  clamp(18px,2.4vw,32px) clamp(8px,1.6vw,20px);
+  display:flex;flex-direction:column;overflow-y:auto}
+.face .txt::-webkit-scrollbar{width:3px}
+.face .txt::-webkit-scrollbar-thumb{background:var(--bd)}
+
+.face .rule{height:1px;background:rgba(244,241,234,0.28);transform-origin:left;transform:scaleX(0);
+  margin-bottom:16px}
+.pan.open .face .rule{transition:transform .8s var(--ease) .2s;transform:scaleX(1)}
+
+.face .tier{display:inline-flex;align-items:center;gap:8px;font-size:0.54rem;letter-spacing:0.22em;
+  text-transform:uppercase;color:var(--tc);margin-bottom:11px;
+  opacity:0;transform:translateY(10px)}
+.face h2{font-family:var(--serif);font-weight:400;color:var(--off);
+  font-size:clamp(1.5rem,3.6vw,2.6rem);line-height:1.06;letter-spacing:-0.018em;margin-bottom:9px;
+  opacity:0;transform:translateY(14px)}
+.face h2 em{font-style:italic}
+.face .kick{font-size:0.62rem;line-height:1.75;color:var(--d2);letter-spacing:0.05em;
+  margin-bottom:18px;opacity:0;transform:translateY(14px)}
+.face p{font-family:var(--serif);font-size:clamp(1rem,1.6vw,1.16rem);line-height:1.66;
+  color:var(--d1);margin-bottom:18px;opacity:0;transform:translateY(14px);max-width:54ch}
+.face .figs{display:flex;flex-wrap:wrap;gap:0;border-top:1px solid var(--bd);margin-bottom:16px;
+  opacity:0;transform:translateY(14px)}
+.face .figs div{padding:12px 20px 0 0;margin-right:20px;border-right:1px solid var(--bd)}
+.face .figs div:last-child{border-right:0;margin-right:0;padding-right:0}
+.face .figs k{display:block;font-size:0.48rem;letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--d3);margin-bottom:5px}
+.face .figs v{display:block;font-family:var(--serif);font-size:1.32rem;color:var(--off);
+  line-height:1;font-weight:500}
+.face .foot{margin-top:auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  opacity:0;transform:translateY(14px)}
+.face .go{display:inline-flex;align-items:center;gap:9px;padding:12px 22px;
+  border:1px solid rgba(244,241,234,0.3);color:var(--off);text-decoration:none;
+  font-size:0.6rem;letter-spacing:0.18em;text-transform:uppercase;transition:.3s var(--ease)}
+.face .go:hover{background:var(--off);color:var(--bg);border-color:var(--off)}
+.face .tags{display:flex;gap:6px;flex-wrap:wrap}
+.face .tags u{text-decoration:none;font-size:0.53rem;letter-spacing:0.13em;text-transform:uppercase;
+  color:var(--d2);border-bottom:1px solid var(--bd);padding-bottom:2px}
+
+/* stage the open panel's contents, one after another */
+.pan.open .face .tier{transition:.6s var(--ease) .3s;opacity:1;transform:none}
+.pan.open .face h2{transition:.65s var(--ease) .36s;opacity:1;transform:none}
+.pan.open .face .kick{transition:.65s var(--ease) .42s;opacity:1;transform:none}
+.pan.open .face p{transition:.65s var(--ease) .48s;opacity:1;transform:none}
+.pan.open .face .figs{transition:.65s var(--ease) .54s;opacity:1;transform:none}
+.pan.open .face .foot{transition:.65s var(--ease) .6s;opacity:1;transform:none}
+
+.hint{position:absolute;right:clamp(16px,3vw,34px);bottom:calc(clamp(14px,2.4vw,26px) + 8px);
+  font-size:0.52rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--d3);
+  pointer-events:none;z-index:6}
+
+@media(max-width:860px){
+  body{overflow:auto}
+  .frame{height:auto;min-height:100svh}
+  .run{flex-direction:column;gap:2px;padding-bottom:26px}
+  .pan{flex:0 0 62px;min-height:62px}
+  .pan.open{flex:0 0 auto}
+  .spine{flex-direction:row;padding:0 18px;justify-content:flex-start;gap:14px}
+  .spine .nm{writing-mode:horizontal-tb;transform:none;font-size:1.05rem}
+  .spine .km{writing-mode:horizontal-tb;margin-left:auto}
+  .face{flex-direction:column}
+  .face .art{flex:0 0 190px}
+  .face .txt{padding:20px}
+  .hint{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  *{transition-duration:.01ms!important;animation-duration:.01ms!important}
+  .face .tier,.face h2,.face .kick,.face p,.face .figs,.face .foot{opacity:1;transform:none}
+  .face .rule{transform:scaleX(1)}
+}
+</style>
+</head>
+<body>
+
+<div class="frame">
+  <header class="head">
+    <h1>Rides &amp; <em id="hEm">Journeys</em></h1>
+    <span class="sub" id="hSub"></span>
+    <a href="#">← Garage</a>
+  </header>
+  <main class="run" id="run"></main>
+  <span class="hint">Click a spine to open it</span>
+</div>
+
+<script src="rides-data.js"></script>
+<script>
+const S = RD.summary
+document.getElementById('hSub').textContent = RD.tally
+
+/* ── the picture in an open panel ─────────────────────────────────────── */
+/* No photos, so the art is the route drawn large and loose over a wash of
+   the ride's own colour — a plate, not a diagram. */
+const AW = 520, AH = 620
+
+function art(r) {
+  if (!r.mapped) {
+    /* no course: concentric rings leaving home, the ride as a departure */
+    const rings = Array.from({ length: 7 }, (_, i) =>
+      `<circle cx="${AW / 2}" cy="${AH / 2}" r="${34 + i * 38}" fill="none"
+        stroke="rgba(244,241,234,${(0.22 - i * 0.026).toFixed(3)})" stroke-width="1.4"
+        stroke-dasharray="${i % 2 ? '3 9' : 'none'}"/>`).join('')
+    return `<svg viewBox="0 0 ${AW} ${AH}" preserveAspectRatio="xMidYMid slice">
+      ${rings}
+      <circle cx="${AW / 2}" cy="${AH / 2}" r="9" fill="#f4f1ea"/>
+      <text x="${AW / 2}" y="${AH / 2 + 34}" text-anchor="middle" font-family="Jost,sans-serif"
+        font-size="12" letter-spacing="4" fill="rgba(244,241,234,0.5)">EVERY ROAD</text>
+    </svg>`
+  }
+  const P = RD.one(r, AW, AH, 96)
+  const d = RD.curve(P.pts)
+  return `<svg viewBox="0 0 ${AW} ${AH}" preserveAspectRatio="xMidYMid slice">
+    <path d="${d}" fill="none" stroke="rgba(11,13,12,0.42)" stroke-width="15"
+      stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="${d}" fill="none" stroke="rgba(244,241,234,0.9)" stroke-width="2.2"
+      stroke-linecap="round" stroke-linejoin="round"/>
+    ${P.pts.map((p, i) => {
+      const edge = i === 0 || i === P.pts.length - 1
+      return `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${edge ? 7 : 4}"
+        fill="${edge ? '#f4f1ea' : 'rgba(11,13,12,0.8)'}"
+        stroke="#f4f1ea" stroke-width="1.8"/>`
+    }).join('')}
+    ${P.pts.map((p, i) => {
+      const s = r.stops[i]
+      const edge = i === 0 || i === P.pts.length - 1
+      if (!edge) return ''
+      const right = p[0] < AW * 0.55
+      return `<text x="${(p[0] + (right ? 15 : -15)).toFixed(1)}" y="${(p[1] + 4).toFixed(1)}"
+        text-anchor="${right ? 'start' : 'end'}" font-family="Jost,sans-serif" font-size="12"
+        letter-spacing="1.4" fill="rgba(244,241,234,0.72)">${s.label}</text>`
+    }).join('')}
+  </svg>`
+}
+
+/* ── build ────────────────────────────────────────────────────────────── */
+document.getElementById('run').innerHTML = RD.rides.map((r, i) => {
+  const dest = r.tbd && /decided/i.test(r.toCity) ? 'anywhere' : r.toCity
+  return `<section class="pan${i === 0 ? ' open' : ''}" data-id="${r.id}"
+      style="--pc:${r.color};--tc:${r.tier.color}" tabindex="0" role="button"
+      aria-label="${r.name}">
+    <div class="spine">
+      <span class="n">${String(i + 1).padStart(2, '0')}</span>
+      <span class="nm">${r.name}</span>
+      <span class="km">${r.distance}</span>
+      <span class="dot"></span>
+    </div>
+    <div class="face">
+      <div class="art">${art(r)}<span class="no">${String(i + 1).padStart(2, '0')}</span></div>
+      <div class="txt">
+        <div class="rule"></div>
+        <span class="tier">${r.tier.label} · ${r.date}</span>
+        <h2>${r.name}</h2>
+        <div class="kick">${r.fromCity} → ${dest}${r.via.length ? ' · via ' + r.via.join(', ') : ''}</div>
+        <p>${r.story}</p>
+        <div class="figs">
+          <div><k>Distance</k><v>${r.distance}</v></div>
+          <div><k>Heading</k><v>${r.mapped ? r.compass + ' ' + r.bearing.toFixed(0) + '°' : 'Open'}</v></div>
+          <div><k>Waypoints</k><v>${r.stops.length}</v></div>
+          <div><k>${r.time ? 'In the saddle' : r.estimated ? 'Estimated' : 'States'}</k>
+            <v>${r.time || r.estimate || r.states.length}</v></div>
+        </div>
+        <div class="foot">
+          <a class="go" href="#">Open the ride</a>
+          <span class="tags">${r.highlights.slice(0, 3).map(h => `<u>${h}</u>`).join('')}</span>
+        </div>
+      </div>
+    </div>
+  </section>`
+}).join('')
+
+/* ── open / close ─────────────────────────────────────────────────────── */
+const pans = [...document.querySelectorAll('.pan')]
+
+function open(p) {
+  pans.forEach(o => o.classList.toggle('open', o === p))
+  const r = RD.byId(p.dataset.id)
+  document.documentElement.style.setProperty('--hc', r.color)
+  document.getElementById('hEm').textContent = 'Journeys'
+}
+
+pans.forEach(p => {
+  p.addEventListener('click', () => { if (!p.classList.contains('open')) open(p) })
+  p.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(p) }
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      const n = pans[Math.min(pans.length - 1, pans.indexOf(p) + 1)]
+      n.focus(); open(n); e.preventDefault()
+    }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      const n = pans[Math.max(0, pans.indexOf(p) - 1)]
+      n.focus(); open(n); e.preventDefault()
+    }
+  })
+})
+
+open(pans[0])
+</script>
+</body>
+</html>

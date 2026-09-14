@@ -1,0 +1,113 @@
+{
+  "_comment": "Biker's Club CBE's one-day September ride to the Dhondenling Tibetan Settlement. Field notes live in src/data/rides.js.",
+
+  "_verified": [
+    "Poster: Biker's Club CBE — One Day September Ride 2026.",
+    "Dhondenling checked against:",
+    "  centraltibetanreliefcommittee.net/index.php/dhondenling-kollegal/",
+    "  fpmt.org  ·  outlooktraveller.com  ·  dzogchen.org.in",
+    "",
+    "  · Tibetan refugee settlement, NOT a temple — established 1974",
+    "  · Odeyarpalya, Kollegal taluk, Chamarajanagar dist., Karnataka 571457",
+    "  · ~4,500 people, 22 village clusters, 3,121 acres, 3,345 ft",
+    "  · Dzogchen Monastery is the largest of its eight, rebuilt here from 1984",
+    "  · 46 km from Kollegal, 34 km from Hasanur",
+    "",
+    "Coordinates: Bannari, Dhimbam, Kollegal, Kadambur, Sathyamangalam from OSM;",
+    "Germalam from Mapcarta; Dhondenling is the PIN 571457 centroid (±2-3 km,",
+    "not the monastery gate).",
+    "",
+    "DISTANCE — 615 KM, routed through all eleven stops below by OSRM (the same",
+    "router the detail map draws with), 11h 1m of moving time. By leg:",
+    "",
+    "  home → Coimbatore          81.3      Dhondenling → Germalam    123.8",
+    "  Coimbatore → Bannari       72.4      Germalam → Kadambur        10.1",
+    "  Bannari → Dhimbam          24.0      Kadambur → Sathyamangalam  32.4",
+    "  Dhimbam → Kollegal         82.8      Sathyamangalam → CBE       73.5",
+    "  Kollegal → Dhondenling     33.9      Coimbatore → home          81.1",
+    "",
+    "The club's own ride — Coimbatore out and back, without the two home legs —",
+    "is 453 km of that. The 615 is the day as YOU actually ride it."
+  ],
+
+  "_todo": [
+    "distance — 615 KM is the ROUTER's answer for the stops below, not an odometer",
+    "        reading. Replace it with the real figure after the 27th; only then",
+    "        does it count, since 'completed' rides are what feed the totals.",
+    "dhondenling stop — the pin is ~12 km short. OSRM routes Kollegal → this pin",
+    "        as 33.9 km where the monastery's own listing says 46 km, which is",
+    "        what a postcode centroid gets you. Swap in the real Dzogchen",
+    "        Monastery pin from Maps on the day and the distance self-corrects.",
+    "organizerLogo — null, so the hero shows the club's name alone, which is the",
+    "        designed-for case. Drop the club badge at public/mygarage/organizers/",
+    "        bikers-club-cbe.png and set the path to add it.",
+    "stats — currently the EVENT's logistics. Replace with actual ride stats",
+    "        (topSpeed, avgSpeed, fuel…) after the 27th.",
+    "time / rating / photos / videoId — after the ride. Move `mode` to 'completed'",
+    "        then and the totals pick it up.",
+    "Monastery visits need prior approval from the monastery office (dzogchen.org.in)."
+  ],
+
+  "order": 25,
+  "id": "dhondenling-2026",
+
+  "name": "Dhondenling Tibetan Settlement",
+  "_subtitle": "The location line under the title. The poster's billing used to live here and has moved into `highlights`, where the club's name already was — and `organizer` names the club on its own besides.",
+  "subtitle": "Home (Kariya Kattu Valasu) → Coimbatore → Dhimbam → Kollegal → Dhondenling → Kadambur → Home",
+  "mode": "upcoming",
+  "organizer": "Biker's Club CBE",
+  "organizerLogo": null,
+
+  "distance": "615 KM",
+  "time": null,
+  "estimateTime": null,
+  "date": "27 Sep 2026",
+  "rating": null,
+
+  "_dest": "A LOOP, so `dest*` is where the ride was GOING and NOT its last stop — it goes to Dhondenling and ends back at Kariya Kattu Valasu. The finish is derived (`endPlace`/`endCity` mirror the start on a round trip) and needs nothing authored here. The turnaround is also marked \"dest\": true on its stop below, because this loop's route out differs from its route back. See the ROUND TRIPS note in src/data/rides.js.",
+  "fromPlace": "Kariya Kattu Valasu",
+  "fromCity": "Kangayam",
+  "destPlace": "Dhondenling Tibetan Settlement",
+  "destCity": "Dhondenling",
+  "states": ["Tamil Nadu", "Karnataka"],
+  "color": "#eab308",
+
+  "description": "A Tibetan settlement in the Biligiri Rangan hills — out over the Dhimbam hairpins, back down the Kadambur ghat.",
+  "story": "Biker's Club CBE's one-day September ride, and the destination is one that most people who have ridden the Dhimbam road have never heard of. Dhondenling is a Tibetan refugee settlement at Odeyarpalya near Kollegal — established in 1974, around 4,500 people living across 22 village clusters on 3,121 acres of the Biligiri Rangan hills, 3,345 ft up. Eight monasteries sit inside it; the largest is Dzogchen, rebuilt here from 1984 after the original in Tibet was destroyed by fire, and home to over 200 monks today. The route earns the early start. Out through Sathyamangalam, up the Dhimbam hairpins into the Sathyamangalam Tiger Reserve, over the Karnataka border and on to Kollegal, then the climb to the settlement. The way back takes a different line down — Germalam, then the Kadambur ghat, which drops out of the hills on the Sathyamangalam side and runs home from there. Assemble 5:30 AM at Coimbatore, wheels rolling at 6:00. Faith, roads, people, mountains — the poster's own list, and a fair summary of the day.",
+  "highlights": ["One Day September Ride 2026", "More Than A Destination", "Tibetan Settlement", "Dzogchen Monastery", "Dhimbam Hairpins", "Kadambur Ghat", "Biker's Club CBE"],
+
+  "_compliments": "Off the poster's inclusions list, in its order, with ONE deliberate omission: the poster's \"All brand bikes welcome\" is an eligibility rule, not something you receive, so it does not belong in a list of what the ride comes with. Put it in `highlights` or the story if it should be visible. ₹349 registration lives in `stats` rather than here — this list is what you GET, that is what it costs.",
+  "compliments": [
+    { "icon": "☕", "text": "Breakfast combo with tea/coffee" },
+    { "icon": "🍽️", "text": "Evening tea/coffee + snacks" },
+    { "icon": "🎁", "text": "Badge · Stickers · Surprise gift" },
+    { "icon": "🏆", "text": "Lucky rider wins a special gift" }
+  ],
+  "via": ["Bannari", "Dhimbam", "Kollegal", "Germalam", "Kadambur", "Sathyamangalam"],
+
+  "mapCenter": [11.59, 77.29],
+  "mapZoom": 8,
+
+  "videoId": null,
+  "photos": [],
+  "stats": {
+    "assemble": "5:30 AM",
+    "rideStart": "6:00 AM",
+    "registration": "₹349"
+  },
+
+  "_stops": "A loop: home out to the Coimbatore muster, up and over, and back the same way at the end. Stops 1/11 and 2/10 are deliberately identical — same id, icon and dir — so each pair overlaps exactly as one pin instead of two stacked crooked, and `mapCities` merges them for the mini-map.",
+  "stops": [
+    { "id": "kangayam",       "label": "Kariya Kattu Valasu", "icon": "home",      "lat": 11.035075, "lng": 77.618430, "home": true, "dir": "left" },
+    { "id": "coimbatore",     "label": "Coimbatore",          "icon": "start",     "lat": 11.0168,   "lng": 76.9558,   "dir": "left" },
+    { "id": "bannari",        "label": "Bannari",             "icon": "temple",    "lat": 11.5528,   "lng": 77.1389,   "dir": "right" },
+    { "id": "dhimbam",        "label": "Dhimbam",             "icon": "ghat",      "lat": 11.6233,   "lng": 77.1290,   "dir": "left" },
+    { "id": "kollegal",       "label": "Kollegal",            "icon": "",          "lat": 12.1561,   "lng": 77.1072,   "dir": "right" },
+    { "id": "dhondenling",    "label": "Dhondenling",         "icon": "monastery", "lat": 11.9595,   "lng": 77.0086,   "dir": "left", "dest": true },
+    { "id": "germalam",       "label": "Germalam",            "icon": "forest",    "lat": 11.6107,   "lng": 77.2896,   "dir": "right" },
+    { "id": "kadambur",       "label": "Kadambur",            "icon": "ghat",      "lat": 11.6256,   "lng": 77.3277,   "dir": "left" },
+    { "id": "sathyamangalam", "label": "Sathyamangalam",      "icon": "",          "lat": 11.5524,   "lng": 77.2654,   "dir": "right" },
+    { "id": "coimbatore",     "label": "Coimbatore",          "icon": "start",     "lat": 11.0168,   "lng": 76.9558,   "dir": "left" },
+    { "id": "kangayam",       "label": "Kariya Kattu Valasu", "icon": "home",      "lat": 11.035075, "lng": 77.618430, "home": true, "dir": "left" }
+  ]
+}

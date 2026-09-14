@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Compliments — Stamped</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Courier+Prime:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════════
+   STAMPED — the inclusions list as rubber stamps on a docket.
+
+   An organiser's checklist, stamped off one line at a time. Aged paper, one
+   ink colour, and every perk arriving with a thump.
+
+   THE THUMP is the whole design, and it is three things happening on one
+   timeline: the stamp drops in oversized and slightly rotated, squashes past
+   its resting size, then settles — while a ring of ink shocks outwards from
+   under it and fades. Landing them in sequence rather than together turns a
+   list into an action.
+
+   The ink is deliberately imperfect: each seal takes a fixed tilt from its
+   index (never random, so a reload lands them identically), and a mask of
+   turbulence noise eats into the fill so the edges break up the way a rubber
+   stamp on fibrous paper does.
+   ══════════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--paper:#efe9dc;--paper2:#e2dac8;--ink:#1e1a13;--ink2:#5c5343;
+  --rule:rgba(30,26,19,.18);--acc:#eab308;--mono:'Courier Prime',monospace}
+body{background:#0a0910;font-family:'Inter',system-ui,sans-serif;min-height:100vh;
+  display:grid;place-items:center;padding:clamp(14px,3vw,34px)}
+
+.docket{position:relative;width:100%;max-width:800px;overflow:hidden;border-radius:3px;
+  background:linear-gradient(162deg,var(--paper),var(--paper2));
+  padding:clamp(24px,4.4vw,42px);
+  box-shadow:0 32px 64px -24px rgba(0,0,0,.85),0 0 0 1px rgba(0,0,0,.5);
+  animation:in .8s cubic-bezier(.16,1,.3,1) both}
+@keyframes in{from{opacity:0;transform:translateY(20px)}}
+/* fibre */
+.docket::before{content:'';position:absolute;inset:0;pointer-events:none;opacity:.42;
+  mix-blend-mode:multiply;z-index:2;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.3'/%3E%3C/svg%3E")}
+
+.wrap{position:relative;z-index:3}
+.head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;
+  flex-wrap:wrap;padding-bottom:14px;border-bottom:2px solid var(--ink)}
+.head .eye{font-family:var(--mono);font-size:.6rem;font-weight:700;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--ink2)}
+.head h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(1.8rem,5.6vw,2.9rem);
+  line-height:.94;color:var(--ink);letter-spacing:.01em;margin-top:5px}
+.head .ref{font-family:var(--mono);font-size:.6rem;color:var(--ink2);text-align:right;
+  line-height:1.9;white-space:nowrap}
+.head .ref b{display:block;color:var(--ink);font-size:.72rem}
+
+.grid{margin-top:clamp(22px,4vw,34px);display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:clamp(14px,2.6vw,22px)}
+
+/* ── one seal ────────────────────────────────────────────────────────────── */
+.seal{position:relative;padding:16px 12px 14px;text-align:center;
+  border:2.5px solid var(--acc);border-radius:6px;color:var(--acc);
+  transform:rotate(var(--tilt));
+  animation:thump .62s cubic-bezier(.2,1.5,.45,1) both;
+  animation-delay:calc(.4s + var(--i) * .16s);
+  /* The broken edge — noise eating into the whole seal. The trailing numbers
+     are a threshold: alpha' = -20 x noise + 13.5, so ink survives until the
+     noise passes ~0.625. Measured rather than guessed; the -2.2/1.3 this
+     started as left almost nothing opaque and rendered the seals as a faint
+     speckle. More negative = cleaner stamp, less = rougher. */
+  -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -20 13.5'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23m)'/%3E%3C/svg%3E");
+  mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -20 13.5'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23m)'/%3E%3C/svg%3E");
+  transition:transform .35s cubic-bezier(.16,1,.3,1)}
+@keyframes thump{
+  0%{opacity:0;transform:rotate(calc(var(--tilt) * 3)) scale(1.7)}
+  62%{opacity:1;transform:rotate(var(--tilt)) scale(.93)}
+  100%{opacity:1;transform:rotate(var(--tilt)) scale(1)}
+}
+.seal:hover{transform:rotate(0deg) scale(1.04)}
+/* the inner keyline every official stamp has */
+.seal::before{content:'';position:absolute;inset:4px;border:1px solid currentColor;
+  border-radius:3px;opacity:.55}
+/* the ink shock, thrown off as it lands */
+.seal::after{content:'';position:absolute;inset:-6px;border:2px solid var(--acc);
+  border-radius:9px;opacity:0;
+  animation:shock .7s ease-out both;animation-delay:calc(.46s + var(--i) * .16s)}
+@keyframes shock{from{opacity:.6;transform:scale(.82)}to{opacity:0;transform:scale(1.22)}}
+
+.seal .mark{font-size:1.3rem;line-height:1;display:block;margin-bottom:8px;
+  filter:grayscale(1) contrast(1.5) brightness(.75)}
+.seal .mark.tick{font-family:'Bebas Neue',sans-serif;filter:none;font-size:1.5rem}
+.seal .txt{font-family:var(--mono);font-size:.72rem;font-weight:700;line-height:1.45;
+  text-transform:uppercase;letter-spacing:.03em}
+.seal .no{position:absolute;top:3px;right:6px;font-family:var(--mono);font-size:.52rem;opacity:.6}
+
+.foot{margin-top:clamp(24px,4vw,36px);padding-top:14px;border-top:1px solid var(--rule);
+  display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+  font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink2)}
+.foot b{color:var(--ink)}
+/* the master stamp, landing last and hardest */
+.approved{position:absolute;right:clamp(14px,4vw,40px);bottom:clamp(10px,3vw,26px);z-index:4;
+  font-family:'Bebas Neue',sans-serif;font-size:clamp(1.1rem,3.4vw,1.6rem);letter-spacing:.14em;
+  color:var(--acc);border:3px double var(--acc);border-radius:6px;padding:5px 14px;
+  transform:rotate(-11deg);opacity:.9;
+  animation:thump .7s cubic-bezier(.2,1.5,.45,1) both;
+  animation-delay:calc(.55s + var(--n) * .16s)}
+
+@media(prefers-reduced-motion:reduce){
+  .docket,.seal,.seal::after,.approved{animation:none}
+  .seal::after{opacity:0}
+}
+</style>
+</head>
+<body>
+<div class="docket" id="docket"></div>
+
+<script src="compliments-data.js"></script>
+<script>
+const r = window.COMPLIMENTS.current()
+document.documentElement.style.setProperty('--acc', r.color)
+
+/* Fixed tilts, cycled — never random, so the docket lands identically on every
+   reload rather than looking freshly shuffled each time. */
+const TILTS = [-2.4, 1.8, -1.2, 2.6, -3, 1.1, -1.9, 2.2]
+
+const seals = r.compliments.map((c, i) => `
+  <div class="seal" style="--i:${i};--tilt:${TILTS[i % TILTS.length]}deg">
+    <span class="no">${String(i + 1).padStart(2, '0')}</span>
+    <span class="mark${c.icon ? '' : ' tick'}">${c.icon || '✓'}</span>
+    <span class="txt">${c.text}</span>
+  </div>`).join('')
+
+document.getElementById('docket').innerHTML = `
+  <div class="wrap">
+    <div class="head">
+      <div>
+        <div class="eye">Compliments · what the ride comes with</div>
+        <h1>${r.name}</h1>
+      </div>
+      <div class="ref">
+        <b>${r.date}</b>
+        ${r.organizer !== 'Self' ? r.organizer : 'Self organised'}
+      </div>
+    </div>
+    <div class="grid">${seals}</div>
+    <div class="foot">
+      <span>${r.compliments.length} items checked off</span>
+      <span>${r.registration ? `Entry <b>${r.registration}</b>` : 'No entry fee'}</span>
+    </div>
+  </div>
+  <div class="approved" style="--n:${r.compliments.length}">Included</div>`
+</script>
+</body>
+</html>

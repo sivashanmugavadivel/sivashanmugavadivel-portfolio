@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Rides · 2 · Survey Chart</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   SURVEY CHART — the rides as a plotted chart, not a list.
+
+   Left half is a live plot: every stop of every ride projected by real
+   Web Mercator onto one graticule, so the routes sit in true relative
+   position — the three short Kangayam runs cluster tight in the west,
+   the Chennai and Pondicherry lines reach right across to the coast.
+   That spatial truth is the argument for this design: it shows at a
+   glance something no card grid can, which is how far the planned rides
+   actually are compared to the ridden ones.
+
+   Right half is the ledger. Hover or focus a row and its line draws
+   itself across the chart while the rest drop back. The crosshair reads
+   out live lat/lng under the pointer.
+
+   One Ride 2026 has a single stop and no course, so it cannot be a line.
+   It plots as a pulsing origin ring at home and says so.
+   ══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#070d18; --bg2:#0b1524; --panel:#0a1220;
+  --grid:rgba(96,165,250,0.1); --grid2:rgba(96,165,250,0.2);
+  --cy:#38bdf8; --cy2:#7dd3fc;
+  --off:#e8f1fb; --d1:rgba(232,241,251,0.64); --d2:rgba(232,241,251,0.42);
+  --d3:rgba(232,241,251,0.24); --bd:rgba(125,211,252,0.16); --bd2:rgba(125,211,252,0.34);
+  --mono:'IBM Plex Mono',ui-monospace,monospace; --sans:'IBM Plex Sans',system-ui,sans-serif;
+  --ease:cubic-bezier(.2,.9,.25,1);
+}
+body{background:var(--bg);color:var(--d1);font-family:var(--sans);overflow:hidden;
+  -webkit-font-smoothing:antialiased}
+::selection{background:var(--cy);color:var(--bg)}
+
+.wrap{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(340px,0.75fr);
+  height:100vh;height:100svh}
+
+/* ── the plot ── */
+.plot{position:relative;background:
+  radial-gradient(78% 78% at 42% 34%,rgba(56,189,248,0.07),transparent 72%),var(--bg);
+  overflow:hidden;cursor:crosshair}
+.plot svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+
+.frame{position:absolute;inset:clamp(14px,2.4vw,30px);border:1px solid var(--bd);
+  pointer-events:none;z-index:3}
+.frame::before,.frame::after{content:'';position:absolute;width:9px;height:9px;
+  border:1px solid var(--cy)}
+.frame::before{top:-1px;left:-1px;border-right:0;border-bottom:0}
+.frame::after{bottom:-1px;right:-1px;border-left:0;border-top:0}
+
+.plotHead{position:absolute;top:0;left:0;right:0;z-index:6;
+  padding:clamp(16px,2.6vw,30px) clamp(20px,3vw,44px);pointer-events:none;
+  display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.plotHead .t{flex:1;min-width:200px}
+.plotHead .kick{font-family:var(--mono);font-size:0.58rem;letter-spacing:0.32em;
+  text-transform:uppercase;color:var(--cy);margin-bottom:9px;
+  opacity:0;animation:fade .7s var(--ease) .2s forwards}
+@keyframes fade{to{opacity:1}}
+.plotHead h1{font-weight:300;font-size:clamp(1.6rem,3.6vw,2.7rem);color:var(--off);
+  letter-spacing:-0.028em;line-height:1.05}
+.plotHead h1 b{font-weight:600}
+.plotHead h1 .w{display:inline-block;overflow:hidden;vertical-align:bottom}
+.plotHead h1 .w i{display:inline-block;font-style:normal;transform:translateY(104%);
+  animation:rise .95s var(--ease) forwards}
+@keyframes rise{to{transform:none}}
+.plotHead .sub{font-family:var(--mono);font-size:0.66rem;color:var(--d2);margin-top:9px;
+  letter-spacing:0.05em;opacity:0;animation:fade .7s var(--ease) .7s forwards}
+
+/* live readout bottom-left */
+.read{position:absolute;left:clamp(20px,3vw,44px);bottom:clamp(18px,2.6vw,32px);z-index:6;
+  font-family:var(--mono);font-size:0.62rem;letter-spacing:0.1em;color:var(--d2);
+  pointer-events:none;display:flex;flex-direction:column;gap:4px}
+.read b{color:var(--cy);font-weight:500}
+.read .proj{color:var(--d3);font-size:0.56rem;letter-spacing:0.16em;text-transform:uppercase}
+
+/* scale bar bottom-right */
+.scale{position:absolute;right:clamp(20px,3vw,44px);bottom:clamp(18px,2.6vw,32px);z-index:6;
+  font-family:var(--mono);font-size:0.56rem;letter-spacing:0.14em;color:var(--d2);
+  pointer-events:none;text-align:right}
+.scale .bar{height:6px;border:1px solid var(--bd2);border-top:0;margin-top:5px;
+  background:repeating-linear-gradient(90deg,var(--bd2) 0 1px,transparent 1px 25%)}
+
+/* crosshair */
+.cross{position:absolute;inset:0;z-index:4;pointer-events:none;opacity:0;transition:opacity .3s}
+.plot:hover .cross{opacity:1}
+.cross i{position:absolute;background:rgba(56,189,248,0.3)}
+.cross .h{left:0;right:0;height:1px}
+.cross .v{top:0;bottom:0;width:1px}
+
+/* route strokes */
+.route{fill:none;stroke-linecap:round;stroke-linejoin:round;
+  transition:opacity .45s var(--ease),stroke-width .45s var(--ease),filter .45s}
+.route.line{stroke-width:2;opacity:0.34}
+.glowline{fill:none;stroke-linecap:round;stroke-width:9;opacity:0;
+  transition:opacity .45s var(--ease);filter:blur(7px)}
+g.rt.on .route.line{opacity:1;stroke-width:3}
+g.rt.on .glowline{opacity:0.5}
+g.rt.dim .route.line{opacity:0.08}
+g.rt.dim .node{opacity:0.12}
+g.rt{cursor:pointer}
+
+.node{transition:opacity .45s var(--ease),r .35s var(--ease)}
+.node circle.dot{stroke:var(--bg);stroke-width:1.6}
+.node circle.halo{fill:none;stroke-width:1.2;opacity:0}
+g.rt.on .node circle.halo{opacity:0.75}
+.node text{font-family:var(--mono);font-size:8.5px;letter-spacing:0.07em;
+  fill:var(--d2);opacity:0;transition:opacity .4s var(--ease)}
+g.rt.on .node text{opacity:1;fill:var(--off)}
+
+/* the single-stop origin */
+.origin circle.pulse{fill:none;stroke:#dc2626;stroke-width:1.4;transform-origin:center;
+  animation:ping 3s var(--ease) infinite}
+@keyframes ping{0%{r:6;opacity:.9}70%{opacity:0}100%{r:34;opacity:0}}
+
+.graticule line{stroke:var(--grid);stroke-width:1}
+.graticule line.major{stroke:var(--grid2)}
+.graticule text{font-family:var(--mono);font-size:7.5px;fill:var(--d3);letter-spacing:0.1em}
+
+/* ── the ledger ── */
+.side{background:var(--panel);border-left:1px solid var(--bd);display:flex;
+  flex-direction:column;min-width:0;position:relative}
+.side::before{content:'';position:absolute;left:0;top:0;bottom:0;width:1px;
+  background:linear-gradient(transparent,var(--cy),transparent);opacity:0.5}
+.side .top{padding:clamp(16px,2.4vw,26px) clamp(16px,2.2vw,26px) 14px;
+  border-bottom:1px solid var(--bd)}
+.side .top .row1{display:flex;align-items:baseline;gap:10px;margin-bottom:14px}
+.side .top h2{font-family:var(--mono);font-size:0.62rem;letter-spacing:0.26em;
+  text-transform:uppercase;color:var(--cy)}
+.side .top .n{margin-left:auto;font-family:var(--mono);font-size:0.62rem;color:var(--d3);
+  letter-spacing:0.14em}
+.side .top a{font-family:var(--mono);font-size:0.6rem;letter-spacing:0.14em;color:var(--d2);
+  text-decoration:none;transition:.22s}
+.side .top a:hover{color:var(--cy)}
+
+/* the four figures */
+.figs{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--bd)}
+.figs div{background:var(--panel);padding:11px 12px}
+.figs k{display:block;font-family:var(--mono);font-size:0.5rem;letter-spacing:0.2em;
+  text-transform:uppercase;color:var(--d3);margin-bottom:5px}
+.figs v{display:block;font-size:1.15rem;font-weight:600;color:var(--off);
+  letter-spacing:-0.02em;font-variant-numeric:tabular-nums}
+.figs v small{font-size:0.58rem;font-weight:400;color:var(--d3);margin-left:3px;
+  font-family:var(--mono);letter-spacing:0.08em}
+
+.list{flex:1;overflow-y:auto;overscroll-behavior:contain}
+.list::-webkit-scrollbar{width:5px}
+.list::-webkit-scrollbar-thumb{background:var(--bd2)}
+
+.grp{padding:15px 16px 6px;font-family:var(--mono);font-size:0.55rem;letter-spacing:0.24em;
+  text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.grp i{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.grp u{text-decoration:none;margin-left:auto;color:var(--d3);letter-spacing:0.12em}
+
+.rec{display:block;width:100%;text-align:left;background:transparent;border:0;
+  border-bottom:1px solid rgba(125,211,252,0.08);padding:13px 16px;cursor:pointer;
+  font-family:var(--sans);color:var(--d1);position:relative;transition:background .3s var(--ease)}
+.rec::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--c);
+  transform:scaleY(0);transform-origin:center;transition:transform .35s var(--ease)}
+.rec:hover,.rec:focus-visible{background:rgba(56,189,248,0.05);outline:none}
+.rec.on{background:rgba(56,189,248,0.08)}
+.rec.on::before,.rec:hover::before{transform:scaleY(1)}
+.rec .l1{display:flex;align-items:center;gap:9px;margin-bottom:5px}
+.rec .id{font-family:var(--mono);font-size:0.56rem;letter-spacing:0.12em;color:var(--d3);
+  border:1px solid var(--bd);padding:1px 5px;flex-shrink:0}
+.rec h3{font-size:0.88rem;font-weight:500;color:var(--off);letter-spacing:-0.012em;
+  line-height:1.25;flex:1;min-width:0}
+.rec .km{font-family:var(--mono);font-size:0.72rem;font-weight:500;color:var(--c);
+  flex-shrink:0;font-variant-numeric:tabular-nums}
+.rec .l2{font-family:var(--mono);font-size:0.6rem;color:var(--d2);letter-spacing:0.04em;
+  display:flex;flex-wrap:wrap;gap:4px 12px;padding-left:0}
+.rec .l2 span{white-space:nowrap}
+.rec .l2 b{color:var(--d1);font-weight:500}
+.rec .bar{margin-top:9px;height:2px;background:rgba(125,211,252,0.1);overflow:hidden}
+.rec .bar i{display:block;height:100%;background:var(--c);width:0;
+  transition:width .8s var(--ease)}
+.rec.seen .bar i{width:var(--w)}
+
+/* the expanding drawer */
+.rec .more{max-height:0;overflow:hidden;transition:max-height .5s var(--ease),
+  opacity .35s var(--ease),margin .5s var(--ease);opacity:0}
+.rec.on .more{max-height:340px;opacity:1;margin-top:11px}
+.rec .more p{font-size:0.76rem;line-height:1.8;color:var(--d1);
+  padding:10px 0 0;border-top:1px dashed var(--bd)}
+.rec .more .tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+.rec .more .tags u{text-decoration:none;font-family:var(--mono);font-size:0.53rem;
+  letter-spacing:0.11em;text-transform:uppercase;padding:3px 7px;color:var(--c);
+  border:1px solid currentColor;opacity:0.8}
+.rec .more .go{display:inline-flex;align-items:center;gap:7px;margin-top:11px;
+  font-family:var(--mono);font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;
+  color:var(--bg);background:var(--c);padding:7px 13px;text-decoration:none;transition:.26s}
+.rec .more .go:hover{filter:brightness(1.18);transform:translateX(3px)}
+
+@media(max-width:900px){
+  body{overflow:auto}
+  .wrap{grid-template-columns:1fr;height:auto}
+  .plot{height:58svh;min-height:330px}
+  .side{border-left:0;border-top:1px solid var(--bd);height:auto}
+  .list{overflow:visible}
+  .plotHead h1{font-size:1.45rem}
+  .read,.scale{font-size:0.55rem}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;animation-iteration-count:1!important;
+    transition-duration:.01ms!important}
+  .plotHead h1 .w i{transform:none}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <section class="plot" id="plot">
+    <!-- `meet`, never `none`: stretching the box would distort the routes,
+         and true relative shape is the entire argument of this design -->
+    <svg id="chart" preserveAspectRatio="xMidYMid meet" aria-label="All ride routes plotted on one chart"></svg>
+    <div class="cross" id="cross"><i class="h"></i><i class="v"></i></div>
+    <div class="frame"></div>
+
+    <div class="plotHead">
+      <div class="t">
+        <div class="kick">Sheet 01 · Rides &amp; Journeys</div>
+        <h1><span class="w"><i style="animation-delay:.12s">Every road</i></span>
+          <b><span class="w"><i style="animation-delay:.26s">has a story</i></span></b></h1>
+        <div class="sub" id="sub"></div>
+      </div>
+    </div>
+
+    <div class="read">
+      <span class="proj">Mercator · WGS 84</span>
+      <span>LAT <b id="rLat">—</b> &nbsp; LNG <b id="rLng">—</b></span>
+      <span id="rName">Hover a route to trace it</span>
+    </div>
+    <div class="scale">
+      <span id="scaleTxt">—</span>
+      <div class="bar" style="width:104px"></div>
+    </div>
+  </section>
+
+  <aside class="side">
+    <div class="top">
+      <div class="row1">
+        <h2>Register</h2>
+        <span class="n" id="count"></span>
+        <a href="#">← Garage</a>
+      </div>
+      <div class="figs" id="figs"></div>
+    </div>
+    <div class="list" id="list"></div>
+  </aside>
+</div>
+
+<script src="rides-data.js"></script>
+<script>
+const S = RD.summary
+document.getElementById('sub').textContent =
+  RD.tally.replace(/^./, c => c.toUpperCase()) + ' — ' + S.stopCount +
+  ' fixed waypoints across ' + S.states.join(' and ') + '.'
+document.getElementById('count').textContent = String(RD.rides.length).padStart(2, '0') + ' records'
+
+document.getElementById('figs').innerHTML = [
+  ['Ridden', S.doneKm, 'km'],
+  ['Ahead', S.aheadKm, 'km'],
+  ['Legs surveyed', S.legCount, ''],
+  ['Longest ridden', S.longest ? S.longest.km : '—', 'km'],
+].map(([k, v, u]) => `<div><k>${k}</k><v>${v}${u ? `<small>${u}</small>` : ''}</v></div>`).join('')
+
+/* ── plot ─────────────────────────────────────────────────────────────── */
+/* Drawn in a fixed 1000 × 700 user space and stretched to the panel. The
+   projection keeps one scale on both axes, so the SHAPE inside that space
+   is true even though the box it is poured into is not square.          */
+const W = 1000, H = 700, PAD = 92
+const svg = document.getElementById('chart')
+svg.setAttribute('viewBox', `0 0 ${W} ${H}`)
+
+const mapped = RD.rides.filter(r => r.mapped)
+const P = RD.fit(W, H, PAD)
+
+/* every stop of every mapped ride, to work out the graticule range */
+const allStops = mapped.flatMap(r => r.stops)
+const latMin = Math.min(...allStops.map(s => s.lat)), latMax = Math.max(...allStops.map(s => s.lat))
+const lngMin = Math.min(...allStops.map(s => s.lng)), lngMax = Math.max(...allStops.map(s => s.lng))
+
+/* graticule at whole-degree steps, drawn by projecting the degree lines */
+let grat = ''
+for (let d = Math.floor(lngMin); d <= Math.ceil(lngMax); d++) {
+  const [x] = P.of({ lat: latMin, lng: d })
+  grat += `<line x1="${x}" y1="28" x2="${x}" y2="${H - 28}" class="${d % 2 ? '' : 'major'}"/>
+           <text x="${x + 4}" y="${H - 14}">${d}°E</text>`
+}
+for (let d = Math.floor(latMin); d <= Math.ceil(latMax); d++) {
+  const [, y] = P.of({ lat: d, lng: lngMin })
+  grat += `<line x1="28" y1="${y}" x2="${W - 28}" y2="${y}" class="${d % 2 ? '' : 'major'}"/>
+           <text x="34" y="${y - 5}">${d}°N</text>`
+}
+
+/* the scale bar: how many km the 104px bar stands for, measured by
+   projecting two points one degree of longitude apart at this latitude */
+;(function () {
+  const a = { lat: (latMin + latMax) / 2, lng: lngMin }
+  const b = { lat: (latMin + latMax) / 2, lng: lngMin + 1 }
+  const px = Math.abs(P.of(b)[0] - P.of(a)[0])          // user units per degree
+  const kmPerUnit = RD.crow(a, b) / px
+  const panelPx = document.getElementById('plot').clientWidth || W
+  const barUnits = 104 * (W / panelPx)
+  document.getElementById('scaleTxt').textContent =
+    Math.round(barUnits * kmPerUnit) + ' KM'
+})()
+
+const routes = mapped.map((r, i) => {
+  const pts = r.stops.map(s => P.of(s))
+  const d = RD.curve(pts)
+  const nodes = pts.map((p, k) => {
+    const s = r.stops[k]
+    const edge = k === 0 || k === pts.length - 1
+    /* labels flip side near the right edge so they never run off the sheet */
+    const flip = p[0] > W * 0.74
+    return `<g class="node">
+      <circle class="halo" cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${edge ? 9 : 6.5}" stroke="${r.color}"/>
+      <circle class="dot" cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${edge ? 4.4 : 2.8}" fill="${r.color}"/>
+      <text x="${(p[0] + (flip ? -8 : 8)).toFixed(1)}" y="${(p[1] - 8).toFixed(1)}"
+            text-anchor="${flip ? 'end' : 'start'}">${s.label}</text>
+    </g>`
+  }).join('')
+  return `<g class="rt" data-id="${r.id}">
+    <path class="glowline" d="${d}" stroke="${r.color}"/>
+    <path class="route line" d="${d}" stroke="${r.color}"
+          stroke-dasharray="${r.done ? 'none' : '7 6'}"/>
+    ${nodes}
+  </g>`
+}).join('')
+
+/* One Ride: one stop, no course. An origin that pulses outward instead. */
+const solo = RD.rides.filter(r => !r.mapped).map(r => {
+  const [x, y] = P.of(r.stops[0])
+  return `<g class="rt origin" data-id="${r.id}">
+    <circle class="pulse" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="6"/>
+    <circle class="pulse" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="6" style="animation-delay:1.5s"/>
+    <g class="node">
+      <circle class="halo" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="10" stroke="${r.color}"/>
+      <circle class="dot" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.6" fill="${r.color}"/>
+      <text x="${(x + 9).toFixed(1)}" y="${(y + 17).toFixed(1)}">One Ride — course open</text>
+    </g>
+  </g>`
+}).join('')
+
+svg.innerHTML = `<g class="graticule">${grat}</g>${routes}${solo}`
+
+/* draw each route on load, longest stroke last so the sheet fills outward */
+requestAnimationFrame(() => {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  svg.querySelectorAll('.route.line').forEach((p, i) => {
+    const len = p.getTotalLength()
+    p.style.strokeDasharray = p.getAttribute('stroke-dasharray') === 'none' ? len : p.getAttribute('stroke-dasharray')
+    p.style.strokeDashoffset = len
+    p.animate([{ strokeDashoffset: len }, { strokeDashoffset: 0 }],
+      { duration: 1500, delay: 280 + i * 200, easing: 'cubic-bezier(.2,.9,.25,1)', fill: 'forwards' })
+      .onfinish = () => { p.style.strokeDashoffset = 0 }
+  })
+})
+
+/* ── ledger ───────────────────────────────────────────────────────────── */
+const maxKm = Math.max(...RD.rides.map(r => r.km)) || 1
+
+document.getElementById('list').innerHTML = RD.modes
+  .filter(m => RD.byMode(m.key).length)
+  .map(m => `
+    <div class="grp" style="color:${m.color}">
+      <i style="background:${m.color}"></i>${m.plural}
+      <u>${String(RD.byMode(m.key).length).padStart(2, '0')}</u>
+    </div>
+    ${RD.byMode(m.key).map(r => `
+      <button class="rec" data-id="${r.id}" style="--c:${r.color};--w:${(r.km / maxKm * 100).toFixed(1)}%">
+        <span class="l1">
+          <span class="id">${r.id.slice(0, 9).toUpperCase()}</span>
+          <h3>${r.name}</h3>
+          <span class="km">${r.distance}</span>
+        </span>
+        <span class="l2">
+          <span>${r.date}</span>
+          ${r.mapped
+            ? `<span>BRG <b>${r.compass} ${r.bearing.toFixed(0)}°</b></span>
+               <span>CROW <b>${r.crow} km</b></span>
+               <span><b>${r.stops.length}</b> stops</span>`
+            : `<span>BRG <b>open</b></span><span><b>1</b> fixed point</span>`}
+          ${r.time ? `<span>T <b>${r.time}</b></span>`
+            : r.estimate ? `<span>T <b>${r.estimate}</b> est</span>` : ''}
+        </span>
+        <span class="bar"><i></i></span>
+        <span class="more">
+          <p>${r.story}</p>
+          <span class="tags">${r.highlights.map(h => `<u>${h}</u>`).join('')}</span>
+          <a class="go" href="#">Open record ↗</a>
+        </span>
+      </button>`).join('')}`).join('')
+
+/* bars fill when their row scrolls in */
+const io = new IntersectionObserver(es => es.forEach(e => {
+  if (e.isIntersecting) { e.target.classList.add('seen'); io.unobserve(e.target) }
+}), { threshold: 0.4 })
+document.querySelectorAll('.rec').forEach(el => io.observe(el))
+
+/* ── link the two halves ──────────────────────────────────────────────── */
+const gs = [...svg.querySelectorAll('g.rt')]
+const recs = [...document.querySelectorAll('.rec')]
+const rName = document.getElementById('rName')
+
+function focus(id) {
+  gs.forEach(g => {
+    g.classList.toggle('on', g.dataset.id === id)
+    g.classList.toggle('dim', !!id && g.dataset.id !== id)
+  })
+  const r = id && RD.byId(id)
+  rName.textContent = r
+    ? `${r.name} — ${r.fromCity} → ${r.toCity}`
+    : 'Hover a route to trace it'
+}
+
+recs.forEach(b => {
+  b.addEventListener('mouseenter', () => focus(b.dataset.id))
+  b.addEventListener('focus', () => focus(b.dataset.id))
+  b.addEventListener('mouseleave', () => { if (!b.classList.contains('on')) focus(null) })
+  b.addEventListener('click', () => {
+    const was = b.classList.contains('on')
+    recs.forEach(o => o.classList.remove('on'))
+    if (!was) { b.classList.add('on'); focus(b.dataset.id) } else focus(null)
+  })
+})
+gs.forEach(g => {
+  g.addEventListener('mouseenter', () => focus(g.dataset.id))
+  g.addEventListener('mouseleave', () => {
+    const open = document.querySelector('.rec.on')
+    focus(open ? open.dataset.id : null)
+  })
+  g.addEventListener('click', () => {
+    const b = recs.find(x => x.dataset.id === g.dataset.id)
+    if (b) { b.click(); b.scrollIntoView({ block: 'nearest', behavior: 'smooth' }) }
+  })
+})
+
+/* ── crosshair + live coordinate readout ──────────────────────────────── */
+/* Invert the projection: user-space x back to longitude is linear, y back
+   to latitude goes through the inverse Mercator. */
+const plot = document.getElementById('plot')
+const cross = document.getElementById('cross')
+const rLat = document.getElementById('rLat'), rLng = document.getElementById('rLng')
+const c0 = P.of({ lat: latMin, lng: lngMin }), c1 = P.of({ lat: latMax, lng: lngMax })
+
+plot.addEventListener('pointermove', e => {
+  const b = plot.getBoundingClientRect()
+  const px = e.clientX - b.left, py = e.clientY - b.top
+  cross.querySelector('.h').style.top = py + 'px'
+  cross.querySelector('.v').style.left = px + 'px'
+  /* panel px → user space → degrees */
+  const ux = px * (W / b.width), uy = py * (H / b.height)
+  const lng = lngMin + (ux - c0[0]) / ((c1[0] - c0[0]) || 1) * (lngMax - lngMin)
+  const myMin = Math.log(Math.tan(Math.PI / 4 + latMin * Math.PI / 360))
+  const myMax = Math.log(Math.tan(Math.PI / 4 + latMax * Math.PI / 360))
+  const my = myMin + (uy - c0[1]) / ((c1[1] - c0[1]) || 1) * (myMax - myMin)
+  const lat = (Math.atan(Math.exp(my)) - Math.PI / 4) * 360 / Math.PI
+  rLat.textContent = lat.toFixed(4) + '°N'
+  rLng.textContent = lng.toFixed(4) + '°E'
+}, { passive: true })
+</script>
+</body>
+</html>

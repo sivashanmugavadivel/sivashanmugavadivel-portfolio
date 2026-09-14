@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Rides · 1 · Roadbook</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   ROADBOOK — the rides as a rally navigator's roadbook.
+
+   A roadbook is the strip of paper that scrolls past a rally rider's bars:
+   cumulative distance down the left, a "tulip" diagram in the middle
+   showing which way the road leaves the junction, the instruction on the
+   right. It is the one format built for exactly this data — a sequence of
+   places, in order, with a heading between each — so the tulips here are
+   NOT decorative. Every arrow points at the real bearing computed from the
+   stops' true lat/lng, and the cumulative column is the great-circle
+   length of each leg scaled to the ride's stated total.
+
+   No photos needed, which is the point: a roadbook never had any.
+   ══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --paper:#efe8da; --paper2:#e6ddca; --ink:#1c1815; --ink2:#4a4238;
+  --faint:rgba(28,24,21,0.42); --hair:rgba(28,24,21,0.16); --hair2:rgba(28,24,21,0.3);
+  --red:#c0392b; --stamp:#8c2f22;
+  --mono:'Courier Prime',ui-monospace,monospace;
+  --disp:'Archivo','Helvetica Neue',sans-serif;
+  --ease:cubic-bezier(.2,.9,.25,1);
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--mono);color:var(--ink2);background:var(--paper);
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+  background-image:
+    /* paper grain — three offset dot fields, cheaper than an image */
+    radial-gradient(circle at 20% 30%,rgba(120,100,70,0.055),transparent 42%),
+    radial-gradient(circle at 78% 66%,rgba(120,100,70,0.05),transparent 45%),
+    repeating-linear-gradient(0deg,rgba(28,24,21,0.014) 0 1px,transparent 1px 3px);
+}
+::selection{background:var(--red);color:var(--paper)}
+
+/* ── binding: the punched left edge the whole page hangs off ── */
+.bind{position:fixed;left:0;top:0;bottom:0;width:52px;z-index:40;
+  background:linear-gradient(90deg,var(--paper2),var(--paper));
+  border-right:1px solid var(--hair);
+  display:flex;flex-direction:column;align-items:center;justify-content:space-around;
+  padding:30px 0}
+.bind i{width:13px;height:13px;border-radius:50%;background:#0e0c0a;
+  box-shadow:inset 0 2px 3px rgba(0,0,0,.8),0 1px 0 rgba(255,255,255,.6);flex-shrink:0}
+.bind .spine{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-90deg);
+  transform-origin:center;white-space:nowrap;font-size:0.56rem;letter-spacing:0.42em;
+  text-transform:uppercase;color:var(--faint);pointer-events:none}
+
+.sheet{margin-left:52px;max-width:980px;padding:0 clamp(16px,4vw,52px)}
+
+/* ── head ── */
+.hud{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:14px;
+  padding:11px 0;margin-bottom:0;
+  background:linear-gradient(var(--paper) 74%,transparent);
+  border-bottom:1px solid var(--hair)}
+.hud .badge{font-family:var(--disp);font-weight:800;font-size:0.66rem;letter-spacing:0.16em;
+  text-transform:uppercase;color:var(--paper);background:var(--ink);padding:5px 10px}
+.hud .who{font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--faint)}
+.hud .odo{margin-left:auto;font-size:0.7rem;letter-spacing:0.1em;color:var(--ink);
+  font-variant-numeric:tabular-nums}
+.hud .odo b{font-family:var(--disp);font-weight:800}
+.hud a.exit{font-size:0.64rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink2);
+  text-decoration:none;border-bottom:1px solid var(--hair2);padding-bottom:2px;transition:.25s}
+.hud a.exit:hover{color:var(--red);border-color:var(--red)}
+
+.cover{padding:clamp(44px,9vw,104px) 0 clamp(28px,5vw,48px);position:relative}
+.cover .file{font-size:0.62rem;letter-spacing:0.34em;text-transform:uppercase;color:var(--red);
+  margin-bottom:18px}
+.cover h1{font-family:var(--disp);font-weight:800;color:var(--ink);
+  font-size:clamp(2.6rem,10vw,6.2rem);line-height:0.86;letter-spacing:-0.045em;
+  text-transform:uppercase;margin-bottom:20px}
+.cover h1 span{display:block;overflow:hidden}
+.cover h1 span i{display:block;font-style:normal;transform:translateY(102%);
+  animation:rise 1s var(--ease) forwards}
+@keyframes rise{to{transform:none}}
+.cover p{max-width:46ch;font-size:0.9rem;line-height:1.85;
+  opacity:0;animation:fade .8s var(--ease) .55s forwards}
+@keyframes fade{to{opacity:1}}
+.cover .rule{height:3px;background:var(--ink);margin:26px 0 22px;transform-origin:left;
+  transform:scaleX(0);animation:wipe .9s var(--ease) .3s forwards}
+@keyframes wipe{to{transform:none}}
+
+/* the totals strip on the cover */
+.totals{display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--hair2);
+  opacity:0;animation:fade .8s var(--ease) .7s forwards}
+.totals div{flex:1 1 130px;padding:14px 16px;border-right:1px solid var(--hair)}
+.totals div:last-child{border-right:0}
+.totals k{display:block;font-size:0.55rem;letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--faint);margin-bottom:7px}
+.totals v{display:block;font-family:var(--disp);font-weight:800;font-size:1.45rem;
+  color:var(--ink);letter-spacing:-0.02em;font-variant-numeric:tabular-nums}
+.totals v small{font-size:0.62rem;font-family:var(--mono);font-weight:400;
+  letter-spacing:0.1em;color:var(--faint);margin-left:4px}
+
+/* ── a ride = a leaf of the book ── */
+.leaf{border-top:3px solid var(--ink);padding-top:0;margin-bottom:clamp(38px,7vw,74px)}
+.leaf .tab{display:flex;align-items:stretch;flex-wrap:wrap;gap:0;
+  border-bottom:1px solid var(--hair)}
+.leaf .tab .no{font-family:var(--disp);font-weight:800;font-size:clamp(2rem,6vw,3.4rem);
+  color:var(--paper);background:var(--ink);padding:8px 16px;line-height:1;
+  display:flex;align-items:center;letter-spacing:-0.04em}
+.leaf .tab .title{flex:1;min-width:220px;padding:10px 18px}
+.leaf .tab h2{font-family:var(--disp);font-weight:700;font-size:clamp(1.15rem,3.3vw,1.9rem);
+  color:var(--ink);letter-spacing:-0.025em;line-height:1.1;text-transform:uppercase}
+.leaf .tab .sub{font-size:0.7rem;color:var(--faint);margin-top:4px;line-height:1.5}
+.leaf .tab .stampwrap{display:flex;align-items:center;padding:8px 16px 8px 0}
+
+/* the rubber stamp — rotated, bled, drawn not imaged */
+.stamp{border:2.5px solid var(--stamp);color:var(--stamp);padding:5px 12px 6px;
+  font-family:var(--disp);font-weight:800;font-size:0.72rem;letter-spacing:0.14em;
+  text-transform:uppercase;transform:rotate(-7deg);opacity:0.82;
+  box-shadow:inset 0 0 0 1px rgba(140,47,34,0.25);white-space:nowrap;
+  position:relative}
+.stamp::after{content:'';position:absolute;inset:-2.5px;
+  background:repeating-linear-gradient(38deg,transparent 0 3px,rgba(239,232,218,0.5) 3px 5px);
+  pointer-events:none}
+.stamp.plan{--stamp:#3f6d8c;border-color:#3f6d8c;color:#3f6d8c;transform:rotate(5deg)}
+
+/* meta row under the tab */
+.meta{display:flex;flex-wrap:wrap;gap:0;border-bottom:1px solid var(--hair);
+  font-size:0.68rem;letter-spacing:0.06em}
+.meta span{padding:8px 16px;border-right:1px solid var(--hair);color:var(--ink2)}
+.meta span b{color:var(--ink);font-weight:700}
+.meta span:last-child{border-right:0}
+.meta .head{font-variant-numeric:tabular-nums}
+
+/* ── the strip of instructions ── */
+.strip{border-bottom:1px solid var(--hair2)}
+.row{display:grid;grid-template-columns:86px 92px 1fr;align-items:stretch;
+  border-bottom:1px solid var(--hair);
+  opacity:0;transform:translateY(16px);transition:opacity .6s var(--ease),transform .6s var(--ease)}
+.row.in{opacity:1;transform:none}
+.row:hover{background:rgba(28,24,21,0.035)}
+.row .km{padding:16px 10px;border-right:1px solid var(--hair);text-align:right;
+  font-variant-numeric:tabular-nums;display:flex;flex-direction:column;justify-content:center;gap:3px}
+.row .km b{font-family:var(--disp);font-weight:800;font-size:1.15rem;color:var(--ink);
+  letter-spacing:-0.02em}
+.row .km u{text-decoration:none;font-size:0.55rem;letter-spacing:0.14em;color:var(--faint);
+  text-transform:uppercase}
+.row .tul{border-right:1px solid var(--hair);display:grid;place-items:center;padding:12px 0}
+.row .say{padding:15px 18px;display:flex;flex-direction:column;justify-content:center;gap:5px}
+.row .say strong{font-family:var(--disp);font-weight:700;font-size:0.94rem;color:var(--ink);
+  letter-spacing:-0.01em;line-height:1.3}
+.row .say em{font-style:normal;font-size:0.68rem;color:var(--faint);letter-spacing:0.05em}
+.row .say .bear{color:var(--red);font-weight:700}
+
+/* tulip: the junction glyph. entry ball at the bottom, exit arrow rotated
+   to the real bearing of the leg leaving this stop. */
+.tulip{width:52px;height:52px;display:block}
+.tulip circle.ring{fill:none;stroke:var(--hair2);stroke-width:1.4}
+.tulip .ball{fill:var(--ink)}
+.tulip .arm{stroke:var(--ink);stroke-width:2.4;stroke-linecap:round;fill:none}
+.tulip .head{fill:var(--red)}
+.tulip g.turn{transform-origin:26px 26px;transform:rotate(0deg);
+  transition:transform 1.1s var(--ease)}
+.row.in .tulip g.turn{transform:rotate(var(--deg))}
+.tulip.terminus .ring{stroke:var(--ink);stroke-width:2.4}
+.tulip.terminus .home{fill:var(--red)}
+
+/* via lines — the places with no coordinate, so no tulip, just a note */
+.via{display:grid;grid-template-columns:86px 92px 1fr;border-bottom:1px solid var(--hair);
+  opacity:0;transition:opacity .6s var(--ease)}
+.via.in{opacity:1}
+.via .km{border-right:1px solid var(--hair)}
+.via .tul{border-right:1px solid var(--hair);display:grid;place-items:center}
+.via .tul i{display:block;width:1px;height:100%;min-height:34px;
+  background:repeating-linear-gradient(var(--hair2) 0 4px,transparent 4px 8px)}
+.via .say{padding:9px 18px;font-size:0.72rem;color:var(--faint);letter-spacing:0.07em;
+  display:flex;align-items:center;gap:8px}
+.via .say u{text-decoration:none;font-size:0.54rem;letter-spacing:0.18em;text-transform:uppercase;
+  border:1px solid var(--hair2);padding:2px 7px;color:var(--ink2)}
+
+/* ── the note pinned under each leaf ── */
+.note{display:grid;grid-template-columns:1fr 240px;gap:clamp(18px,4vw,40px);padding:22px 2px 0}
+.note p{font-size:0.86rem;line-height:1.95;color:var(--ink2);max-width:62ch}
+.note p::first-letter{font-family:var(--disp);font-weight:800;font-size:2.6em;float:left;
+  line-height:0.78;margin:4px 9px 0 0;color:var(--red)}
+.note .marks{display:flex;flex-direction:column;gap:7px}
+.note .marks k{font-size:0.54rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--faint);
+  margin-bottom:2px}
+.note .marks a{font-size:0.7rem;color:var(--ink);text-decoration:none;padding:6px 10px;
+  border:1px solid var(--hair2);letter-spacing:0.05em;transition:.24s var(--ease);
+  display:flex;align-items:center;gap:8px}
+.note .marks a::before{content:'';width:5px;height:5px;background:var(--red);flex-shrink:0}
+.note .marks a:hover{background:var(--ink);color:var(--paper);border-color:var(--ink);transform:translateX(4px)}
+.note .marks a:hover::before{background:var(--paper)}
+
+.open{margin-top:22px;display:inline-flex;align-items:center;gap:10px;
+  font-family:var(--disp);font-weight:700;font-size:0.74rem;letter-spacing:0.16em;
+  text-transform:uppercase;color:var(--paper);background:var(--ink);
+  padding:12px 20px;text-decoration:none;transition:.28s var(--ease)}
+.open:hover{background:var(--red);transform:translate(3px,-3px);
+  box-shadow:-4px 4px 0 var(--ink)}
+
+/* ── end plate ── */
+.end{border-top:3px solid var(--ink);padding:clamp(38px,7vw,72px) 0 clamp(56px,10vw,110px);
+  text-align:center}
+.end h3{font-family:var(--disp);font-weight:800;text-transform:uppercase;color:var(--ink);
+  font-size:clamp(1.5rem,5vw,2.8rem);letter-spacing:-0.03em;margin-bottom:12px}
+.end p{font-size:0.82rem;color:var(--faint);max-width:44ch;margin:0 auto 24px;line-height:1.9}
+
+@media(max-width:760px){
+  .bind{width:34px}.bind i{width:9px;height:9px}.bind .spine{display:none}
+  .sheet{margin-left:34px}
+  .row,.via{grid-template-columns:62px 70px 1fr}
+  .row .km{padding:12px 8px}.row .km b{font-size:0.98rem}
+  .tulip{width:44px;height:44px}
+  .row .say{padding:12px 13px}
+  .note{grid-template-columns:1fr;gap:22px}
+  .leaf .tab .no{font-size:1.8rem;padding:7px 12px}
+  .leaf .tab .stampwrap{padding:0 14px 12px}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;transition-duration:.01ms!important}
+  .row,.via{opacity:1;transform:none}
+  .cover h1 span i,.cover .rule{transform:none}
+}
+</style>
+</head>
+<body>
+
+<div class="bind" aria-hidden="true">
+  <span class="spine">Roadbook · Bear 650 · Tamil Nadu</span>
+  <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+</div>
+
+<div class="sheet">
+  <header class="hud">
+    <span class="badge">Roadbook</span>
+    <span class="who">Bear 650</span>
+    <span class="odo">Ridden <b id="odo">0</b> km</span>
+    <a class="exit" href="#">← Garage</a>
+  </header>
+
+  <section class="cover">
+    <div class="file">Sheet 01 — Rides &amp; Journeys</div>
+    <h1>
+      <span><i style="animation-delay:.1s">Every</i></span>
+      <span><i style="animation-delay:.2s">road has</i></span>
+      <span><i style="animation-delay:.3s">a story</i></span>
+    </h1>
+    <div class="rule"></div>
+    <p id="lede"></p>
+    <div class="totals" id="totals"></div>
+  </section>
+
+  <main id="book"></main>
+
+  <section class="end">
+    <h3>End of book</h3>
+    <p>Three ridden, three still paper. Every tulip is drawn from the real coordinates in the ride files — so the day the rest get ridden, the roadbook already knows the way.</p>
+    <a class="open" href="#">← Back to My Garage</a>
+  </section>
+</div>
+
+<script src="rides-data.js"></script>
+<script>
+document.getElementById('lede').textContent =
+  RD.note + ' ' + RD.tally.replace(/^./, c => c.toUpperCase()) +
+  '. Distances down the left, the way out of each junction in the middle, what happened on the right.'
+
+/* ── cover totals ─────────────────────────────────────────────────────── */
+const S = RD.summary
+document.getElementById('totals').innerHTML = [
+  ['In the book', S.count, 'rides'],
+  ['Ridden', S.doneKm, 'km'],
+  ['Still ahead', S.aheadKm, 'km'],
+  ['Longest ridden', S.longest ? S.longest.km : '—', 'km'],
+  ['Waypoints', S.stopCount, 'fixed'],
+].map(([k, v, u]) => `<div><k>${k}</k><v>${v}<small>${u}</small></v></div>`).join('')
+
+/* odometer in the sticky head counts up once */
+;(function count() {
+  const el = document.getElementById('odo'), to = S.doneKm
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { el.textContent = to; return }
+  const t0 = performance.now()
+  const tick = t => {
+    const p = Math.min(1, (t - t0) / 1400)
+    el.textContent = Math.round(to * (1 - Math.pow(1 - p, 3)))
+    if (p < 1) requestAnimationFrame(tick)
+  }
+  requestAnimationFrame(tick)
+})()
+
+/* ── tulip glyph ──────────────────────────────────────────────────────── */
+/* deg is a compass bearing (0 = north). SVG rotation is clockwise from the
+   +x axis, and the arm is drawn pointing up, so the two already agree. */
+function tulip(deg, kind) {
+  if (kind === 'end') return `<svg class="tulip terminus" viewBox="0 0 52 52">
+      <circle class="ring" cx="26" cy="26" r="17"/>
+      <circle class="home" cx="26" cy="26" r="5.5"/></svg>`
+  return `<svg class="tulip" viewBox="0 0 52 52" style="--deg:${deg}deg">
+    <circle class="ring" cx="26" cy="26" r="17"/>
+    <circle class="ball" cx="26" cy="43" r="3.6"/>
+    <g class="turn">
+      <path class="arm" d="M26 43 L26 12"/>
+      <path class="head" d="M26 5 L31.6 16 L20.4 16 Z"/>
+    </g>
+  </svg>`
+}
+
+/* ── build the book ───────────────────────────────────────────────────── */
+document.getElementById('book').innerHTML = RD.rides.map((r, i) => {
+
+  /* Cumulative column. The stated distance is road distance; the legs are
+     great-circle. Scaling the crow legs so they sum to the stated total
+     gives a column that is both honest about proportion and adds up to the
+     number printed on the tab. */
+  const crowTotal = r.legs.reduce((n, l) => n + l.crow, 0) || 1
+  const k = r.km / crowTotal
+  let run = 0
+
+  const rows = r.stops.map((s, si) => {
+    const leg = r.legs[si]                    // the leg LEAVING this stop
+    const at = run
+    if (leg) run += leg.crow * k
+    const last = si === r.stops.length - 1
+    return `<div class="row">
+      <div class="km">
+        <b>${at.toFixed(at < 10 ? 1 : 0)}</b>
+        <u>${si === 0 ? 'start' : last ? 'finish' : 'km'}</u>
+      </div>
+      <div class="tul">${tulip(leg ? leg.bearing : 0, last ? 'end' : 'turn')}</div>
+      <div class="say">
+        <strong>${s.label}</strong>
+        <em>${s.lat.toFixed(4)}°N · ${s.lng.toFixed(4)}°E${
+          leg ? ` — leave <span class="bear">${leg.compass} ${leg.bearing.toFixed(0)}°</span>` :
+                (s.home ? ' — <span class="bear">home</span>' : ' — arrive')}</em>
+      </div>
+    </div>`
+  })
+
+  /* the via places have no fix, so they slot in as unmeasured notes */
+  const vias = r.via.map(v => `<div class="via">
+      <div class="km"></div><div class="tul"><i></i></div>
+      <div class="say"><u>via</u> ${v}</div>
+    </div>`).join('')
+
+  /* Drop the via block in before the final row so the sheet still ends at
+     the finish line. One Ride has a single stop and no course at all, so it
+     gets an open-road line rather than a finish — the blank IS the entry. */
+  const strip = r.mapped
+    ? rows.slice(0, -1).join('') + vias + rows[rows.length - 1]
+    : rows[0] + `<div class="via in">
+        <div class="km"></div><div class="tul"><i></i></div>
+        <div class="say"><u>open</u> Route yours to choose — One Ride sets a date, not a course</div>
+      </div>`
+
+  return `<article class="leaf" id="leaf-${r.id}">
+    <div class="tab">
+      <div class="no">${String(i + 1).padStart(2, '0')}</div>
+      <div class="title">
+        <h2>${r.name}</h2>
+        <div class="sub">${r.subtitle}</div>
+      </div>
+      <div class="stampwrap">
+        <span class="stamp ${r.done ? '' : 'plan'}">${r.done ? 'Ridden ' + r.date : 'Not yet ridden'}</span>
+      </div>
+    </div>
+    <div class="meta">
+      <span><b>${r.distance}</b>${r.tbd ? ' — route is yours to pick' : ' by road'}</span>
+      ${r.mapped
+        ? `<span class="head"><b>${r.crow}</b> km as the crow flies</span>
+           <span class="head">Heading <b>${r.compass} ${r.bearing.toFixed(0)}°</b></span>`
+        : `<span class="head">Heading <b>anywhere</b></span>`}
+      <span>${r.time
+        ? '<b>' + r.time + '</b> in the saddle'
+        : r.estimate ? '<b>' + r.estimate + '</b> <u style="text-decoration:none;font-size:0.85em;opacity:.7">est.</u>'
+        : 'Time <b>—</b>'}</span>
+      <span>${r.states.join(' · ')}</span>
+    </div>
+    <div class="strip">${strip}</div>
+    <div class="note">
+      <p>${r.story}</p>
+      <div class="marks">
+        <k>Marked on the sheet</k>
+        ${r.highlights.map(h => `<a href="#">${h}</a>`).join('')}
+        <a class="open" href="#" style="margin-top:8px">Open the ride ↗</a>
+      </div>
+    </div>
+  </article>`
+}).join('')
+
+/* ── reveal the strip as it scrolls under the bars ────────────────────── */
+const io = new IntersectionObserver(es => {
+  es.forEach(e => {
+    if (!e.isIntersecting) return
+    /* stagger by position within the ride, so a sheet unrolls */
+    const sibs = [...e.target.parentElement.children]
+    e.target.style.transitionDelay = Math.min(sibs.indexOf(e.target) * 70, 420) + 'ms'
+    e.target.classList.add('in')
+    io.unobserve(e.target)
+  })
+}, { rootMargin: '0px 0px -12% 0px', threshold: 0.15 })
+document.querySelectorAll('.row,.via').forEach(el => io.observe(el))
+</script>
+</body>
+</html>

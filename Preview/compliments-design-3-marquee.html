@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Compliments — Marquee</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════════
+   MARQUEE — the inclusions list as a theatre sign.
+
+   The loudest design in the set. A ride's perks are the billing on the front
+   of the house, so they get bulbs, neon and a chase.
+
+   BULBS are real elements, laid around the frame by JS rather than painted as
+   a repeating gradient — a gradient cannot chase. Each one takes its
+   animation-delay from its position in the loop, so the light runs round the
+   border in one direction instead of blinking at random.
+
+   NEON is two text-shadows: a tight white core and a wide coloured bloom. The
+   flicker is deliberately irregular (a keyframe track with uneven stops), since
+   an evenly pulsing "flicker" reads as a CSS animation, not a failing tube.
+   ══════════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#08070c;--panel:#141019;--off:#fff8e7;
+  --d1:rgba(255,248,231,.62);--d2:rgba(255,248,231,.36);--acc:#eab308}
+body{background:radial-gradient(60% 50% at 50% 0%,rgba(234,179,8,.09),transparent 72%),var(--bg);
+  font-family:'Inter',system-ui,sans-serif;min-height:100vh;display:grid;place-items:center;
+  padding:clamp(18px,4vw,40px)}
+
+.marquee{position:relative;width:100%;max-width:800px;padding:clamp(22px,4vw,34px);
+  background:linear-gradient(170deg,var(--panel),#0d0a12 70%);
+  border-radius:14px;box-shadow:0 30px 60px -22px #000, inset 0 0 90px rgba(0,0,0,.7);
+  animation:on 1s cubic-bezier(.16,1,.3,1) both}
+@keyframes on{from{opacity:0;transform:scale(.97)}}
+
+/* ── the bulbs ───────────────────────────────────────────────────────────── */
+.bulbs{position:absolute;inset:0;pointer-events:none}
+.bulbs b{position:absolute;width:7px;height:7px;border-radius:50%;
+  background:var(--acc);transform:translate(-50%,-50%);
+  animation:chase 1.6s linear infinite;animation-delay:calc(var(--i) * -.045s)}
+@keyframes chase{
+  0%,42%{opacity:.2;box-shadow:none}
+  10%{opacity:1;box-shadow:0 0 8px 2px var(--acc),0 0 18px 5px rgba(234,179,8,.42)}
+}
+
+.inner{position:relative;border:1px solid rgba(255,255,255,.07);border-radius:9px;
+  padding:clamp(20px,4vw,32px);background:rgba(0,0,0,.24)}
+
+.tonight{text-align:center;font-size:.56rem;font-weight:800;letter-spacing:.4em;
+  text-transform:uppercase;color:var(--d2);margin-bottom:10px}
+h1{font-family:'Bebas Neue',sans-serif;text-align:center;color:var(--off);
+  font-size:clamp(2rem,7.4vw,3.7rem);line-height:.9;letter-spacing:.03em;
+  text-shadow:0 0 5px #fff,0 0 14px var(--acc),0 0 38px var(--acc);
+  animation:flicker 5.5s linear .8s infinite}
+/* uneven on purpose — see NEON above */
+@keyframes flicker{
+  0%,16%,18%,22%,25%,53%,57%,100%{opacity:1}
+  17%,24%,55%{opacity:.35}
+  21%{opacity:.72}
+}
+h1 em{font-style:normal;color:var(--acc);text-shadow:0 0 6px #fff5cf,0 0 20px var(--acc)}
+.billing{text-align:center;margin:12px 0 24px;font-size:.64rem;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--d1)}
+.billing b{color:var(--off)}
+
+/* ── the rows, lighting up one after another ─────────────────────────────── */
+ul{list-style:none;display:grid;gap:9px}
+li{display:flex;align-items:center;gap:14px;padding:12px 15px;border-radius:8px;
+  background:linear-gradient(90deg,rgba(255,255,255,.045),rgba(255,255,255,.015));
+  border:1px solid rgba(255,255,255,.07);border-left:3px solid var(--acc);
+  animation:light .55s cubic-bezier(.16,1,.3,1) both;
+  animation-delay:calc(.55s + var(--i) * .12s);transition:.35s}
+@keyframes light{from{opacity:0;transform:translateY(10px);filter:brightness(.3)}}
+li:hover{background:linear-gradient(90deg,rgba(234,179,8,.14),rgba(255,255,255,.02));
+  box-shadow:0 0 26px -6px var(--acc);transform:translateX(4px)}
+li .mark{flex-shrink:0;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;
+  font-size:1rem;background:rgba(0,0,0,.45);border:1px solid rgba(234,179,8,.42);
+  box-shadow:0 0 12px -2px rgba(234,179,8,.5), inset 0 0 10px rgba(234,179,8,.15)}
+li .mark.tick{color:var(--acc);font-weight:800;font-size:.8rem}
+li .txt{flex:1;font-size:clamp(.82rem,2vw,.94rem);color:var(--off);font-weight:500;line-height:1.5}
+
+.foot{margin-top:22px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);
+  display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;
+  font-size:.58rem;letter-spacing:.22em;text-transform:uppercase;color:var(--d2);font-weight:700}
+.foot b{color:var(--acc);letter-spacing:.08em;font-size:.74rem;text-transform:none}
+
+@media(prefers-reduced-motion:reduce){
+  .marquee,h1,li{animation:none}
+  .bulbs b{animation:none;opacity:.9;box-shadow:0 0 8px 2px var(--acc)}
+}
+</style>
+</head>
+<body>
+<div class="marquee" id="m">
+  <div class="bulbs" id="bulbs"></div>
+  <div class="inner" id="inner"></div>
+</div>
+
+<script src="compliments-data.js"></script>
+<script>
+const r = window.COMPLIMENTS.current()
+document.documentElement.style.setProperty('--acc', r.color)
+
+document.getElementById('inner').innerHTML = `
+  <div class="tonight">${r.organizer !== 'Self' ? r.organizer + ' presents' : 'On the road'}</div>
+  <h1>Every rider<em>gets all this</em></h1>
+  <div class="billing"><b>${r.name}</b> · ${r.date}</div>
+  <ul>
+    ${r.compliments.map((c, i) => `
+      <li style="--i:${i}">
+        <span class="mark${c.icon ? '' : ' tick'}">${c.icon || '✓'}</span>
+        <span class="txt">${c.text}</span>
+      </li>`).join('')}
+  </ul>
+  <div class="foot">
+    <span>${r.compliments.length} inclusions</span>
+    ${r.registration ? `<span>·</span><span>Entry <b>${r.registration}</b></span>` : ''}
+  </div>`
+
+/* Bulbs, evenly spaced around the perimeter. Laid out in one loop that walks
+   the border clockwise, so `--i` is position-in-the-loop and the chase reads as
+   one light travelling rather than four edges blinking independently. */
+function layBulbs() {
+  const box = document.getElementById('m').getBoundingClientRect()
+  const GAP = 26
+  const cols = Math.max(4, Math.round(box.width / GAP))
+  const rows = Math.max(3, Math.round(box.height / GAP))
+  const pts = []
+  for (let i = 0; i < cols; i++) pts.push([(i / cols) * 100, 0])          // top →
+  for (let i = 0; i < rows; i++) pts.push([100, (i / rows) * 100])        // right ↓
+  for (let i = cols; i > 0; i--) pts.push([(i / cols) * 100, 100])        // bottom ←
+  for (let i = rows; i > 0; i--) pts.push([0, (i / rows) * 100])          // left ↑
+  document.getElementById('bulbs').innerHTML = pts
+    .map(([x, y], i) => `<b style="--i:${i};left:${x}%;top:${y}%"></b>`).join('')
+}
+layBulbs()
+addEventListener('resize', layBulbs)
+</script>
+</body>
+</html>

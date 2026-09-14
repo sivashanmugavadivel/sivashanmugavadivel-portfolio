@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Rides · 24 · Morph</title>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   MORPH — one shape on the wall, and it becomes the next route as you
+   scroll.
+
+   Every route is resampled to the same number of points, spaced evenly
+   by arc length. That makes two different roads directly comparable
+   point for point, and lets one bend continuously into the other. The
+   line you are watching is never a cross-fade between two drawings: at
+   any scroll position it is a single real path, interpolated.
+
+   Resampling by arc length rather than by stop is what makes it work.
+   The Coimbatore run has seven stops and the Chennai haul has two, so
+   pairing them stop-to-stop would whip the shape around. Spacing 96
+   points evenly along each route instead gives both the same "spine",
+   and the tween stays smooth in both directions.
+
+   The ride with no route has no shape at all, so it resolves to a small
+   circle at its single fixed point — the line collapsing to a dot is
+   the honest picture of a course that has not been chosen.
+
+   Gallery-white, generous, quiet. The motion is the only ornament.
+   ══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --paper:#faf9f6; --paper2:#efede6; --ink:#16150f; --ink2:#55524a;
+  --faint:#95908a; --hair:rgba(22,21,15,0.12);
+  --serif:'Newsreader',Georgia,serif; --sans:'Inter',system-ui,sans-serif;
+  --ease:cubic-bezier(.2,.9,.25,1); --c:#ef4444;
+}
+body{background:var(--paper);color:var(--ink2);font-family:var(--sans);overflow-x:hidden;
+  -webkit-font-smoothing:antialiased}
+::selection{background:var(--ink);color:var(--paper)}
+
+/* ── chrome ── */
+.hud{position:fixed;top:0;left:0;right:0;z-index:60;display:flex;align-items:baseline;gap:14px;
+  padding:clamp(14px,2.4vw,26px) clamp(16px,4vw,46px);pointer-events:none;
+  background:linear-gradient(var(--paper) 40%,transparent)}
+.hud > *{pointer-events:auto}
+.hud .mk{font-family:var(--serif);font-weight:400;font-size:clamp(0.95rem,2vw,1.2rem);
+  color:var(--ink);letter-spacing:-0.01em}
+.hud .mk em{font-style:italic}
+.hud .n{margin-left:auto;font-size:0.56rem;letter-spacing:0.2em;color:var(--faint);
+  font-variant-numeric:tabular-nums}
+.hud a{font-size:0.54rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink2);
+  text-decoration:none;border-bottom:1px solid var(--hair);padding-bottom:3px;transition:.24s}
+.hud a:hover{color:var(--c);border-color:var(--c)}
+.prog{position:fixed;left:0;top:0;height:2px;width:0;background:var(--c);z-index:70;
+  transition:background .8s var(--ease)}
+
+/* ── opening ── */
+.open{min-height:100svh;display:flex;flex-direction:column;justify-content:center;
+  padding:120px clamp(18px,6vw,80px) 70px;max-width:980px;margin:0 auto}
+.open .kick{font-size:0.54rem;letter-spacing:0.34em;text-transform:uppercase;color:var(--c);
+  margin-bottom:22px;opacity:0;animation:fade .9s var(--ease) .2s forwards}
+@keyframes fade{to{opacity:1}}
+.open h1{font-family:var(--serif);font-weight:300;color:var(--ink);
+  font-size:clamp(2.4rem,8vw,5.6rem);line-height:1.02;letter-spacing:-0.03em;margin-bottom:22px}
+.open h1 em{font-style:italic}
+.open h1 .w{display:block;overflow:hidden}
+.open h1 .w i{display:block;font-style:normal;transform:translateY(104%);
+  animation:rise 1.1s var(--ease) forwards}
+.open h1 .w i em{font-style:italic}
+@keyframes rise{to{transform:none}}
+.open p{max-width:44ch;font-size:0.95rem;line-height:1.9;
+  opacity:0;animation:fade 1s var(--ease) .72s forwards}
+.open .cue{margin-top:36px;font-size:0.54rem;letter-spacing:0.24em;text-transform:uppercase;
+  color:var(--faint);display:flex;align-items:center;gap:12px;
+  opacity:0;animation:fade 1s var(--ease) .95s forwards}
+.open .cue i{width:1px;height:32px;background:linear-gradient(var(--ink),transparent);
+  animation:drop 2.1s var(--ease) infinite}
+@keyframes drop{50%{transform:translateY(9px)}}
+
+/* ── the gallery ── */
+.gallery{position:relative}
+.wall{position:sticky;top:0;height:100svh;display:grid;
+  grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);align-items:center;
+  gap:clamp(18px,4vw,60px);padding:clamp(70px,10vh,110px) clamp(18px,5vw,72px)
+  clamp(50px,8vh,86px);max-width:1400px;margin:0 auto;pointer-events:none}
+.wall > *{pointer-events:auto}
+
+/* the canvas the shape lives on */
+.frame{position:relative;height:100%;min-height:0;
+  display:flex;align-items:center;justify-content:center}
+.frame svg{width:100%;height:100%;overflow:visible}
+.frame .rule{position:absolute;inset:0;border:1px solid var(--hair);pointer-events:none}
+.frame .rule::before,.frame .rule::after{content:'';position:absolute;width:11px;height:11px}
+.frame .rule::before{left:-1px;top:-1px;border-left:1px solid var(--c);border-top:1px solid var(--c)}
+.frame .rule::after{right:-1px;bottom:-1px;border-right:1px solid var(--c);
+  border-bottom:1px solid var(--c)}
+.frame .cap{position:absolute;left:0;bottom:-26px;font-size:0.5rem;letter-spacing:0.2em;
+  text-transform:uppercase;color:var(--faint);white-space:nowrap}
+
+.morphLine{fill:none;stroke:var(--c);stroke-width:2.4;stroke-linecap:round;
+  stroke-linejoin:round;transition:stroke .7s var(--ease)}
+.morphGhost{fill:none;stroke:var(--hair);stroke-width:1;stroke-dasharray:2 6}
+.pt{transition:opacity .5s var(--ease),fill .7s var(--ease)}
+
+/* the label plate, cross-faded as the shape resolves */
+.plates{position:relative;height:100%;min-height:0;display:flex;align-items:center}
+.plate{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;
+  opacity:0;transform:translateY(22px);pointer-events:none;
+  transition:opacity .6s var(--ease),transform .6s var(--ease)}
+.plate.on{opacity:1;transform:none;pointer-events:auto}
+.plate .tier{display:inline-flex;align-items:center;gap:8px;font-size:0.5rem;letter-spacing:0.22em;
+  text-transform:uppercase;color:var(--tc);margin-bottom:16px}
+.plate .tier i{width:6px;height:6px;border-radius:50%;background:currentColor}
+.plate .no{font-family:var(--serif);font-size:0.9rem;color:var(--faint);margin-bottom:10px;
+  font-variant-numeric:tabular-nums}
+.plate h2{font-family:var(--serif);font-weight:300;color:var(--ink);
+  font-size:clamp(1.5rem,3.4vw,2.6rem);line-height:1.08;letter-spacing:-0.026em;margin-bottom:12px}
+.plate h2 em{font-style:italic}
+.plate .route{font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--faint);
+  line-height:1.9;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid var(--hair)}
+.plate .route b{color:var(--c);font-weight:500}
+.plate p{font-size:0.87rem;line-height:1.95;max-width:42ch;margin-bottom:20px}
+.plate .figs{display:flex;flex-wrap:wrap;gap:0;margin-bottom:20px}
+.plate .figs div{padding-right:clamp(14px,2.4vw,28px);margin-right:clamp(14px,2.4vw,28px);
+  border-right:1px solid var(--hair)}
+.plate .figs div:last-child{border-right:0;margin-right:0;padding-right:0}
+.plate .figs k{display:block;font-size:0.45rem;letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--faint);margin-bottom:6px}
+.plate .figs v{display:block;font-family:var(--serif);font-size:1.34rem;color:var(--ink);
+  line-height:1}
+.plate .go{align-self:flex-start;display:inline-flex;align-items:center;gap:10px;font-size:0.55rem;
+  letter-spacing:0.18em;text-transform:uppercase;color:var(--ink);text-decoration:none;
+  border-bottom:1px solid var(--ink);padding-bottom:5px;transition:.3s var(--ease)}
+.plate .go:hover{color:var(--c);border-color:var(--c);gap:16px}
+
+/* one scroll step per ride */
+.step{height:130svh}
+
+/* the tick rail */
+.rail{position:fixed;left:clamp(10px,2vw,22px);top:50%;transform:translateY(-50%);z-index:55;
+  display:flex;flex-direction:column;gap:10px}
+.rail button{display:flex;align-items:center;gap:9px;background:none;border:0;cursor:pointer;
+  padding:0;color:var(--faint);font-family:var(--sans);font-size:0.52rem;letter-spacing:0.1em;
+  transition:.3s var(--ease)}
+.rail button i{width:14px;height:1.5px;background:currentColor;transition:.3s var(--ease)}
+.rail button span{opacity:0;max-width:0;overflow:hidden;white-space:nowrap;transition:.3s var(--ease)}
+.rail button:hover span,.rail button.on span{opacity:1;max-width:170px}
+.rail button.on{color:var(--ink)}
+.rail button.on i{width:30px;background:var(--rc)}
+
+/* ── closing ── */
+.close{min-height:70svh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;gap:18px;padding:clamp(50px,9vw,110px) clamp(18px,6vw,60px)
+  calc(80px + env(safe-area-inset-bottom));max-width:620px;margin:0 auto}
+.close h2{font-family:var(--serif);font-weight:300;color:var(--ink);
+  font-size:clamp(1.8rem,5.4vw,3.2rem);line-height:1.06;letter-spacing:-0.028em}
+.close h2 em{font-style:italic}
+.close p{font-size:0.9rem;line-height:1.95}
+.close a{margin-top:8px;display:inline-flex;align-items:center;gap:10px;padding:14px 28px;
+  background:var(--ink);color:var(--paper);text-decoration:none;font-size:0.56rem;
+  letter-spacing:0.18em;text-transform:uppercase;transition:.28s var(--ease)}
+.close a:hover{background:var(--c);transform:translateY(-3px)}
+
+@media(max-width:880px){
+  .rail{display:none}
+  .wall{grid-template-columns:1fr;grid-template-rows:minmax(0,0.9fr) minmax(0,1.1fr);
+    gap:18px;padding:64px 18px 40px}
+  .plate{position:relative;inset:auto}
+  .plate:not(.on){display:none}
+  .plate p{display:none}
+  .frame .cap{bottom:-20px}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;animation-iteration-count:1!important;
+    transition-duration:.01ms!important}
+  .open h1 .w i{transform:none}
+}
+</style>
+</head>
+<body>
+
+<div class="prog" id="prog"></div>
+<header class="hud">
+  <span class="mk">Rides &amp; <em>Journeys</em></span>
+  <span class="n"><span id="hN">01</span> — <span id="hAll">06</span></span>
+  <a href="#">← Garage</a>
+</header>
+
+<section class="open">
+  <div class="kick">My Garage · Bear 650 · Kangayam</div>
+  <h1>
+    <span class="w"><i>One line,</i></span>
+    <span class="w"><i style="animation-delay:.14s"><em>six roads</em></i></span>
+  </h1>
+  <p id="lede"></p>
+  <div class="cue"><i></i>Scroll — the shape becomes the next route</div>
+</section>
+
+<section class="gallery" id="gallery">
+  <div class="wall">
+    <div class="frame">
+      <svg id="art" viewBox="0 0 600 600" preserveAspectRatio="xMidYMid meet">
+        <path class="morphGhost" id="ghost"></path>
+        <path class="morphLine" id="line"></path>
+        <g id="pts"></g>
+      </svg>
+      <span class="rule"></span>
+      <span class="cap" id="cap"></span>
+    </div>
+    <div class="plates" id="plates"></div>
+  </div>
+  <div id="steps"></div>
+</section>
+
+<nav class="rail" id="rail"></nav>
+
+<section class="close">
+  <h2>Six shapes, <em>one line</em></h2>
+  <p id="closeP"></p>
+  <a href="#">← Back to My Garage</a>
+</section>
+
+<script src="rides-data.js"></script>
+<script>
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches
+const S = RD.summary
+const N = 96          // resample resolution — the shared spine
+const SZ = 600, PAD = 96
+
+document.getElementById('lede').textContent =
+  `${RD.tally}. Each route is resampled to the same ${N} points, evenly spaced along its own ` +
+  `length, so one road can bend into the next without ever stopping being a real path.`
+document.getElementById('closeP').textContent =
+  `${S.doneKm} km ridden against ${S.aheadKm} km planned. Every shape here is drawn from the ` +
+  `coordinates in the ride files — resampled, never redrawn by hand.`
+document.getElementById('hAll').textContent = String(RD.rides.length).padStart(2, '0')
+
+/* ── resample a route to N evenly spaced points ───────────────────────── */
+/* By ARC LENGTH, not by stop. A 7-stop route and a 2-stop route then share
+   a spine and tween smoothly; pairing them stop-to-stop would not. */
+/* one projector per ride, built once — the scroll loop must never make one */
+const PROJ = new Map(RD.rides.map(r => [r.id, RD.one(r, SZ, SZ, PAD)]))
+
+function spine(r) {
+  const pts = r.stops.map(s => PROJ.get(r.id).of(s))
+
+  if (pts.length === 1 || !r.mapped) {
+    /* no course: the line resolves to a small ring at the fixed point */
+    const [cx, cy] = pts[0]
+    return Array.from({ length: N }, (_, i) => {
+      const a = (i / (N - 1)) * Math.PI * 2
+      return [cx + Math.cos(a) * 26, cy + Math.sin(a) * 26]
+    })
+  }
+
+  /* cumulative length along the polyline */
+  const seg = [], cum = [0]
+  for (let i = 1; i < pts.length; i++) {
+    const d = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1])
+    seg.push(d); cum.push(cum[i - 1] + d)
+  }
+  const total = cum[cum.length - 1] || 1
+
+  const out = []
+  for (let k = 0; k < N; k++) {
+    const want = (k / (N - 1)) * total
+    let i = 1
+    while (i < cum.length - 1 && cum[i] < want) i++
+    const t = seg[i - 1] ? (want - cum[i - 1]) / seg[i - 1] : 0
+    out.push([
+      pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * t,
+      pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * t,
+    ])
+  }
+  return out
+}
+
+const SPINES = RD.rides.map(spine)
+
+/* a smooth path through the resampled points */
+function toPath(p) {
+  let d = `M${p[0][0].toFixed(1)} ${p[0][1].toFixed(1)}`
+  for (let i = 1; i < p.length - 1; i++) {
+    const mx = (p[i][0] + p[i + 1][0]) / 2, my = (p[i][1] + p[i + 1][1]) / 2
+    d += ` Q${p[i][0].toFixed(1)} ${p[i][1].toFixed(1)} ${mx.toFixed(1)} ${my.toFixed(1)}`
+  }
+  const last = p[p.length - 1]
+  return d + ` L${last[0].toFixed(1)} ${last[1].toFixed(1)}`
+}
+
+const lerp = (a, b, t) => a.map((p, i) => [
+  p[0] + (b[i][0] - p[0]) * t,
+  p[1] + (b[i][1] - p[1]) * t,
+])
+
+/* mix two hex colours, for the tween */
+function mix(h1, h2, t) {
+  const v = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16))
+  const a = v(h1), b = v(h2)
+  return '#' + a.map((c, i) => Math.round(c + (b[i] - c) * t)
+    .toString(16).padStart(2, '0')).join('')
+}
+
+/* ── plates ───────────────────────────────────────────────────────────── */
+document.getElementById('plates').innerHTML = RD.rides.map((r, i) => {
+  const dest = r.tbd && /decided/i.test(r.toCity) ? 'anywhere' : r.toCity
+  return `<article class="plate" data-i="${i}" style="--tc:${r.tier.color}">
+    <span class="tier"><i></i>${r.tier.label} · ${r.date}</span>
+    <div class="no">${String(i + 1).padStart(2, '0')} / ${String(RD.rides.length).padStart(2, '0')}</div>
+    <h2>${r.name}</h2>
+    <div class="route">${r.fromCity} <b>→</b> ${dest}${
+      r.via.length ? '<br/>via ' + r.via.join(' · ') : ''}</div>
+    <p>${r.story}</p>
+    <div class="figs">
+      <div><k>Distance</k><v>${r.distance}</v></div>
+      <div><k>Heading</k><v>${r.mapped ? r.compass : 'Open'}</v></div>
+      <div><k>Waypoints</k><v>${r.stops.length}</v></div>
+      <div><k>${r.time ? 'Saddle' : r.estimated ? 'Est.' : 'States'}</k>
+        <v>${r.time || r.estimate || r.states.length}</v></div>
+    </div>
+    <a class="go" href="#">Open the ride →</a>
+  </article>`
+}).join('')
+
+document.getElementById('steps').innerHTML =
+  RD.rides.map((r, i) => `<div class="step" data-i="${i}"></div>`).join('')
+
+document.getElementById('rail').innerHTML = RD.rides.map((r, i) =>
+  `<button data-i="${i}" style="--rc:${r.color}"><i></i><span>${r.name}</span></button>`).join('')
+document.querySelectorAll('.rail button').forEach(b =>
+  b.addEventListener('click', () => {
+    const st = document.querySelector(`.step[data-i="${b.dataset.i}"]`)
+    if (st) st.scrollIntoView({ behavior: REDUCED ? 'auto' : 'smooth', block: 'start' })
+  }))
+
+/* ── the morph, driven by scroll ──────────────────────────────────────── */
+const gallery = document.getElementById('gallery')
+const lineEl = document.getElementById('line')
+const ghostEl = document.getElementById('ghost')
+const ptsEl = document.getElementById('pts')
+const plates = [...document.querySelectorAll('.plate')]
+const railBtns = [...document.querySelectorAll('.rail button')]
+let ticking = false
+
+/* ease so the shape holds still in the middle of a step and moves
+   decisively between them, rather than creeping the whole way */
+const ease = t => t < 0.5
+  ? 4 * t * t * t
+  : 1 - Math.pow(-2 * t + 2, 3) / 2
+
+function frame() {
+  ticking = false
+  const steps = [...document.querySelectorAll('.step')]
+  if (!steps.length) return
+
+  const g = gallery.getBoundingClientRect()
+  const stepH = steps[0].offsetHeight || 1
+  /* position along the gallery, in step units */
+  const raw = Math.max(0, Math.min(RD.rides.length - 1, (-g.top) / stepH))
+
+  const i = Math.min(RD.rides.length - 2, Math.floor(raw))
+  const frac = Math.max(0, Math.min(1, raw - i))
+  const t = REDUCED ? Math.round(frac) : ease(frac)
+
+  const A = SPINES[i], B = SPINES[i + 1] || SPINES[i]
+  const cur = lerp(A, B, t)
+  lineEl.setAttribute('d', toPath(cur))
+
+  const ca = RD.rides[i].color, cb = (RD.rides[i + 1] || RD.rides[i]).color
+  const col = mix(ca, cb, t)
+  document.documentElement.style.setProperty('--c', col)
+
+  /* 1 when the line has settled on a real route, 0 at the midpoint of a
+     tween — the dots belong to a settled shape, the ghost to a moving one */
+  const resolved = Math.min(1, Math.abs(t - 0.5) * 2)
+
+  ghostEl.setAttribute('d', toPath(t < 0.5 ? B : A))
+  ghostEl.style.opacity = ((1 - resolved) * 0.9).toFixed(2)
+
+  /* the real stops of whichever ride the shape is nearest */
+  const near = t < 0.5 ? RD.rides[i] : (RD.rides[i + 1] || RD.rides[i])
+  const nearI = t < 0.5 ? i : Math.min(RD.rides.length - 1, i + 1)
+  const proj = PROJ.get(near.id)
+  ptsEl.innerHTML = near.stops.map((s, k) => {
+    const p = proj.of(s)
+    const edge = k === 0 || k === near.stops.length - 1
+    return `<circle class="pt" cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}"
+      r="${edge ? 6 : 3.4}" fill="${edge ? col : 'var(--paper)'}"
+      stroke="${col}" stroke-width="1.8" opacity="${resolved.toFixed(2)}"/>`
+  }).join('')
+
+  document.getElementById('cap').textContent =
+    `${near.mapped ? near.stops.length + ' waypoints · ' + near.crow + ' km straight-line'
+      : 'no course — one fixed point'} · resampled to ${N} points`
+
+  plates.forEach((p, k) => p.classList.toggle('on', k === nearI))
+  railBtns.forEach((b, k) => b.classList.toggle('on', k === nearI))
+  document.getElementById('hN').textContent = String(nearI + 1).padStart(2, '0')
+
+  const h = document.documentElement.scrollHeight - innerHeight
+  document.getElementById('prog').style.width = (h > 0 ? scrollY / h * 100 : 0) + '%'
+}
+
+addEventListener('scroll', () => {
+  if (!ticking) { ticking = true; requestAnimationFrame(frame) }
+}, { passive: true })
+addEventListener('resize', frame)
+frame()
+</script>
+</body>
+</html>

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Compliments Poster Design Picker</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0c0b12;--card:#15131f;--bd:rgba(255,255,255,0.09);
+  --acc:#eab308;--off:#f0eef6;--d1:rgba(240,238,246,0.64);--d2:rgba(240,238,246,0.4);--d3:rgba(240,238,246,0.22);
+  --sans:'Inter',sans-serif;--serif:'Playfair Display',serif}
+body{background:var(--bg);color:var(--d1);font-family:var(--sans);min-height:100vh}
+.layout{display:flex;height:100vh}
+.side{width:340px;flex-shrink:0;background:#100e1a;border-right:1px solid var(--bd);
+  display:flex;flex-direction:column;overflow:hidden}
+.side h1{font-family:var(--serif);font-size:1.05rem;font-weight:700;color:var(--off);padding:16px 18px 6px}
+.side .intro{font-size:0.7rem;color:var(--d3);padding:0 18px 12px;border-bottom:1px solid var(--bd);line-height:1.6}
+.list{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:6px}
+.item{width:100%;text-align:left;padding:12px;border-radius:11px;border:1px solid var(--bd);
+  background:transparent;color:var(--d1);font-family:var(--sans);cursor:pointer;transition:all .25s}
+.item:hover{border-color:var(--acc);background:rgba(234,179,8,0.07);color:var(--off)}
+.item.on{border-color:var(--acc);background:rgba(234,179,8,0.14);color:var(--off)}
+.item b{display:flex;align-items:center;gap:8px;font-size:0.83rem;font-weight:600;margin-bottom:5px}
+.item b i{font-style:normal;min-width:20px;height:20px;padding:0 5px;border-radius:6px;
+  display:grid;place-items:center;font-size:0.6rem;font-weight:700;
+  background:rgba(234,179,8,0.18);color:var(--acc);flex-shrink:0}
+.item .what{display:block;font-size:0.67rem;color:var(--d2);line-height:1.6}
+.item .tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+.item .tags u{font-size:0.55rem;letter-spacing:0.07em;text-transform:uppercase;text-decoration:none;
+  padding:3px 8px;border-radius:99px;background:rgba(234,179,8,0.15);color:var(--acc);
+  border:1px solid rgba(234,179,8,0.2);font-weight:600}
+.side footer{padding:11px 18px 14px;border-top:1px solid var(--bd);font-size:0.63rem;color:var(--d3);line-height:1.65}
+.side footer code{color:var(--d2)}
+.stage{flex:1;display:flex;flex-direction:column;min-width:0}
+.bar{padding:10px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:12px;
+  background:#100e1a;flex-wrap:wrap}
+.bar .now{font-size:0.8rem;font-weight:600;color:var(--off)}
+.bar .how{font-size:0.66rem;color:var(--d3)}
+.bar .views{display:flex;gap:1px;background:var(--bd);border-radius:8px;overflow:hidden}
+.bar .views:first-of-type{margin-left:auto}
+.bar .views button{padding:7px 12px;border:0;background:#15131f;color:var(--d2);cursor:pointer;
+  font-family:var(--sans);font-size:0.68rem;transition:.22s}
+.bar .views button.on{background:var(--acc);color:#100e1a;font-weight:600}
+.bar select{background:#15131f;color:var(--d1);border:1px solid var(--bd);border-radius:8px;
+  padding:7px 10px;font-family:var(--sans);font-size:0.68rem;cursor:pointer;max-width:250px}
+.bar a,.bar .replay{font-size:0.7rem;font-weight:600;color:var(--acc);text-decoration:none;
+  padding:7px 13px;border-radius:99px;border:1px solid rgba(234,179,8,0.28);transition:.25s;
+  white-space:nowrap;background:transparent;font-family:var(--sans);cursor:pointer}
+.bar a:hover,.bar .replay:hover{background:var(--acc);color:#100e1a}
+.frameholder{flex:1;min-height:0;display:flex;align-items:flex-start;justify-content:center;
+  overflow:auto;background:#08070d;padding:0}
+.frameholder.phone{padding:22px;background:
+  radial-gradient(40vw 40vw at 50% 20%,rgba(234,179,8,0.07),transparent 70%),#08070d}
+iframe{width:100%;height:100%;border:0;background:#08070e;display:block}
+.frameholder.phone iframe{width:390px;height:844px;max-height:100%;border-radius:26px;
+  border:8px solid #1c1a26;box-shadow:0 30px 60px -20px rgba(0,0,0,0.9);flex-shrink:0}
+@media(max-width:900px){
+  .layout{flex-direction:column;height:auto}
+  .side{width:100%}
+  .frameholder{height:78vh}
+  .frameholder.phone{padding:12px}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="side">
+    <h1>Compliments — twelve posters</h1>
+    <div class="intro">Takes on the <em>compliments</em> panel — the inclusions list an
+      organised ride's poster carries, rendered today by <code>ComplimentsPoster</code> in
+      <code>GarageV7RideDetail.jsx</code>. <b>7–12 draw the perk</b>: "tea/coffee + snacks"
+      gets a cup with steam rising off it, "lucky rider wins" gets a trophy catching the
+      light — the illustration is picked from the text itself, so it works on entries with no
+      emoji. <b>1–6</b> are the earlier typographic set. Every one is animated, so use
+      <b>Replay</b> to watch an entry sequence again. Switch rides from the dropdown: the
+      <b>Plain</b> fixture has no icons and no organiser, and <b>Long</b> runs eight entries
+      with two that wrap — between them they find the designs that only work at five short
+      lines.</div>
+    <div class="list" id="list"></div>
+    <footer>Standalone HTML in this folder, all reading <code>compliments-data.js</code>;
+      7–12 also read <code>compliments-scenes.js</code> for the drawings. The Dhondenling
+      fixture is the real <code>r7</code> ride, verbatim.</footer>
+  </aside>
+  <main class="stage">
+    <div class="bar">
+      <span class="now" id="now"></span>
+      <span class="how" id="how"></span>
+      <div class="views">
+        <button id="vDesk" class="on">Desktop</button>
+        <button id="vPhone">Phone</button>
+      </div>
+      <select id="pick" title="Which ride's compliments to show"></select>
+      <button class="replay" id="replay">Replay ↻</button>
+      <a id="open" href="#" target="_blank">Full screen ↗</a>
+    </div>
+    <div class="frameholder" id="holder"><iframe id="frame" title="preview"></iframe></div>
+  </main>
+</div>
+
+<!-- loaded only to populate the ride dropdown from the same source the designs read -->
+<script src="compliments-data.js"></script>
+<script>
+/* The illustrated set leads, since it is the newer idea and the one worth
+   judging first; the typographic six follow. */
+const DESIGNS = [
+  { n: 7, file: 'compliments-design-7-camp-table.html', name: 'Camp Table',
+    what: 'The literal reading: the perks as objects on a table, drawn from what each one says. Warm wood under a single light from the top left, and every object carries a contact shadow that widens and softens as it lifts — without one, a drawing floats however good it is. Dust drifts through the light.',
+    how: 'Hover an object to lift it', tags: ['Drawn perks', 'Contact shadows', 'Warm wood'] },
+  { n: 8, file: 'compliments-design-8-conveyor.html', name: 'Conveyor',
+    what: 'The only one that never stops. Perks ride past on a belt that loops seamlessly — the track holds the items twice and shifts by exactly 50%, so the snap back is invisible. The belt speed scales with how many perks there are, so three do not crawl and eight do not race. Hover stops the line.',
+    how: 'Hover the belt to stop it', tags: ['Endless loop', 'Drawn perks', 'Hover to pause'] },
+  { n: 9, file: 'compliments-design-9-campfire.html', name: 'Campfire',
+    what: 'One light source in the middle of the panel, and everything reads from it — a single animated custom property drives the fire’s glow, the ground and every card’s lit edge, so the whole clearing dims when the fire gulps. Four flames on mismatched durations, so the silhouette does not visibly repeat.',
+    how: 'Watch the fire breathe', tags: ['One light source', 'Flicker drives all', 'Embers'] },
+  { n: 10, file: 'compliments-design-10-comic.html', name: 'Comic Strip',
+    what: 'The loudest and, oddly, the most legible — comics solved “a grid of small pictures each needing a caption” long ago. Heavy keylines, flat colour, halftone showing through the gutters. Every panel takes a slightly different border weight and tilt: identical 4px borders look like a table, 3.5–5px looks drawn.',
+    how: 'Hover a panel for the burst', tags: ['Halftone', 'Uneven ink', 'Action bursts'] },
+  { n: 11, file: 'compliments-design-11-blueprint.html', name: 'Blueprint',
+    what: 'The coolest-headed, and the one that scales best — a parts drawing is built to carry twenty annotated items without getting louder. Every frame and leader line inks itself on, with lengths measured after layout so a phone and a desktop draw at the same apparent rate. One plotter pass, once.',
+    how: 'Watch the sheet ink itself', tags: ['Self-drawing', 'Scales to 20+', 'One ink'] },
+  { n: 12, file: 'compliments-design-12-crate.html', name: 'Crate',
+    what: 'The only one with a beginning, middle and end: the crate lands, the lid tips and slides off, straw puffs out, and the contents are thrown up one at a time to settle on a shelf — each overshooting slightly, its shadow arriving late. Fading them in at their final spots would lose the whole idea.',
+    how: 'Replay to unpack it again', tags: ['Sequenced', 'Overshoot landing', 'Unboxing'] },
+  { n: 1, file: 'compliments-design-1-letterpress.html', name: 'Letterpress',
+    what: 'The only light design in the set: cream stock, black ink, the ride’s colour as the one spot ink a small press run could afford. Rows arrive blurred and out of register then settle sharp, like the press catching up with itself, and a lamp follows your pointer across the sheet.',
+    how: 'Move the pointer across the paper', tags: ['Light stock', 'Ink bleed', 'Pointer lamp'] },
+  { n: 2, file: 'compliments-design-2-ticket-stub.html', name: 'Ticket Stub ★',
+    what: 'The perks as an event pass — you paid the registration, this is what it admits you to. Real perforation: transparent circles down the seam and half-circle bites out of the card’s edges. Each row’s punched hole is a WINDOW with that perk’s own animated scene showing through it — a cup steaming, a trophy catching the light — and the barcode is hashed from the ride id.',
+    how: 'Watch the windows punch open', tags: ['Perforated', 'Animated windows', 'INCLUDED stamp'] },
+  { n: 3, file: 'compliments-design-3-marquee.html', name: 'Marquee',
+    what: 'The loudest of the six. Bulbs are real elements laid round the frame by JS — a gradient cannot chase — each taking its delay from its place in the loop so one light runs the border. The neon flicker is deliberately uneven, since an evenly pulsing flicker reads as CSS rather than a failing tube.',
+    how: 'Watch the bulbs chase · hover a row', tags: ['Chasing bulbs', 'Neon flicker', 'Loud'] },
+  { n: 4, file: 'compliments-design-4-swag-tags.html', name: 'Swag Tags',
+    what: 'The goodie bag, hung up: kraft luggage tags on twine, pivoting at the eyelet rather than the centre. Each tag takes its own period and amplitude from its index — a rail of identical-period tags reads as windscreen wipers — so they drift in and out of phase on their own. Hover takes one in hand.',
+    how: 'Let it sway · hover a tag', tags: ['Physical sway', 'Kraft tags', 'Per-tag period'] },
+  { n: 5, file: 'compliments-design-5-stamped.html', name: 'Stamped',
+    what: 'An organiser’s docket, stamped off one line at a time. Each seal drops in oversized, squashes past its resting size and settles while a ring of ink shocks outward from under it. The ink is imperfect on purpose — a turbulence mask eats into every seal so the edges break up like rubber on fibre.',
+    how: 'Watch them land in sequence', tags: ['Stamp thump', 'Broken ink edge', 'Light stock'] },
+  { n: 6, file: 'compliments-design-6-sticker-sheet.html', name: 'Sticker Sheet',
+    what: 'Half the perks on a ride poster are stickers, so the panel is the sheet they came on — glossy backing board, dashed die-lines, vinyl badges waiting to be peeled. The lift is sold by the shadow travelling further than the sticker does, and a sheen sweeps each badge once after it lands.',
+    how: 'Hover to peel a corner', tags: ['Die-cut', 'Corner peel', 'Gloss sweep'] },
+]
+
+const list = document.getElementById('list')
+list.innerHTML = DESIGNS.map(d =>
+  `<button class="item" data-file="${d.file}" data-name="${d.name}" data-how="${d.how}">
+     <b><i>${d.n}</i>${d.name}</b>
+     <span class="what">${d.what}</span>
+     <span class="tags">${d.tags.map(t => `<u>${t}</u>`).join('')}</span>
+   </button>`).join('')
+
+/* built from the same fixtures the designs read, so it cannot drift out of step */
+const pick = document.getElementById('pick')
+pick.innerHTML = window.COMPLIMENTS.rides.map(r =>
+  `<option value="${r.id}">${r.label}</option>`).join('')
+
+let current = DESIGNS[0].file
+
+function render() {
+  /* the cache-buster is what makes Replay work: every one of these designs
+     plays its entry once on load, so the only way to see it again is a fresh
+     document rather than a re-pointed src */
+  const url = `${current}?ride=${pick.value}`
+  document.getElementById('frame').src = `${url}&t=${Date.now()}`
+  document.getElementById('open').href = url
+}
+function show(btn) {
+  document.querySelectorAll('.item').forEach(b => b.classList.toggle('on', b === btn))
+  current = btn.dataset.file
+  document.getElementById('now').textContent = btn.dataset.name
+  document.getElementById('how').textContent = '— ' + btn.dataset.how
+  render()
+}
+list.addEventListener('click', e => {
+  const btn = e.target.closest('.item')
+  if (btn) show(btn)
+})
+pick.addEventListener('change', render)
+document.getElementById('replay').addEventListener('click', render)
+
+/* desktop / phone frame toggle */
+const holder = document.getElementById('holder')
+const vDesk = document.getElementById('vDesk'), vPhone = document.getElementById('vPhone')
+vDesk.addEventListener('click', () => {
+  holder.classList.remove('phone'); vDesk.classList.add('on'); vPhone.classList.remove('on')
+})
+vPhone.addEventListener('click', () => {
+  holder.classList.add('phone'); vPhone.classList.add('on'); vDesk.classList.remove('on')
+})
+
+show(document.querySelector('.item'))
+</script>
+</body>
+</html>

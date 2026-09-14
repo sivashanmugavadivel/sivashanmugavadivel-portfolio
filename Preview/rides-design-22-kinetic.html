@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Rides · 22 · Kinetic</title>
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wdth,wght@75..125,300..900&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   KINETIC — no pictures. The typography does all of it.
+
+   Four scroll behaviours, each doing a different job:
+
+   · WORD REVEAL. Every line is split into words and each word rises from
+     behind its own mask on a stagger, so a sentence assembles left to
+     right instead of fading in as a block.
+
+   · SCROLL-FILLED TYPE. The big statements are cut out of a gradient
+     whose position is driven by scroll, so colour pours through the
+     letters as the line crosses the screen. Nothing is hidden — the
+     unfilled state is still legible.
+
+   · DIRECTION-AWARE MARQUEE. The running bands change direction with
+     your scroll direction and their speed tracks your scroll velocity.
+     Scroll up and they run back the other way.
+
+   · VARIABLE WEIGHT AND WIDTH. The headline sits on a variable axis and
+     is stretched and thickened by scroll velocity, so fast movement
+     literally bends the letterforms and they settle when you stop.
+
+   Monochrome with one acid accent. Every number on the page is real.
+   ══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0b0b0b; --off:#fafafa;
+  --d1:rgba(250,250,250,0.6); --d2:rgba(250,250,250,0.38); --d3:rgba(250,250,250,0.2);
+  --bd:rgba(250,250,250,0.12);
+  --acid:#d8ff3e; --acid2:#9bff8a;
+  --disp:'Anybody',Impact,sans-serif; --mono:'DM Mono',ui-monospace,monospace;
+  --ease:cubic-bezier(.2,.9,.25,1); --c:#ef4444;
+}
+body{background:var(--bg);color:var(--d1);font-family:var(--mono);overflow-x:hidden;
+  -webkit-font-smoothing:antialiased}
+::selection{background:var(--acid);color:var(--bg)}
+
+/* ── chrome ── */
+.hud{position:fixed;top:0;left:0;right:0;z-index:60;display:flex;align-items:center;gap:12px;
+  padding:14px clamp(14px,3vw,34px);pointer-events:none;
+  background:linear-gradient(var(--bg) 30%,transparent)}
+.hud > *{pointer-events:auto}
+.hud .mk{font-family:var(--disp);font-weight:800;font-size:0.82rem;letter-spacing:0.02em;
+  text-transform:uppercase;color:var(--off);font-variation-settings:'wdth' 110}
+.hud .mk em{font-style:normal;color:var(--acid)}
+.hud .n{margin-left:auto;font-size:0.6rem;letter-spacing:0.2em;color:var(--d2);
+  font-variant-numeric:tabular-nums}
+.hud a{font-size:0.56rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--d2);
+  text-decoration:none;border:1px solid var(--bd);padding:7px 12px;transition:.22s}
+.hud a:hover{background:var(--acid);color:var(--bg);border-color:var(--acid)}
+.prog{position:fixed;left:0;top:0;height:2px;width:0;background:var(--acid);z-index:70}
+
+/* ── word reveal primitive ── */
+.rv{display:inline-block;overflow:hidden;vertical-align:bottom}
+.rv > i{display:inline-block;font-style:normal;transform:translateY(105%);
+  transition:transform .85s var(--ease)}
+.live .rv > i{transform:none}
+
+/* ── opening ── */
+.open{min-height:100svh;display:flex;flex-direction:column;justify-content:center;
+  padding:100px clamp(14px,4vw,60px) 60px;max-width:1400px;margin:0 auto}
+.open .kick{font-size:0.58rem;letter-spacing:0.34em;text-transform:uppercase;color:var(--acid);
+  margin-bottom:24px}
+h1{font-family:var(--disp);font-weight:900;text-transform:uppercase;color:var(--off);
+  font-size:clamp(2.6rem,14vw,11rem);line-height:0.8;letter-spacing:-0.05em;
+  font-variation-settings:'wdth' var(--wd,100);margin-bottom:28px}
+h1 span{display:block}
+.open .sub{display:flex;gap:26px;flex-wrap:wrap;align-items:baseline;
+  border-top:1px solid var(--bd);padding-top:20px}
+.open .sub p{max-width:42ch;font-size:0.88rem;line-height:1.8;color:var(--d1)}
+.open .sub .cue{margin-left:auto;font-size:0.56rem;letter-spacing:0.24em;text-transform:uppercase;
+  color:var(--d3);display:flex;align-items:center;gap:10px;white-space:nowrap}
+.open .sub .cue i{width:2px;height:26px;background:var(--acid);
+  animation:drop 1.9s var(--ease) infinite}
+@keyframes drop{50%{transform:translateY(8px)}}
+
+/* ── the marquee bands ── */
+.band{overflow:hidden;border-top:1px solid var(--bd);border-bottom:1px solid var(--bd);
+  padding:11px 0;white-space:nowrap;position:relative}
+.band .run{display:inline-flex;gap:40px;will-change:transform;font-family:var(--disp);
+  font-weight:700;text-transform:uppercase;font-size:clamp(0.9rem,2.4vw,1.5rem);
+  letter-spacing:-0.01em;color:var(--d3);font-variation-settings:'wdth' 92}
+.band .run b{color:var(--off);font-weight:900}
+.band .run em{font-style:normal;color:var(--acid)}
+.band.thin .run{font-size:clamp(0.62rem,1.3vw,0.8rem);font-family:var(--mono);
+  letter-spacing:0.22em;text-transform:uppercase;font-weight:400}
+
+/* ── a ride beat ── */
+.beat{min-height:100svh;display:flex;flex-direction:column;justify-content:center;
+  padding:clamp(60px,10vh,110px) clamp(14px,4vw,60px);max-width:1400px;margin:0 auto;
+  position:relative}
+.beat .no{position:absolute;right:clamp(14px,4vw,60px);top:clamp(50px,9vh,100px);
+  font-family:var(--disp);font-weight:900;font-size:clamp(4rem,16vw,13rem);line-height:0.72;
+  color:transparent;-webkit-text-stroke:1px rgba(250,250,250,0.12);pointer-events:none;
+  user-select:none;letter-spacing:-0.05em}
+
+.beat .tier{display:inline-flex;align-items:center;gap:9px;font-size:0.54rem;letter-spacing:0.24em;
+  text-transform:uppercase;color:var(--tc);margin-bottom:18px}
+.beat .tier i{width:7px;height:7px;border-radius:50%;background:currentColor;
+  box-shadow:0 0 12px currentColor}
+
+/* the big statement, filled by scroll */
+.beat h2{font-family:var(--disp);font-weight:900;text-transform:uppercase;
+  font-size:clamp(1.9rem,8.4vw,6.4rem);line-height:0.86;letter-spacing:-0.045em;
+  margin-bottom:22px;max-width:16ch;
+  /* two-stop gradient: the fill line is moved by scroll */
+  background-image:linear-gradient(90deg,var(--c) 0 50%,rgba(250,250,250,0.22) 50% 100%);
+  background-size:200% 100%;background-position:var(--fill,100%) 0;
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  font-variation-settings:'wdth' var(--wd,100)}
+
+.beat .meta{display:flex;flex-wrap:wrap;gap:0;border-top:1px solid var(--bd);
+  border-bottom:1px solid var(--bd);margin-bottom:22px}
+.beat .meta div{flex:1 1 130px;padding:15px 20px 15px 0;margin-right:20px;
+  border-right:1px solid var(--bd)}
+.beat .meta div:last-child{border-right:0;margin-right:0;padding-right:0}
+.beat .meta k{display:block;font-size:0.46rem;letter-spacing:0.22em;text-transform:uppercase;
+  color:var(--d3);margin-bottom:7px}
+.beat .meta v{display:block;font-family:var(--disp);font-weight:800;
+  font-size:clamp(1.2rem,2.8vw,1.9rem);color:var(--off);line-height:1;letter-spacing:-0.03em;
+  font-variant-numeric:tabular-nums}
+.beat .meta v small{font-size:0.44em;color:var(--d2);font-weight:500;margin-left:3px;
+  font-family:var(--mono);letter-spacing:0.06em}
+
+.beat .cols{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);
+  gap:clamp(18px,4vw,52px);align-items:start}
+.beat p{font-size:clamp(0.88rem,1.5vw,1rem);line-height:1.9;color:var(--d1)}
+.beat .tags{display:flex;flex-direction:column;gap:0}
+.beat .tags u{text-decoration:none;font-size:0.6rem;letter-spacing:0.18em;text-transform:uppercase;
+  color:var(--d2);padding:11px 0;border-bottom:1px solid var(--bd);
+  display:flex;align-items:center;gap:11px;transition:.3s var(--ease)}
+.beat .tags u::before{content:'';width:0;height:1px;background:var(--acid);transition:.4s var(--ease)}
+.live .tags u::before{width:20px}
+.beat .tags u:hover{color:var(--off);padding-left:8px}
+.beat .go{margin-top:24px;align-self:flex-start;display:inline-flex;align-items:center;gap:12px;
+  font-family:var(--disp);font-weight:800;font-size:0.66rem;letter-spacing:0.14em;
+  text-transform:uppercase;color:var(--bg);background:var(--acid);text-decoration:none;
+  padding:14px 24px;transition:.28s var(--ease)}
+.beat .go:hover{background:var(--off);transform:translateX(6px)}
+
+/* ── closing ── */
+.close{min-height:78svh;display:flex;flex-direction:column;justify-content:center;
+  padding:clamp(50px,9vw,110px) clamp(14px,4vw,60px) calc(80px + env(safe-area-inset-bottom));
+  max-width:1400px;margin:0 auto}
+.close h2{font-family:var(--disp);font-weight:900;text-transform:uppercase;color:var(--off);
+  font-size:clamp(2rem,10vw,7.4rem);line-height:0.82;letter-spacing:-0.05em;margin-bottom:24px}
+.close h2 em{font-style:normal;color:var(--acid)}
+.close a{align-self:flex-start;display:inline-flex;align-items:center;gap:12px;
+  font-family:var(--disp);font-weight:800;font-size:0.7rem;letter-spacing:0.14em;
+  text-transform:uppercase;color:var(--bg);background:var(--off);text-decoration:none;
+  padding:16px 28px;transition:.28s var(--ease)}
+.close a:hover{background:var(--acid);transform:translateX(-6px)}
+
+@media(max-width:760px){
+  .beat .cols{grid-template-columns:1fr;gap:22px}
+  .beat .no{font-size:4.4rem;top:auto;bottom:clamp(30px,6vh,60px)}
+  .beat h2{max-width:none}
+  .beat .meta div{flex:1 1 44%;padding-right:12px;margin-right:12px}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;animation-iteration-count:1!important;
+    transition-duration:.01ms!important}
+  .rv > i{transform:none}
+  .band .run{transform:none!important}
+  .beat h2{background-position:0 0!important}
+}
+</style>
+</head>
+<body>
+
+<div class="prog" id="prog"></div>
+<header class="hud">
+  <span class="mk">Rides <em>&amp;</em> Journeys</span>
+  <span class="n"><span id="hN">00</span>/<span id="hAll">00</span></span>
+  <a href="#">← Garage</a>
+</header>
+
+<section class="open live" id="openSec">
+  <div class="kick">My Garage · Bear 650 · Kangayam</div>
+  <h1 id="h1"></h1>
+  <div class="sub">
+    <p id="lede"></p>
+    <span class="cue"><i></i>Scroll</span>
+  </div>
+</section>
+
+<div class="band" id="band1"><div class="run" id="run1"></div></div>
+
+<main id="beats"></main>
+
+<div class="band thin" id="band2"><div class="run" id="run2"></div></div>
+
+<section class="close" id="closeSec">
+  <h2 id="closeH"></h2>
+  <a href="#">← Back to My Garage</a>
+</section>
+
+<script src="rides-data.js"></script>
+<script>
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches
+const S = RD.summary
+const TOTAL = S.doneKm + S.aheadKm
+
+/* ── split text into masked words ─────────────────────────────────────── */
+/* Each word gets its own mask and its own delay, so a line assembles
+   rather than arriving all at once. */
+function words(text, base) {
+  return String(text).split(' ').map((w, i) =>
+    `<span class="rv"><i style="transition-delay:${(base + i * 0.045).toFixed(3)}s">${w}</i></span>`
+  ).join(' ')
+}
+
+document.getElementById('h1').innerHTML =
+  `<span>${words('Every road', 0.1)}</span><span>${words('has a story', 0.24)}</span>`
+document.getElementById('lede').innerHTML = words(
+  `${RD.tally}. ${S.doneKm} kilometres behind the wheel, ${S.aheadKm} already drawn and waiting.`, 0.5)
+document.getElementById('closeH').innerHTML =
+  `<span>${words('The road', 0.05)}</span><span>${words('keeps', 0.16)}</span>` +
+  `<span><em>${words('going', 0.26)}</em></span>`
+document.getElementById('hAll').textContent = String(RD.rides.length).padStart(2, '0')
+
+/* ── beats ────────────────────────────────────────────────────────────── */
+document.getElementById('beats').innerHTML = RD.rides.map((r, i) => {
+  const dest = r.tbd && /decided/i.test(r.toCity) ? 'Anywhere' : r.toCity
+  return `<section class="beat" data-i="${i}" style="--c:${r.color};--tc:${r.tier.color}">
+    <span class="no">${String(i + 1).padStart(2, '0')}</span>
+    <span class="tier"><i></i>${r.tier.label} · ${r.date}</span>
+    <h2>${r.name}</h2>
+    <div class="meta">
+      <div><k>Distance</k><v>${r.tbd ? 'TBD' : r.km + '<small>KM</small>'}</v></div>
+      <div><k>From</k><v style="font-size:clamp(.85rem,1.8vw,1.15rem)">${r.fromCity}</v></div>
+      <div><k>To</k><v style="font-size:clamp(.85rem,1.8vw,1.15rem)">${dest}</v></div>
+      <div><k>Heading</k><v>${r.mapped ? r.compass : 'Open'}</v></div>
+      <div><k>Stops</k><v>${r.stops.length}</v></div>
+    </div>
+    <div class="cols">
+      <div>
+        <p>${words(r.story, 0.1)}</p>
+        <a class="go" href="#">Open the ride →</a>
+      </div>
+      <div class="tags">${r.highlights.map(h => `<u>${h}</u>`).join('')}</div>
+    </div>
+  </section>`
+}).join('')
+
+/* ── marquee content ──────────────────────────────────────────────────── */
+const line1 = RD.rides.map(r =>
+  `<span><b>${r.name}</b> <em>${r.distance}</em></span>`).join('')
+document.getElementById('run1').innerHTML = line1 + line1 + line1
+
+const facts = [
+  `<b>${S.doneKm} km</b> ridden`,
+  `<b>${S.aheadKm} km</b> ahead`,
+  `<b>${S.stopCount}</b> waypoints`,
+  `<b>${S.legCount}</b> legs`,
+  `<b>${S.states.join(' &amp; ')}</b>`,
+  `longest — <b>${S.longest ? S.longest.name : '—'}</b>`,
+].map(t => `<span>${t}</span>`).join('')
+document.getElementById('run2').innerHTML = facts + facts + facts
+
+/* ── scroll engine ────────────────────────────────────────────────────── */
+/* One rAF pass drives: word reveals, gradient fill on the big statements,
+   variable-font width from velocity, and the two marquees.             */
+const beats = [...document.querySelectorAll('.beat')]
+const sections = [document.getElementById('openSec'), ...beats, document.getElementById('closeSec')]
+const run1 = document.getElementById('run1'), run2 = document.getElementById('run2')
+
+let lastY = scrollY, vel = 0, dir = 1
+let m1 = 0, m2 = 0
+let ticking = false
+
+function frame() {
+  ticking = false
+
+  const dy = scrollY - lastY
+  lastY = scrollY
+  vel = vel * 0.85 + dy * 0.15
+  if (Math.abs(dy) > 0.6) dir = dy > 0 ? 1 : -1
+
+  /* variable font axis: stretch with speed, settle when still */
+  const wd = Math.max(78, Math.min(122, 100 - vel * 0.5))
+  document.documentElement.style.setProperty('--wd', wd.toFixed(1))
+
+  /* sections become live when they enter the middle band */
+  sections.forEach(s => {
+    const r = s.getBoundingClientRect()
+    s.classList.toggle('live', r.top < innerHeight * 0.78 && r.bottom > innerHeight * 0.14)
+  })
+
+  /* the gradient fill line follows each statement across the screen */
+  let live = 0
+  beats.forEach((b, i) => {
+    const r = b.getBoundingClientRect()
+    const h2 = b.querySelector('h2')
+    /* 1 → 0 as the beat travels from below the fold to above it */
+    const t = 1 - Math.max(0, Math.min(1, (innerHeight * 0.86 - r.top) / (innerHeight * 0.62)))
+    if (h2 && !REDUCED) h2.style.setProperty('--fill', (t * 100).toFixed(1) + '%')
+    if (r.top <= innerHeight / 2 && r.bottom >= innerHeight / 2) live = i + 1
+  })
+  document.getElementById('hN').textContent = String(live).padStart(2, '0')
+  if (live) document.documentElement.style.setProperty('--c', RD.rides[live - 1].color)
+
+  /* marquees: direction from scroll direction, speed from velocity */
+  if (!REDUCED) {
+    const speed = 0.55 + Math.min(5, Math.abs(vel) * 0.1)
+    m1 -= dir * speed
+    m2 += dir * speed * 0.72
+    const w1 = run1.scrollWidth / 3 || 1
+    const w2 = run2.scrollWidth / 3 || 1
+    if (m1 <= -w1) m1 += w1
+    if (m1 > 0) m1 -= w1
+    if (m2 <= -w2) m2 += w2
+    if (m2 > 0) m2 -= w2
+    run1.style.transform = `translate3d(${m1.toFixed(1)}px,0,0)`
+    run2.style.transform = `translate3d(${m2.toFixed(1)}px,0,0)`
+  }
+
+  const h = document.documentElement.scrollHeight - innerHeight
+  document.getElementById('prog').style.width = (h > 0 ? scrollY / h * 100 : 0) + '%'
+}
+
+/* the marquees should keep drifting even when the page is still */
+function idle() {
+  if (!REDUCED) {
+    vel *= 0.9
+    if (Math.abs(vel) < 0.4) { m1 -= dir * 0.45; m2 += dir * 0.32 }
+    const w1 = run1.scrollWidth / 3 || 1
+    const w2 = run2.scrollWidth / 3 || 1
+    if (m1 <= -w1) m1 += w1
+    if (m2 <= -w2) m2 += w2
+    run1.style.transform = `translate3d(${m1.toFixed(1)}px,0,0)`
+    run2.style.transform = `translate3d(${m2.toFixed(1)}px,0,0)`
+    /* let the width axis relax back to normal */
+    const cur = parseFloat(getComputedStyle(document.documentElement)
+      .getPropertyValue('--wd')) || 100
+    document.documentElement.style.setProperty('--wd', (cur + (100 - cur) * 0.08).toFixed(1))
+  }
+  requestAnimationFrame(idle)
+}
+
+addEventListener('scroll', () => {
+  if (!ticking) { ticking = true; requestAnimationFrame(frame) }
+}, { passive: true })
+addEventListener('resize', frame)
+
+frame()
+requestAnimationFrame(idle)
+</script>
+</body>
+</html>

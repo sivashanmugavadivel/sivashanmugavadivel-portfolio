@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Rides · 25 · Headlight</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Azeret+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   HEADLIGHT — the map is dark, and your pointer is the beam.
+
+   Riding at night is the one experience a motorcycle page can borrow
+   honestly: you only ever see the piece of road the light is on. So the
+   full network is drawn on the hero at almost nothing, and a masked copy
+   of the same drawing burns through wherever the beam falls. Stops light
+   as the beam crosses them.
+
+   The mask is a radial gradient whose centre is two CSS variables, so
+   moving the light costs no layout and no repaint of the SVG — the
+   pointer writes --mx/--my once per frame and the compositor does the
+   rest.
+
+   A torch that hides content would be a bad page, so it does not:
+   · the beam auto-sweeps when nothing is pointing at it, and on touch
+   · every ride is listed in full, permanently lit, below the hero
+   · a LIGHTS ON switch floods the whole map for anyone who wants it,
+     and it is the state reduced-motion users start in.
+
+   Black, with the warm amber of a halogen lamp. Nothing else.
+   ══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --night:#04050a; --night2:#080a12; --panel:#0b0e17;
+  --beam:#ffd489; --beam2:#ffb84d; --cold:#9db4d6;
+  --off:#eaeff7; --d1:rgba(234,239,247,0.6); --d2:rgba(234,239,247,0.36);
+  --d3:rgba(234,239,247,0.18); --bd:rgba(234,239,247,0.1);
+  --sans:'Sora',system-ui,sans-serif; --mono:'Azeret Mono',ui-monospace,monospace;
+  --ease:cubic-bezier(.2,.9,.25,1); --c:#ef4444;
+  --mx:50%; --my:46%; --beamR:26vmax;
+}
+body{background:var(--night);color:var(--d1);font-family:var(--sans);overflow-x:hidden;
+  -webkit-font-smoothing:antialiased}
+::selection{background:var(--beam);color:var(--night)}
+
+/* ── the dark stage ── */
+.stage{position:relative;height:88svh;min-height:440px;overflow:hidden;
+  background:radial-gradient(120% 80% at 50% 120%,#0a0d16,var(--night) 70%);
+  cursor:none;touch-action:pan-y}
+.stage.lit{cursor:default}
+
+.layer{position:absolute;inset:0}
+.layer svg{width:100%;height:100%;display:block}
+
+/* the map as it is without the light: present, but barely */
+.dark .rt .ln{stroke-width:1.6;opacity:0.13}
+.dark .nd circle{opacity:0.16}
+.dark .nd text{opacity:0}
+
+/* the same map, burning, revealed only inside the beam */
+.lit-layer{
+  -webkit-mask-image:radial-gradient(circle var(--beamR) at var(--mx) var(--my),
+    #000 0%,#000 38%,rgba(0,0,0,0.55) 62%,transparent 100%);
+  mask-image:radial-gradient(circle var(--beamR) at var(--mx) var(--my),
+    #000 0%,#000 38%,rgba(0,0,0,0.55) 62%,transparent 100%);
+  will-change:mask-image}
+.stage.lit .lit-layer{-webkit-mask-image:none;mask-image:none}
+.lit-layer .rt .ln{stroke-width:3.2;opacity:1;
+  filter:drop-shadow(0 0 10px currentColor)}
+.lit-layer .nd circle{opacity:1}
+.lit-layer .nd text{opacity:1}
+.nd text{font-family:'Azeret Mono',monospace;font-size:8.5px;letter-spacing:0.1em;
+  fill:var(--off);transition:opacity .3s}
+
+/* the warm wash of the lamp itself */
+.glowpool{position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;
+  background:radial-gradient(circle calc(var(--beamR) * 1.05) at var(--mx) var(--my),
+    rgba(255,212,137,0.2) 0%,rgba(255,184,77,0.09) 42%,transparent 72%);
+  will-change:background}
+.stage.lit .glowpool{background:radial-gradient(circle 160vmax at 50% 50%,
+  rgba(255,212,137,0.1),transparent 70%)}
+
+/* the lamp's hot centre, following the pointer */
+.bulb{position:absolute;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;
+  left:var(--mx);top:var(--my);pointer-events:none;
+  background:var(--beam);box-shadow:0 0 26px 8px rgba(255,212,137,0.55);
+  transition:opacity .4s}
+.stage.lit .bulb{opacity:0}
+
+/* the stage's own furniture */
+.stageHead{position:absolute;left:0;right:0;top:0;z-index:6;pointer-events:none;
+  padding:clamp(14px,2.6vw,28px) clamp(16px,4vw,44px);display:flex;align-items:flex-start;gap:14px}
+.stageHead > *{pointer-events:auto}
+.stageHead .mk{font-weight:600;font-size:0.95rem;color:var(--off);letter-spacing:-0.022em}
+.stageHead .mk span{display:block;font-family:var(--mono);font-size:0.5rem;letter-spacing:0.22em;
+  text-transform:uppercase;color:var(--d3);margin-top:6px;font-weight:400}
+.stageHead a{margin-left:auto;font-family:var(--mono);font-size:0.54rem;letter-spacing:0.16em;
+  text-transform:uppercase;color:var(--d2);text-decoration:none;border:1px solid var(--bd);
+  border-radius:99px;padding:8px 13px;transition:.24s}
+.stageHead a:hover{color:var(--night);background:var(--off);border-color:var(--off)}
+
+.switch{position:absolute;right:clamp(16px,4vw,44px);bottom:clamp(16px,3vw,30px);z-index:7;
+  display:flex;align-items:center;gap:9px;background:rgba(11,14,23,0.8);backdrop-filter:blur(8px);
+  border:1px solid var(--bd);border-radius:99px;padding:7px 13px 7px 9px;cursor:pointer;
+  font-family:var(--mono);font-size:0.54rem;letter-spacing:0.16em;text-transform:uppercase;
+  color:var(--d2);transition:.26s var(--ease)}
+.switch:hover{color:var(--off);border-color:var(--beam)}
+.switch i{width:9px;height:9px;border-radius:50%;background:var(--d3);transition:.26s}
+.switch.on i{background:var(--beam);box-shadow:0 0 12px var(--beam)}
+.switch.on{color:var(--beam)}
+
+.hint{position:absolute;left:clamp(16px,4vw,44px);bottom:clamp(16px,3vw,30px);z-index:6;
+  font-family:var(--mono);font-size:0.54rem;letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--d3);pointer-events:none}
+
+/* what the beam is currently over */
+.readout{position:absolute;left:50%;transform:translateX(-50%);bottom:clamp(52px,8vw,76px);
+  z-index:6;pointer-events:none;text-align:center;
+  opacity:0;transition:opacity .35s var(--ease)}
+.readout.on{opacity:1}
+.readout b{display:block;font-size:1.02rem;color:var(--beam);font-weight:600;
+  letter-spacing:-0.02em}
+.readout span{display:block;font-family:var(--mono);font-size:0.54rem;letter-spacing:0.14em;
+  color:var(--d2);margin-top:5px}
+
+/* ── the lit list below ── */
+.below{max-width:1180px;margin:0 auto;
+  padding:clamp(30px,5vw,60px) clamp(14px,4vw,36px) calc(70px + env(safe-area-inset-bottom))}
+.lede{display:flex;align-items:flex-end;gap:20px;flex-wrap:wrap;margin-bottom:clamp(20px,3vw,34px);
+  padding-bottom:18px;border-bottom:1px solid var(--bd)}
+.lede h1{flex:1;min-width:250px;font-weight:300;font-size:clamp(1.5rem,3.6vw,2.4rem);
+  color:var(--off);letter-spacing:-0.034em;line-height:1.1}
+.lede h1 b{font-weight:600;color:var(--beam)}
+.lede p{max-width:40ch;font-size:0.8rem;line-height:1.8;color:var(--d2)}
+
+.rows{display:flex;flex-direction:column;gap:8px}
+.row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:clamp(12px,2.4vw,22px);
+  align-items:center;background:var(--panel);border:1px solid var(--bd);border-radius:13px;
+  padding:14px clamp(13px,2vw,20px);text-decoration:none;color:inherit;
+  transition:.3s var(--ease);position:relative;overflow:hidden}
+.row::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--rc);
+  transform:scaleY(0);transform-origin:center;transition:transform .32s var(--ease)}
+.row:hover{border-color:var(--rc);transform:translateX(4px);
+  background:var(--night2)}
+.row:hover::before,.row.beamed::before{transform:scaleY(1)}
+.row.beamed{border-color:var(--rc);
+  box-shadow:0 0 0 1px var(--rc),0 0 30px -8px var(--rc)}
+
+.row .lamp{width:38px;height:38px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;
+  background:var(--night2);border:1px solid var(--bd);transition:.3s var(--ease)}
+.row .lamp i{width:11px;height:11px;border-radius:50%;background:var(--rc);
+  box-shadow:0 0 12px var(--rc)}
+.row:hover .lamp,.row.beamed .lamp{background:var(--rc);border-color:var(--rc)}
+.row:hover .lamp i,.row.beamed .lamp i{background:var(--night);box-shadow:none}
+
+.row .mid{min-width:0}
+.row h3{font-weight:600;font-size:0.94rem;color:var(--off);letter-spacing:-0.022em;
+  line-height:1.2;margin-bottom:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .m{font-family:var(--mono);font-size:0.58rem;color:var(--d3);letter-spacing:0.05em;
+  line-height:1.6}
+.row .m em{font-style:normal;color:var(--rc)}
+.row .m .desc{color:var(--d2);display:block;margin-top:4px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .right{text-align:right;flex-shrink:0}
+.row .right b{display:block;font-weight:600;font-size:1.06rem;color:var(--off);line-height:1;
+  font-variant-numeric:tabular-nums}
+.row .right u{display:block;text-decoration:none;font-family:var(--mono);font-size:0.48rem;
+  letter-spacing:0.16em;text-transform:uppercase;color:var(--d3);margin-top:6px}
+
+.foot{margin-top:clamp(24px,4vw,40px);display:flex;flex-wrap:wrap;gap:0;
+  border-top:1px solid var(--bd);padding-top:18px}
+.foot div{padding-right:24px;margin-right:24px;border-right:1px solid var(--bd)}
+.foot div:last-child{border-right:0;margin-right:0;padding-right:0}
+.foot k{display:block;font-family:var(--mono);font-size:0.46rem;letter-spacing:0.2em;
+  text-transform:uppercase;color:var(--d3);margin-bottom:6px}
+.foot v{display:block;font-weight:600;font-size:1.25rem;color:var(--off);line-height:1;
+  font-variant-numeric:tabular-nums}
+
+@media(max-width:700px){
+  :root{--beamR:34vmax}
+  .stage{height:64svh;cursor:default}
+  .row{grid-template-columns:auto minmax(0,1fr);gap:12px}
+  .row .right{grid-column:2;text-align:left;display:flex;align-items:baseline;gap:8px}
+  .row .right u{margin-top:0}
+  .readout{bottom:64px}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+
+<section class="stage" id="stage">
+  <div class="layer dark"><svg id="svgDark" aria-hidden="true"></svg></div>
+  <div class="layer lit-layer"><svg id="svgLit" aria-label="Ride network, revealed by the beam"></svg></div>
+  <div class="glowpool"></div>
+  <div class="bulb"></div>
+
+  <div class="stageHead">
+    <div class="mk">Rides &amp; Journeys<span>Bear 650 · Kangayam</span></div>
+    <a href="#">← Garage</a>
+  </div>
+
+  <div class="readout" id="readout"><b></b><span></span></div>
+  <span class="hint" id="hint">Move the light across the map</span>
+  <button class="switch" id="switch"><i></i>Lights on</button>
+</section>
+
+<div class="below">
+  <div class="lede">
+    <h1>Every road has a story — <b>you just have to light it</b></h1>
+    <p id="lede"></p>
+  </div>
+  <div class="rows" id="rows"></div>
+  <div class="foot" id="foot"></div>
+</div>
+
+<script src="rides-data.js"></script>
+<script>
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches
+const FINE = matchMedia('(pointer: fine)').matches
+const S = RD.summary
+const W = 1200, H = 780
+
+document.getElementById('lede').textContent =
+  `${RD.tally}. The whole network is on the map above — ${S.stopCount} places joined by ` +
+  `${S.legCount} legs — but only where the light falls. Everything is listed in full below.`
+
+/* ── the map, drawn twice ─────────────────────────────────────────────── */
+const P = RD.fit(W, H, 120)
+
+function mapSVG() {
+  const routes = RD.rides.filter(r => r.mapped).map(r => {
+    const pts = r.stops.map(s => P.of(s))
+    return `<g class="rt" data-id="${r.id}" style="color:${r.color}">
+      <path class="ln" d="${RD.curve(pts)}" fill="none" stroke="${r.color}"
+        stroke-linecap="round" stroke-linejoin="round"
+        stroke-dasharray="${r.done ? 'none' : '6 6'}"/>
+      ${pts.map((p, i) => {
+        const s = r.stops[i]
+        const edge = i === 0 || i === pts.length - 1
+        const flip = p[0] > W * 0.72
+        return `<g class="nd">
+          <circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${edge ? 5 : 3}"
+            fill="${r.color}"/>
+          <text x="${(p[0] + (flip ? -9 : 9)).toFixed(1)}" y="${(p[1] - 7).toFixed(1)}"
+            text-anchor="${flip ? 'end' : 'start'}">${s.label}</text>
+        </g>`
+      }).join('')}
+    </g>`
+  }).join('')
+
+  /* the ride with no course: a ring at its one fixed point */
+  const solo = RD.rides.filter(r => !r.mapped).map(r => {
+    const [x, y] = P.of(r.stops[0])
+    return `<g class="rt" data-id="${r.id}" style="color:${r.color}">
+      <circle class="ln" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="24" fill="none"
+        stroke="${r.color}" stroke-dasharray="4 7"/>
+      <g class="nd">
+        <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5" fill="${r.color}"/>
+        <text x="${(x + 9).toFixed(1)}" y="${(y + 20).toFixed(1)}">One Ride — course open</text>
+      </g></g>`
+  }).join('')
+
+  return routes + solo
+}
+
+const body = mapSVG()
+;['svgDark', 'svgLit'].forEach(id => {
+  const el = document.getElementById(id)
+  el.setAttribute('viewBox', `0 0 ${W} ${H}`)
+  el.setAttribute('preserveAspectRatio', 'xMidYMid slice')
+  el.innerHTML = body
+})
+
+/* ── the beam ─────────────────────────────────────────────────────────── */
+const stage = document.getElementById('stage')
+const readout = document.getElementById('readout')
+let mx = 0.5, my = 0.46          // 0-1 within the stage
+let sweeping = true
+let raf = 0
+
+function paint() {
+  raf = 0
+  stage.style.setProperty('--mx', (mx * 100).toFixed(2) + '%')
+  stage.style.setProperty('--my', (my * 100).toFixed(2) + '%')
+
+  /* which ride is under the light: nearest stop within the beam */
+  const b = stage.getBoundingClientRect()
+  if (!b.width) return
+  /* slice-fit means the SVG box may be cropped — recover the mapping */
+  const scale = Math.max(b.width / W, b.height / H)
+  const ox = (b.width - W * scale) / 2, oy = (b.height - H * scale) / 2
+  const px = (mx * b.width - ox) / scale, py = (my * b.height - oy) / scale
+
+  let best = null, bestD = 1e9
+  RD.rides.forEach(r => r.stops.forEach(s => {
+    const p = P.of(s)
+    const d = Math.hypot(p[0] - px, p[1] - py)
+    if (d < bestD) { bestD = d; best = { r, s } }
+  }))
+
+  const near = best && bestD < 130
+  readout.classList.toggle('on', !!near)
+  if (near) {
+    readout.querySelector('b').textContent = best.s.label
+    readout.querySelector('span').textContent =
+      `${best.r.name} · ${best.r.distance} · ${best.r.tier.label}`
+  }
+  document.querySelectorAll('.row').forEach(el =>
+    el.classList.toggle('beamed', !!near && el.dataset.id === best.r.id))
+}
+
+function queue() { if (!raf) raf = requestAnimationFrame(paint) }
+
+stage.addEventListener('pointermove', e => {
+  const b = stage.getBoundingClientRect()
+  mx = (e.clientX - b.left) / b.width
+  my = (e.clientY - b.top) / b.height
+  sweeping = false
+  queue()
+})
+stage.addEventListener('pointerleave', () => { sweeping = true })
+
+/* ── auto-sweep ───────────────────────────────────────────────────────── */
+/* So the hero is alive on touch, on keyboard, and before anyone points at
+   it. A figure-of-eight rather than a circle, so it crosses the middle. */
+let t0 = 0
+function sweep(t) {
+  if (!t0) t0 = t
+  if (sweeping && !REDUCED && !stage.classList.contains('lit')) {
+    const k = (t - t0) / 7000
+    mx = 0.5 + Math.sin(k * Math.PI * 2) * 0.3
+    my = 0.46 + Math.sin(k * Math.PI * 4) * 0.2
+    queue()
+  }
+  requestAnimationFrame(sweep)
+}
+requestAnimationFrame(sweep)
+
+/* ── the lights switch ────────────────────────────────────────────────── */
+const sw = document.getElementById('switch')
+function setLit(on) {
+  stage.classList.toggle('lit', on)
+  sw.classList.toggle('on', on)
+  sw.lastChild.textContent = on ? 'Lights off' : 'Lights on'
+  document.getElementById('hint').textContent = on
+    ? 'Whole map lit'
+    : (FINE ? 'Move the light across the map' : 'Drag across the map')
+}
+sw.addEventListener('click', () => setLit(!stage.classList.contains('lit')))
+
+/* anyone who asked for less motion starts with the map simply visible */
+if (REDUCED) setLit(true); else setLit(false)
+
+/* clicking a lit route jumps to its row */
+stage.addEventListener('click', e => {
+  const g = e.target.closest('.rt')
+  if (!g) return
+  const row = document.querySelector(`.row[data-id="${g.dataset.id}"]`)
+  if (row) row.scrollIntoView({ behavior: REDUCED ? 'auto' : 'smooth', block: 'center' })
+})
+
+/* ── the permanently lit list ─────────────────────────────────────────── */
+document.getElementById('rows').innerHTML = RD.rides.map(r => {
+  const dest = r.tbd && /decided/i.test(r.toCity) ? 'anywhere' : r.toCity
+  return `<a class="row" href="#" data-id="${r.id}" style="--rc:${r.color}">
+    <span class="lamp"><i></i></span>
+    <span class="mid">
+      <h3>${r.name}</h3>
+      <span class="m"><em>${r.tier.label}</em> · ${r.date} · ${r.fromCity} → ${dest}
+        <span class="desc">${r.description}</span></span>
+    </span>
+    <span class="right">
+      <b>${r.tbd ? 'TBD' : r.km}</b>
+      <u>${r.tbd ? 'no distance' : 'km'}</u>
+    </span>
+  </a>`
+}).join('')
+
+document.getElementById('foot').innerHTML = [
+  ['Ridden', S.doneKm + ' km'],
+  ['Ahead', S.aheadKm + ' km'],
+  ['Places', S.stopCount],
+  ['Legs', S.legCount],
+  ['States', S.stateCount],
+].map(([k, v]) => `<div><k>${k}</k><v>${v}</v></div>`).join('')
+
+/* hovering a row swings the beam onto that ride's first stop */
+document.querySelectorAll('.row').forEach(el => el.addEventListener('mouseenter', () => {
+  if (stage.classList.contains('lit') || !FINE) return
+  const r = RD.byId(el.dataset.id)
+  const p = P.of(r.stops[0])
+  const b = stage.getBoundingClientRect()
+  const scale = Math.max(b.width / W, b.height / H)
+  const ox = (b.width - W * scale) / 2, oy = (b.height - H * scale) / 2
+  mx = (p[0] * scale + ox) / b.width
+  my = (p[1] * scale + oy) / b.height
+  sweeping = false
+  queue()
+}))
+
+addEventListener('resize', queue)
+paint()
+</script>
+</body>
+</html>

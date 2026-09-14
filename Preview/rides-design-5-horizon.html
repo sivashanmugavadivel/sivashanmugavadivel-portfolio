@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Rides · 5 · Horizon</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   HORIZON — one ride, one full screen, seen from the saddle.
+
+   No photos, so the view is built instead: a road running to a vanishing
+   point, layered ridgelines behind it, and a sky graded out of the ride's
+   own colour. Every chapter re-tints the whole page as it snaps in.
+
+   The road is not decoration either. Each stop is a marker placed along
+   it at its true share of the ride's length — so the Coimbatore run shows
+   five markers crowding the near distance and the Chennai haul shows two,
+   far apart. You can read the shape of a ride off the road itself.
+
+   One Ride 2026 has one stop and no course, so its road simply runs into
+   the haze with nothing marked on it — every road, which is the point.
+   ══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ink:#07070b; --off:#fbfaf7;
+  --d1:rgba(251,250,247,0.72); --d2:rgba(251,250,247,0.48); --d3:rgba(251,250,247,0.28);
+  --disp:'Anton',Impact,sans-serif; --sans:'Manrope',system-ui,sans-serif;
+  --ease:cubic-bezier(.19,1,.22,1);
+  --c:#ef4444;
+}
+html,body{height:100%}
+body{background:var(--ink);color:var(--d1);font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;overflow:hidden}
+::selection{background:var(--c);color:var(--ink)}
+
+/* the tint that follows the active chapter */
+.wash{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(120vw 78vh at 50% 108%,var(--c),transparent 62%);
+  opacity:0.16;transition:background 1.1s var(--ease)}
+
+.reel{height:100svh;overflow-y:auto;overflow-x:hidden;
+  scroll-snap-type:y mandatory;scroll-behavior:smooth;
+  position:relative;z-index:1}
+.reel::-webkit-scrollbar{width:0}
+
+/* ── chrome ── */
+.hud{position:fixed;top:0;left:0;right:0;z-index:40;display:flex;align-items:center;gap:14px;
+  padding:clamp(14px,2.4vw,26px) clamp(16px,4vw,44px);pointer-events:none;
+  background:linear-gradient(rgba(7,7,11,0.82),transparent)}
+.hud > *{pointer-events:auto}
+.hud .mark{font-family:var(--disp);font-size:1rem;letter-spacing:0.06em;text-transform:uppercase;
+  color:var(--off)}
+.hud .mark em{font-style:normal;color:var(--c);transition:color .9s var(--ease)}
+.hud .n{margin-left:auto;font-size:0.66rem;letter-spacing:0.2em;color:var(--d2);
+  font-variant-numeric:tabular-nums}
+.hud .n b{color:var(--off);font-weight:600}
+.hud a{font-size:0.64rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--d2);
+  text-decoration:none;border:1px solid rgba(251,250,247,0.2);padding:7px 13px;
+  border-radius:99px;transition:.25s}
+.hud a:hover{color:var(--ink);background:var(--off);border-color:var(--off)}
+
+/* right rail — the chapter index */
+.rail{position:fixed;right:clamp(12px,2.4vw,26px);top:50%;transform:translateY(-50%);z-index:40;
+  display:flex;flex-direction:column;gap:13px;align-items:flex-end}
+.rail button{display:flex;align-items:center;gap:9px;background:none;border:0;cursor:pointer;
+  padding:2px 0;font-family:var(--sans);color:var(--d3);font-size:0.6rem;letter-spacing:0.1em;
+  transition:.35s var(--ease)}
+.rail button span{opacity:0;transform:translateX(6px);transition:.35s var(--ease);
+  white-space:nowrap;max-width:0;overflow:hidden}
+.rail button:hover span,.rail button.on span{opacity:1;transform:none;max-width:190px}
+.rail button i{width:22px;height:2px;background:currentColor;flex-shrink:0;
+  transition:.35s var(--ease)}
+.rail button.on{color:var(--off)}
+.rail button.on i{width:42px;background:var(--rc)}
+.rail button:hover{color:var(--off)}
+
+/* ── a chapter ── */
+.ch{height:100svh;scroll-snap-align:start;scroll-snap-stop:always;
+  position:relative;overflow:hidden;display:flex;flex-direction:column;
+  justify-content:flex-end;isolation:isolate}
+.ch .view{position:absolute;inset:0;z-index:0}
+.ch .view svg{width:100%;height:100%;display:block}
+/* the haze that sits on the horizon */
+.ch .haze{position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:linear-gradient(to bottom,transparent 34%,rgba(7,7,11,0.16) 48%,
+    rgba(7,7,11,0.72) 78%,var(--ink) 100%)}
+
+.ch .body{position:relative;z-index:3;padding:0 clamp(18px,5vw,72px)
+  calc(clamp(34px,6vw,78px) + env(safe-area-inset-bottom));
+  max-width:1180px;width:100%}
+
+.ch .no{font-family:var(--disp);font-size:clamp(4rem,17vw,12rem);line-height:0.78;
+  color:transparent;-webkit-text-stroke:1.4px rgba(251,250,247,0.16);
+  position:absolute;right:clamp(18px,5vw,72px);bottom:clamp(20px,5vw,60px);z-index:2;
+  pointer-events:none;user-select:none;
+  opacity:0;transform:translateY(30px);transition:1s var(--ease) .15s}
+.ch.live .no{opacity:1;transform:none}
+
+.ch .tier{display:inline-flex;align-items:center;gap:9px;font-size:0.6rem;font-weight:700;
+  letter-spacing:0.24em;text-transform:uppercase;margin-bottom:16px;
+  opacity:0;transform:translateY(18px);transition:.8s var(--ease) .1s}
+.ch .tier i{width:7px;height:7px;border-radius:50%;background:currentColor;
+  box-shadow:0 0 12px currentColor}
+.ch.live .tier{opacity:1;transform:none}
+
+.ch h2{font-family:var(--disp);color:var(--off);text-transform:uppercase;
+  font-size:clamp(2rem,7.4vw,5.6rem);line-height:0.9;letter-spacing:0.002em;
+  max-width:15ch;margin-bottom:14px}
+.ch h2 .w{display:block;overflow:hidden}
+.ch h2 .w i{display:block;font-style:normal;transform:translateY(104%);
+  transition:transform 1.05s var(--ease)}
+.ch.live h2 .w i{transform:none}
+
+.ch .lede{font-size:clamp(0.9rem,1.5vw,1.05rem);line-height:1.8;max-width:52ch;
+  color:var(--d1);margin-bottom:24px;
+  opacity:0;transform:translateY(18px);transition:.9s var(--ease) .45s}
+.ch.live .lede{opacity:1;transform:none}
+
+.ch .figs{display:flex;flex-wrap:wrap;gap:0;border-top:1px solid rgba(251,250,247,0.16);
+  opacity:0;transform:translateY(18px);transition:.9s var(--ease) .58s}
+.ch.live .figs{opacity:1;transform:none}
+.ch .figs div{padding:14px 24px 0 0;margin-right:24px;
+  border-right:1px solid rgba(251,250,247,0.1)}
+.ch .figs div:last-child{border-right:0;margin-right:0}
+.ch .figs k{display:block;font-size:0.55rem;letter-spacing:0.22em;text-transform:uppercase;
+  color:var(--d3);margin-bottom:6px}
+.ch .figs v{display:block;font-family:var(--disp);font-size:clamp(1.2rem,2.6vw,1.9rem);
+  color:var(--off);letter-spacing:0.01em;font-variant-numeric:tabular-nums;line-height:1}
+.ch .figs v small{font-size:0.5em;color:var(--d2);margin-left:4px;font-family:var(--sans);
+  font-weight:500;letter-spacing:0.06em}
+
+.ch .row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:24px;
+  opacity:0;transform:translateY(18px);transition:.9s var(--ease) .7s}
+.ch.live .row{opacity:1;transform:none}
+.ch .go{display:inline-flex;align-items:center;gap:10px;padding:14px 26px;border-radius:99px;
+  background:var(--off);color:var(--ink);text-decoration:none;font-size:0.74rem;font-weight:700;
+  letter-spacing:0.1em;text-transform:uppercase;transition:.32s var(--ease)}
+.ch .go:hover{background:var(--c);color:var(--off);transform:translateY(-3px);
+  box-shadow:0 16px 34px -12px var(--c)}
+.ch .tags{display:flex;gap:6px;flex-wrap:wrap}
+.ch .tags u{text-decoration:none;font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;
+  padding:6px 11px;border-radius:99px;border:1px solid rgba(251,250,247,0.2);color:var(--d1)}
+
+/* ── opening + closing chapters ── */
+.cover{justify-content:center;align-items:flex-start}
+.cover .body{padding-bottom:0}
+.cover .kick{font-size:0.62rem;letter-spacing:0.34em;text-transform:uppercase;color:var(--c);
+  margin-bottom:18px;opacity:0;animation:fade .9s var(--ease) .2s forwards}
+@keyframes fade{to{opacity:1}}
+.cover h1{font-family:var(--disp);text-transform:uppercase;color:var(--off);
+  font-size:clamp(2.8rem,13vw,9.5rem);line-height:0.82;letter-spacing:0.002em;margin-bottom:22px}
+.cover h1 .w{display:block;overflow:hidden}
+.cover h1 .w i{display:block;font-style:normal;transform:translateY(104%);
+  animation:rise 1.15s var(--ease) forwards}
+@keyframes rise{to{transform:none}}
+.cover p{font-size:clamp(0.94rem,1.7vw,1.15rem);line-height:1.8;max-width:46ch;
+  opacity:0;animation:fade .9s var(--ease) .75s forwards}
+.cover .cue{display:flex;align-items:center;gap:12px;margin-top:34px;font-size:0.6rem;
+  letter-spacing:0.22em;text-transform:uppercase;color:var(--d3);
+  opacity:0;animation:fade .9s var(--ease) 1s forwards}
+.cover .cue i{width:1px;height:34px;background:linear-gradient(var(--c),transparent);
+  animation:drop 2.1s var(--ease) infinite}
+@keyframes drop{50%{transform:translateY(9px)}}
+
+.end{justify-content:center;align-items:center;text-align:center}
+.end .body{padding-bottom:0;text-align:center}
+.end h2{font-family:var(--disp);text-transform:uppercase;color:var(--off);margin:0 auto 16px;
+  font-size:clamp(2rem,8vw,5.4rem);line-height:0.88;max-width:none}
+.end p{max-width:44ch;margin:0 auto 26px;line-height:1.85;font-size:0.95rem}
+
+/* road stripe motion */
+.stripe{animation:flow 2.6s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-260}}
+
+@media(max-width:760px){
+  .rail{display:none}
+  .ch .figs div{padding-right:14px;margin-right:14px}
+  .ch .figs v{font-size:1.15rem}
+  .ch .no{font-size:5rem;bottom:auto;top:22%}
+  .ch h2{max-width:none}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;animation-iteration-count:1!important;
+    transition-duration:.01ms!important}
+  .reel{scroll-behavior:auto}
+  .ch h2 .w i,.cover h1 .w i{transform:none}
+  .ch .tier,.ch .lede,.ch .figs,.ch .row,.ch .no{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+
+<div class="wash" id="wash"></div>
+
+<header class="hud">
+  <span class="mark">Rides <em id="hudEm">&amp;</em> Journeys</span>
+  <span class="n"><b id="hudN">01</b> / <span id="hudAll">00</span></span>
+  <a href="#">← Garage</a>
+</header>
+
+<nav class="rail" id="rail"></nav>
+
+<div class="reel" id="reel">
+
+  <section class="ch cover" data-i="0" style="--c:#ef4444">
+    <div class="view" id="coverView"></div>
+    <div class="haze"></div>
+    <div class="body">
+      <div class="kick">My Garage · Bear 650</div>
+      <h1>
+        <span class="w"><i style="animation-delay:.12s">Every</i></span>
+        <span class="w"><i style="animation-delay:.24s">road has</i></span>
+        <span class="w"><i style="animation-delay:.36s">a story</i></span>
+      </h1>
+      <p id="lede"></p>
+      <div class="cue"><i></i>Scroll to ride</div>
+    </div>
+  </section>
+
+  <!-- ride chapters injected here -->
+
+  <section class="ch end" data-i="99" style="--c:#8b5cf6">
+    <div class="haze"></div>
+    <div class="body">
+      <h2>The road<br/>keeps going</h2>
+      <p id="endP"></p>
+      <div class="row" style="justify-content:center">
+        <a class="go" href="#">← Back to My Garage</a>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script src="rides-data.js"></script>
+<script>
+const S = RD.summary
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches
+
+document.getElementById('lede').textContent =
+  `${RD.tally.replace(/^./, c => c.toUpperCase())}. ${S.doneKm} km behind, ${S.aheadKm} km still ahead — one screen each, from the saddle.`
+document.getElementById('endP').textContent =
+  `${S.open} of the ${RD.rides.length} are still ahead of the front wheel. The roads are picked; the dates are not.`
+
+/* ── the view out of a chapter ────────────────────────────────────────── */
+/* A 1200 × 800 scene. Horizon at y=430, vanishing point dead centre. The
+   road is a trapezoid from the bottom edge up to a near-point, and each
+   stop sits on it at its true share of the ride's length: share 0 is at
+   the rider's feet, share 1 at the horizon.                             */
+const VW = 1200, VH = 800, HZ = 430, VPX = VW / 2
+
+function view(r, i) {
+  const c = r.color
+  const seedRnd = seeder(r.id)
+
+  /* ridgelines — three layers, further ones paler and flatter */
+  const ridges = [
+    { y: HZ - 4, amp: 54, op: 0.5, col: shade(c, -0.5) },
+    { y: HZ + 6, amp: 34, op: 0.68, col: shade(c, -0.66) },
+    { y: HZ + 22, amp: 20, op: 0.85, col: '#0b0b11' },
+  ].map(g => {
+    let d = `M0 ${VH}L0 ${g.y}`
+    for (let x = 0; x <= VW; x += 110) {
+      d += ` Q${x + 55} ${(g.y - seedRnd() * g.amp).toFixed(1)} ${x + 110} ${(g.y - seedRnd() * g.amp * 0.55).toFixed(1)}`
+    }
+    return `<path d="${d}L${VW} ${VH}Z" fill="${g.col}" opacity="${g.op}"/>`
+  }).join('')
+
+  /* the road: wide at the bottom, pinched at the vanishing point */
+  const road = `M${VPX - 620} ${VH} L${VPX - 7} ${HZ + 4} L${VPX + 7} ${HZ + 4} L${VPX + 620} ${VH} Z`
+
+  /* markers for the stops, spaced by real cumulative distance */
+  let marks = ''
+  if (r.mapped) {
+    const total = r.chain || 1
+    let run = 0
+    r.stops.forEach((s, k) => {
+      if (k) run += r.legs[k - 1].crow
+      const share = run / total                       // 0 → 1 along the ride
+      /* perspective: depth grows non-linearly toward the horizon */
+      const t = Math.pow(share, 0.62)
+      const y = VH - (VH - HZ - 8) * t
+      const halfW = 620 * (1 - t) + 7 * t
+      const x = VPX + halfW * 0.82
+      const sc = 1 - t * 0.82
+      if (sc < 0.1) return
+      marks += `<g class="mk" opacity="${(0.35 + sc * 0.65).toFixed(2)}">
+        <line x1="${x.toFixed(1)}" y1="${y.toFixed(1)}"
+              x2="${x.toFixed(1)}" y2="${(y - 78 * sc).toFixed(1)}"
+              stroke="rgba(251,250,247,0.5)" stroke-width="${(3 * sc).toFixed(2)}"/>
+        <rect x="${(x - 3).toFixed(1)}" y="${(y - 112 * sc).toFixed(1)}"
+              width="${(74 * sc).toFixed(1)}" height="${(36 * sc).toFixed(1)}"
+              fill="${c}" rx="${(3 * sc).toFixed(1)}"/>
+        <text x="${(x + 8).toFixed(1)}" y="${(y - 88 * sc).toFixed(1)}"
+              fill="#fbfaf7" font-family="Anton,sans-serif"
+              font-size="${(20 * sc).toFixed(1)}">${Math.round(run)}</text>
+      </g>`
+    })
+  }
+
+  return `<svg viewBox="0 0 ${VW} ${VH}" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+    <defs>
+      <linearGradient id="sky${i}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#07070b"/>
+        <stop offset="0.42" stop-color="${shade(c, -0.58)}"/>
+        <stop offset="0.62" stop-color="${shade(c, -0.16)}"/>
+        <stop offset="0.78" stop-color="${shade(c, -0.62)}"/>
+      </linearGradient>
+      <radialGradient id="sun${i}" cx="0.5" cy="${(HZ / VH).toFixed(3)}" r="0.42">
+        <stop offset="0" stop-color="${c}" stop-opacity="0.92"/>
+        <stop offset="0.5" stop-color="${c}" stop-opacity="0.2"/>
+        <stop offset="1" stop-color="${c}" stop-opacity="0"/>
+      </radialGradient>
+      <linearGradient id="tar${i}" x1="0" y1="1" x2="0" y2="0">
+        <stop offset="0" stop-color="#16161d"/>
+        <stop offset="1" stop-color="${shade(c, -0.72)}"/>
+      </linearGradient>
+    </defs>
+
+    <rect width="${VW}" height="${VH}" fill="url(#sky${i})"/>
+    <ellipse cx="${VPX}" cy="${HZ}" rx="${VW * 0.44}" ry="230" fill="url(#sun${i})"/>
+    ${stars(seedRnd, c)}
+    ${ridges}
+
+    <path d="${road}" fill="url(#tar${i})"/>
+    <!-- verges -->
+    <path d="M${VPX - 620} ${VH} L${VPX - 7} ${HZ + 4}" stroke="rgba(251,250,247,0.3)" stroke-width="3" fill="none"/>
+    <path d="M${VPX + 620} ${VH} L${VPX + 7} ${HZ + 4}" stroke="rgba(251,250,247,0.3)" stroke-width="3" fill="none"/>
+    <!-- centre line, running away from the rider -->
+    <path class="${REDUCED ? '' : 'stripe'}" d="M${VPX} ${VH} L${VPX} ${HZ + 4}"
+      stroke="rgba(251,250,247,0.72)" stroke-width="7" fill="none"
+      stroke-dasharray="58 46" stroke-linecap="round"
+      style="animation-delay:${(i * 0.3).toFixed(2)}s"/>
+    ${marks}
+  </svg>`
+}
+
+/* a scattering of stars, only in the upper third where the sky is dark */
+function stars(rnd, c) {
+  return Array.from({ length: 46 }, () => {
+    const x = rnd() * VW, y = rnd() * (HZ - 90)
+    const r = 0.6 + rnd() * 1.5
+    return `<circle cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" r="${r.toFixed(1)}"
+      fill="#fbfaf7" opacity="${(0.14 + rnd() * 0.5).toFixed(2)}"/>`
+  }).join('') + `<circle cx="${(VW * 0.78).toFixed(0)}" cy="${(HZ - 250).toFixed(0)}" r="46"
+      fill="${c}" opacity="0.1"/>`
+}
+
+/* deterministic pseudo-random from a string, so a chapter never reshuffles */
+function seeder(seed) {
+  let h = 0
+  for (const ch of seed) h = (h * 31 + ch.charCodeAt(0)) % 99991
+  return () => { h = (h * 1103515245 + 12345) % 2147483648; return (h >> 9) / 4194304 }
+}
+
+/* mix a hex toward black (t<0) or white (t>0) */
+function shade(hex, t) {
+  const n = parseInt(hex.slice(1), 16)
+  const f = c => {
+    const v = t < 0 ? c * (1 + t) : c + (255 - c) * t
+    return Math.max(0, Math.min(255, Math.round(v)))
+  }
+  const r = f(n >> 16 & 255), g = f(n >> 8 & 255), b = f(n & 255)
+  return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)
+}
+
+/* ── build the chapters ───────────────────────────────────────────────── */
+const chapters = RD.rides.map((r, i) => {
+  const words = r.name.split(' ')
+  const lines = []
+  /* break the title into lines of roughly three words so it stacks well */
+  for (let k = 0; k < words.length; k += 3) lines.push(words.slice(k, k + 3).join(' '))
+  return `<section class="ch" data-i="${i + 1}" data-id="${r.id}" style="--c:${r.color}">
+    <div class="view">${view(r, i)}</div>
+    <div class="haze"></div>
+    <span class="no">${String(i + 1).padStart(2, '0')}</span>
+    <div class="body">
+      <span class="tier" style="color:${r.tier.color}"><i></i>${r.tier.label} · ${r.date}</span>
+      <h2>${lines.map((l, k) =>
+        `<span class="w"><i style="transition-delay:${0.18 + k * 0.09}s">${l}</i></span>`).join('')}</h2>
+      <p class="lede">${r.description}</p>
+      <div class="figs">
+        <div><k>Distance</k><v>${r.tbd ? 'TBD' : r.km + '<small>km</small>'}</v></div>
+        <div><k>From</k><v style="font-size:clamp(.9rem,1.7vw,1.2rem)">${r.fromCity}</v></div>
+        <div><k>To</k><v style="font-size:clamp(.9rem,1.7vw,1.2rem)">${
+          r.tbd && /decided/i.test(r.toCity) ? 'Anywhere' : r.toCity}</v></div>
+        <div><k>Heading</k><v>${r.mapped ? r.compass + '<small>' + r.bearing.toFixed(0) + '°</small>' : 'Open'}</v></div>
+        <div><k>${r.time ? 'Saddle time' : r.estimate ? 'Estimated' : 'Stops'}</k>
+          <v style="font-size:clamp(.95rem,2vw,1.35rem)">${r.time || r.estimate || r.stops.length}</v></div>
+      </div>
+      <div class="row">
+        <a class="go" href="#">Open the ride →</a>
+        <span class="tags">${r.highlights.slice(0, 3).map(h => `<u>${h}</u>`).join('')}</span>
+      </div>
+    </div>
+  </section>`
+}).join('')
+
+document.querySelector('.ch.end').insertAdjacentHTML('beforebegin', chapters)
+
+/* the cover gets a view too — the first ride's road, unmarked */
+document.getElementById('coverView').innerHTML = view(
+  { ...RD.rides[0], mapped: false, id: 'cover' }, 99)
+
+/* ── rail + active chapter ────────────────────────────────────────────── */
+const reel = document.getElementById('reel')
+const chs = [...reel.querySelectorAll('.ch')]
+document.getElementById('hudAll').textContent = String(RD.rides.length).padStart(2, '0')
+
+document.getElementById('rail').innerHTML = RD.rides.map((r, i) =>
+  `<button data-go="${i + 1}" style="--rc:${r.color}"><span>${r.name}</span><i></i></button>`).join('')
+
+document.querySelectorAll('.rail button').forEach(b =>
+  b.addEventListener('click', () => {
+    const t = chs.find(c => c.dataset.i === b.dataset.go)
+    if (t) t.scrollIntoView({ behavior: REDUCED ? 'auto' : 'smooth' })
+  }))
+
+const wash = document.getElementById('wash')
+const hudEm = document.getElementById('hudEm')
+const hudN = document.getElementById('hudN')
+const railBtns = [...document.querySelectorAll('.rail button')]
+
+const io = new IntersectionObserver(es => {
+  es.forEach(e => {
+    e.target.classList.toggle('live', e.isIntersecting && e.intersectionRatio > 0.55)
+    if (!e.isIntersecting || e.intersectionRatio <= 0.55) return
+    const c = getComputedStyle(e.target).getPropertyValue('--c').trim()
+    wash.style.setProperty('--c', c)
+    hudEm.style.color = c
+    const i = e.target.dataset.i
+    hudN.textContent = i === '0' ? '00' : i === '99'
+      ? String(RD.rides.length).padStart(2, '0') : String(i).padStart(2, '0')
+    railBtns.forEach(b => b.classList.toggle('on', b.dataset.go === i))
+  })
+}, { root: reel, threshold: [0.25, 0.56, 0.8] })
+chs.forEach(c => io.observe(c))
+
+/* arrow keys / page keys step a whole chapter, since it is a reel */
+addEventListener('keydown', e => {
+  const keys = { ArrowDown: 1, ArrowUp: -1, PageDown: 1, PageUp: -1 }
+  if (!(e.key in keys)) return
+  const at = chs.findIndex(c => c.classList.contains('live'))
+  const next = chs[Math.max(0, Math.min(chs.length - 1, at + keys[e.key]))]
+  if (next) { next.scrollIntoView({ behavior: REDUCED ? 'auto' : 'smooth' }); e.preventDefault() }
+})
+</script>
+</body>
+</html>

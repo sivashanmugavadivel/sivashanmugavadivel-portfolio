@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Rides · 26 · Vinyl</title>
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600;700&family=Bitter:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   VINYL — the rides as a record, and the record is to scale.
+
+   A groove is a spiral, and a spiral is a length wound into a disc —
+   which is exactly what a ride log is. So the banding is not decorative:
+   each ride owns a radial band whose WIDTH is its share of the 768 km on
+   the books, wound from the outer edge inward the way a record actually
+   plays. The 450 km haul is a fat band; the 34 km delivery run is a
+   sliver. You can read the proportions off the disc.
+
+   The tonearm is the index. Pick a ride and the arm swings to the middle
+   of that ride's band, with the stylus landing at the real radius. The
+   platter turns while playing and spins down when you stop it, because a
+   platter that snaps to a halt reads as a GIF rather than an object.
+
+   The label carries the current ride's colour, straight out of its file.
+   The sleeve notes on the right are the track listing.
+
+   Walnut, cream and orange. Warm, analogue, and quiet.
+   ══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --wood:#3b2719; --wood2:#4d3422; --felt:#1d1410;
+  --cream:#f2e8d5; --cream2:#e3d5ba; --ink:#221711;
+  --d1:rgba(242,232,213,0.64); --d2:rgba(242,232,213,0.4); --d3:rgba(242,232,213,0.22);
+  --bd:rgba(242,232,213,0.14);
+  --orange:#e2622a; --brass:#c9a227;
+  --sans:'Familjen Grotesk',system-ui,sans-serif; --serif:'Bitter',Georgia,serif;
+  --ease:cubic-bezier(.2,.9,.25,1); --c:#ef4444;
+  --spin:0deg;
+}
+html,body{height:100%}
+body{background:var(--wood);color:var(--d1);font-family:var(--sans);overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+  background-image:
+    /* wood grain: long fine stripes plus a couple of broad bands */
+    repeating-linear-gradient(92deg,rgba(0,0,0,0.1) 0 2px,transparent 2px 7px),
+    repeating-linear-gradient(88deg,rgba(255,220,180,0.03) 0 1px,transparent 1px 13px),
+    radial-gradient(80vw 60vh at 50% 0%,rgba(255,200,140,0.07),transparent 64%)}
+::selection{background:var(--orange);color:var(--cream)}
+
+.deck{max-width:1240px;margin:0 auto;min-height:100svh;display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(300px,0.78fr);gap:clamp(16px,3vw,38px);
+  padding:clamp(14px,2.6vw,30px) clamp(14px,3vw,32px)
+  calc(28px + env(safe-area-inset-bottom))}
+
+/* ── the plinth ── */
+.plinth{position:relative;background:var(--felt);border-radius:16px;
+  border:1px solid rgba(0,0,0,0.5);padding:clamp(16px,2.6vw,30px);
+  display:flex;flex-direction:column;min-width:0;
+  box-shadow:inset 0 1px 0 rgba(255,220,180,0.08),0 30px 60px -26px rgba(0,0,0,0.85)}
+
+.plinth .top{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.plinth .top h1{font-family:var(--serif);font-weight:700;font-size:clamp(1rem,2.2vw,1.32rem);
+  color:var(--cream);letter-spacing:-0.02em}
+.plinth .top h1 em{font-style:italic;color:var(--orange)}
+.plinth .top .sub{font-size:0.54rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--d3)}
+.plinth .top a{margin-left:auto;font-size:0.54rem;letter-spacing:0.16em;text-transform:uppercase;
+  color:var(--d2);text-decoration:none;border:1px solid var(--bd);border-radius:99px;
+  padding:7px 12px;transition:.24s}
+.plinth .top a:hover{background:var(--cream);color:var(--ink);border-color:var(--cream)}
+
+/* the platter area */
+.platterWrap{position:relative;flex:1;min-height:0;display:grid;place-items:center;
+  padding:clamp(6px,1.4vw,14px)}
+.platter{position:relative;width:min(100%,min(56vh,460px));aspect-ratio:1;
+  border-radius:50%;cursor:pointer;
+  transform:rotate(var(--spin));will-change:transform}
+.platter svg{width:100%;height:100%;display:block;border-radius:50%;
+  box-shadow:0 22px 44px -18px rgba(0,0,0,0.9)}
+/* the sheen that does NOT rotate with the disc */
+.sheen{position:absolute;inset:0;border-radius:50%;pointer-events:none;z-index:3;
+  background:linear-gradient(118deg,rgba(255,255,255,0.11) 0%,transparent 26%,
+    transparent 62%,rgba(255,255,255,0.055) 82%,transparent 96%)}
+
+/* the tonearm */
+.arm{position:absolute;right:2%;top:8%;width:44%;height:62%;z-index:6;pointer-events:none;
+  transform-origin:88% 12%;transform:rotate(var(--armDeg,-22deg));
+  transition:transform 1.05s cubic-bezier(.35,.02,.2,1)}
+.arm .pivot{position:absolute;right:0;top:0;width:17%;aspect-ratio:1;border-radius:50%;
+  background:linear-gradient(150deg,#6b6b70,#2c2c30);
+  box-shadow:0 5px 14px rgba(0,0,0,0.7),inset 0 1px 0 rgba(255,255,255,0.3)}
+.arm .tube{position:absolute;right:8%;top:6%;width:82%;height:5px;border-radius:3px;
+  background:linear-gradient(#d8d8dc,#8d8d94 55%,#5a5a60);transform-origin:right center;
+  transform:rotate(19deg);box-shadow:0 3px 8px rgba(0,0,0,0.55)}
+.arm .head{position:absolute;left:2%;top:24%;width:20%;height:13px;border-radius:2px;
+  background:linear-gradient(#3a3a40,#18181c);transform:rotate(19deg);
+  box-shadow:0 3px 8px rgba(0,0,0,0.6)}
+.arm .head::after{content:'';position:absolute;left:14%;bottom:-5px;width:2px;height:6px;
+  background:var(--brass)}
+
+/* transport */
+.controls{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:14px;
+  padding-top:14px;border-top:1px solid var(--bd)}
+.bt{width:38px;height:38px;border-radius:50%;border:1px solid var(--bd);background:rgba(0,0,0,0.3);
+  color:var(--cream);cursor:pointer;display:grid;place-items:center;font-size:0.8rem;
+  transition:.24s var(--ease)}
+.bt:hover{background:var(--cream);color:var(--ink);transform:scale(1.07)}
+.bt.play{background:var(--orange);border-color:var(--orange);color:var(--felt);width:44px;height:44px}
+.bt.play:hover{background:var(--cream);color:var(--ink)}
+.speed{display:flex;gap:1px;background:var(--bd);border-radius:6px;overflow:hidden;margin-left:auto}
+.speed button{padding:8px 11px;border:0;background:rgba(0,0,0,0.3);color:var(--d2);cursor:pointer;
+  font-family:var(--sans);font-size:0.58rem;letter-spacing:0.06em;transition:.2s}
+.speed button.on{background:var(--brass);color:var(--felt);font-weight:600}
+.rpmLab{font-size:0.5rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--d3)}
+
+/* the reading under the platter */
+.nowPlaying{margin-top:12px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.nowPlaying k{font-size:0.5rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--d3)}
+.nowPlaying b{font-family:var(--serif);font-weight:700;font-size:1rem;color:var(--cream)}
+.nowPlaying u{text-decoration:none;font-size:0.58rem;color:var(--orange);margin-left:auto;
+  font-variant-numeric:tabular-nums}
+
+/* ── the sleeve ── */
+.sleeve{background:var(--cream);color:var(--ink);border-radius:14px;padding:clamp(16px,2.4vw,26px);
+  display:flex;flex-direction:column;min-width:0;
+  box-shadow:0 26px 54px -24px rgba(0,0,0,0.8);
+  background-image:repeating-linear-gradient(0deg,rgba(34,23,17,0.018) 0 1px,transparent 1px 4px)}
+.sleeve .lbl{font-size:0.5rem;letter-spacing:0.26em;text-transform:uppercase;color:var(--orange);
+  margin-bottom:10px}
+.sleeve h2{font-family:var(--serif);font-weight:700;font-size:clamp(1.1rem,2.4vw,1.45rem);
+  line-height:1.14;letter-spacing:-0.024em;margin-bottom:5px}
+.sleeve .by{font-family:var(--serif);font-style:italic;font-size:0.8rem;color:rgba(34,23,17,0.6);
+  margin-bottom:14px;padding-bottom:13px;border-bottom:1px solid rgba(34,23,17,0.16)}
+
+.tracks{flex:1;min-height:0;overflow-y:auto;margin:0 -6px}
+.tracks::-webkit-scrollbar{width:4px}
+.tracks::-webkit-scrollbar-thumb{background:rgba(34,23,17,0.2)}
+.tr{width:100%;text-align:left;background:transparent;border:0;cursor:pointer;
+  padding:9px 8px;border-radius:7px;display:grid;grid-template-columns:22px 1fr auto;
+  gap:10px;align-items:baseline;font-family:var(--sans);color:var(--ink);
+  transition:.22s var(--ease)}
+.tr:hover{background:rgba(34,23,17,0.06)}
+.tr.on{background:var(--tc);color:var(--cream)}
+.tr .n{font-size:0.62rem;color:rgba(34,23,17,0.42);font-variant-numeric:tabular-nums}
+.tr.on .n{color:rgba(242,232,213,0.7)}
+.tr .nm{min-width:0}
+.tr .nm b{display:block;font-weight:600;font-size:0.82rem;line-height:1.2;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tr .nm span{display:block;font-size:0.58rem;color:rgba(34,23,17,0.5);margin-top:3px}
+.tr.on .nm span{color:rgba(242,232,213,0.72)}
+.tr .len{font-size:0.62rem;color:rgba(34,23,17,0.5);font-variant-numeric:tabular-nums;
+  white-space:nowrap}
+.tr.on .len{color:rgba(242,232,213,0.8)}
+
+.notes{margin-top:14px;padding-top:14px;border-top:1px solid rgba(34,23,17,0.16)}
+.notes p{font-family:var(--serif);font-size:0.82rem;line-height:1.75;color:rgba(34,23,17,0.8);
+  margin-bottom:12px}
+.notes .figs{display:flex;flex-wrap:wrap;gap:0;margin-bottom:13px}
+.notes .figs div{padding-right:15px;margin-right:15px;border-right:1px solid rgba(34,23,17,0.16)}
+.notes .figs div:last-child{border-right:0;margin-right:0;padding-right:0}
+.notes .figs k{display:block;font-size:0.44rem;letter-spacing:0.18em;text-transform:uppercase;
+  color:rgba(34,23,17,0.45);margin-bottom:4px}
+.notes .figs v{display:block;font-family:var(--serif);font-weight:700;font-size:1rem}
+.notes .go{display:inline-flex;align-items:center;gap:9px;font-size:0.56rem;letter-spacing:0.16em;
+  text-transform:uppercase;color:var(--ink);text-decoration:none;border-bottom:1.5px solid var(--tc);
+  padding-bottom:4px;transition:.26s var(--ease)}
+.notes .go:hover{color:var(--tc);gap:15px}
+.sleeve .cat{margin-top:12px;font-size:0.48rem;letter-spacing:0.2em;text-transform:uppercase;
+  color:rgba(34,23,17,0.35)}
+
+/* svg bits */
+.band{cursor:pointer}
+.band .zone{transition:opacity .35s var(--ease)}
+.band:hover .zone{opacity:0.34}
+.band.on .zone{opacity:0.46}
+.groove{fill:none;stroke:rgba(0,0,0,0.55);stroke-width:0.7}
+
+@media(max-width:900px){
+  .deck{grid-template-columns:1fr;min-height:auto}
+  .platter{width:min(86vw,400px)}
+  .tracks{max-height:none;overflow:visible}
+}
+@media(prefers-reduced-motion:reduce){
+  *{transition-duration:.01ms!important}
+  .platter{transform:none!important}
+}
+</style>
+</head>
+<body>
+
+<div class="deck">
+  <section class="plinth">
+    <div class="top">
+      <h1>Rides &amp; <em>Journeys</em></h1>
+      <span class="sub">LP · Bear 650</span>
+      <a href="#">← Garage</a>
+    </div>
+
+    <div class="platterWrap">
+      <div class="platter" id="platter"><svg id="disc" viewBox="0 0 500 500"></svg></div>
+      <div class="sheen"></div>
+      <div class="arm" id="arm">
+        <span class="pivot"></span><span class="tube"></span><span class="head"></span>
+      </div>
+    </div>
+
+    <div class="nowPlaying">
+      <k>Playing</k><b id="npName">—</b><u id="npKm"></u>
+    </div>
+
+    <div class="controls">
+      <button class="bt" id="bPrev" title="Previous track">⏮</button>
+      <button class="bt play" id="bPlay" title="Play / stop">▶</button>
+      <button class="bt" id="bNext" title="Next track">⏭</button>
+      <span class="rpmLab" id="rpmLab">33⅓ rpm</span>
+      <div class="speed" id="speed">
+        <button data-r="33" class="on">33⅓</button>
+        <button data-r="45">45</button>
+      </div>
+    </div>
+  </section>
+
+  <aside class="sleeve">
+    <div class="lbl">Side A · Track listing</div>
+    <h2 id="sName">Rides &amp; Journeys</h2>
+    <div class="by" id="sBy"></div>
+    <div class="tracks" id="tracks"></div>
+    <div class="notes" id="notes"></div>
+    <div class="cat" id="cat"></div>
+  </aside>
+</div>
+
+<script src="rides-data.js"></script>
+<script>
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches
+const S = RD.summary
+const TOTAL = S.doneKm + S.aheadKm
+
+/* ── the disc ─────────────────────────────────────────────────────────── */
+/* R_OUT is the lead-in edge, R_IN the label. Each ride's band is its share
+   of TOTAL, wound from the outside in — the direction a record plays. A
+   ride with no distance would take no width, so TBD is given a thin fixed
+   band and marked, rather than vanishing. */
+const CX = 250, CY = 250, R_OUT = 236, R_IN = 86
+const TBD_W = 9
+
+const sized = RD.rides.map(r => ({ r, w: r.tbd ? TBD_W : 0 }))
+const spare = (R_OUT - R_IN) - sized.filter(s => s.r.tbd).length * TBD_W
+sized.forEach(s => { if (!s.r.tbd) s.w = (s.r.km / TOTAL) * spare * (TOTAL / (TOTAL || 1)) })
+/* normalise the non-TBD bands so they exactly fill the spare radius */
+const sumK = RD.rides.filter(r => !r.tbd).reduce((n, r) => n + r.km, 0) || 1
+sized.forEach(s => { if (!s.r.tbd) s.w = (s.r.km / sumK) * spare })
+
+let edge = R_OUT
+const bands = sized.map(({ r, w }) => {
+  const outer = edge
+  edge -= w
+  return { r, outer, inner: edge, mid: (outer + edge) / 2, w }
+})
+
+const ring = (cx, cy, rr) =>
+  `M${cx} ${(cy - rr).toFixed(2)}A${rr} ${rr} 0 1 1 ${cx} ${(cy + rr).toFixed(2)}` +
+  `A${rr} ${rr} 0 1 1 ${cx} ${(cy - rr).toFixed(2)}`
+
+/* fine grooves across the whole playing surface */
+let grooves = ''
+for (let rr = R_IN + 2; rr < R_OUT; rr += 2.6) {
+  grooves += `<circle class="groove" cx="${CX}" cy="${CY}" r="${rr.toFixed(1)}"/>`
+}
+
+document.getElementById('disc').innerHTML = `
+  <defs>
+    <radialGradient id="vinylG" cx="0.38" cy="0.32" r="0.85">
+      <stop offset="0" stop-color="#2b2b30"/>
+      <stop offset="0.5" stop-color="#131316"/>
+      <stop offset="1" stop-color="#08080a"/>
+    </radialGradient>
+    <radialGradient id="labelG" cx="0.4" cy="0.34" r="0.8">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.12"/>
+    </radialGradient>
+  </defs>
+
+  <circle cx="${CX}" cy="${CY}" r="246" fill="url(#vinylG)"/>
+  <circle cx="${CX}" cy="${CY}" r="243" fill="none" stroke="rgba(255,255,255,0.06)"/>
+  <g>${grooves}</g>
+
+  ${bands.map((b, i) => `
+    <g class="band" data-i="${i}">
+      <!-- the band's tint, sitting in the grooves -->
+      <circle class="zone" cx="${CX}" cy="${CY}" r="${((b.outer + b.inner) / 2).toFixed(2)}"
+        fill="none" stroke="${b.r.color}" stroke-width="${Math.max(1.6, b.w).toFixed(2)}"
+        opacity="0.16"/>
+      <!-- the silent band between tracks -->
+      <circle cx="${CX}" cy="${CY}" r="${b.inner.toFixed(2)}" fill="none"
+        stroke="rgba(255,255,255,0.16)" stroke-width="0.9"/>
+      <path id="lbl${i}" d="${ring(CX, CY, (b.mid).toFixed(2))}" fill="none"/>
+    </g>`).join('')}
+
+  <!-- the label -->
+  <circle cx="${CX}" cy="${CY}" r="${R_IN}" fill="var(--lc,#ef4444)" id="label"/>
+  <circle cx="${CX}" cy="${CY}" r="${R_IN}" fill="url(#labelG)"/>
+  <text x="${CX}" y="${CY - 26}" text-anchor="middle" font-family="Bitter,serif"
+    font-weight="700" font-size="13" fill="rgba(255,255,255,0.9)" id="labTop">RIDES</text>
+  <text x="${CX}" y="${CY - 10}" text-anchor="middle" font-family="Familjen Grotesk,sans-serif"
+    font-size="7.5" letter-spacing="2.6" fill="rgba(255,255,255,0.62)">&amp; JOURNEYS</text>
+  <text x="${CX}" y="${CY + 30}" text-anchor="middle" font-family="Familjen Grotesk,sans-serif"
+    font-size="8" letter-spacing="1.6" fill="rgba(255,255,255,0.78)" id="labKm"></text>
+  <text x="${CX}" y="${CY + 44}" text-anchor="middle" font-family="Familjen Grotesk,sans-serif"
+    font-size="6.5" letter-spacing="2" fill="rgba(255,255,255,0.5)" id="labSide">SIDE A</text>
+  <circle cx="${CX}" cy="${CY}" r="7" fill="#0a0a0c"/>
+  <circle cx="${CX}" cy="${CY}" r="7" fill="none" stroke="rgba(0,0,0,0.6)"/>`
+
+/* ── the sleeve ───────────────────────────────────────────────────────── */
+document.getElementById('sBy').textContent =
+  `${RD.rides.length} tracks · ${TOTAL} km total running length · ${RD.tally}`
+document.getElementById('cat').textContent =
+  `KVL-${String(TOTAL).padStart(4, '0')} · Kariya Kattu Valasu · ${S.states.join(' / ')}`
+
+document.getElementById('tracks').innerHTML = bands.map(({ r, w }, i) =>
+  `<button class="tr" data-i="${i}" style="--tc:${r.color}">
+     <span class="n">${String(i + 1).padStart(2, '0')}</span>
+     <span class="nm"><b>${r.name}</b><span>${r.tier.label} · ${r.date}</span></span>
+     <span class="len">${r.distance}</span>
+   </button>`).join('')
+
+/* ── selection ────────────────────────────────────────────────────────── */
+/* The arm's swing is mapped so the stylus sits over the band's mid radius:
+   fully out at the lead-in edge, fully in at the label. */
+const ARM_OUT = -26, ARM_IN = -2
+let at = 0, playing = false, rpm = 33
+
+function armDegFor(b) {
+  const t = (R_OUT - b.mid) / (R_OUT - R_IN)     // 0 at edge → 1 at label
+  return ARM_OUT + (ARM_IN - ARM_OUT) * t
+}
+
+function select(i, keepPlaying) {
+  at = (i + bands.length) % bands.length
+  const { r, mid } = bands[at]
+  document.documentElement.style.setProperty('--lc', r.color)
+  document.documentElement.style.setProperty('--c', r.color)
+  document.getElementById('label').setAttribute('fill', r.color)
+  document.getElementById('labTop').textContent = r.tbd ? 'TBD' : r.km
+  document.getElementById('labKm').textContent = r.tbd ? 'NO DISTANCE' : 'KILOMETRES'
+  document.getElementById('labSide').textContent = r.tier.label.toUpperCase()
+
+  document.getElementById('arm').style.setProperty('--armDeg', armDegFor(bands[at]) + 'deg')
+  document.querySelectorAll('.band').forEach((g, k) => g.classList.toggle('on', k === at))
+  document.querySelectorAll('.tr').forEach((b, k) => b.classList.toggle('on', k === at))
+
+  document.getElementById('npName').textContent = r.name
+  document.getElementById('npKm').textContent =
+    `${r.distance}${r.mapped ? ' · ' + r.compass + ' ' + r.bearing.toFixed(0) + '°' : ' · course open'}`
+
+  const dest = r.tbd && /decided/i.test(r.toCity) ? 'anywhere' : r.toCity
+  document.getElementById('notes').innerHTML = `
+    <p>${r.description}</p>
+    <div class="figs">
+      <div><k>From</k><v style="font-size:.8rem">${r.fromCity}</v></div>
+      <div><k>To</k><v style="font-size:.8rem">${dest}</v></div>
+      <div><k>Stops</k><v>${r.stops.length}</v></div>
+      <div><k>${r.time ? 'Saddle' : r.estimated ? 'Est.' : 'When'}</k>
+        <v style="font-size:.8rem">${r.time || r.estimate || r.date}</v></div>
+    </div>
+    <a class="go" href="#" style="--tc:${r.color}">Open the ride ↗</a>`
+
+  if (!keepPlaying) stop()
+  void mid
+}
+
+document.querySelectorAll('.tr').forEach(b =>
+  b.addEventListener('click', () => { select(+b.dataset.i, true); play() }))
+document.querySelectorAll('.band').forEach(g =>
+  g.addEventListener('click', () => { select(+g.dataset.i, true); play() }))
+
+/* ── the platter ──────────────────────────────────────────────────────── */
+/* Spun by hand rather than by a CSS animation, so it can spin UP and DOWN
+   — a platter that stops dead does not read as a physical object. */
+const platter = document.getElementById('platter')
+let angle = 0, speed = 0, rafId = 0
+
+function targetSpeed() { return playing ? (rpm === 45 ? 0.62 : 0.46) : 0 }
+
+function turn() {
+  rafId = 0
+  const want = targetSpeed()
+  speed += (want - speed) * (want > speed ? 0.035 : 0.012)   // spin up faster than down
+  if (Math.abs(speed) > 0.0006) {
+    angle = (angle + speed * 16.7) % 360
+    platter.style.setProperty('--spin', angle.toFixed(2) + 'deg')
+    rafId = requestAnimationFrame(turn)
+  } else if (playing) {
+    rafId = requestAnimationFrame(turn)
+  }
+}
+function kick() { if (!rafId && !REDUCED) rafId = requestAnimationFrame(turn) }
+
+function play() {
+  playing = true
+  document.getElementById('bPlay').textContent = '■'
+  kick()
+}
+function stop() {
+  playing = false
+  document.getElementById('bPlay').textContent = '▶'
+  kick()
+}
+
+document.getElementById('bPlay').addEventListener('click', () => playing ? stop() : play())
+document.getElementById('bPrev').addEventListener('click', () => select(at - 1, true))
+document.getElementById('bNext').addEventListener('click', () => select(at + 1, true))
+platter.addEventListener('click', e => { if (!e.target.closest('.band')) playing ? stop() : play() })
+
+document.querySelectorAll('.speed button').forEach(b =>
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.speed button').forEach(o => o.classList.toggle('on', o === b))
+    rpm = +b.dataset.r
+    document.getElementById('rpmLab').textContent = rpm === 45 ? '45 rpm' : '33⅓ rpm'
+    kick()
+  }))
+
+addEventListener('keydown', e => {
+  if (e.key === ' ') { e.preventDefault(); playing ? stop() : play() }
+  if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { select(at + 1, true); e.preventDefault() }
+  if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { select(at - 1, true); e.preventDefault() }
+})
+
+select(0, true)
+if (!REDUCED) setTimeout(play, 600)
+</script>
+</body>
+</html>

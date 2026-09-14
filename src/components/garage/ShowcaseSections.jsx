@@ -24,7 +24,7 @@ import Zoom from 'yet-another-react-lightbox/plugins/zoom'
 import 'yet-another-react-lightbox/styles.css'
 import 'yet-another-react-lightbox/plugins/captions.css'
 import 'yet-another-react-lightbox/plugins/counter.css'
-import { vlogs, rideSummary, ridesInOrder, RIDE_MODES, dreamGarage, wishlist, garageJourney } from '../../data/garage'
+import { vlogs, rideSummary, ridesInOrder, RIDE_MODES, routeLabel, dreamGarage, wishlist, garageJourney } from '../../data/garage'
 import { featuredAccessories, accessoriesNote, accessoryCount } from '../../data/accessories'
 import { galleryPhotos, galleryTitle, galleryNote, galleryTicker, galleryCount } from '../../data/garageGallery'
 import ShowcaseCard from './ShowcaseCard'
@@ -415,12 +415,16 @@ export function RidesAndRoutes({ title = 'Rides & Routes', basePath = '/mygarage
                   onMouseEnter={e => e.currentTarget.style.background = CARD2}
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                    <span style={{ fontSize: '0.74rem', fontWeight: 600, color: OFF }}>{r.fromCity} → {r.toCity}</span>
+                    <span style={{ fontSize: '0.74rem', fontWeight: 600, color: OFF }}>{routeLabel(r.fromCity, r.destCity, r.roundTrip)}</span>
                     {m && m.key !== 'completed' && (
                       <span style={{ fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: m.color, background: `${m.color}1f`, border: `1px solid ${m.color}4d`, borderRadius: 999, padding: '1px 6px', flexShrink: 0 }}>{m.label}</span>
                     )}
                   </div>
-                  <div style={{ fontSize: '0.6rem', color: D2 }}>{r.distance} · {r.date}</div>
+                  {/* Organizer only when it wasn't you — "Self" on every row
+                      would be noise in a list this tight. */}
+                  <div style={{ fontSize: '0.6rem', color: D2 }}>
+                    {r.distance} · {r.date}{r.organizer !== 'Self' ? ` · ${r.organizer}` : ''}
+                  </div>
                 </div>
               )
             })}

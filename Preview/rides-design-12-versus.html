@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Rides · 12 · Versus</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Roboto+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   VERSUS — pick two rides and put them against each other.
+
+   A list tells you what exists. This tells you how they differ, which is
+   the thing a six-item list is actually short enough to support. Choose a
+   ride on each side and six measures race across the middle: distance,
+   waypoints, crow-flies, directness, saddle time, and how long ago. The
+   bars animate from zero on every change, so the comparison is something
+   you watch resolve rather than read off a table.
+
+   Directness is the measure worth having — road distance over straight-
+   line distance. The first-service run weaves out to Avinashipalayam and
+   comes in at 1.52; the Chennai haul is 450 km of road over 367 km of
+   crow, so it runs a far straighter 1.22. That number is only available
+   because the stops carry real coordinates, and it says something no
+   single ride's page can.
+
+   It also CHECKS the files, which is why the row flags anything under
+   1.00. A road cannot be shorter than the straight line it spans, so a
+   ratio below 1 means the ride's stated distance and its own coordinates
+   disagree. Bear 650 Delivery does exactly that today — it says 34 KM
+   while its endpoints are 35.6 km apart and its chain via Vattamalai is
+   37 km. Rather than print 0.96 as though it were a fact, the row marks
+   it and the verdict says so.
+
+   One Ride 2026 has no distance and no route, so it cannot be raced. It
+   is selectable, and says plainly which rows it cannot answer, instead of
+   quietly scoring zero and losing every contest it enters.
+   ══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0a0c; --bg2:#131318; --panel:#0f0f13;
+  --off:#f7f7f8; --d1:rgba(247,247,248,0.62); --d2:rgba(247,247,248,0.4);
+  --d3:rgba(247,247,248,0.22); --line:rgba(247,247,248,0.1); --line2:rgba(247,247,248,0.2);
+  --A:#ef4444; --B:#38bdf8;
+  --disp:'Oswald',sans-serif; --mono:'Roboto Mono',ui-monospace,monospace;
+  --ease:cubic-bezier(.2,.9,.25,1);
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--d1);font-family:var(--mono);overflow:hidden;
+  -webkit-font-smoothing:antialiased}
+::selection{background:var(--off);color:var(--bg)}
+
+.arena{display:grid;grid-template-rows:auto minmax(0,1fr) auto;height:100svh}
+/* the two sides bleed their colour in from the edges */
+.arena::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(46vw 90vh at 0% 50%,var(--A),transparent 70%),
+    radial-gradient(46vw 90vh at 100% 50%,var(--B),transparent 70%);
+  opacity:0.14;transition:background .7s var(--ease)}
+
+/* ── head ── */
+.head{position:relative;z-index:2;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  padding:clamp(12px,2vw,20px) clamp(14px,3vw,28px);border-bottom:1px solid var(--line)}
+.head h1{font-family:var(--disp);font-weight:600;text-transform:uppercase;color:var(--off);
+  font-size:clamp(1rem,2.4vw,1.4rem);letter-spacing:0.04em;line-height:1}
+.head h1 em{font-style:normal;color:var(--d3)}
+.head .sw{margin-left:auto;display:flex;gap:8px;align-items:center}
+.head button,.head a{font-family:var(--mono);font-size:0.56rem;letter-spacing:0.16em;
+  text-transform:uppercase;color:var(--d2);background:transparent;text-decoration:none;
+  border:1px solid var(--line2);padding:8px 13px;cursor:pointer;transition:.24s var(--ease)}
+.head button:hover,.head a:hover{color:var(--bg);background:var(--off);border-color:var(--off)}
+
+/* ── the two corners + the card between them ── */
+.ring{position:relative;z-index:2;display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(280px,1.05fr) minmax(0,1fr);
+  min-height:0;overflow:hidden}
+
+.corner{display:flex;flex-direction:column;min-height:0;overflow:hidden;
+  padding:clamp(12px,2vw,22px)}
+.corner.b{align-items:flex-end;text-align:right}
+
+.corner .side{font-family:var(--disp);font-weight:700;font-size:0.62rem;letter-spacing:0.3em;
+  text-transform:uppercase;color:var(--sc);margin-bottom:10px}
+.corner .tier{display:inline-flex;align-items:center;gap:7px;font-size:0.5rem;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--tc);margin-bottom:9px}
+.corner .tier i{width:6px;height:6px;border-radius:50%;background:currentColor}
+.corner h2{font-family:var(--disp);font-weight:500;text-transform:uppercase;color:var(--off);
+  font-size:clamp(1.15rem,2.9vw,2rem);line-height:1.02;letter-spacing:0.005em;margin-bottom:8px}
+.corner .rt{font-size:0.58rem;color:var(--d2);letter-spacing:0.07em;line-height:1.65;
+  margin-bottom:14px}
+
+/* the route shape, drawn at a shared scale so the two are comparable */
+.corner .shape{flex:0 0 auto;height:clamp(90px,17vh,168px);width:100%;margin-bottom:14px}
+.corner .shape svg{width:100%;height:100%;display:block;overflow:visible}
+.corner .shape .rd{fill:none;stroke-linecap:round;stroke-linejoin:round}
+
+.corner .hero{font-family:var(--disp);font-weight:700;font-size:clamp(2.2rem,7vw,4.2rem);
+  color:var(--sc);line-height:0.86;letter-spacing:-0.02em;margin-bottom:4px;
+  font-variant-numeric:tabular-nums}
+.corner .hero small{font-size:0.26em;color:var(--d2);letter-spacing:0.14em;margin-left:5px;
+  font-family:var(--mono);font-weight:400}
+.corner .heroLab{font-size:0.5rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--d3);
+  margin-bottom:14px}
+
+/* the chooser */
+.pick{margin-top:auto;display:flex;flex-wrap:wrap;gap:5px}
+.corner.b .pick{justify-content:flex-end}
+.pick button{font-family:var(--mono);font-size:0.53rem;letter-spacing:0.06em;padding:6px 10px;
+  border:1px solid var(--line);background:transparent;color:var(--d2);cursor:pointer;
+  transition:.22s var(--ease);white-space:nowrap;max-width:150px;overflow:hidden;
+  text-overflow:ellipsis;display:inline-flex;align-items:center;gap:6px}
+.pick button i{width:6px;height:6px;border-radius:50%;background:var(--pc);flex-shrink:0}
+.pick button:hover{color:var(--off);border-color:var(--line2)}
+.pick button.on{background:var(--sc);border-color:var(--sc);color:var(--bg);font-weight:500}
+.pick button.busy{opacity:0.3;cursor:not-allowed}
+
+/* ── the scoreboard ── */
+.score{border-left:1px solid var(--line);border-right:1px solid var(--line);
+  background:rgba(15,15,19,0.72);backdrop-filter:blur(10px);
+  display:flex;flex-direction:column;min-height:0;overflow-y:auto}
+.score::-webkit-scrollbar{width:4px}
+.score::-webkit-scrollbar-thumb{background:var(--line2)}
+
+.vs{text-align:center;padding:14px 0 10px;flex-shrink:0}
+.vs b{font-family:var(--disp);font-weight:700;font-size:clamp(1.6rem,4vw,2.4rem);color:var(--off);
+  letter-spacing:0.06em;line-height:1;display:block}
+.vs span{font-size:0.5rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--d3);
+  display:block;margin-top:5px}
+
+.row{padding:11px clamp(12px,2vw,18px);border-top:1px solid var(--line)}
+.row .lab{text-align:center;font-size:0.48rem;letter-spacing:0.22em;text-transform:uppercase;
+  color:var(--d3);margin-bottom:8px}
+.row .nums{display:flex;align-items:baseline;gap:10px;margin-bottom:7px}
+.row .nums v{font-family:var(--disp);font-weight:600;font-size:1.28rem;line-height:1;
+  font-variant-numeric:tabular-nums;transition:color .4s}
+.row .nums v.a{color:var(--A)}
+.row .nums v.b{color:var(--B);margin-left:auto}
+.row .nums v.win{text-shadow:0 0 18px currentColor}
+.row .nums v.na{color:var(--d3);font-size:0.9rem;font-family:var(--mono);font-weight:400;
+  letter-spacing:0.1em}
+/* a figure the data says cannot be true */
+.row .nums v.sus{color:#fbbf24}
+.row .nums v abbr{text-decoration:none;cursor:help;font-family:var(--mono);font-size:0.5em;
+  font-weight:500;vertical-align:super;margin-left:3px;color:#fbbf24;
+  border:1px solid currentColor;border-radius:50%;padding:0 3px;line-height:1.3}
+
+/* the two bars, growing out from the middle */
+.bars{display:flex;align-items:center;gap:3px;height:8px}
+.bars .half{flex:1;height:100%;background:rgba(247,247,248,0.06);position:relative;overflow:hidden}
+.bars .half i{position:absolute;top:0;bottom:0;width:0;transition:width .75s var(--ease)}
+.bars .ha i{right:0;background:var(--A);box-shadow:0 0 12px var(--A)}
+.bars .hb i{left:0;background:var(--B);box-shadow:0 0 12px var(--B)}
+.bars .pin{width:1px;height:14px;background:var(--line2);flex-shrink:0}
+
+.verdict{margin-top:auto;padding:14px clamp(12px,2vw,18px);border-top:1px solid var(--line2);
+  flex-shrink:0}
+.verdict k{display:block;font-size:0.46rem;letter-spacing:0.22em;text-transform:uppercase;
+  color:var(--d3);margin-bottom:7px}
+.verdict p{font-size:0.7rem;line-height:1.75;color:var(--d1)}
+.verdict p b{color:var(--off);font-weight:500}
+
+/* ── foot ── */
+.foot{position:relative;z-index:2;display:grid;grid-template-columns:1fr 1fr;gap:1px;
+  background:var(--line);border-top:1px solid var(--line)}
+.foot a{background:var(--bg);padding:13px;text-align:center;text-decoration:none;
+  font-family:var(--disp);font-weight:500;font-size:0.68rem;letter-spacing:0.18em;
+  text-transform:uppercase;transition:.26s var(--ease)}
+.foot a.a{color:var(--A)}.foot a.b{color:var(--B)}
+.foot a.a:hover{background:var(--A);color:var(--bg)}
+.foot a.b:hover{background:var(--B);color:var(--bg)}
+
+@media(max-width:960px){
+  body{overflow:auto}
+  .arena{height:auto}
+  .ring{grid-template-columns:1fr 1fr;grid-template-areas:'a b' 'sc sc'}
+  .corner.a{grid-area:a}.corner.b{grid-area:b}
+  .score{grid-area:sc;border-left:0;border-right:0;border-top:1px solid var(--line);
+    overflow:visible}
+  .corner .shape{height:110px}
+}
+@media(max-width:560px){
+  .ring{grid-template-columns:1fr;grid-template-areas:'a' 'b' 'sc'}
+  .corner.b{align-items:flex-start;text-align:left}
+  .corner.b .pick{justify-content:flex-start}
+  .corner{border-bottom:1px solid var(--line)}
+}
+@media(prefers-reduced-motion:reduce){
+  *{transition-duration:.01ms!important;animation-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+
+<div class="arena">
+  <header class="head">
+    <h1>Rides <em>&amp;</em> Journeys <em>/</em> Head to head</h1>
+    <div class="sw">
+      <button id="swap">⇄ Swap</button>
+      <button id="rand">Shuffle</button>
+      <a href="#">← Garage</a>
+    </div>
+  </header>
+
+  <section class="ring">
+    <div class="corner a" id="cA"></div>
+    <div class="score">
+      <div class="vs"><b>VS</b><span id="vsNote"></span></div>
+      <div id="rows"></div>
+      <div class="verdict"><k>Verdict</k><p id="verdict"></p></div>
+    </div>
+    <div class="corner b" id="cB"></div>
+  </section>
+
+  <div class="foot">
+    <a class="a" href="#" id="goA">Open ride ↗</a>
+    <a class="b" href="#" id="goB">Open ride ↗</a>
+  </div>
+</div>
+
+<script src="rides-data.js"></script>
+<script>
+let A = RD.byId('r5')          // the longest ridden
+let B = RD.byId('r2')          // the longest planned
+
+/* ── the six measures ─────────────────────────────────────────────────── */
+/* `get` returns null when a ride genuinely cannot answer — One Ride has no
+   distance and no route, and a null is shown as "—" rather than scored as
+   a zero it would always lose on. `good` says which way is better, and is
+   null where neither direction is better, only different.               */
+const ROWS = [
+  { lab: 'Distance by road', unit: 'km', good: 'high',
+    get: r => r.tbd ? null : r.km },
+  { lab: 'Waypoints', unit: '', good: 'high',
+    get: r => r.mapped ? r.stops.length : null },
+  { lab: 'Straight-line', unit: 'km', good: 'high',
+    get: r => r.mapped ? r.crow : null },
+  /* road km per crow km — 1.00 would be a ruler-straight road, and
+     anything BELOW 1.00 is impossible, so it flags a file whose stated
+     distance disagrees with its own coordinates */
+  { lab: 'Directness', unit: '×', good: 'low', dp: 2,
+    get: r => (r.mapped && !r.tbd && r.crow) ? +(r.km / r.crow).toFixed(2) : null,
+    flag: v => v != null && v < 1,
+    why: 'Stated distance is shorter than the straight line between the ' +
+         'end points — the ride file’s distance and its coordinates disagree.' },
+  { lab: 'Saddle time', unit: 'min', good: null,
+    get: r => r.mins },
+  { lab: 'Days ago', unit: '', good: null,
+    get: r => (r.dated && r.days < 0) ? Math.abs(r.days) : null },
+]
+
+/* ── a corner ─────────────────────────────────────────────────────────── */
+function shape(r, side) {
+  const w = 300, h = 150
+  const col = side === 'a' ? 'var(--A)' : 'var(--B)'
+  if (!r.mapped) {
+    return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">
+      <circle cx="${w / 2}" cy="${h / 2}" r="34" fill="none" stroke="${col}"
+        stroke-width="1.4" stroke-dasharray="4 7" opacity="0.6"/>
+      <circle cx="${w / 2}" cy="${h / 2}" r="7" fill="${col}"/>
+      <text x="${w / 2}" y="${h / 2 + 62}" text-anchor="middle"
+        font-family="Roboto Mono,monospace" font-size="10" letter-spacing="2"
+        fill="rgba(247,247,248,0.34)">NO ROUTE SET</text></svg>`
+  }
+  const P = RD.one(r, w, h, 22)
+  const d = RD.curve(P.pts)
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">
+    <path class="rd" d="${d}" stroke="rgba(247,247,248,0.1)" stroke-width="11"/>
+    <path class="rd" d="${d}" stroke="${col}" stroke-width="3.4"/>
+    ${P.pts.map((p, i) => {
+      const edge = i === 0 || i === P.pts.length - 1
+      return `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${edge ? 5.4 : 3}"
+        fill="${edge ? col : '#0a0a0c'}" stroke="${col}" stroke-width="1.8"/>`
+    }).join('')}</svg>`
+}
+
+function corner(r, side) {
+  const el = document.getElementById(side === 'a' ? 'cA' : 'cB')
+  const dest = r.tbd && /decided/i.test(r.toCity) ? 'Anywhere' : r.toCity
+  el.style.setProperty('--sc', side === 'a' ? 'var(--A)' : 'var(--B)')
+  el.style.setProperty('--tc', r.tier.color)
+  el.innerHTML = `
+    <div class="side">${side === 'a' ? 'Corner A' : 'Corner B'}</div>
+    <span class="tier"><i></i>${r.tier.label} · ${r.date}</span>
+    <h2>${r.name}</h2>
+    <div class="rt">${r.fromCity} → ${dest}</div>
+    <div class="shape">${shape(r, side)}</div>
+    <div class="hero">${r.tbd ? 'TBD' : r.km}${r.tbd ? '' : '<small>KM</small>'}</div>
+    <div class="heroLab">${r.mapped ? r.compass + ' ' + r.bearing.toFixed(0) + '° · ' +
+      r.stops.length + ' stops' : 'Course open · 1 fixed point'}</div>
+    <div class="pick">
+      ${RD.rides.map(o => `<button data-id="${o.id}" data-side="${side}"
+        class="${o.id === r.id ? 'on' : ''}${
+          (side === 'a' ? B : A).id === o.id ? ' busy' : ''}"
+        style="--pc:${o.color}" title="${o.name}"><i></i>${o.name}</button>`).join('')}
+    </div>`
+  document.getElementById(side === 'a' ? 'goA' : 'goB').textContent = 'Open ' + r.name + ' ↗'
+}
+
+/* ── the scoreboard ───────────────────────────────────────────────────── */
+function score() {
+  document.getElementById('vsNote').textContent =
+    A.tbd || B.tbd ? 'one of these has no numbers yet' : 'six measures'
+
+  document.getElementById('rows').innerHTML = ROWS.map((row, i) => {
+    const a = row.get(A), b = row.get(B)
+    const max = Math.max(a || 0, b || 0) || 1
+    /* better side, only where "better" means anything for this row */
+    let win = null
+    if (a != null && b != null && row.good && a !== b) {
+      win = row.good === 'high' ? (a > b ? 'a' : 'b') : (a < b ? 'a' : 'b')
+    }
+    const fmt = (v, flagged) => v == null ? null
+      : (row.dp ? v.toFixed(row.dp) : v) +
+        (row.unit ? `<small style="font-size:.5em;opacity:.6"> ${row.unit}</small>` : '') +
+        (flagged ? `<abbr title="${row.why}">!</abbr>` : '')
+    const fa = row.flag ? row.flag(a) : false, fb = row.flag ? row.flag(b) : false
+    /* an impossible figure is not a win, whichever way the row sorts */
+    if (fa || fb) win = null
+    return `<div class="row" data-i="${i}">
+      <div class="lab">${row.lab}</div>
+      <div class="nums">
+        <v class="a${win === 'a' ? ' win' : ''}${a == null ? ' na' : ''}${fa ? ' sus' : ''}">${fmt(a, fa) ?? '—'}</v>
+        <v class="b${win === 'b' ? ' win' : ''}${b == null ? ' na' : ''}${fb ? ' sus' : ''}">${fmt(b, fb) ?? '—'}</v>
+      </div>
+      <div class="bars">
+        <span class="half ha"><i data-w="${a == null ? 0 : (a / max * 100).toFixed(1)}"></i></span>
+        <span class="pin"></span>
+        <span class="half hb"><i data-w="${b == null ? 0 : (b / max * 100).toFixed(1)}"></i></span>
+      </div>
+    </div>`
+  }).join('')
+
+  /* race the bars from zero on every change */
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.bars i').forEach((el, k) => {
+      el.style.width = '0%'
+      setTimeout(() => { el.style.width = el.dataset.w + '%' }, 40 + k * 45)
+    })
+  })
+
+  verdict()
+}
+
+function verdict() {
+  const p = document.getElementById('verdict')
+  if (A.tbd || B.tbd) {
+    const open = A.tbd ? A : B, other = A.tbd ? B : A
+    p.innerHTML = `<b>${open.name}</b> can't be raced — it has no distance and no route yet,
+      because One Ride is a date rather than a course. Against it, <b>${other.name}</b>
+      is ${other.tbd ? 'equally unmeasured' : `a measured ${other.km} km with ${other.stops.length} fixed stops`}.`
+    return
+  }
+  const longer = A.km >= B.km ? A : B, shorter = A.km >= B.km ? B : A
+  const dA = A.crow ? A.km / A.crow : null, dB = B.crow ? B.km / B.crow : null
+  const ratio = shorter.km ? (longer.km / shorter.km).toFixed(1) : '—'
+
+  /* an impossible directness makes the straightness comparison meaningless,
+     so say what is wrong instead of ranking two figures that can't be ranked */
+  const bad = [[A, dA], [B, dB]].filter(([, d]) => d != null && d < 1)
+  let straight
+  if (bad.length) {
+    straight = ` Straightness can't be compared: <b>${bad.map(([r]) => r.name).join('</b> and <b>')}</b> ` +
+      `${bad.length > 1 ? 'state distances' : 'states a distance'} shorter than the straight line ` +
+      `between ${bad.length > 1 ? 'their end points' : 'its end points'}, so the ride ` +
+      `${bad.length > 1 ? 'files disagree' : 'file disagrees'} with itself.`
+  } else if (dA != null && dB != null) {
+    const s = dA <= dB ? A : B
+    straight = ` <b>${s.name}</b> is the straighter road — ${
+      (s === A ? dA : dB).toFixed(2)}× its crow-flies length against ${
+      (s === A ? dB : dA).toFixed(2)}×.`
+  } else straight = ''
+
+  p.innerHTML =
+    `<b>${longer.name}</b> is ${ratio}× the distance of <b>${shorter.name}</b>.` +
+    straight +
+    ` ${A.done && B.done ? 'Both ridden.'
+      : A.done || B.done ? `Only ${(A.done ? A : B).name} has actually been ridden.`
+      : 'Neither has been ridden yet.'}`
+}
+
+/* ── wiring ───────────────────────────────────────────────────────────── */
+function render() {
+  document.documentElement.style.setProperty('--A', A.color)
+  document.documentElement.style.setProperty('--B', B.color)
+  corner(A, 'a'); corner(B, 'b')
+  score()
+  document.querySelectorAll('.pick button').forEach(b =>
+    b.addEventListener('click', () => {
+      if (b.classList.contains('busy')) return
+      const r = RD.byId(b.dataset.id)
+      if (b.dataset.side === 'a') A = r; else B = r
+      render()
+    }))
+}
+
+document.getElementById('swap').addEventListener('click', () => {
+  const t = A; A = B; B = t; render()
+})
+document.getElementById('rand').addEventListener('click', () => {
+  const pool = RD.rides.slice()
+  A = pool.splice(Math.floor(Math.random() * pool.length), 1)[0]
+  B = pool[Math.floor(Math.random() * pool.length)]
+  render()
+})
+addEventListener('keydown', e => {
+  if (e.key === 's' || e.key === 'S') document.getElementById('swap').click()
+  if (e.key === 'r' || e.key === 'R') document.getElementById('rand').click()
+})
+
+render()
+</script>
+</body>
+</html>

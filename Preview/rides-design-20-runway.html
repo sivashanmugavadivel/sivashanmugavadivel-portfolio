@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Rides · 20 · Runway</title>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,600;0,6..96,700;1,6..96,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   RUNWAY — you scroll down and the page moves sideways.
+
+   One long horizontal track, pinned while the document scrolls past it.
+   Vertical scroll distance is translated into horizontal travel, so the
+   whole set reads as one continuous lateral sweep rather than a stack.
+
+   Three things make it feel like motion rather than a slider:
+
+   · PARALLAX IN DEPTH. Inside each panel the plate, the numeral and the
+     type move at different rates, so panels have thickness — near things
+     pass faster than far things, exactly as they do out of a window.
+
+   · VELOCITY SKEW. The track skews and scales a little in proportion to
+     how fast you are scrolling, then settles. Fast flicks feel fast.
+
+   · A REAL RULE. The measure along the bottom is not a progress bar; it
+     is the 768 km on the books, and each panel sits at its true distance
+     along it, so the spacing between rides is the spacing in kilometres.
+
+   Editorial black-and-bone with oxblood — a fashion spread, read sideways.
+   ══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bone:#f4f1ea; --bone2:#e7e2d6; --ink:#14110f; --ink2:#3b3530;
+  --faint:#8a8177; --hair:rgba(20,17,15,0.16);
+  --ox:#7d1f2b; --gold:#a8892f;
+  --serif:'Bodoni Moda',Didot,Georgia,serif; --sans:'Jost',system-ui,sans-serif;
+  --ease:cubic-bezier(.2,.9,.25,1); --c:#ef4444;
+}
+body{background:var(--bone);color:var(--ink2);font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--ox);color:var(--bone)}
+
+/* ── fixed chrome ── */
+.hud{position:fixed;top:0;left:0;right:0;z-index:60;display:flex;align-items:baseline;gap:16px;
+  padding:clamp(13px,2.2vw,22px) clamp(16px,3.4vw,38px);pointer-events:none;
+  mix-blend-mode:difference;color:#fff}
+.hud > *{pointer-events:auto}
+.hud .mk{font-family:var(--serif);font-size:clamp(0.95rem,2vw,1.25rem);letter-spacing:0.01em}
+.hud .mk em{font-style:italic}
+.hud .n{margin-left:auto;font-size:0.58rem;letter-spacing:0.24em;text-transform:uppercase;
+  font-variant-numeric:tabular-nums}
+.hud a{font-size:0.56rem;letter-spacing:0.18em;text-transform:uppercase;color:#fff;
+  text-decoration:none;border-bottom:1px solid rgba(255,255,255,0.4);padding-bottom:3px}
+
+/* ── opening ── */
+.open{height:100svh;display:flex;flex-direction:column;justify-content:flex-end;
+  padding:0 clamp(18px,5vw,72px) clamp(40px,7vw,80px);position:relative;overflow:hidden}
+.open .big{font-family:var(--serif);font-weight:400;color:var(--ink);
+  font-size:clamp(3rem,15vw,11rem);line-height:0.8;letter-spacing:-0.035em}
+.open .big em{font-style:italic;color:var(--ox)}
+.open .big .w{display:block;overflow:hidden}
+.open .big .w i{display:block;font-style:normal;transform:translateY(104%);
+  animation:rise 1.2s var(--ease) forwards}
+.open .big .w i em{font-style:italic}
+@keyframes rise{to{transform:none}}
+.open .row{display:flex;align-items:flex-end;gap:24px;flex-wrap:wrap;margin-top:26px;
+  padding-top:20px;border-top:1px solid var(--hair);
+  opacity:0;animation:fade 1s var(--ease) .8s forwards}
+@keyframes fade{to{opacity:1}}
+.open p{max-width:40ch;font-size:0.9rem;line-height:1.85}
+.open .cue{margin-left:auto;display:flex;align-items:center;gap:12px;font-size:0.56rem;
+  letter-spacing:0.24em;text-transform:uppercase;color:var(--faint);white-space:nowrap}
+.open .cue i{width:40px;height:1px;background:var(--ink);position:relative;overflow:hidden}
+.open .cue i::after{content:'';position:absolute;inset:0;background:var(--ox);
+  animation:sweep 2.2s var(--ease) infinite}
+@keyframes sweep{0%{transform:translateX(-100%)}60%,100%{transform:translateX(100%)}}
+
+/* ── the pinned runway ── */
+.runway{position:relative}
+.pin{position:sticky;top:0;height:100svh;overflow:hidden;background:var(--bone)}
+.rail{display:flex;height:100%;will-change:transform;
+  transform:translate3d(0,0,0)}
+
+.panel{position:relative;flex:0 0 auto;width:clamp(320px,74vw,900px);height:100%;
+  display:grid;grid-template-rows:1fr auto;padding:clamp(70px,9vh,110px) clamp(18px,3vw,52px)
+  clamp(56px,8vh,90px);border-right:1px solid var(--hair);overflow:hidden}
+.panel:last-child{border-right:0}
+
+/* the oversized numeral, furthest back and slowest */
+.panel .no{position:absolute;right:clamp(14px,3vw,44px);top:clamp(40px,7vh,74px);
+  font-family:var(--serif);font-size:clamp(7rem,21vw,17rem);line-height:0.72;
+  color:transparent;-webkit-text-stroke:1px rgba(20,17,15,0.14);pointer-events:none;
+  user-select:none;will-change:transform}
+
+.panel .stage{position:relative;min-height:0;display:flex;align-items:center;gap:clamp(18px,3vw,46px)}
+.panel .plate{position:relative;flex:0 0 44%;height:100%;max-height:50vh;will-change:transform}
+.panel .plate svg{width:100%;height:100%;overflow:visible}
+.panel .plate .frame{position:absolute;inset:-14px;border:1px solid var(--hair);
+  pointer-events:none}
+.panel .plate .frame::before{content:'';position:absolute;left:-1px;top:-1px;width:10px;height:10px;
+  border-left:1px solid var(--ox);border-top:1px solid var(--ox)}
+.panel .plate .frame::after{content:'';position:absolute;right:-1px;bottom:-1px;width:10px;height:10px;
+  border-right:1px solid var(--ox);border-bottom:1px solid var(--ox)}
+
+.panel .tx{flex:1;min-width:0;will-change:transform}
+.panel .tag{display:inline-flex;align-items:center;gap:8px;font-size:0.52rem;letter-spacing:0.24em;
+  text-transform:uppercase;color:var(--tc);margin-bottom:14px}
+.panel .tag i{width:6px;height:6px;border-radius:50%;background:currentColor}
+.panel h2{font-family:var(--serif);font-weight:400;color:var(--ink);
+  font-size:clamp(1.6rem,4.2vw,3rem);line-height:1.02;letter-spacing:-0.022em;margin-bottom:12px}
+.panel h2 em{font-style:italic}
+.panel .route{font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--faint);
+  line-height:1.9;margin-bottom:16px}
+.panel .route b{color:var(--ox);font-weight:500}
+.panel p{font-size:0.85rem;line-height:1.9;max-width:44ch;margin-bottom:20px;color:var(--ink2)}
+.panel .go{display:inline-flex;align-items:center;gap:10px;font-size:0.56rem;letter-spacing:0.2em;
+  text-transform:uppercase;color:var(--ink);text-decoration:none;border-bottom:1px solid var(--ink);
+  padding-bottom:5px;transition:.3s var(--ease)}
+.panel .go:hover{color:var(--ox);border-color:var(--ox);gap:18px}
+
+/* the figures along the foot of each panel */
+.panel .foot{display:flex;gap:0;border-top:1px solid var(--hair);padding-top:14px;
+  will-change:transform}
+.panel .foot div{padding-right:clamp(14px,2.4vw,30px);margin-right:clamp(14px,2.4vw,30px);
+  border-right:1px solid var(--hair)}
+.panel .foot div:last-child{border-right:0;margin-right:0;padding-right:0}
+.panel .foot k{display:block;font-size:0.46rem;letter-spacing:0.22em;text-transform:uppercase;
+  color:var(--faint);margin-bottom:6px}
+.panel .foot v{display:block;font-family:var(--serif);font-size:clamp(1.1rem,2.2vw,1.6rem);
+  color:var(--ink);line-height:1}
+
+/* ── the measure along the bottom ── */
+.measure{position:fixed;left:0;right:0;bottom:0;z-index:55;height:52px;pointer-events:none;
+  padding:0 clamp(16px,3.4vw,38px);display:flex;align-items:center}
+.measure .bar{position:relative;flex:1;height:1px;background:var(--hair)}
+.measure .bar .done{position:absolute;left:0;top:0;height:1px;background:var(--ox);width:0}
+.measure .bar .tick{position:absolute;top:-5px;width:1px;height:11px;background:var(--hair)}
+.measure .bar .tick.hit{background:var(--ox);height:15px;top:-7px}
+.measure .bar .tick b{position:absolute;bottom:14px;left:0;transform:translateX(-50%);
+  font-size:0.48rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--faint);
+  white-space:nowrap;transition:.3s}
+.measure .bar .tick.hit b{color:var(--ox)}
+.measure .km{margin-left:14px;font-size:0.56rem;letter-spacing:0.16em;color:var(--ink);
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* ── closing ── */
+.close{min-height:78svh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;gap:20px;padding:clamp(40px,7vw,90px) clamp(18px,6vw,60px)
+  calc(80px + env(safe-area-inset-bottom));background:var(--ink);color:rgba(244,241,234,0.6)}
+.close h2{font-family:var(--serif);font-weight:400;color:var(--bone);
+  font-size:clamp(2rem,7vw,4.4rem);line-height:1;letter-spacing:-0.03em}
+.close h2 em{font-style:italic;color:var(--gold)}
+.close p{max-width:42ch;font-size:0.88rem;line-height:1.9}
+.close a{display:inline-flex;align-items:center;gap:10px;padding:14px 28px;
+  border:1px solid rgba(244,241,234,0.4);color:var(--bone);text-decoration:none;
+  font-size:0.58rem;letter-spacing:0.2em;text-transform:uppercase;transition:.3s var(--ease)}
+.close a:hover{background:var(--bone);color:var(--ink)}
+
+@media(max-width:760px){
+  .panel{width:88vw;padding:64px 18px 60px}
+  .panel .stage{flex-direction:column;align-items:stretch;gap:16px}
+  .panel .plate{flex:0 0 34%;max-height:26vh}
+  .panel .no{font-size:6rem;opacity:0.7}
+  .panel .foot{flex-wrap:wrap;gap:10px 0}
+  .measure{height:44px}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;animation-iteration-count:1!important;
+    transition-duration:.01ms!important}
+  .open .big .w i{transform:none}
+  .pin{position:static;height:auto}
+  .rail{flex-direction:column;transform:none!important}
+  .panel{width:100%;height:auto;min-height:80svh;border-right:0;border-bottom:1px solid var(--hair)}
+  .measure{display:none}
+}
+</style>
+</head>
+<body>
+
+<header class="hud">
+  <span class="mk">Rides &amp; <em>Journeys</em></span>
+  <span class="n"><span id="hN">01</span> / <span id="hAll">06</span></span>
+  <a href="#">← Garage</a>
+</header>
+
+<section class="open">
+  <div class="big">
+    <span class="w"><i>Read it</i></span>
+    <span class="w"><i style="animation-delay:.14s"><em>sideways</em></i></span>
+  </div>
+  <div class="row">
+    <p id="lede"></p>
+    <span class="cue"><i></i>Scroll down, travel across</span>
+  </div>
+</section>
+
+<section class="runway" id="runway">
+  <div class="pin">
+    <div class="rail" id="rail"></div>
+  </div>
+</section>
+
+<div class="measure" id="measure">
+  <div class="bar"><div class="done" id="mDone"></div><div id="mTicks"></div></div>
+  <span class="km" id="mKm">0 KM</span>
+</div>
+
+<section class="close">
+  <h2>End of the <em>sweep</em></h2>
+  <p id="closeP"></p>
+  <a href="#">← Back to My Garage</a>
+</section>
+
+<script src="rides-data.js"></script>
+<script>
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches
+const S = RD.summary
+const TOTAL = S.doneKm + S.aheadKm
+
+document.getElementById('lede').textContent =
+  `${RD.tally}. Six panels on one lateral track — and the rule along the bottom is the real ` +
+  `${TOTAL} km on the books, so the gaps between them are the gaps in distance.`
+document.getElementById('closeP').textContent =
+  `${S.doneKm} km ridden, ${S.aheadKm} km already drawn and waiting. Every figure here comes ` +
+  `straight out of the ride files.`
+document.getElementById('hAll').textContent = String(RD.rides.length).padStart(2, '0')
+
+/* ── panels ───────────────────────────────────────────────────────────── */
+function plate(r) {
+  const w = 420, h = 460
+  if (!r.mapped) {
+    return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">
+      ${Array.from({ length: 6 }, (_, i) =>
+        `<circle cx="${w / 2}" cy="${h / 2}" r="${26 + i * 30}" fill="none"
+          stroke="rgba(20,17,15,${(0.26 - i * 0.036).toFixed(3)})" stroke-width="1"
+          stroke-dasharray="${i % 2 ? '2 8' : 'none'}"/>`).join('')}
+      <circle cx="${w / 2}" cy="${h / 2}" r="7" fill="${r.color}"/>
+      <text x="${w / 2}" y="${h / 2 + 32}" text-anchor="middle" font-family="Jost,sans-serif"
+        font-size="11" letter-spacing="4" fill="rgba(20,17,15,0.45)">NO COURSE</text></svg>`
+  }
+  const P = RD.one(r, w, h, 58)
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">
+    <path d="${RD.curve(P.pts)}" fill="none" stroke="rgba(20,17,15,0.14)" stroke-width="11"
+      stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="${RD.curve(P.pts)}" fill="none" stroke="${r.color}" stroke-width="2.4"
+      stroke-linecap="round" stroke-linejoin="round"/>
+    ${P.pts.map((p, i) => {
+      const edge = i === 0 || i === P.pts.length - 1
+      return `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${edge ? 6 : 3.4}"
+        fill="${edge ? r.color : 'var(--bone)'}" stroke="${r.color}" stroke-width="1.8"/>`
+    }).join('')}</svg>`
+}
+
+document.getElementById('rail').innerHTML = RD.rides.map((r, i) => {
+  const dest = r.tbd && /decided/i.test(r.toCity) ? 'anywhere' : r.toCity
+  return `<article class="panel" data-i="${i}" style="--c:${r.color};--tc:${r.tier.color}">
+    <span class="no">${String(i + 1).padStart(2, '0')}</span>
+    <div class="stage">
+      <div class="plate">${plate(r)}<span class="frame"></span></div>
+      <div class="tx">
+        <span class="tag"><i></i>${r.tier.label} · ${r.date}</span>
+        <h2>${r.name}</h2>
+        <div class="route">${r.fromCity} <b>→</b> ${dest}</div>
+        <p>${r.story}</p>
+        <a class="go" href="#">Open the ride</a>
+      </div>
+    </div>
+    <div class="foot">
+      <div><k>Distance</k><v>${r.distance}</v></div>
+      <div><k>Heading</k><v>${r.mapped ? r.compass : 'Open'}</v></div>
+      <div><k>Waypoints</k><v>${r.stops.length}</v></div>
+      <div><k>${r.time ? 'Saddle' : r.estimated ? 'Est.' : 'States'}</k>
+        <v>${r.time || r.estimate || r.states.length}</v></div>
+    </div>
+  </article>`
+}).join('')
+
+/* ── the measure ──────────────────────────────────────────────────────── */
+let run = 0
+const marks = RD.rides.map(r => { const at = run; run += r.km; return { r, at } })
+document.getElementById('mTicks').innerHTML = marks.map((m, i) =>
+  `<span class="tick" data-i="${i}" style="left:${(m.at / TOTAL * 100).toFixed(2)}%">
+     <b>${m.r.tbd ? 'TBD' : Math.round(m.at) + ' km'}</b></span>`).join('')
+
+/* ── the scroll → sideways translation ────────────────────────────────── */
+const runway = document.getElementById('runway')
+const rail = document.getElementById('rail')
+let span = 0
+let last = 0, vel = 0, ticking = false
+
+function measure() {
+  if (REDUCED) { runway.style.height = 'auto'; return }
+  /* the document space this section needs = how far the rail must travel */
+  span = Math.max(0, rail.scrollWidth - innerWidth)
+  runway.style.height = (span + innerHeight) + 'px'
+  onScroll()
+}
+
+function onScroll() {
+  ticking = false
+  if (REDUCED) return
+
+  const r = runway.getBoundingClientRect()
+  /* 0 while the section is arriving, 1 once it has been scrolled through */
+  const p = Math.max(0, Math.min(1, -r.top / (span || 1)))
+  const x = -p * span
+
+  /* velocity, smoothed — drives the skew */
+  const nowY = scrollY
+  vel = vel * 0.82 + (nowY - last) * 0.18
+  last = nowY
+  const sk = Math.max(-7, Math.min(7, vel * 0.16))
+
+  rail.style.transform = `translate3d(${x.toFixed(1)}px,0,0) skewX(${sk.toFixed(2)}deg)`
+
+  /* depth inside each panel: three layers, three rates */
+  const panels = [...rail.children]
+  panels.forEach((el, i) => {
+    const b = el.getBoundingClientRect()
+    /* -1 (off right) → 0 (centred) → 1 (off left) */
+    const c = (b.left + b.width / 2 - innerWidth / 2) / innerWidth
+    const no = el.querySelector('.no')
+    const plate = el.querySelector('.plate')
+    const tx = el.querySelector('.tx')
+    const foot = el.querySelector('.foot')
+    if (no) no.style.transform = `translate3d(${(c * 70).toFixed(1)}px,0,0)`
+    if (plate) plate.style.transform = `translate3d(${(c * -46).toFixed(1)}px,0,0)`
+    if (tx) tx.style.transform = `translate3d(${(c * -14).toFixed(1)}px,0,0)`
+    if (foot) foot.style.transform = `translate3d(${(c * -26).toFixed(1)}px,0,0)`
+    el.style.opacity = Math.abs(c) > 1.1 ? 0.3 : 1
+  })
+
+  /* which panel is centred */
+  let at = 0, best = 1e9
+  panels.forEach((el, i) => {
+    const b = el.getBoundingClientRect()
+    const d = Math.abs(b.left + b.width / 2 - innerWidth / 2)
+    if (d < best) { best = d; at = i }
+  })
+  document.getElementById('hN').textContent = String(at + 1).padStart(2, '0')
+
+  /* the rule reads the travel as kilometres */
+  const km = p * TOTAL
+  document.getElementById('mDone').style.width = (p * 100) + '%'
+  document.getElementById('mKm').textContent = Math.round(km) + ' KM'
+  document.querySelectorAll('.measure .tick').forEach((t, i) =>
+    t.classList.toggle('hit', marks[i].at <= km + 0.5))
+
+  /* the measure only belongs on screen while the runway is on screen */
+  const show = r.top <= 0 && r.bottom >= innerHeight
+  document.getElementById('measure').style.opacity = show ? 1 : 0
+}
+
+addEventListener('scroll', () => {
+  if (!ticking) { ticking = true; requestAnimationFrame(onScroll) }
+}, { passive: true })
+
+let rt = 0
+addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(measure, 160) })
+
+/* jump to a panel from the measure */
+document.getElementById('measure').style.pointerEvents = 'none'
+document.querySelectorAll('.measure .tick').forEach(t => {
+  t.style.pointerEvents = 'auto'; t.style.cursor = 'pointer'
+  t.addEventListener('click', () => {
+    const el = rail.children[+t.dataset.i]
+    if (!el || REDUCED) return
+    const target = runway.offsetTop + (el.offsetLeft / (span || 1)) * span
+    scrollTo({ top: target, behavior: 'smooth' })
+  })
+})
+
+measure()
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure)
+addEventListener('load', measure)
+</script>
+</body>
+</html>

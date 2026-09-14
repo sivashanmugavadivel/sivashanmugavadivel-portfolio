@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Rides · 4 · Postcards</title>
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Caveat:wght@500;600;700&family=Courier+Prime:wght@400;700&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   POSTCARDS — one card per ride, sent home from the road.
+
+   The no-photo problem solved head on. A vintage postcard never showed a
+   photograph either: it showed GREETINGS FROM in fat slab letters, and
+   inside the letters, a picture. So the picture side here is built from
+   the only thing these rides really have — the route. Each card's front
+   is the ride's true projected path, drawn large over a duotone in the
+   ride's own colour, with the destination set across it.
+
+   Flip a card and the back is the real postcard back: a divided card,
+   the story handwritten on the left, the address block right, and a
+   franked stamp whose postmark ring carries the actual date and the
+   start coordinates from the ride file.
+
+   One Ride 2026 has no route to draw, so its front gets a starburst of
+   headings instead — every road, which is what the event is.
+   ══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --desk:#1e1a16; --desk2:#2a2420;
+  --card:#f6efe0; --card2:#ece2cf; --ink:#2b2521; --ink2:#5c5148;
+  --faint:rgba(43,37,33,0.44); --hair:rgba(43,37,33,0.18);
+  --frank:#b3372c; --teal:#1f6f6b;
+  --slab:'Alfa Slab One',serif; --hand:'Caveat',cursive;
+  --mono:'Courier Prime',monospace; --sans:'Archivo',sans-serif;
+  --ease:cubic-bezier(.2,.9,.25,1);
+}
+body{background:var(--desk);color:var(--card);font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden;
+  background-image:
+    radial-gradient(70vw 50vh at 22% 0%,rgba(179,55,44,0.1),transparent 62%),
+    radial-gradient(60vw 50vh at 86% 88%,rgba(31,111,107,0.1),transparent 64%),
+    repeating-linear-gradient(94deg,rgba(255,255,255,0.011) 0 2px,transparent 2px 6px);
+}
+::selection{background:var(--frank);color:var(--card)}
+
+.desk{max-width:1220px;margin:0 auto;
+  padding:clamp(22px,4vw,54px) clamp(14px,3vw,34px) calc(60px + env(safe-area-inset-bottom))}
+
+/* ── header ── */
+.top{display:flex;align-items:flex-end;gap:20px;flex-wrap:wrap;
+  margin-bottom:clamp(22px,4vw,44px)}
+.top .t{flex:1;min-width:250px}
+.top .kick{font-family:var(--mono);font-size:0.62rem;letter-spacing:0.3em;text-transform:uppercase;
+  color:var(--frank);margin-bottom:12px;opacity:0;animation:fade .7s var(--ease) .15s forwards}
+@keyframes fade{to{opacity:1}}
+.top h1{font-family:var(--slab);font-size:clamp(2.1rem,7vw,4.4rem);line-height:0.95;
+  color:var(--card);letter-spacing:-0.01em}
+.top h1 .w{display:inline-block;overflow:hidden;vertical-align:bottom}
+.top h1 .w i{display:inline-block;font-style:normal;transform:translateY(106%);
+  animation:rise 1s var(--ease) forwards}
+@keyframes rise{to{transform:none}}
+.top h1 em{font-style:normal;color:var(--frank);
+  -webkit-text-stroke:0;text-shadow:3px 3px 0 rgba(0,0,0,0.25)}
+.top p{font-family:var(--hand);font-size:clamp(1.1rem,2.4vw,1.5rem);color:rgba(246,239,224,0.66);
+  margin-top:10px;opacity:0;animation:fade .8s var(--ease) .6s forwards}
+.top .ctrl{display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap}
+.top .ctrl button,.top .ctrl a{font-family:var(--mono);font-size:0.62rem;letter-spacing:0.14em;
+  text-transform:uppercase;color:var(--card);background:transparent;text-decoration:none;
+  border:1px solid rgba(246,239,224,0.24);padding:9px 14px;cursor:pointer;transition:.25s var(--ease)}
+.top .ctrl button:hover,.top .ctrl a:hover{background:var(--card);color:var(--desk);
+  border-color:var(--card)}
+.top .ctrl button.on{background:var(--frank);border-color:var(--frank)}
+
+/* ── the spread ── */
+.spread{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));
+  gap:clamp(22px,3.4vw,40px)}
+
+.slot{perspective:1600px;opacity:0;transform:translateY(30px);
+  transition:opacity .75s var(--ease),transform .75s var(--ease)}
+.slot.in{opacity:1;transform:none}
+
+.card{position:relative;aspect-ratio:1.52/1;transform-style:preserve-3d;cursor:pointer;
+  transition:transform .82s var(--ease),filter .4s;
+  transform:rotateY(0deg) rotate(var(--tilt,0deg));
+  filter:drop-shadow(0 22px 30px rgba(0,0,0,0.5))}
+.slot:nth-child(3n+1) .card{--tilt:-1.5deg}
+.slot:nth-child(3n+2) .card{--tilt:1.1deg}
+.slot:nth-child(3n) .card{--tilt:-0.6deg}
+.card:hover{filter:drop-shadow(0 34px 44px rgba(0,0,0,0.62))}
+.slot:hover .card{transform:rotateY(0deg) rotate(0deg) translateY(-7px)}
+.card.flip,.slot:hover .card.flip{transform:rotateY(180deg) rotate(0deg) translateY(-7px)}
+
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  background:var(--card);border-radius:3px;overflow:hidden;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,0.12),inset 0 0 44px rgba(120,95,60,0.14)}
+
+/* ── FRONT: the picture side ── */
+.front{display:block}
+.front svg{position:absolute;inset:0;width:100%;height:100%}
+.front .greet{position:absolute;left:0;right:0;top:11%;text-align:center;
+  font-family:var(--slab);line-height:0.82;pointer-events:none;padding:0 6%}
+.front .greet .g1{display:block;font-family:var(--mono);font-weight:700;
+  font-size:clamp(0.5rem,1.5vw,0.62rem);letter-spacing:0.42em;text-transform:uppercase;
+  color:rgba(43,37,33,0.55);margin-bottom:9px}
+/* the destination, knocked out so the route shows through the letters */
+.front .greet .g2{display:block;font-size:clamp(1.5rem,5.4vw,2.5rem);
+  color:transparent;-webkit-background-clip:text;background-clip:text;
+  background-image:var(--fill);
+  -webkit-text-stroke:1.1px rgba(43,37,33,0.52);
+  filter:drop-shadow(1.5px 2px 0 rgba(43,37,33,0.18));
+  word-break:break-word;hyphens:auto}
+.front .band{position:absolute;left:0;right:0;bottom:0;padding:9px 13px;
+  display:flex;align-items:center;gap:9px;
+  background:linear-gradient(transparent,rgba(43,37,33,0.1) 40%,rgba(43,37,33,0.16));
+  font-family:var(--mono);font-size:0.58rem;letter-spacing:0.14em;text-transform:uppercase;
+  color:var(--ink2)}
+.front .band b{color:var(--ink);font-weight:700}
+.front .band .sp{margin-left:auto}
+.front .edge{position:absolute;inset:9px;border:1.5px solid rgba(246,239,224,0.5);
+  border-radius:2px;pointer-events:none;
+  box-shadow:0 0 0 1px rgba(43,37,33,0.1)}
+.front .tag{position:absolute;top:12px;left:12px;font-family:var(--mono);font-weight:700;
+  font-size:0.5rem;letter-spacing:0.2em;text-transform:uppercase;padding:3px 7px;
+  color:var(--card);border-radius:1px}
+.front .hint{position:absolute;bottom:34px;right:14px;font-family:var(--hand);
+  font-size:0.98rem;color:var(--faint);opacity:0;transform:translateX(-6px);
+  transition:.35s var(--ease)}
+.slot:hover .front .hint{opacity:1;transform:none}
+
+/* ── BACK: the divided card ── */
+.back{transform:rotateY(180deg);display:grid;grid-template-columns:1fr 1px 0.86fr;
+  gap:0;padding:15px 16px}
+.back .split{background:repeating-linear-gradient(var(--hair) 0 5px,transparent 5px 10px)}
+.back .msg{padding-right:13px;display:flex;flex-direction:column;min-width:0}
+.back .msg .dear{font-family:var(--hand);font-size:1.14rem;color:var(--teal);margin-bottom:4px}
+.back .msg p{font-family:var(--hand);font-size:clamp(0.96rem,1.5vw,1.1rem);line-height:1.42;
+  color:var(--ink);flex:1;overflow:hidden;transform:rotate(-0.5deg)}
+.back .msg .sign{font-family:var(--hand);font-size:1.1rem;color:var(--teal);text-align:right;
+  margin-top:6px;transform:rotate(-1.4deg)}
+
+.back .addr{padding-left:14px;display:flex;flex-direction:column;min-width:0}
+.back .addr .stampwrap{display:flex;justify-content:flex-end;position:relative;margin-bottom:12px}
+/* the stamp: perforated edge faked with a repeating radial mask */
+.stamp{width:62px;height:74px;background:var(--sc);position:relative;flex-shrink:0;
+  padding:5px;
+  -webkit-mask:radial-gradient(circle 2.6px,transparent 97%,#000) -3.2px -3.2px/10.6px 10.6px;
+  mask:radial-gradient(circle 2.6px,transparent 97%,#000) -3.2px -3.2px/10.6px 10.6px}
+.stamp .in{height:100%;border:1px solid rgba(246,239,224,0.55);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:3px;text-align:center;padding:3px}
+.stamp .in b{font-family:var(--slab);font-size:1.06rem;color:#fff;line-height:1;
+  text-shadow:0 1px 2px rgba(0,0,0,0.3)}
+.stamp .in u{text-decoration:none;font-family:var(--mono);font-size:0.4rem;letter-spacing:0.11em;
+  text-transform:uppercase;color:rgba(255,255,255,0.9)}
+/* the postmark, struck over the stamp at an angle */
+.mark{position:absolute;right:-10px;top:14px;width:82px;height:82px;border-radius:50%;
+  border:2px solid var(--frank);color:var(--frank);display:grid;place-items:center;
+  transform:rotate(-15deg);opacity:0.74;pointer-events:none;
+  font-family:var(--mono);font-size:0.42rem;letter-spacing:0.06em;text-align:center;
+  line-height:1.5;text-transform:uppercase}
+.mark::before{content:'';position:absolute;inset:6px;border-radius:50%;
+  border:1px dashed var(--frank);opacity:0.6}
+.mark span{max-width:58px}
+.mark b{display:block;font-size:0.52rem;letter-spacing:0.1em}
+.card.flip .mark{animation:strike .5s var(--ease) .55s backwards}
+@keyframes strike{0%{transform:rotate(-15deg) scale(2.4);opacity:0}
+  60%{transform:rotate(-15deg) scale(0.94);opacity:.9}100%{transform:rotate(-15deg) scale(1);opacity:.74}}
+
+.back .lines{margin-top:auto;display:flex;flex-direction:column;gap:9px}
+.back .lines i{display:block;height:1px;background:var(--hair)}
+.back .to{font-family:var(--mono);font-size:0.58rem;line-height:1.85;color:var(--ink2);
+  letter-spacing:0.04em;margin-bottom:8px}
+.back .to b{display:block;color:var(--ink);font-weight:700;font-size:0.62rem;
+  letter-spacing:0.1em;text-transform:uppercase}
+.back .facts{display:flex;flex-wrap:wrap;gap:3px 10px;font-family:var(--mono);font-size:0.52rem;
+  letter-spacing:0.08em;color:var(--faint);text-transform:uppercase;
+  border-top:1px solid var(--hair);padding-top:8px;margin-top:8px}
+.back .facts b{color:var(--ink)}
+.back .go{position:absolute;right:15px;bottom:13px;font-family:var(--mono);font-size:0.54rem;
+  letter-spacing:0.14em;text-transform:uppercase;color:var(--card);background:var(--ink);
+  padding:6px 11px;text-decoration:none;border-radius:1px;transition:.24s var(--ease)}
+.back .go:hover{background:var(--frank);transform:translateY(-2px)}
+
+/* ── footer ── */
+.end{margin-top:clamp(40px,7vw,78px);text-align:center}
+.end p{font-family:var(--hand);font-size:clamp(1.2rem,3vw,1.9rem);
+  color:rgba(246,239,224,0.6);max-width:30ch;margin:0 auto 20px;line-height:1.45}
+.end a{display:inline-block;font-family:var(--mono);font-size:0.64rem;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--desk);background:var(--card);padding:13px 24px;
+  text-decoration:none;transition:.28s var(--ease)}
+.end a:hover{background:var(--frank);color:var(--card);transform:translateY(-3px)}
+
+@media(max-width:640px){
+  .spread{grid-template-columns:1fr;gap:24px}
+  .back{padding:12px;grid-template-columns:1fr 1px 0.8fr}
+  .back .msg p{font-size:0.95rem;line-height:1.36}
+  .stamp{width:50px;height:60px}
+  .mark{width:66px;height:66px;font-size:0.38rem;right:-6px}
+  .front .greet{top:9%}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;transition-duration:.01ms!important}
+  .slot{opacity:1;transform:none}
+  .top h1 .w i{transform:none}
+}
+</style>
+</head>
+<body>
+
+<div class="desk">
+  <header class="top">
+    <div class="t">
+      <div class="kick">Poste restante · Kariya Kattu Valasu</div>
+      <h1><span class="w"><i style="animation-delay:.1s">Wish you</i></span><br/>
+        <em><span class="w"><i style="animation-delay:.24s">were here</i></span></em></h1>
+      <p id="lede"></p>
+    </div>
+    <div class="ctrl">
+      <button id="flipAll">Flip them all</button>
+      <a href="#">← Garage</a>
+    </div>
+  </header>
+
+  <main class="spread" id="spread"></main>
+
+  <section class="end">
+    <p id="endNote"></p>
+    <a href="#">← Back to My Garage</a>
+  </section>
+</div>
+
+<script src="rides-data.js"></script>
+<script>
+const S = RD.summary
+document.getElementById('lede').textContent =
+  `${RD.rides.length} cards on the desk — ${RD.tally}. Turn one over to read the back.`
+document.getElementById('endNote').textContent =
+  `${S.done} of them were actually posted. The rest are written and waiting for a date.`
+
+/* ── the picture side ─────────────────────────────────────────────────── */
+/* Drawn at 460 × 300 and scaled. The route is the artwork: real projected
+   coordinates, fattened into a road with a casing stroke under it.      */
+const W = 460, H = 300
+
+function scene(r) {
+  const tint = r.color
+  if (!r.mapped) {
+    /* One Ride — no course, so the art is every heading at once */
+    const rays = Array.from({ length: 32 }, (_, i) => {
+      const a = (i / 32) * Math.PI * 2
+      const len = 108 + (i % 3) * 34
+      return `<line x1="${W / 2}" y1="${H / 2}" x2="${(W / 2 + Math.cos(a) * len).toFixed(1)}"
+        y2="${(H / 2 + Math.sin(a) * len).toFixed(1)}" stroke="${tint}" stroke-width="${i % 2 ? 1.2 : 2.6}"
+        opacity="${i % 2 ? 0.3 : 0.55}" stroke-linecap="round"/>`
+    }).join('')
+    return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <defs>${grain(r)}</defs>
+      <rect width="${W}" height="${H}" fill="url(#sky-${r.id})"/>
+      <g class="rays">${rays}</g>
+      <circle cx="${W / 2}" cy="${H / 2}" r="11" fill="none" stroke="${tint}" stroke-width="3"/>
+      <circle cx="${W / 2}" cy="${H / 2}" r="4.5" fill="${tint}"/>
+      <rect width="${W}" height="${H}" fill="url(#gr-${r.id})"/>
+    </svg>`
+  }
+
+  const P = RD.one(r, W, H, 62)
+  const d = RD.curve(P.pts)
+  const pins = P.pts.map((p, i) => {
+    const edge = i === 0 || i === P.pts.length - 1
+    return `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${edge ? 7 : 4.4}"
+      fill="${edge ? tint : 'rgba(43,37,33,0.55)'}" stroke="#f6efe0" stroke-width="${edge ? 2.6 : 1.8}"/>`
+  }).join('')
+
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <defs>${grain(r)}</defs>
+    <rect width="${W}" height="${H}" fill="url(#sky-${r.id})"/>
+    <!-- contour hills behind the route, seeded off the ride id -->
+    <g opacity="0.3">${hills(r, tint)}</g>
+    <path d="${d}" fill="none" stroke="rgba(43,37,33,0.3)" stroke-width="13"
+      stroke-linecap="round" stroke-linejoin="round"/>
+    <path class="road" d="${d}" fill="none" stroke="${tint}" stroke-width="7"
+      stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="${d}" fill="none" stroke="#f6efe0" stroke-width="1.6" stroke-dasharray="7 9"
+      stroke-linecap="round" opacity="0.85"/>
+    ${pins}
+    <rect width="${W}" height="${H}" fill="url(#gr-${r.id})"/>
+  </svg>`
+}
+
+/* a warm duotone wash + a vignette, per ride */
+function grain(r) {
+  return `<linearGradient id="sky-${r.id}" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="${r.color}" stop-opacity="0.3"/>
+      <stop offset="0.55" stop-color="#f6efe0" stop-opacity="0.06"/>
+      <stop offset="1" stop-color="${r.color}" stop-opacity="0.16"/>
+    </linearGradient>
+    <radialGradient id="gr-${r.id}" cx="0.5" cy="0.45" r="0.78">
+      <stop offset="0.55" stop-color="#000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#3a2d1e" stop-opacity="0.3"/>
+    </radialGradient>`
+}
+
+/* rolling hills along the bottom — deterministic from the ride id, so a
+   card always looks the same, but no two rides look alike */
+function hills(r, tint) {
+  let h = 0
+  for (const c of r.id) h = (h * 31 + c.charCodeAt(0)) % 99991
+  const rnd = () => { h = (h * 1103515245 + 12345) % 2147483648; return (h >> 9) / 4194304 }
+  return [0.62, 0.74].map((base, layer) => {
+    let d = `M0 ${H}`
+    for (let x = 0; x <= W; x += 46) {
+      d += ` Q${x + 23} ${(H * base - rnd() * 40).toFixed(1)} ${x + 46} ${(H * base + rnd() * 16).toFixed(1)}`
+    }
+    d += ` L${W} ${H} Z`
+    return `<path d="${d}" fill="${layer ? tint : 'rgba(43,37,33,0.5)'}" opacity="${layer ? 0.5 : 0.35}"/>`
+  }).join('')
+}
+
+/* ── build ────────────────────────────────────────────────────────────── */
+document.getElementById('spread').innerHTML = RD.rides.map(r => {
+  const dest = r.tbd && /decided/i.test(r.toCity) ? 'Anywhere' : shortName(r.toCity)
+  const lat = r.stops[0].lat.toFixed(2), lng = r.stops[0].lng.toFixed(2)
+  return `<div class="slot">
+    <div class="card" data-id="${r.id}" tabindex="0" role="button"
+         aria-label="${r.name} — turn the card over">
+
+      <div class="face front" style="--fill:linear-gradient(150deg,${r.color},#2b2521)">
+        ${scene(r)}
+        <span class="tag" style="background:${r.tier.color}">${r.tier.label}</span>
+        <div class="greet">
+          <span class="g1">Greetings from</span>
+          <span class="g2">${dest}</span>
+        </div>
+        <div class="edge"></div>
+        <div class="band">
+          <b>${r.distance}</b>
+          <span>${r.mapped ? r.compass + ' ' + r.bearing.toFixed(0) + '°' : 'Heading open'}</span>
+          <span class="sp">${r.date}</span>
+        </div>
+        <span class="hint">turn me over →</span>
+      </div>
+
+      <div class="face back">
+        <div class="msg">
+          <div class="dear">From the road —</div>
+          <p>${trim(r.story, 240)}</p>
+          <div class="sign">— Siva</div>
+        </div>
+        <div class="split"></div>
+        <div class="addr">
+          <div class="stampwrap">
+            <div class="stamp" style="--sc:${r.color}">
+              <div class="in">
+                <b>${r.tbd ? '—' : r.km}</b>
+                <u>${r.tbd ? 'TBD' : 'KM'}</u>
+                <u>India</u>
+              </div>
+            </div>
+            <div class="mark">
+              <span>
+                <b>${r.fromCity.split(/[\s,]/)[0].toUpperCase()}</b>
+                ${r.date.toUpperCase()}<br/>${lat}N ${lng}E
+              </span>
+            </div>
+          </div>
+          <div class="to">
+            <b>${r.name}</b>
+            ${r.fromCity}<br/>→ ${r.tbd && /decided/i.test(r.toCity) ? 'wherever it goes' : r.toCity}
+          </div>
+          <div class="lines"><i></i><i></i><i></i></div>
+          <div class="facts">
+            <span><b>${r.stops.length}</b> stops</span>
+            ${r.time ? `<span><b>${r.time}</b></span>`
+              : r.estimate ? `<span><b>${r.estimate}</b> est</span>` : ''}
+            <span>${r.states.join(' · ')}</span>
+          </div>
+        </div>
+        <a class="go" href="#" onclick="event.stopPropagation()">Open ↗</a>
+      </div>
+    </div>
+  </div>`
+}).join('')
+
+/* keep the message on the card — a postcard back has a finite amount of room */
+function trim(s, n) {
+  if (s.length <= n) return s
+  const cut = s.slice(0, n)
+  return cut.slice(0, cut.lastIndexOf(' ')) + '…'
+}
+/* "Hindusthan College of Arts and Sciences, Coimbatore" → "Coimbatore" */
+function shortName(s) {
+  const tail = s.split(',').pop().trim()
+  return (tail.length > 3 ? tail : s).replace(/^Royal Enfield\s*/i, '')
+}
+
+/* ── flip ─────────────────────────────────────────────────────────────── */
+const cards = [...document.querySelectorAll('.card')]
+cards.forEach(c => {
+  const go = () => c.classList.toggle('flip')
+  c.addEventListener('click', go)
+  c.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go() }
+  })
+})
+
+const all = document.getElementById('flipAll')
+all.addEventListener('click', () => {
+  const turn = !all.classList.contains('on')
+  all.classList.toggle('on', turn)
+  all.textContent = turn ? 'Show the pictures' : 'Flip them all'
+  /* stagger, so the desk turns over in a wave rather than all at once */
+  cards.forEach((c, i) => setTimeout(() => c.classList.toggle('flip', turn), i * 85))
+})
+
+/* deal the cards in as they scroll up */
+const io = new IntersectionObserver(es => es.forEach(e => {
+  if (!e.isIntersecting) return
+  const sibs = [...e.target.parentElement.children]
+  e.target.style.transitionDelay = Math.min(sibs.indexOf(e.target) % 3 * 110, 330) + 'ms'
+  e.target.classList.add('in')
+  io.unobserve(e.target)
+}), { threshold: 0.12, rootMargin: '0px 0px -6% 0px' })
+document.querySelectorAll('.slot').forEach(el => io.observe(el))
+</script>
+</body>
+</html>

@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Rides · 29 · Ledger</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   LEDGER — the no-nonsense one. Everything, on one screen, in a table.
+
+   Twenty-eight designs in this folder are expressive. This one is not:
+   it is the view you want when you already know the rides and just need
+   to compare them. Density is the feature.
+
+   What a table can do that none of the card layouts can:
+
+   · SORT BY ANY COLUMN, including derived ones that exist nowhere in the
+     files — directness (road ÷ straight-line), average speed, days ago.
+     Click a header; click again to reverse.
+
+   · IN-CELL BARS. Distance and directness carry a bar drawn to the row's
+     value against the column maximum, so the shape of the column is
+     readable without reading a single number.
+
+   · A TOTALS ROW that actually totals — and refuses to total what cannot
+     be totalled. "TBD" is not zero, so the distance sum says "168 + 1
+     unmeasured" rather than quietly under-reporting.
+
+   · KEYBOARD. ↑ ↓ walk rows, Enter expands one in place, / focuses the
+     filter. No mouse required.
+
+   Terminal green and amber on near-black, tabular figures, tight rows.
+   ══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#06080a; --bg2:#0b0f13; --row:#0e1318; --row2:#121820;
+  --off:#dbe5ec; --d1:rgba(219,229,236,0.62); --d2:rgba(219,229,236,0.4);
+  --d3:rgba(219,229,236,0.22); --bd:rgba(219,229,236,0.1); --bd2:rgba(219,229,236,0.2);
+  --grn:#4ade80; --amb:#fbbf24; --cy:#38bdf8; --rd:#fb7185;
+  --mono:'IBM Plex Mono',ui-monospace,monospace; --sans:'IBM Plex Sans',system-ui,sans-serif;
+  --ease:cubic-bezier(.2,.9,.25,1);
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--d1);font-family:var(--mono);font-size:13px;
+  -webkit-font-smoothing:antialiased;overflow:hidden}
+::selection{background:var(--grn);color:var(--bg)}
+
+.app{display:flex;flex-direction:column;height:100svh}
+
+/* ── head ── */
+.head{flex-shrink:0;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  padding:11px clamp(12px,2.4vw,22px);border-bottom:1px solid var(--bd);background:var(--bg2)}
+.head .mk{font-family:var(--sans);font-weight:700;font-size:0.86rem;color:var(--off);
+  letter-spacing:-0.02em}
+.head .mk span{display:block;font-family:var(--mono);font-size:0.48rem;letter-spacing:0.2em;
+  text-transform:uppercase;color:var(--d3);margin-top:4px;font-weight:400}
+.head .filter{position:relative;flex:1 1 200px;max-width:300px}
+.head input{width:100%;background:var(--bg);border:1px solid var(--bd);color:var(--off);
+  font-family:var(--mono);font-size:0.72rem;padding:8px 10px 8px 26px;outline:none;
+  transition:.2s}
+.head input:focus{border-color:var(--grn)}
+.head .filter::before{content:'/';position:absolute;left:10px;top:50%;transform:translateY(-50%);
+  color:var(--d3);font-size:0.72rem;pointer-events:none}
+.head .cnt{font-size:0.62rem;color:var(--d2);letter-spacing:0.08em;white-space:nowrap}
+.head .cnt b{color:var(--grn)}
+.head a{font-size:0.56rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--d2);
+  text-decoration:none;border:1px solid var(--bd);padding:7px 11px;transition:.2s}
+.head a:hover{color:var(--bg);background:var(--off);border-color:var(--off)}
+
+/* ── the table ── */
+.scroll{flex:1;min-height:0;overflow:auto;scrollbar-width:thin}
+.scroll::-webkit-scrollbar{width:9px;height:9px}
+.scroll::-webkit-scrollbar-thumb{background:var(--bd2)}
+.scroll::-webkit-scrollbar-track{background:var(--bg)}
+
+table{width:100%;border-collapse:separate;border-spacing:0;min-width:920px}
+thead th{position:sticky;top:0;z-index:5;background:var(--bg2);
+  border-bottom:1px solid var(--bd2);padding:9px 11px;text-align:left;
+  font-size:0.52rem;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;
+  color:var(--d2);cursor:pointer;user-select:none;white-space:nowrap;transition:.2s}
+thead th:hover{color:var(--off);background:var(--row2)}
+thead th.num{text-align:right}
+thead th.on{color:var(--grn)}
+thead th i{font-style:normal;opacity:0;margin-left:5px;font-size:0.9em}
+thead th.on i{opacity:1}
+thead th .u{display:block;font-size:0.44rem;letter-spacing:0.12em;color:var(--d3);
+  margin-top:3px;text-transform:none}
+
+tbody tr{cursor:pointer;transition:background .16s}
+tbody tr:nth-child(4n+1) td{background:var(--row)}
+tbody tr:nth-child(4n+3) td{background:var(--bg)}
+tbody tr:hover td{background:var(--row2)}
+tbody tr.sel td{background:#16202a;box-shadow:inset 2px 0 0 var(--rc)}
+tbody td{padding:9px 11px;border-bottom:1px solid rgba(219,229,236,0.05);
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+tbody td.num{text-align:right}
+tbody td.name{white-space:normal;min-width:190px}
+tbody td.name b{display:block;font-family:var(--sans);font-weight:600;font-size:0.8rem;
+  color:var(--off);letter-spacing:-0.012em;line-height:1.25}
+tbody td.name span{display:block;font-size:0.58rem;color:var(--d3);margin-top:3px}
+
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:7px;
+  vertical-align:middle}
+.tierTag{font-size:0.56rem;letter-spacing:0.1em;text-transform:uppercase}
+.g{color:var(--grn)}.a{color:var(--amb)}.dim{color:var(--d3)}.c{color:var(--cy)}
+.warn{color:var(--rd)}
+
+/* the in-cell bar */
+.bar{position:relative;display:block;height:3px;background:rgba(219,229,236,0.09);
+  margin-top:5px;overflow:hidden}
+.bar i{position:absolute;left:0;top:0;bottom:0;background:var(--rc);width:0;
+  transition:width .7s var(--ease)}
+tr.seen .bar i{width:var(--w)}
+.bar.right i{left:auto;right:0}
+
+/* the expanded row */
+tr.detail td{padding:0;background:#0a0e13!important;border-bottom:1px solid var(--bd)}
+.det{max-height:0;overflow:hidden;transition:max-height .45s var(--ease)}
+tr.detail.on .det{max-height:420px}
+.detIn{padding:16px clamp(12px,2.4vw,22px) 18px;display:grid;
+  grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) auto;gap:clamp(14px,2.6vw,30px);
+  border-left:2px solid var(--rc)}
+.detIn p{font-family:var(--sans);font-size:0.8rem;line-height:1.75;color:var(--d1);max-width:62ch}
+.detIn .chain{font-size:0.6rem;line-height:1.9;color:var(--d2)}
+.detIn .chain k{display:block;font-size:0.44rem;letter-spacing:0.18em;text-transform:uppercase;
+  color:var(--d3);margin-bottom:6px}
+.detIn .chain span{display:block}
+.detIn .chain span b{color:var(--rc);font-weight:400}
+.detIn .go{align-self:start;display:inline-flex;align-items:center;gap:8px;padding:9px 15px;
+  background:var(--rc);color:var(--bg);text-decoration:none;font-size:0.56rem;font-weight:500;
+  letter-spacing:0.14em;text-transform:uppercase;white-space:nowrap;transition:.24s}
+.detIn .go:hover{filter:brightness(1.2);transform:translateX(3px)}
+
+/* ── the totals foot ── */
+.foot{flex-shrink:0;border-top:1px solid var(--bd2);background:var(--bg2);
+  padding:10px clamp(12px,2.4vw,22px) calc(11px + env(safe-area-inset-bottom));
+  display:flex;align-items:center;gap:clamp(12px,2.4vw,26px);flex-wrap:wrap;
+  font-size:0.62rem}
+.foot div k{font-size:0.44rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--d3);
+  margin-right:7px}
+.foot div v{color:var(--off);font-variant-numeric:tabular-nums}
+.foot div v em{font-style:normal;color:var(--d3);font-size:0.9em}
+.foot .keys{margin-left:auto;color:var(--d3);font-size:0.54rem;letter-spacing:0.1em;
+  white-space:nowrap}
+.foot .keys b{color:var(--d1);font-weight:400;border:1px solid var(--bd);padding:1px 5px;
+  margin:0 2px}
+
+.empty{padding:40px 20px;text-align:center;color:var(--d3);font-size:0.72rem}
+
+@media(max-width:720px){
+  .head .mk span{display:none}
+  .detIn{grid-template-columns:1fr}
+  .foot .keys{display:none}
+}
+@media(prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="head">
+    <div class="mk">rides.ledger<span>Bear 650 · Kangayam</span></div>
+    <div class="filter"><input id="q" placeholder="filter…" autocomplete="off" /></div>
+    <span class="cnt" id="cnt"></span>
+    <a href="#">← Garage</a>
+  </header>
+
+  <div class="scroll">
+    <table>
+      <thead><tr id="thead"></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="foot" id="foot"></div>
+</div>
+
+<script src="rides-data.js"></script>
+<script>
+const S = RD.summary
+
+/* ── columns, including ones the files do not contain ─────────────────── */
+/* `get` returns null where a ride genuinely cannot answer, and null never
+   sorts as zero and never enters a total. */
+const COLS = [
+  { k: 'n', t: '#', w: 38, num: true, get: (r, i) => i + 1, fmt: v => String(v).padStart(2, '0') },
+  { k: 'name', t: 'Ride', cls: 'name', get: r => r.name,
+    cell: r => `<b>${r.name}</b><span>${r.fromCity} → ${
+      r.tbd && /decided/i.test(r.toCity) ? 'anywhere' : r.toCity}</span>` },
+  { k: 'tier', t: 'Status', get: r => ['completed', 'upcoming', 'planned'].indexOf(r.mode),
+    cell: r => `<span class="tierTag" style="color:${r.tier.color}">
+      <span class="dot" style="background:${r.tier.color}"></span>${r.tier.label}</span>` },
+  { k: 'km', t: 'Distance', u: 'km', num: true, bar: true, get: r => r.tbd ? null : r.km,
+    fmt: v => v == null ? 'TBD' : v },
+  { k: 'crow', t: 'Straight', u: 'km', num: true, get: r => r.mapped ? r.crow : null },
+  /* road ÷ straight-line. Under 1.00 is impossible — it means the file's
+     own distance disagrees with its own coordinates. */
+  { k: 'direct', t: 'Directness', u: 'road ÷ crow', num: true, bar: true, dp: 2,
+    get: r => (r.mapped && !r.tbd && r.crow) ? +(r.km / r.crow).toFixed(2) : null,
+    flag: v => v != null && v < 1 },
+  { k: 'stops', t: 'Stops', num: true, get: r => r.stops.length },
+  { k: 'brg', t: 'Heading', num: true, get: r => r.mapped ? r.bearing : null,
+    cell: r => r.mapped
+      ? `<span class="c">${r.compass}</span> <span class="dim">${r.bearing.toFixed(0)}°</span>`
+      : '<span class="dim">open</span>' },
+  { k: 'mins', t: 'Time', u: 'min', num: true, get: r => r.mins,
+    cell: r => r.mins
+      ? `${r.mins}${r.estimated ? ' <span class="dim">est</span>' : ''}`
+      : '<span class="dim">—</span>' },
+  { k: 'speed', t: 'Avg', u: 'km/h', num: true,
+    get: r => (r.mins && r.mapped && !r.tbd) ? +(r.km / (r.mins / 60)).toFixed(0) : null },
+  { k: 'days', t: 'When', num: true,
+    get: r => r.dated ? -r.days : null,
+    cell: r => r.dated
+      ? `${r.date}<span class="dim"> · ${r.days === 0 ? 'today'
+        : r.days > 0 ? 'in ' + r.days + 'd' : Math.abs(r.days) + 'd ago'}</span>`
+      : '<span class="dim">no date</span>' },
+]
+
+let sortK = 'n', sortDir = 1, query = '', openId = null, selI = 0
+
+/* maxima for the in-cell bars */
+const MAX = {}
+COLS.filter(c => c.bar).forEach(c => {
+  MAX[c.k] = Math.max(...RD.rides.map(r => c.get(r) ?? 0)) || 1
+})
+
+/* ── head ── */
+document.getElementById('thead').innerHTML = COLS.map(c =>
+  `<th data-k="${c.k}" class="${c.num ? 'num' : ''}" style="${c.w ? 'width:' + c.w + 'px' : ''}">
+     ${c.t}<i></i>${c.u ? `<span class="u">${c.u}</span>` : ''}
+   </th>`).join('')
+
+document.querySelectorAll('thead th').forEach(th =>
+  th.addEventListener('click', () => {
+    const k = th.dataset.k
+    if (sortK === k) sortDir *= -1
+    else { sortK = k; sortDir = (k === 'n' || k === 'name') ? 1 : -1 }
+    render()
+  }))
+
+/* ── render ───────────────────────────────────────────────────────────── */
+function rows() {
+  const col = COLS.find(c => c.k === sortK) || COLS[0]
+  let list = RD.rides.map((r, i) => ({ r, i }))
+
+  if (query) {
+    const q = query.toLowerCase()
+    list = list.filter(({ r }) =>
+      [r.name, r.subtitle, r.description, r.story, r.fromCity, r.toCity, r.date,
+        ...r.via, ...r.highlights, ...r.states, ...r.stops.map(s => s.label)]
+        .join(' ').toLowerCase().includes(q))
+  }
+
+  list.sort((a, b) => {
+    const va = col.get(a.r, a.i), vb = col.get(b.r, b.i)
+    /* nulls always sink, whichever way the column is pointing */
+    if (va == null && vb == null) return a.i - b.i
+    if (va == null) return 1
+    if (vb == null) return -1
+    if (typeof va === 'string') return va.localeCompare(vb) * sortDir
+    return (va - vb) * sortDir
+  })
+  return list
+}
+
+function render() {
+  const list = rows()
+
+  document.querySelectorAll('thead th').forEach(th => {
+    const on = th.dataset.k === sortK
+    th.classList.toggle('on', on)
+    th.querySelector('i').textContent = on ? (sortDir > 0 ? '▲' : '▼') : ''
+  })
+
+  const tb = document.getElementById('tbody')
+  if (!list.length) {
+    tb.innerHTML = `<tr><td colspan="${COLS.length}"><div class="empty">
+      nothing matches “${query}” — clear the filter to see all ${RD.rides.length}</div></td></tr>`
+  } else {
+    tb.innerHTML = list.map(({ r, i }) => {
+      const cells = COLS.map(c => {
+        const v = c.get(r, i)
+        let inner
+        if (c.cell) inner = c.cell(r, i)
+        else if (c.fmt) inner = c.fmt(v)
+        else if (v == null) inner = '<span class="dim">—</span>'
+        else inner = c.dp ? v.toFixed(c.dp) : v
+        const bad = c.flag && c.flag(v)
+        if (bad) inner = `<span class="warn" title="stated distance is shorter than the straight line — the ride file disagrees with itself">${inner} !</span>`
+        const bar = (c.bar && v != null)
+          ? `<span class="bar${c.num ? ' right' : ''}" style="--w:${(v / MAX[c.k] * 100).toFixed(1)}%"><i></i></span>`
+          : ''
+        return `<td class="${c.num ? 'num' : ''} ${c.cls || ''}">${inner}${bar}</td>`
+      }).join('')
+
+      const det = `<tr class="detail ${openId === r.id ? 'on' : ''}" data-id="${r.id}">
+        <td colspan="${COLS.length}"><div class="det"><div class="detIn" style="--rc:${r.color}">
+          <p>${r.story}</p>
+          <div class="chain">
+            <k>${r.mapped ? r.stops.length + ' waypoints' : 'one fixed point'}</k>
+            ${r.stops.map((s, k) => `<span><b>${String(k + 1).padStart(2, '0')}</b> ${s.label}
+              <span class="dim">${s.lat.toFixed(3)}N ${s.lng.toFixed(3)}E</span></span>`).join('')}
+            ${r.mapped ? '' : '<span class="dim">One Ride sets a date, not a course.</span>'}
+          </div>
+          <a class="go" href="#">Open ride ↗</a>
+        </div></div></td></tr>`
+
+      return `<tr class="${openId === r.id ? 'sel' : ''}" data-id="${r.id}"
+        style="--rc:${r.color}">${cells}</tr>${det}`
+    }).join('')
+  }
+
+  /* bars fill after paint */
+  requestAnimationFrame(() =>
+    document.querySelectorAll('tbody tr[data-id]').forEach(tr => tr.classList.add('seen')))
+
+  document.querySelectorAll('tbody tr[data-id]:not(.detail)').forEach(tr =>
+    tr.addEventListener('click', () => toggle(tr.dataset.id)))
+
+  document.getElementById('cnt').innerHTML = query
+    ? `<b>${list.length}</b> of ${RD.rides.length}`
+    : `<b>${RD.rides.length}</b> rides`
+
+  totals(list)
+}
+
+function toggle(id) {
+  openId = openId === id ? null : id
+  render()
+}
+
+/* ── the totals row ───────────────────────────────────────────────────── */
+/* It refuses to total what cannot be totalled — "TBD" is not zero. */
+function totals(list) {
+  const rs = list.map(x => x.r)
+  const measured = rs.filter(r => !r.tbd)
+  const unmeasured = rs.length - measured.length
+  const km = measured.reduce((n, r) => n + r.km, 0)
+  const done = rs.filter(r => r.done).reduce((n, r) => n + r.km, 0)
+  const stops = rs.reduce((n, r) => n + r.stops.length, 0)
+  const timed = rs.filter(r => r.mins)
+  const mins = timed.reduce((n, r) => n + r.mins, 0)
+
+  document.getElementById('foot').innerHTML = `
+    <div><k>Σ distance</k><v>${km} km${
+      unmeasured ? ` <em>+ ${unmeasured} unmeasured</em>` : ''}</v></div>
+    <div><k>Ridden</k><v class="g">${done} km</v></div>
+    <div><k>Ahead</k><v class="a">${km - done} km</v></div>
+    <div><k>Σ stops</k><v>${stops}</v></div>
+    <div><k>Σ time</k><v>${mins ? Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm' : '—'}
+      <em>${timed.length < rs.length ? `of ${timed.length}/${rs.length}` : ''}</em></v></div>
+    <span class="keys"><b>↑↓</b> move <b>↵</b> expand <b>/</b> filter <b>esc</b> clear</span>`
+}
+
+/* ── filter + keyboard ────────────────────────────────────────────────── */
+const q = document.getElementById('q')
+q.addEventListener('input', () => { query = q.value.trim(); openId = null; selI = 0; render() })
+
+addEventListener('keydown', e => {
+  if (e.key === '/' && document.activeElement !== q) { e.preventDefault(); q.focus(); return }
+  if (e.key === 'Escape') {
+    if (document.activeElement === q) { q.blur() }
+    if (query) { query = ''; q.value = ''; render() }
+    else if (openId) { openId = null; render() }
+    return
+  }
+  if (document.activeElement === q) return
+
+  const trs = [...document.querySelectorAll('tbody tr[data-id]:not(.detail)')]
+  if (!trs.length) return
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault()
+    selI = Math.max(0, Math.min(trs.length - 1, selI + (e.key === 'ArrowDown' ? 1 : -1)))
+    trs.forEach((t, i) => t.classList.toggle('sel', i === selI))
+    trs[selI].scrollIntoView({ block: 'nearest' })
+  }
+  if (e.key === 'Enter') {
+    e.preventDefault()
+    const t = trs[selI]
+    if (t) toggle(t.dataset.id)
+  }
+})
+
+render()
+</script>
+</body>
+</html>

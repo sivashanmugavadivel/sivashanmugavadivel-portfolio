@@ -1,5 +1,5 @@
 {
-  "_comment": "The route behind the KoviaON marathon vlog (public/mygarage/vlog/config/koviaon-marathon-hindusthan-college.json → rideId 'r5'). Field notes live in src/data/rides.js.",
+  "_comment": "The route behind the KovaiON marathon vlog (public/mygarage/vlog/config/koviaon-marathon-hindusthan-college.json → rideId 'r5'). Field notes live in src/data/rides.js. NAME is the ride's PURPOSE — the marathon; `subtitle` carries where it went. The vlog file keeps its koviaon- filename because renaming it changes the vlog's URL.",
 
   "_todo": [
     "time     — what the ride actually took, as a QUOTED clock, H:MM ('2:10').",
@@ -26,8 +26,8 @@
   "order": 12,
   "id": "r5",
 
-  "name": "Home to Hindusthan College, Coimbatore",
-  "subtitle": "Kariya Kattu Valasu → Palladam → Sulur → Hindusthan College of Arts and Sciences",
+  "name": "KovaiON Marathon",
+  "subtitle": "Home (Kariya Kattu Valasu) → Palladam → Sulur → Hindusthan College, Coimbatore",
   "mode": "completed",
 
   "distance": "80 KM",
@@ -36,14 +36,16 @@
   "date": "23 Aug 2026",
   "rating": null,
 
-  "fromCity": "Kariya Kattu Valasu",
-  "toCity": "Hindusthan College of Arts and Sciences, Coimbatore",
+  "fromPlace": "Kariya Kattu Valasu",
+  "fromCity": "Kangayam",
+  "destPlace": "Hindusthan College of Arts and Sciences",
+  "destCity": "Coimbatore",
   "states": ["Tamil Nadu"],
   "color": "#3b82f6",
 
-  "description": "The run down to Coimbatore for the KoviaON marathon at Hindusthan College.",
-  "story": "Ridden for the KoviaON marathon at Hindusthan College of Arts and Sciences, Coimbatore. Out of Kariya Kattu Valasu through Kangayam, then west along the Avinashipalayam and Palladam road, Sulur, and into the city through Singanallur to the campus.",
-  "highlights": ["KoviaON Marathon", "Hindusthan College", "Palladam Road", "City Approach"],
+  "description": "The run down to Coimbatore for the KovaiON marathon at Hindusthan College.",
+  "story": "Ridden for the KovaiON marathon at Hindusthan College of Arts and Sciences, Coimbatore. Out of Kariya Kattu Valasu through Kangayam, then west along the Avinashipalayam and Palladam road, Sulur, and into the city through Singanallur to the campus.",
+  "highlights": ["KovaiON Marathon", "Hindusthan College", "Palladam Road", "City Approach"],
   "via": ["Kangayam", "Avinashipalayam", "Palladam", "Sulur", "Singanallur"],
 
   "mapCenter": [11.01, 77.3],

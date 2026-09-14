@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Rides · 3 · Departure Board</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   DEPARTURE BOARD — the rides as a split-flap board in a station hall.
+
+   The reason this format fits: a ride list is already a departures list.
+   Every ride has a date, an origin, a destination, places it calls at,
+   and a state — and the three tiers map onto board statuses exactly:
+
+     completed → DEPARTED      upcoming → BOARDING      planned → SCHEDULED
+
+   A board is also the one display that is MORE interesting when a row is
+   incomplete. "One Ride 2026 · destination: ANYWHERE · platform: OPEN"
+   reads as a feature on a board, where on a card it reads as missing data.
+
+   The flaps really clatter: every character cycles through the drum and
+   settles, staggered left to right, exactly as the mechanical ones do.
+   ══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --hall:#08080a; --board:#111114; --flap:#1a1a1f; --flap2:#141418;
+  --amber:#ffb000; --amber2:#ffd166; --green:#4ade80; --dim:#6b6b74;
+  --off:#f4f4f2; --bd:rgba(255,176,0,0.16); --bd2:rgba(255,176,0,0.34);
+  --cond:'Barlow Condensed',sans-serif; --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --ease:cubic-bezier(.2,.9,.25,1);
+  --gap:14px;
+}
+body{background:var(--hall);color:var(--dim);font-family:var(--cond);
+  -webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden;
+  background-image:
+    radial-gradient(80vw 46vh at 50% -8%,rgba(255,176,0,0.055),transparent 66%),
+    repeating-linear-gradient(0deg,rgba(255,255,255,0.012) 0 1px,transparent 1px 4px);
+}
+::selection{background:var(--amber);color:var(--hall)}
+
+.hall{max-width:1240px;margin:0 auto;padding:clamp(16px,3vw,40px) clamp(12px,3vw,32px)
+  calc(40px + env(safe-area-inset-bottom))}
+
+/* ── hall signage above the board ── */
+.sign{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:clamp(14px,2.4vw,24px)}
+.sign .t{flex:1;min-width:240px}
+.sign .kick{font-family:var(--mono);font-size:0.58rem;letter-spacing:0.3em;text-transform:uppercase;
+  color:var(--amber);margin-bottom:8px;opacity:0;animation:fade .7s var(--ease) .15s forwards}
+@keyframes fade{to{opacity:1}}
+.sign h1{font-weight:700;text-transform:uppercase;color:var(--off);
+  font-size:clamp(1.9rem,6vw,3.6rem);line-height:0.94;letter-spacing:0.005em}
+.sign h1 em{font-style:normal;color:var(--amber)}
+.sign h1 .w{display:inline-block;overflow:hidden;vertical-align:bottom}
+.sign h1 .w i{display:inline-block;font-style:normal;transform:translateY(104%);
+  animation:rise .95s var(--ease) forwards}
+@keyframes rise{to{transform:none}}
+.sign .clock{text-align:right;font-family:var(--mono);flex-shrink:0}
+.sign .clock b{display:block;font-size:clamp(1.4rem,4vw,2.1rem);color:var(--amber);
+  font-weight:500;letter-spacing:0.04em;line-height:1;font-variant-numeric:tabular-nums}
+.sign .clock u{display:block;text-decoration:none;font-size:0.56rem;letter-spacing:0.2em;
+  text-transform:uppercase;color:var(--dim);margin-top:6px}
+.sign a.exit{font-family:var(--mono);font-size:0.6rem;letter-spacing:0.16em;text-transform:uppercase;
+  color:var(--dim);text-decoration:none;border:1px solid var(--bd);padding:7px 12px;transition:.25s}
+.sign a.exit:hover{color:var(--amber);border-color:var(--bd2)}
+
+/* ── the board ── */
+.board{background:var(--board);border:1px solid rgba(255,255,255,0.07);
+  border-radius:5px;overflow:hidden;
+  box-shadow:0 44px 90px -40px rgba(0,0,0,0.95),inset 0 1px 0 rgba(255,255,255,0.05)}
+/* the glass reflection across the top of the case */
+.board{position:relative}
+.board::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:9;
+  background:linear-gradient(168deg,rgba(255,255,255,0.055) 0%,transparent 26%)}
+
+.cols{display:grid;grid-template-columns:var(--g);gap:1px;
+  background:rgba(255,176,0,0.13);padding:0 0 1px;
+  font-family:var(--mono);font-size:0.56rem;letter-spacing:0.2em;text-transform:uppercase}
+.cols div{background:var(--board);color:var(--amber);padding:11px 12px}
+.cols div.r{text-align:right}
+
+.rows{display:flex;flex-direction:column;gap:1px;background:rgba(255,255,255,0.05)}
+
+.rw{display:grid;grid-template-columns:var(--g);gap:1px;background:rgba(255,255,255,0.05);
+  cursor:pointer;position:relative;text-align:left;border:0;padding:0;width:100%;
+  font-family:var(--cond)}
+.rw > span{background:var(--flap);padding:12px;display:flex;align-items:center;
+  transition:background .3s var(--ease);min-width:0}
+.rw:hover > span,.rw:focus-visible > span{background:var(--flap2)}
+.rw:focus-visible{outline:1px solid var(--amber);outline-offset:-1px}
+.rw.on > span{background:#1f1f26}
+.rw.on > span:first-child{box-shadow:inset 3px 0 0 var(--amber)}
+
+/* the flap characters */
+.flaps{display:flex;gap:1px;flex-wrap:nowrap;min-width:0}
+.flaps.wrap{flex-wrap:wrap;gap:1px 1px}
+.fl{display:inline-grid;place-items:center;flex-shrink:0;
+  min-width:0.68em;height:1.5em;padding:0 0.055em;
+  background:linear-gradient(var(--flap2) 0 calc(50% - 0.5px),#0d0d10 calc(50% - 0.5px) calc(50% + 0.5px),var(--flap2) calc(50% + 0.5px) 100%);
+  color:var(--off);font-weight:600;font-size:1.02rem;line-height:1;
+  border-radius:1.5px;font-variant-numeric:tabular-nums;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.06)}
+.fl.sp{background:transparent;box-shadow:none;min-width:0.34em}
+.fl.turning{animation:flap .1s linear;color:var(--amber2)}
+@keyframes flap{0%{transform:scaleY(.5) translateY(-12%);filter:brightness(1.6)}100%{transform:none}}
+.fl.am{color:var(--amber)}
+.fl.gr{color:var(--green)}
+.fl.dm{color:var(--dim)}
+
+/* column-specific type sizes */
+.rw .c-date .fl{font-size:0.92rem;color:var(--amber)}
+.rw .c-dest .fl{font-size:1.12rem}
+.rw .c-via{font-family:var(--mono);font-size:0.68rem;color:var(--dim);letter-spacing:0.04em;
+  line-height:1.5;display:block;padding-top:14px}
+.rw .c-km{justify-content:flex-end}
+.rw .c-km .fl{font-size:1.02rem;color:var(--amber2)}
+.rw .c-st{justify-content:flex-end}
+
+/* status lamp */
+.lamp{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:0.6rem;
+  letter-spacing:0.16em;text-transform:uppercase;white-space:nowrap}
+.lamp i{width:7px;height:7px;border-radius:50%;flex-shrink:0;box-shadow:0 0 9px currentColor}
+.lamp.departed{color:var(--green)}
+.lamp.departed i{background:var(--green)}
+.lamp.boarding{color:var(--amber);animation:blink 1.15s steps(2,end) infinite}
+.lamp.boarding i{background:var(--amber)}
+@keyframes blink{50%{opacity:0.32}}
+.lamp.scheduled{color:var(--dim)}
+.lamp.scheduled i{background:var(--dim);box-shadow:none}
+
+/* ── the stub that unfolds under a row ── */
+.stub{grid-column:1/-1;background:var(--flap2);overflow:hidden;max-height:0;
+  transition:max-height .55s var(--ease)}
+.rw.on + .stub{max-height:620px}
+.stubIn{padding:0 clamp(14px,2.6vw,26px) clamp(18px,2.6vw,26px);
+  display:grid;grid-template-columns:1fr 268px;gap:clamp(16px,3vw,34px);
+  border-top:1px dashed rgba(255,176,0,0.22);margin:0 clamp(10px,2vw,16px);
+  opacity:0;transform:translateY(-10px);transition:.45s var(--ease) .1s}
+.rw.on + .stub .stubIn{opacity:1;transform:none;padding-top:clamp(16px,2.4vw,24px)}
+.stubIn p{font-family:var(--cond);font-size:1.02rem;line-height:1.72;color:#c9c9cf;max-width:64ch}
+.stubIn .hl{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+.stubIn .hl u{text-decoration:none;font-family:var(--mono);font-size:0.55rem;letter-spacing:0.12em;
+  text-transform:uppercase;padding:4px 9px;border:1px solid var(--bd2);color:var(--amber)}
+
+/* the boarding-pass card on the right of the stub */
+.pass{background:#0c0c0f;border:1px solid var(--bd);position:relative;padding:16px 16px 14px;
+  align-self:start}
+.pass::before,.pass::after{content:'';position:absolute;width:15px;height:15px;border-radius:50%;
+  background:var(--flap2);top:50%;margin-top:-7.5px}
+.pass::before{left:-8px}.pass::after{right:-8px}
+.pass k{display:block;font-family:var(--mono);font-size:0.5rem;letter-spacing:0.2em;
+  text-transform:uppercase;color:var(--dim);margin-bottom:4px}
+.pass .big{font-family:var(--mono);font-size:1.3rem;color:var(--amber);font-weight:500;
+  letter-spacing:0.02em;margin-bottom:12px;font-variant-numeric:tabular-nums}
+.pass .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;
+  padding-top:12px;border-top:1px dashed var(--bd);margin-top:2px}
+.pass .grid v{display:block;font-family:var(--mono);font-size:0.76rem;color:var(--off)}
+.pass .code{margin-top:14px;padding-top:12px;border-top:1px dashed var(--bd);
+  display:flex;align-items:flex-end;gap:2px;height:34px}
+.pass .code i{flex:1;background:var(--off);border-radius:0.5px}
+.pass .go{display:block;text-align:center;margin-top:14px;padding:10px;background:var(--amber);
+  color:var(--hall);font-family:var(--mono);font-size:0.62rem;letter-spacing:0.18em;
+  text-transform:uppercase;text-decoration:none;font-weight:600;transition:.25s var(--ease)}
+.pass .go:hover{background:var(--amber2);transform:translateY(-2px)}
+
+/* ── ticker along the bottom ── */
+.ticker{margin-top:clamp(14px,2.4vw,22px);border:1px solid var(--bd);background:var(--board);
+  overflow:hidden;padding:9px 0;position:relative}
+.ticker::before,.ticker::after{content:'';position:absolute;top:0;bottom:0;width:60px;z-index:2}
+.ticker::before{left:0;background:linear-gradient(90deg,var(--board),transparent)}
+.ticker::after{right:0;background:linear-gradient(-90deg,var(--board),transparent)}
+.ticker .run{display:flex;gap:44px;white-space:nowrap;width:max-content;
+  animation:run 34s linear infinite;font-family:var(--mono);font-size:0.64rem;
+  letter-spacing:0.14em;text-transform:uppercase;color:var(--dim)}
+.ticker .run b{color:var(--amber);font-weight:500}
+@keyframes run{to{transform:translateX(-50%)}}
+.ticker:hover .run{animation-play-state:paused}
+
+.foot{margin-top:18px;font-family:var(--mono);font-size:0.58rem;letter-spacing:0.14em;
+  text-transform:uppercase;color:#4a4a52;text-align:center;line-height:1.9}
+
+/* desktop / phone column maps */
+.cols,.rw{--g:128px minmax(0,1.55fr) minmax(0,1fr) 108px 132px}
+@media(max-width:1040px){
+  .cols,.rw{--g:104px minmax(0,1.6fr) 86px 116px}
+  .cols div.c-via,.rw .c-via{display:none}
+}
+@media(max-width:680px){
+  .cols,.rw{--g:minmax(0,1fr) 78px}
+  .cols div.c-date,.rw .c-date,.cols div.c-km,.rw .c-km{display:none}
+  .rw .c-dest .fl{font-size:0.96rem}
+  .rw > span{padding:10px}
+  .stubIn{grid-template-columns:1fr}
+  .lamp{font-size:0.54rem;letter-spacing:0.1em}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;animation-iteration-count:1!important;
+    transition-duration:.01ms!important}
+  .sign h1 .w i{transform:none}
+  .ticker .run{animation:none}
+}
+</style>
+</head>
+<body>
+
+<div class="hall">
+  <header class="sign">
+    <div class="t">
+      <div class="kick">Kariya Kattu Valasu · Platform 1 · Bear 650</div>
+      <h1><span class="w"><i style="animation-delay:.1s">Rides</i></span>
+        <em><span class="w"><i style="animation-delay:.22s">&amp; Journeys</i></span></em></h1>
+    </div>
+    <div class="clock"><b id="clock">--:--:--</b><u id="tally"></u></div>
+    <a class="exit" href="#">← Garage</a>
+  </header>
+
+  <div class="board">
+    <div class="cols">
+      <div class="c-date">Date</div>
+      <div class="c-dest">Destination</div>
+      <div class="c-via">Calling at</div>
+      <div class="c-km r">Distance</div>
+      <div class="c-st r">Status</div>
+    </div>
+    <div class="rows" id="rows"></div>
+  </div>
+
+  <div class="ticker"><div class="run" id="run"></div></div>
+
+  <p class="foot">
+    Board updates when a ride is added to the garage · Split-flap display, Kangayam
+  </p>
+</div>
+
+<script src="rides-data.js"></script>
+<script>
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches
+const S = RD.summary
+
+/* board status per tier */
+const STATUS = {
+  completed: { word: 'Departed', cls: 'departed' },
+  upcoming: { word: 'Boarding', cls: 'boarding' },
+  planned: { word: 'Scheduled', cls: 'scheduled' },
+}
+
+document.getElementById('tally').textContent = RD.rides.length + ' services · ' + RD.tally
+
+/* ── hall clock ───────────────────────────────────────────────────────── */
+;(function clock() {
+  const el = document.getElementById('clock')
+  const tick = () => {
+    const d = new Date()
+    el.textContent = [d.getHours(), d.getMinutes(), d.getSeconds()]
+      .map(n => String(n).padStart(2, '0')).join(':')
+  }
+  tick(); setInterval(tick, 1000)
+})()
+
+/* ── flap rendering ───────────────────────────────────────────────────── */
+/* Each character is one flap. `cls` tints the whole run. A space becomes a
+   narrow gap flap so words separate without a lit tile between them.    */
+function flaps(text, cls, wrap) {
+  const chars = String(text).split('')
+  return `<span class="flaps${wrap ? ' wrap' : ''}">` + chars.map(c =>
+    c === ' '
+      ? '<i class="fl sp"></i>'
+      : `<i class="fl${cls ? ' ' + cls : ''}" data-to="${c.replace(/"/g, '&quot;')}">${REDUCED ? c : ' '}</i>`
+  ).join('') + '</span>'
+}
+
+/* the drum: what a flap cycles through on its way to the right character */
+const DRUM = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789·—→'
+
+/* Settle every flap on the board, staggered so the clatter sweeps across.
+   Each flap spins for a few frames then locks, like the real drum finding
+   its stop. */
+function settle(root) {
+  if (REDUCED) return
+  const all = [...root.querySelectorAll('.fl[data-to]')]
+  all.forEach((el, i) => {
+    const target = el.dataset.to
+    const upper = target.toUpperCase()
+    /* how many frames this flap turns before it lands */
+    const spins = 6 + Math.floor(Math.random() * 9)
+    let n = 0
+    const start = 120 + i * 11
+    setTimeout(() => {
+      const id = setInterval(() => {
+        n++
+        if (n >= spins) {
+          clearInterval(id)
+          el.textContent = target
+          el.classList.remove('turning')
+          return
+        }
+        el.textContent = DRUM[Math.floor(Math.random() * DRUM.length)]
+        el.classList.add('turning')
+        /* retrigger the flap keyframe */
+        el.style.animation = 'none'; void el.offsetWidth; el.style.animation = ''
+      }, 42)
+      void upper
+    }, start)
+  })
+}
+
+/* ── build the rows ───────────────────────────────────────────────────── */
+document.getElementById('rows').innerHTML = RD.rides.map(r => {
+  const st = STATUS[r.mode]
+  /* the board shows a destination, and One Ride genuinely has none */
+  const dest = r.tbd && /decided/i.test(r.toCity) ? 'ANYWHERE' : r.toCity.toUpperCase()
+  const via = r.via.length ? r.via.join(' · ')
+    : (r.mapped ? r.stops.slice(1, -1).map(s => s.label).join(' · ') || 'Non-stop' : 'Route open')
+  return `<button class="rw" data-id="${r.id}">
+      <span class="c-date">${flaps(r.date.toUpperCase())}</span>
+      <span class="c-dest">${flaps(dest, '', true)}</span>
+      <span class="c-via">${via}</span>
+      <span class="c-km">${flaps(r.distance.toUpperCase())}</span>
+      <span class="c-st"><span class="lamp ${st.cls}"><i></i>${st.word}</span></span>
+    </button>
+    <div class="stub">
+      <div class="stubIn">
+        <div>
+          <p>${r.story}</p>
+          <div class="hl">${r.highlights.map(h => `<u>${h}</u>`).join('')}</div>
+        </div>
+        <div class="pass">
+          <k>Service</k>
+          <div class="big">${r.id.slice(0, 10).toUpperCase()}</div>
+          <div class="grid">
+            <div><k>From</k><v>${r.fromCity}</v></div>
+            <div><k>To</k><v>${r.tbd && /decided/i.test(r.toCity) ? 'Anywhere' : r.toCity}</v></div>
+            <div><k>Distance</k><v>${r.distance}</v></div>
+            <div><k>Duration</k><v>${r.time || (r.estimate ? r.estimate + ' est' : '—')}</v></div>
+            <div><k>Heading</k><v>${r.mapped ? r.compass + ' ' + r.bearing.toFixed(0) + '°' : 'Open'}</v></div>
+            <div><k>Stops</k><v>${r.stops.length}</v></div>
+          </div>
+          <div class="code" aria-hidden="true">${bars(r.id)}</div>
+          <a class="go" href="#">Open ride ↗</a>
+        </div>
+      </div>
+    </div>`
+}).join('')
+
+/* a barcode whose bar widths come from the ride id, so each one differs */
+function bars(seed) {
+  let h = 0
+  for (const c of seed) h = (h * 31 + c.charCodeAt(0)) % 99991
+  return Array.from({ length: 34 }, (_, i) => {
+    h = (h * 1103515245 + 12345) % 2147483648
+    const w = 1 + (h >> 7) % 3
+    const tall = (h >> 3) % 4 !== 0
+    return `<i style="flex:${w};height:${tall ? 100 : 62}%"></i>`
+  }).join('')
+}
+
+/* ── ticker copy ──────────────────────────────────────────────────────── */
+const lines = [
+  `<b>${S.done}</b> departed · <b>${S.doneKm} km</b> on the clock`,
+  `<b>${S.aheadKm} km</b> still scheduled`,
+  `Longest ridden — <b>${S.longest ? S.longest.name : '—'}</b>`,
+  `One Ride 2026 boarding <b>20 Sep</b> · every rider, every road, everywhere`,
+  `<b>${S.stopCount}</b> waypoints surveyed across <b>${S.states.join(' & ')}</b>`,
+]
+document.getElementById('run').innerHTML =
+  [...lines, ...lines].map(l => `<span>${l}</span>`).join('')
+
+/* ── behaviour ────────────────────────────────────────────────────────── */
+settle(document.getElementById('rows'))
+
+const rows = [...document.querySelectorAll('.rw')]
+rows.forEach(rw => rw.addEventListener('click', () => {
+  const was = rw.classList.contains('on')
+  rows.forEach(o => o.classList.remove('on'))
+  if (!was) {
+    rw.classList.add('on')
+    /* the row re-flaps as it opens — the board acknowledging the pick */
+    settle(rw)
+  }
+}))
+
+/* arrow keys walk the board, like the hall attendant scrolling it */
+addEventListener('keydown', e => {
+  if (!['ArrowDown', 'ArrowUp'].includes(e.key)) return
+  const at = rows.findIndex(r => r === document.activeElement)
+  const next = rows[Math.max(0, Math.min(rows.length - 1, at + (e.key === 'ArrowDown' ? 1 : -1)))]
+  if (next) { next.focus(); e.preventDefault() }
+})
+</script>
+</body>
+</html>

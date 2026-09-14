@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Rides · 15 · Journal</title>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   JOURNAL — a bound book you turn, not a stack you flip.
+
+   Design 4 in this folder flips loose postcards. This is the opposite
+   object: one sewn volume, opened flat, with a spread per ride. Left page
+   carries the plate — the route engraved with its waypoints listed under
+   it. Right page carries the written entry. Turning is a real page turn:
+   grab the outer edge and the leaf follows your hand, its back showing
+   through as it passes vertical, and it drops or springs back depending
+   on how far you took it.
+
+   Because it is bound rather than stacked, sequence matters and is
+   visible: a ribbon marker rides the page edges so you always know how
+   far into the book you are, and the two rides with no date are simply
+   the last entries written so far.
+
+   Letterpress on linen — ink that sits slightly into the paper, a gutter
+   shadow down the spine, and deckled outer edges.
+   ══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --desk:#241f1a; --desk2:#332b23;
+  --leaf:#f6f1e4; --leaf2:#ece5d3; --edge:#ddd3bb;
+  --ink:#231e18; --ink2:#574e42; --faint:#8d8273;
+  --hair:rgba(35,30,24,0.16); --rib:#9d2f2a;
+  --serif:'EB Garamond',Georgia,serif; --sans:'Inter Tight',system-ui,sans-serif;
+  --ease:cubic-bezier(.3,.02,.2,1); --c:#ef4444;
+}
+html,body{height:100%}
+body{background:var(--desk);color:var(--ink2);font-family:var(--serif);overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+  background-image:
+    radial-gradient(80vw 70vh at 50% -10%,rgba(255,240,210,0.07),transparent 62%),
+    repeating-linear-gradient(48deg,rgba(0,0,0,0.05) 0 3px,transparent 3px 7px)}
+::selection{background:var(--rib);color:var(--leaf)}
+
+.room{height:100svh;display:flex;flex-direction:column;align-items:center;
+  padding:clamp(10px,2vw,26px);gap:clamp(8px,1.4vw,14px)}
+
+/* ── chrome ── */
+.top{width:min(1180px,100%);display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;
+  flex-shrink:0}
+.top h1{font-weight:500;color:var(--leaf);font-size:clamp(1.05rem,2.4vw,1.5rem);
+  letter-spacing:0.01em;line-height:1}
+.top h1 em{font-style:italic;color:#c9b89a}
+.top .sub{font-family:var(--sans);font-size:0.56rem;letter-spacing:0.22em;text-transform:uppercase;
+  color:rgba(246,241,228,0.36)}
+.top a{margin-left:auto;font-family:var(--sans);font-size:0.56rem;letter-spacing:0.16em;
+  text-transform:uppercase;color:rgba(246,241,228,0.5);text-decoration:none;
+  border:1px solid rgba(246,241,228,0.2);padding:7px 12px;transition:.24s}
+.top a:hover{color:var(--desk);background:var(--leaf);border-color:var(--leaf)}
+
+/* ── the book ── */
+.book{position:relative;width:min(1180px,100%);flex:1;min-height:0;
+  perspective:2400px;perspective-origin:50% 46%}
+.vol{position:absolute;inset:0;display:flex;border-radius:3px;
+  box-shadow:0 40px 70px -28px rgba(0,0,0,0.8)}
+
+/* the fixed spread underneath */
+.leafpage{flex:1 1 50%;min-width:0;background:var(--leaf);position:relative;overflow:hidden;
+  background-image:radial-gradient(60% 60% at 30% 20%,rgba(255,255,255,0.7),transparent 70%)}
+.leafpage.L{border-radius:3px 0 0 3px;
+  box-shadow:inset -22px 0 30px -22px rgba(35,30,24,0.5)}
+.leafpage.R{border-radius:0 3px 3px 0;
+  box-shadow:inset 22px 0 30px -22px rgba(35,30,24,0.5)}
+/* deckled outer edge */
+.leafpage.L::before,.leafpage.R::before{content:'';position:absolute;top:0;bottom:0;width:6px;
+  background:repeating-linear-gradient(var(--edge) 0 3px,var(--leaf2) 3px 7px)}
+.leafpage.L::before{left:0}.leafpage.R::before{right:0}
+
+/* the turning leaf */
+.turner{position:absolute;top:0;bottom:0;left:50%;width:50%;z-index:20;
+  transform-style:preserve-3d;transform-origin:left center;
+  transform:rotateY(0deg);pointer-events:none}
+.turner.live{pointer-events:auto}
+.turner.ease{transition:transform .72s var(--ease)}
+.turner .side{position:absolute;inset:0;backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;background:var(--leaf);overflow:hidden;
+  border-radius:0 3px 3px 0;
+  box-shadow:inset 22px 0 30px -22px rgba(35,30,24,0.5)}
+.turner .side.back{transform:rotateY(180deg);border-radius:3px 0 0 3px;
+  box-shadow:inset -22px 0 30px -22px rgba(35,30,24,0.5)}
+/* the shadow the lifted leaf casts back onto the spread */
+.turner::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(90deg,rgba(35,30,24,0.24),transparent 34%);opacity:0}
+.turner.lifting::after{opacity:1}
+
+/* grab zones */
+.grab{position:absolute;top:0;bottom:0;width:9%;z-index:30;cursor:pointer}
+.grab.next{right:0}
+.grab.prev{left:0}
+.grab::after{content:'';position:absolute;right:0;top:0;bottom:0;width:100%;
+  background:linear-gradient(-90deg,rgba(35,30,24,0.1),transparent);opacity:0;transition:.3s}
+.grab:hover::after{opacity:1}
+.grab .curl{position:absolute;right:10px;bottom:12px;font-family:var(--sans);font-size:0.54rem;
+  letter-spacing:0.16em;text-transform:uppercase;color:var(--faint);opacity:0;transition:.3s}
+.grab.prev .curl{left:10px;right:auto}
+.grab:hover .curl{opacity:1}
+
+/* ── page contents ── */
+.pg{position:absolute;inset:0;padding:clamp(20px,3.2vw,46px);display:flex;flex-direction:column}
+.pg.L{padding-right:clamp(26px,3.4vw,54px)}
+.pg.R{padding-left:clamp(26px,3.4vw,54px)}
+
+.folio{position:absolute;bottom:clamp(14px,2vw,24px);font-family:var(--sans);font-size:0.54rem;
+  letter-spacing:0.24em;text-transform:uppercase;color:var(--faint)}
+.pg.L .folio{left:clamp(20px,3.2vw,46px)}
+.pg.R .folio{right:clamp(20px,3.2vw,46px)}
+
+/* left page — the plate */
+.plate{flex:1;min-height:0;display:flex;flex-direction:column}
+.plate .cap{font-family:var(--sans);font-size:0.5rem;letter-spacing:0.26em;text-transform:uppercase;
+  color:var(--faint);margin-bottom:12px}
+.plate .im{flex:1;min-height:0;position:relative;border:1px solid var(--hair);
+  background:var(--leaf2);overflow:hidden}
+.plate .im svg{position:absolute;inset:0;width:100%;height:100%}
+.plate .im .tint{position:absolute;inset:0;background:var(--c);opacity:0.07;mix-blend-mode:multiply}
+.plate .legend{margin-top:12px;columns:2;column-gap:20px;font-size:0.84rem;line-height:1.6}
+.plate .legend div{break-inside:avoid;display:flex;gap:7px;color:var(--ink2);margin-bottom:3px}
+.plate .legend b{font-family:var(--sans);font-size:0.56rem;font-weight:600;color:var(--c);
+  flex-shrink:0;padding-top:2px}
+
+/* right page — the entry */
+.entry{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.entry .date{font-family:var(--sans);font-size:0.52rem;letter-spacing:0.26em;text-transform:uppercase;
+  color:var(--c);margin-bottom:10px;display:flex;align-items:center;gap:9px}
+.entry .date i{width:6px;height:6px;border-radius:50%;background:currentColor}
+.entry h2{font-weight:600;color:var(--ink);font-size:clamp(1.4rem,3vw,2.1rem);line-height:1.08;
+  letter-spacing:-0.014em;margin-bottom:6px}
+.entry .kick{font-style:italic;font-size:0.95rem;color:var(--faint);line-height:1.5;
+  margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--hair)}
+.entry .body{flex:1;min-height:0;overflow-y:auto;font-size:clamp(0.98rem,1.6vw,1.1rem);
+  line-height:1.72;color:var(--ink2);columns:1}
+.entry .body::-webkit-scrollbar{width:3px}
+.entry .body::-webkit-scrollbar-thumb{background:var(--hair)}
+.entry .body p:first-child::first-letter{font-size:3.1em;float:left;line-height:0.76;
+  margin:5px 9px 0 0;color:var(--c);font-weight:600}
+.entry .marg{margin-top:14px;padding-top:13px;border-top:1px solid var(--hair);
+  display:flex;flex-wrap:wrap;gap:0}
+.entry .marg div{padding-right:18px;margin-right:18px;border-right:1px solid var(--hair)}
+.entry .marg div:last-child{border-right:0;margin-right:0;padding-right:0}
+.entry .marg k{display:block;font-family:var(--sans);font-size:0.46rem;letter-spacing:0.2em;
+  text-transform:uppercase;color:var(--faint);margin-bottom:4px}
+.entry .marg v{display:block;font-size:1.1rem;color:var(--ink);font-weight:500}
+.entry .go{margin-top:14px;align-self:flex-start;font-family:var(--sans);font-size:0.56rem;
+  letter-spacing:0.18em;text-transform:uppercase;color:var(--ink);text-decoration:none;
+  border-bottom:1.5px solid var(--c);padding-bottom:3px;transition:.24s}
+.entry .go:hover{color:var(--c)}
+
+/* ── the ribbon + edge index ── */
+.ribbon{position:absolute;top:-8px;width:16px;z-index:26;pointer-events:none;
+  background:var(--rib);box-shadow:0 2px 7px rgba(0,0,0,0.5);
+  transition:left .72s var(--ease),height .72s var(--ease)}
+.ribbon::after{content:'';position:absolute;bottom:-9px;left:0;right:0;height:10px;
+  background:var(--rib);clip-path:polygon(0 0,100% 0,100% 100%,50% 58%,0 100%)}
+
+.edges{width:min(1180px,100%);display:flex;gap:2px;flex-shrink:0}
+.edges button{flex:1;height:30px;border:0;background:rgba(246,241,228,0.14);cursor:pointer;
+  position:relative;transition:.3s var(--ease);font-family:var(--sans);font-size:0.5rem;
+  letter-spacing:0.12em;text-transform:uppercase;color:rgba(246,241,228,0.5);overflow:hidden}
+.edges button:hover{background:rgba(246,241,228,0.28);color:var(--desk)}
+.edges button.on{background:var(--eb);color:#fff}
+.edges button i{position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--eb)}
+
+@media(max-width:880px){
+  body{overflow:auto}
+  .room{height:auto;min-height:100svh}
+  .book{flex:none;height:auto;perspective:none}
+  .vol{position:static;flex-direction:column}
+  .leafpage{flex:none;border-radius:3px}
+  .leafpage.L{min-height:420px;box-shadow:none}
+  .leafpage.R{min-height:480px;box-shadow:none}
+  .turner,.ribbon{display:none}
+  .grab{display:none}
+  .plate .legend{columns:1}
+  .edges button{font-size:0.44rem}
+}
+@media(prefers-reduced-motion:reduce){
+  *{transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+
+<div class="room">
+  <div class="top">
+    <h1>Rides &amp; <em>Journeys</em></h1>
+    <span class="sub" id="sub"></span>
+    <a href="#">← Garage</a>
+  </div>
+
+  <div class="book" id="book">
+    <div class="vol">
+      <div class="leafpage L"><div class="pg L" id="pgL"></div></div>
+      <div class="leafpage R"><div class="pg R" id="pgR"></div></div>
+    </div>
+    <div class="turner" id="turner">
+      <div class="side front"><div class="pg R" id="tFront"></div></div>
+      <div class="side back"><div class="pg L" id="tBack"></div></div>
+    </div>
+    <div class="ribbon" id="ribbon"></div>
+    <div class="grab prev" id="gPrev"><span class="curl">← back</span></div>
+    <div class="grab next" id="gNext"><span class="curl">turn →</span></div>
+  </div>
+
+  <div class="edges" id="edges"></div>
+</div>
+
+<script src="rides-data.js"></script>
+<script>
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches
+document.getElementById('sub').textContent = RD.rides.length + ' entries · ' + RD.tally
+
+let at = 0              // which spread is open
+let busy = false
+
+/* ── the engraved plate ───────────────────────────────────────────────── */
+const PW = 560, PH = 460
+
+function plate(r) {
+  if (!r.mapped) {
+    const rings = Array.from({ length: 6 }, (_, i) =>
+      `<circle cx="${PW / 2}" cy="${PH / 2}" r="${30 + i * 33}" fill="none"
+        stroke="rgba(35,30,24,${(0.3 - i * 0.04).toFixed(2)})" stroke-width="1"
+        stroke-dasharray="${i % 2 ? '2 6' : 'none'}"/>`).join('')
+    return `<svg viewBox="0 0 ${PW} ${PH}" preserveAspectRatio="xMidYMid meet">
+      ${hatch()}${rings}
+      <circle cx="${PW / 2}" cy="${PH / 2}" r="7" fill="${r.color}"/>
+      <text x="${PW / 2}" y="${PH / 2 + 30}" text-anchor="middle"
+        font-family="Inter Tight,sans-serif" font-size="11" letter-spacing="3"
+        fill="rgba(35,30,24,0.5)">COURSE UNDECIDED</text></svg>`
+  }
+  const P = RD.one(r, PW, PH, 62)
+  const d = RD.curve(P.pts)
+  return `<svg viewBox="0 0 ${PW} ${PH}" preserveAspectRatio="xMidYMid meet">
+    ${hatch()}
+    <path d="${d}" fill="none" stroke="rgba(35,30,24,0.18)" stroke-width="10"
+      stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="${d}" fill="none" stroke="${r.color}" stroke-width="2.6"
+      stroke-linecap="round" stroke-linejoin="round"/>
+    ${P.pts.map((p, i) => `
+      <circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}"
+        r="${i === 0 || i === P.pts.length - 1 ? 6.5 : 4}"
+        fill="#f6f1e4" stroke="${r.color}" stroke-width="2"/>
+      <text x="${p[0].toFixed(1)}" y="${(p[1] + 3.4).toFixed(1)}" text-anchor="middle"
+        font-family="Inter Tight,sans-serif" font-weight="600" font-size="7"
+        fill="${r.color}">${i + 1}</text>`).join('')}
+  </svg>`
+}
+
+/* an engraver's hatch across the plate, faint */
+const hatch = () => `<defs><pattern id="h" width="7" height="7" patternUnits="userSpaceOnUse"
+    patternTransform="rotate(38)">
+    <line x1="0" y1="0" x2="0" y2="7" stroke="rgba(35,30,24,0.05)" stroke-width="1"/>
+  </pattern></defs><rect width="${PW}" height="${PH}" fill="url(#h)"/>`
+
+/* ── the two pages of a spread ────────────────────────────────────────── */
+function leftHtml(r, i) {
+  return `<div class="plate">
+    <div class="cap">Plate ${String(i + 1).padStart(2, '0')} — ${
+      r.mapped ? r.stops.length + ' waypoints' : 'no course set'}</div>
+    <div class="im">${plate(r)}<span class="tint"></span></div>
+    <div class="legend">
+      ${r.stops.map((s, k) => `<div><b>${k + 1}</b>${s.label}</div>`).join('')}
+    </div>
+  </div>
+  <span class="folio">${r.fromCity}</span>`
+}
+
+function rightHtml(r, i) {
+  const dest = r.tbd && /decided/i.test(r.toCity) ? 'anywhere' : r.toCity
+  return `<div class="entry">
+    <div class="date"><i></i>${r.tier.label} · ${r.date}</div>
+    <h2>${r.name}</h2>
+    <div class="kick">${r.subtitle}</div>
+    <div class="body"><p>${r.story}</p></div>
+    <div class="marg">
+      <div><k>Distance</k><v>${r.distance}</v></div>
+      <div><k>Heading</k><v>${r.mapped ? r.compass + ' ' + r.bearing.toFixed(0) + '°' : 'Open'}</v></div>
+      <div><k>${r.time ? 'Saddle' : r.estimated ? 'Est.' : 'To'}</k>
+        <v>${r.time || r.estimate || dest}</v></div>
+    </div>
+    <a class="go" href="#">Open the ride ↗</a>
+  </div>
+  <span class="folio">${String(i + 1).padStart(2, '0')} of ${String(RD.rides.length).padStart(2, '0')}</span>`
+}
+
+/* ── render a spread ──────────────────────────────────────────────────── */
+function show(i) {
+  at = Math.max(0, Math.min(RD.rides.length - 1, i))
+  const r = RD.rides[at]
+  document.documentElement.style.setProperty('--c', r.color)
+  document.getElementById('pgL').innerHTML = leftHtml(r, at)
+  document.getElementById('pgR').innerHTML = rightHtml(r, at)
+  document.querySelectorAll('.edges button').forEach((b, k) => b.classList.toggle('on', k === at))
+  moveRibbon()
+}
+
+function moveRibbon() {
+  const rb = document.getElementById('ribbon')
+  const book = document.getElementById('book')
+  /* the ribbon sits deeper into the book the further in you are */
+  const t = RD.rides.length > 1 ? at / (RD.rides.length - 1) : 0
+  rb.style.left = (50 + t * 44) + '%'
+  rb.style.height = (34 + t * 26) + '%'
+  rb.style.background = RD.rides[at].color
+  void book
+}
+
+/* ── turning ──────────────────────────────────────────────────────────── */
+const turner = document.getElementById('turner')
+const tFront = document.getElementById('tFront'), tBack = document.getElementById('tBack')
+
+/* Set the leaf up for a turn: its FRONT is the right page you are leaving,
+   its BACK is the left page of the spread you are going to. */
+function arm(dir) {
+  const from = RD.rides[at]
+  const to = RD.rides[at + dir]
+  if (!to) return false
+  if (dir > 0) {
+    tFront.className = 'pg R'; tFront.innerHTML = rightHtml(from, at)
+    tBack.className = 'pg L'; tBack.innerHTML = leftHtml(to, at + 1)
+    turner.style.left = '50%'; turner.style.transformOrigin = 'left center'
+  } else {
+    tFront.className = 'pg L'; tFront.innerHTML = leftHtml(from, at)
+    tBack.className = 'pg R'; tBack.innerHTML = rightHtml(to, at - 1)
+    turner.style.left = '0%'; turner.style.transformOrigin = 'right center'
+  }
+  turner.classList.add('live', 'lifting')
+  return true
+}
+
+function turn(dir) {
+  if (busy) return
+  const to = at + dir
+  if (to < 0 || to >= RD.rides.length) return
+  if (REDUCED) { show(to); return }
+  busy = true
+  if (!arm(dir)) { busy = false; return }
+  turner.classList.remove('ease')
+  turner.style.transform = 'rotateY(0deg)'
+  requestAnimationFrame(() => {
+    turner.classList.add('ease')
+    turner.style.transform = `rotateY(${dir > 0 ? -180 : 180}deg)`
+    /* swap the underlying spread halfway, while the leaf hides it */
+    setTimeout(() => show(to), 380)
+    setTimeout(() => {
+      turner.classList.remove('ease', 'live', 'lifting')
+      turner.style.transform = 'rotateY(0deg)'
+      busy = false
+    }, 760)
+  })
+}
+
+/* drag the outer edge and the leaf follows the hand */
+function dragTurn(zone, dir) {
+  zone.addEventListener('pointerdown', e => {
+    if (busy || REDUCED) return
+    const to = at + dir
+    if (to < 0 || to >= RD.rides.length) return
+    if (!arm(dir)) return
+    busy = true
+    turner.classList.remove('ease')
+    const book = document.getElementById('book').getBoundingClientRect()
+    const start = e.clientX
+    zone.setPointerCapture(e.pointerId)
+
+    const move = ev => {
+      const half = book.width / 2 || 1
+      /* 0 → 1 across half the book, mapped to 0 → 180° of rotation */
+      const p = Math.max(0, Math.min(1, (dir > 0 ? start - ev.clientX : ev.clientX - start) / half))
+      turner.style.transform = `rotateY(${dir > 0 ? -p * 180 : p * 180}deg)`
+      turner.dataset.p = p
+    }
+    const up = () => {
+      zone.removeEventListener('pointermove', move)
+      zone.removeEventListener('pointerup', up)
+      const p = +(turner.dataset.p || 0)
+      turner.classList.add('ease')
+      if (p > 0.38) {
+        turner.style.transform = `rotateY(${dir > 0 ? -180 : 180}deg)`
+        setTimeout(() => show(at + dir), 300)
+        setTimeout(reset, 740)
+      } else {
+        turner.style.transform = 'rotateY(0deg)'
+        setTimeout(reset, 740)
+      }
+    }
+    const reset = () => {
+      turner.classList.remove('ease', 'live', 'lifting')
+      turner.style.transform = 'rotateY(0deg)'
+      turner.dataset.p = 0
+      busy = false
+    }
+    zone.addEventListener('pointermove', move)
+    zone.addEventListener('pointerup', up)
+    zone.addEventListener('pointercancel', up)
+  })
+  /* a plain click still turns the page */
+  zone.addEventListener('click', () => { if (!busy) turn(dir) })
+}
+
+dragTurn(document.getElementById('gNext'), 1)
+dragTurn(document.getElementById('gPrev'), -1)
+
+/* ── edge index ───────────────────────────────────────────────────────── */
+document.getElementById('edges').innerHTML = RD.rides.map((r, i) =>
+  `<button style="--eb:${r.color}" title="${r.name}"><i></i>${
+    r.name.length > 18 ? r.name.slice(0, 17) + '…' : r.name}</button>`).join('')
+document.querySelectorAll('.edges button').forEach((b, i) =>
+  b.addEventListener('click', () => {
+    if (busy || i === at) return
+    if (Math.abs(i - at) === 1) turn(i - at); else show(i)
+  }))
+
+addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'PageDown') { turn(1); e.preventDefault() }
+  if (e.key === 'ArrowLeft' || e.key === 'PageUp') { turn(-1); e.preventDefault() }
+})
+
+show(0)
+</script>
+</body>
+</html>

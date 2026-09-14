@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Rides · 7 · Telemetry</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   TELEMETRY — you don't read the ride, you play it back.
+
+   The interaction IS the page: hit play and a marker travels the real
+   projected route while the odometer climbs, the heading swings to each
+   leg's true bearing, and waypoints tick over as they are passed. Drag
+   the scrubber to move through the ride by hand; click any waypoint on
+   the track to jump straight to it.
+
+   It works because the data supports it honestly — every leg has a real
+   great-circle length, so position along the track maps to actual
+   kilometres rather than to a made-up curve. The clock is real too: a
+   logged time where one exists, the router's estimate where it does not,
+   and the readout says which of the two you are looking at.
+
+   One Ride 2026 has no course, so there is nothing to play. Instead of
+   faking a route it switches the panel to a live countdown — which, six
+   days out, is the more useful thing to show anyway.
+   ══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#04070a; --panel:#070c11; --panel2:#0b1219;
+  --ph:#5eead4; --ph2:#99f6e4; --am:#fbbf24; --rd:#fb7185;
+  --off:#dff5f0; --d1:rgba(223,245,240,0.6); --d2:rgba(223,245,240,0.38);
+  --d3:rgba(223,245,240,0.2); --bd:rgba(94,234,212,0.16); --bd2:rgba(94,234,212,0.36);
+  --mono:'JetBrains Mono',ui-monospace,monospace; --sans:'Barlow',system-ui,sans-serif;
+  --ease:cubic-bezier(.2,.9,.25,1); --c:#ef4444;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--d1);font-family:var(--mono);overflow:hidden;
+  -webkit-font-smoothing:antialiased}
+::selection{background:var(--ph);color:var(--bg)}
+/* CRT scanlines over everything, faint enough to read through */
+body::after{content:'';position:fixed;inset:0;z-index:90;pointer-events:none;
+  background:repeating-linear-gradient(rgba(0,0,0,0.22) 0 1px,transparent 1px 3px);
+  opacity:0.55}
+
+.rig{display:grid;grid-template-rows:auto minmax(0,1fr) auto;height:100svh}
+
+/* ── top: the ride selector ── */
+.bar{display:flex;align-items:stretch;border-bottom:1px solid var(--bd);background:var(--panel);
+  overflow-x:auto;scrollbar-width:none}
+.bar::-webkit-scrollbar{display:none}
+.bar .brand{display:flex;flex-direction:column;justify-content:center;gap:3px;flex-shrink:0;
+  padding:10px clamp(12px,2vw,22px);border-right:1px solid var(--bd)}
+.bar .brand b{font-family:var(--sans);font-weight:700;font-size:0.9rem;color:var(--off);
+  letter-spacing:0.02em}
+.bar .brand u{text-decoration:none;font-size:0.5rem;letter-spacing:0.22em;text-transform:uppercase;
+  color:var(--ph)}
+.tab{flex:1 0 auto;min-width:110px;padding:10px 14px;background:transparent;border:0;
+  border-right:1px solid rgba(94,234,212,0.1);cursor:pointer;text-align:left;
+  font-family:var(--mono);color:var(--d2);transition:.25s var(--ease);position:relative}
+.tab::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--tc);
+  transform:scaleX(0);transform-origin:left;transition:transform .35s var(--ease)}
+.tab:hover{background:rgba(94,234,212,0.05);color:var(--off)}
+.tab.on{color:var(--off);background:rgba(94,234,212,0.08)}
+.tab.on::after{transform:scaleX(1)}
+.tab i{display:block;font-style:normal;font-size:0.48rem;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--tc);margin-bottom:4px}
+.tab b{display:block;font-size:0.7rem;font-weight:500;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;max-width:190px}
+.bar a.exit{display:flex;align-items:center;padding:0 16px;flex-shrink:0;color:var(--d2);
+  text-decoration:none;font-size:0.56rem;letter-spacing:0.16em;text-transform:uppercase;
+  border-left:1px solid var(--bd);transition:.22s}
+.bar a.exit:hover{color:var(--ph)}
+
+/* ── middle: screen + readouts ── */
+.mid{display:grid;grid-template-columns:minmax(0,1fr) 296px;min-height:0}
+.screen{position:relative;min-width:0;background:
+  radial-gradient(68% 68% at 50% 46%,rgba(94,234,212,0.06),transparent 72%),var(--bg);
+  overflow:hidden}
+.screen svg{position:absolute;inset:0;width:100%;height:100%}
+.screen .vig{position:absolute;inset:0;pointer-events:none;z-index:2;
+  background:radial-gradient(72% 72% at 50% 50%,transparent 52%,rgba(4,7,10,0.85))}
+.screen .corner{position:absolute;font-size:0.5rem;letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--d3);z-index:3;pointer-events:none}
+.screen .tl{top:12px;left:14px}.screen .tr{top:12px;right:14px;text-align:right}
+.screen .bl{bottom:12px;left:14px}
+
+/* the "no course" state */
+.nocourse{position:absolute;inset:0;z-index:4;display:none;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;gap:14px;padding:24px}
+.nocourse.on{display:flex}
+.nocourse .warn{font-size:0.58rem;letter-spacing:0.34em;text-transform:uppercase;color:var(--am);
+  animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{50%{opacity:0.35}}
+.nocourse .cd{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.nocourse .cd div{min-width:74px;padding:12px 8px;border:1px solid var(--bd);background:var(--panel)}
+.nocourse .cd b{display:block;font-family:var(--sans);font-weight:700;
+  font-size:clamp(1.5rem,4vw,2.3rem);color:var(--ph2);line-height:1;
+  font-variant-numeric:tabular-nums}
+.nocourse .cd u{display:block;text-decoration:none;font-size:0.46rem;letter-spacing:0.2em;
+  text-transform:uppercase;color:var(--d3);margin-top:6px}
+.nocourse p{max-width:42ch;font-family:var(--sans);font-size:0.92rem;line-height:1.7;
+  color:var(--d1)}
+
+/* readout column */
+.reads{background:var(--panel);border-left:1px solid var(--bd);display:flex;flex-direction:column;
+  min-height:0;overflow-y:auto}
+.reads::-webkit-scrollbar{width:4px}
+.reads::-webkit-scrollbar-thumb{background:var(--bd2)}
+.big{padding:14px 16px;border-bottom:1px solid var(--bd)}
+.big k{display:block;font-size:0.46rem;letter-spacing:0.24em;text-transform:uppercase;
+  color:var(--d3);margin-bottom:6px}
+.big v{display:block;font-family:var(--sans);font-weight:700;font-size:2.5rem;line-height:0.92;
+  color:var(--ph2);font-variant-numeric:tabular-nums;letter-spacing:-0.02em;
+  text-shadow:0 0 18px rgba(94,234,212,0.34)}
+.big v small{font-size:0.3em;color:var(--d2);font-family:var(--mono);font-weight:400;
+  letter-spacing:0.1em;margin-left:5px}
+.big .of{font-size:0.56rem;color:var(--d3);margin-top:6px;letter-spacing:0.1em}
+
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--bd);
+  border-bottom:1px solid var(--bd)}
+.duo div{background:var(--panel);padding:11px 14px}
+.duo k{display:block;font-size:0.44rem;letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--d3);margin-bottom:5px}
+.duo v{display:block;font-family:var(--sans);font-weight:600;font-size:1.15rem;color:var(--off);
+  font-variant-numeric:tabular-nums;line-height:1.1}
+.duo v em{font-style:normal;font-size:0.5em;color:var(--am);letter-spacing:0.08em;
+  display:block;margin-top:3px;font-family:var(--mono);font-weight:400}
+
+/* the compass needle */
+.rose{padding:14px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:14px}
+.rose .dial{width:66px;height:66px;flex-shrink:0;position:relative;border-radius:50%;
+  border:1px solid var(--bd2);display:grid;place-items:center}
+.rose .dial i{position:absolute;font-style:normal;font-size:0.42rem;color:var(--d3)}
+.rose .dial i:nth-child(1){top:3px}.rose .dial i:nth-child(2){right:4px}
+.rose .dial i:nth-child(3){bottom:3px}.rose .dial i:nth-child(4){left:4px}
+.rose .needle{width:2px;height:44px;position:relative;transform-origin:50% 50%;
+  transition:transform .55s var(--ease)}
+.rose .needle::before{content:'';position:absolute;top:0;left:-3px;width:8px;height:22px;
+  background:var(--rd);clip-path:polygon(50% 0,100% 100%,0 100%)}
+.rose .needle::after{content:'';position:absolute;bottom:0;left:-2px;width:6px;height:20px;
+  background:rgba(223,245,240,0.28)}
+.rose .txt k{display:block;font-size:0.44rem;letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--d3);margin-bottom:5px}
+.rose .txt v{font-family:var(--sans);font-weight:700;font-size:1.3rem;color:var(--off)}
+.rose .txt u{display:block;text-decoration:none;font-size:0.56rem;color:var(--d2);margin-top:3px}
+
+/* waypoint log */
+.wps{flex:1;min-height:0;padding:12px 0 6px}
+.wps k{display:block;font-size:0.44rem;letter-spacing:0.22em;text-transform:uppercase;
+  color:var(--d3);padding:0 16px 9px}
+.wp{display:flex;align-items:baseline;gap:9px;padding:7px 16px;font-size:0.64rem;
+  color:var(--d3);cursor:pointer;transition:.28s var(--ease);border-left:2px solid transparent}
+.wp:hover{background:rgba(94,234,212,0.05);color:var(--d1)}
+.wp.past{color:var(--d1);border-left-color:var(--bd2)}
+.wp.now{color:var(--ph2);background:rgba(94,234,212,0.1);border-left-color:var(--ph)}
+.wp b{flex:1;font-weight:400;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wp u{text-decoration:none;font-size:0.56rem;color:inherit;opacity:0.7;flex-shrink:0;
+  font-variant-numeric:tabular-nums}
+
+.openride{padding:12px 16px;border-top:1px solid var(--bd)}
+.openride a{display:flex;align-items:center;justify-content:center;gap:8px;padding:11px;
+  background:var(--ph);color:var(--bg);text-decoration:none;font-size:0.58rem;font-weight:700;
+  letter-spacing:0.18em;text-transform:uppercase;transition:.26s var(--ease)}
+.openride a:hover{background:var(--ph2);transform:translateY(-2px)}
+
+/* ── bottom: transport ── */
+.transport{background:var(--panel);border-top:1px solid var(--bd);
+  padding:10px clamp(12px,2vw,20px) calc(12px + env(safe-area-inset-bottom));
+  display:flex;align-items:center;gap:clamp(9px,1.6vw,16px);flex-wrap:wrap}
+.bt{width:40px;height:40px;flex-shrink:0;border-radius:50%;border:1px solid var(--bd2);
+  background:var(--panel2);color:var(--ph);cursor:pointer;display:grid;place-items:center;
+  font-size:0.85rem;transition:.24s var(--ease)}
+.bt:hover{background:var(--ph);color:var(--bg);transform:scale(1.07)}
+.bt.play{width:46px;height:46px;background:var(--ph);color:var(--bg);border-color:var(--ph);
+  font-size:0.95rem}
+.bt.play:hover{background:var(--ph2);box-shadow:0 0 22px rgba(94,234,212,0.5)}
+.bt:disabled{opacity:0.3;cursor:not-allowed;transform:none}
+
+.track{flex:1 1 260px;min-width:170px;position:relative;height:40px;cursor:pointer;
+  display:flex;align-items:center;touch-action:none}
+.track .rail{position:absolute;left:0;right:0;height:4px;background:rgba(94,234,212,0.14);
+  border-radius:2px}
+.track .fill{position:absolute;left:0;height:4px;background:var(--c);border-radius:2px;
+  box-shadow:0 0 12px var(--c);width:0}
+.track .tick{position:absolute;width:2px;height:11px;background:rgba(223,245,240,0.32);
+  transform:translateX(-1px);border-radius:1px;transition:.25s}
+.track .tick.past{background:var(--ph);box-shadow:0 0 7px var(--ph)}
+.track .knob{position:absolute;width:15px;height:15px;border-radius:50%;background:var(--off);
+  border:2px solid var(--c);transform:translateX(-7.5px);
+  box-shadow:0 0 14px var(--c);transition:transform .12s}
+.track:active .knob{transform:translateX(-7.5px) scale(1.28)}
+
+.spd{display:flex;gap:1px;background:var(--bd);border-radius:5px;overflow:hidden;flex-shrink:0}
+.spd button{padding:8px 10px;border:0;background:var(--panel2);color:var(--d2);cursor:pointer;
+  font-family:var(--mono);font-size:0.58rem;transition:.2s}
+.spd button.on{background:var(--ph);color:var(--bg);font-weight:700}
+.clock{font-size:0.66rem;color:var(--off);letter-spacing:0.08em;flex-shrink:0;
+  font-variant-numeric:tabular-nums}
+.clock em{font-style:normal;color:var(--d3)}
+
+@media(max-width:900px){
+  body{overflow:auto}
+  .rig{height:auto;grid-template-rows:auto auto auto}
+  .mid{grid-template-columns:1fr}
+  .screen{height:44svh;min-height:280px}
+  .reads{border-left:0;border-top:1px solid var(--bd);overflow:visible}
+  .big v{font-size:2rem}
+  .transport{position:sticky;bottom:0;z-index:20}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;animation-iteration-count:1!important;
+    transition-duration:.01ms!important}
+  body::after{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="rig">
+  <nav class="bar">
+    <div class="brand"><b>Telemetry</b><u>Bear 650</u></div>
+    <div id="tabs" style="display:flex;flex:1"></div>
+    <a class="exit" href="#">← Garage</a>
+  </nav>
+
+  <div class="mid">
+    <section class="screen" id="screen">
+      <svg id="plot" preserveAspectRatio="xMidYMid meet" aria-label="Route playback"></svg>
+      <div class="vig"></div>
+      <span class="corner tl" id="cTL"></span>
+      <span class="corner tr" id="cTR"></span>
+      <span class="corner bl">Mercator · live playback</span>
+      <div class="nocourse" id="nocourse">
+        <span class="warn">⚠ No course plotted</span>
+        <div class="cd" id="cd"></div>
+        <p id="ncp"></p>
+      </div>
+    </section>
+
+    <aside class="reads">
+      <div class="big">
+        <k>Distance covered</k>
+        <v><span id="rKm">0.0</span><small>KM</small></v>
+        <div class="of" id="rOf"></div>
+      </div>
+      <div class="duo">
+        <div><k>Elapsed</k><v id="rEl">0:00</v></div>
+        <div><k>Remaining</k><v id="rRe">—</v></div>
+        <div><k>Avg speed</k><v id="rSp">—</v></div>
+        <div><k>Progress</k><v id="rPc">0%</v></div>
+      </div>
+      <div class="rose">
+        <div class="dial">
+          <i>N</i><i>E</i><i>S</i><i>W</i>
+          <div class="needle" id="needle"></div>
+        </div>
+        <div class="txt">
+          <k>Heading</k>
+          <v id="rHd">—</v>
+          <u id="rLeg">—</u>
+        </div>
+      </div>
+      <div class="wps">
+        <k>Waypoint log</k>
+        <div id="wpList"></div>
+      </div>
+      <div class="openride"><a href="#">Open this ride ↗</a></div>
+    </aside>
+  </div>
+
+  <div class="transport">
+    <button class="bt" id="bPrev" title="Previous waypoint">⏮</button>
+    <button class="bt play" id="bPlay" title="Play / pause">▶</button>
+    <button class="bt" id="bNext" title="Next waypoint">⏭</button>
+    <div class="track" id="track">
+      <div class="rail"></div>
+      <div class="fill" id="fill"></div>
+      <div id="ticks"></div>
+      <div class="knob" id="knob"></div>
+    </div>
+    <div class="spd" id="spd">
+      <button data-x="1" class="on">1×</button>
+      <button data-x="4">4×</button>
+      <button data-x="12">12×</button>
+    </div>
+    <span class="clock"><span id="tNow">0:00</span><em> / <span id="tAll">—</span></em></span>
+  </div>
+</div>
+
+<script src="rides-data.js"></script>
+<script>
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches
+const W = 900, H = 620, PAD = 78
+
+let ride = RD.rides[0]
+let p = 0            // 0 → 1 along the route
+let playing = false
+let mult = 1
+let raf = 0, last = 0
+
+/* ── tabs ─────────────────────────────────────────────────────────────── */
+document.getElementById('tabs').innerHTML = RD.rides.map((r, i) =>
+  `<button class="tab${i === 0 ? ' on' : ''}" data-id="${r.id}" style="--tc:${r.color}">
+     <i>${r.tier.label}</i><b>${r.name}</b>
+   </button>`).join('')
+
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(o => o.classList.toggle('on', o === t))
+  load(RD.byId(t.dataset.id))
+}))
+
+/* ── load a ride ──────────────────────────────────────────────────────── */
+const svg = document.getElementById('plot')
+svg.setAttribute('viewBox', `0 0 ${W} ${H}`)
+let pathEl = null, pathLen = 0
+
+function load(r) {
+  ride = r
+  p = 0
+  stop()
+  document.documentElement.style.setProperty('--c', r.color)
+  document.getElementById('cTL').textContent = r.fromCity.toUpperCase()
+  document.getElementById('cTR').textContent =
+    (r.tbd && /decided/i.test(r.toCity) ? 'ANYWHERE' : r.toCity).toUpperCase()
+
+  const off = document.getElementById('nocourse')
+  off.classList.toggle('on', !r.mapped)
+  document.getElementById('bPlay').disabled = !r.mapped
+  document.getElementById('bPrev').disabled = !r.mapped
+  document.getElementById('bNext').disabled = !r.mapped
+
+  if (!r.mapped) {
+    svg.innerHTML = ''
+    countdown(r)
+    document.getElementById('ncp').textContent = r.description +
+      ' There is no route to play back, because the route is the rider’s to choose.'
+    paint()
+    return
+  }
+
+  const P = RD.one(r, W, H, PAD)
+  /* straight legs, not bowed: on a straight polyline the drawn pixel length
+     of each leg is proportional to its real length, so a position found by
+     path length is also the right position in kilometres. */
+  const d = RD.path(P.pts)
+  const nodes = P.pts.map((pt, i) => {
+    const s = r.stops[i]
+    const edge = i === 0 || i === P.pts.length - 1
+    const flip = pt[0] > W * 0.72
+    return `<g class="nd" data-i="${i}">
+      <circle cx="${pt[0].toFixed(1)}" cy="${pt[1].toFixed(1)}" r="${edge ? 8 : 5.5}"
+        fill="none" stroke="${r.color}" stroke-width="1.4" opacity="0.5"/>
+      <circle cx="${pt[0].toFixed(1)}" cy="${pt[1].toFixed(1)}" r="${edge ? 4.5 : 3}"
+        fill="${r.color}"/>
+      <text x="${(pt[0] + (flip ? -11 : 11)).toFixed(1)}" y="${(pt[1] + 4).toFixed(1)}"
+        text-anchor="${flip ? 'end' : 'start'}" font-family="JetBrains Mono,monospace"
+        font-size="11" fill="rgba(223,245,240,0.45)">${s.label}</text>
+    </g>`
+  }).join('')
+
+  svg.innerHTML = `
+    <defs>
+      <filter id="gl"><feGaussianBlur stdDeviation="5" result="b"/>
+        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>
+    <path id="ghost" d="${d}" fill="none" stroke="rgba(223,245,240,0.16)" stroke-width="2.5"
+      stroke-dasharray="5 7" stroke-linecap="round" stroke-linejoin="round"/>
+    <path id="road" d="${d}" fill="none" stroke="${r.color}" stroke-width="4"
+      stroke-linecap="round" stroke-linejoin="round" filter="url(#gl)"/>
+    ${nodes}
+    <g id="rider">
+      <circle r="16" fill="${r.color}" opacity="0.16"/>
+      <circle r="7.5" fill="${r.color}" stroke="#04070a" stroke-width="2"/>
+      <path id="arrow" d="M0 -19 L5.5 -9 L-5.5 -9 Z" fill="#dff5f0"/>
+    </g>`
+
+  pathEl = svg.querySelector('#road')
+  pathLen = pathEl.getTotalLength()
+  pathEl.style.strokeDasharray = pathLen
+  pathEl.style.strokeDashoffset = pathLen
+
+  /* waypoints jump the playhead when clicked, on the map and in the log */
+  svg.querySelectorAll('.nd').forEach(g => {
+    g.style.cursor = 'pointer'
+    g.addEventListener('click', () => seek(markP(+g.dataset.i)))
+  })
+
+  buildTicks()
+  buildLog()
+  paint()
+}
+
+/* the progress value of waypoint i */
+const markP = i => (ride.chain ? ride.marks[i].at / ride.chain : 0)
+
+/* ── countdown, for the ride with no course ───────────────────────────── */
+let cdTimer = 0
+function countdown(r) {
+  clearInterval(cdTimer)
+  const box = document.getElementById('cd')
+  const tick = () => {
+    /* the ride is a date, not a time — count to 06:00 local on the day */
+    const target = new Date(r.when.getUTCFullYear(), r.when.getUTCMonth(), r.when.getUTCDate(), 6)
+    let s = Math.max(0, Math.floor((target - Date.now()) / 1000))
+    const dd = Math.floor(s / 86400); s -= dd * 86400
+    const hh = Math.floor(s / 3600); s -= hh * 3600
+    const mm = Math.floor(s / 60); s -= mm * 60
+    box.innerHTML = [[dd, 'days'], [hh, 'hrs'], [mm, 'min'], [s, 'sec']]
+      .map(([n, u]) => `<div><b>${String(n).padStart(2, '0')}</b><u>${u}</u></div>`).join('')
+  }
+  tick(); cdTimer = setInterval(tick, 1000)
+}
+
+/* ── scrub track ──────────────────────────────────────────────────────── */
+function buildTicks() {
+  document.getElementById('ticks').innerHTML = ride.marks.map((m, i) =>
+    `<i class="tick" data-i="${i}" style="left:${(markP(i) * 100).toFixed(2)}%"></i>`).join('')
+}
+function buildLog() {
+  document.getElementById('wpList').innerHTML = ride.marks.map((m, i) =>
+    `<div class="wp" data-i="${i}">
+       <b>${m.stop.label}</b><u>${m.at.toFixed(1)} km</u>
+     </div>`).join('')
+  document.querySelectorAll('.wp').forEach(w =>
+    w.addEventListener('click', () => seek(markP(+w.dataset.i))))
+}
+
+/* ── the readouts ─────────────────────────────────────────────────────── */
+function paint() {
+  const r = ride
+  const covered = r.mapped ? p * r.chain : 0
+  document.getElementById('rKm').textContent = covered.toFixed(1)
+  document.getElementById('rOf').textContent = r.mapped
+    ? `of ${r.chain} km stop-to-stop · ${r.distance} by road`
+    : 'route not set'
+  document.getElementById('rPc').textContent = Math.round(p * 100) + '%'
+
+  const mins = r.mins
+  document.getElementById('rEl').textContent = mins ? clock(p * mins) : '—'
+  document.getElementById('rRe').innerHTML = mins
+    ? clock((1 - p) * mins) + (r.estimated ? '<em>estimated</em>' : '')
+    : '—'
+  document.getElementById('rSp').innerHTML = mins && r.mapped
+    ? (r.chain / (mins / 60)).toFixed(0) + ' <small style="font-size:.55em">km/h</small>'
+    : '—'
+  document.getElementById('tNow').textContent = mins ? clock(p * mins) : '0:00'
+  document.getElementById('tAll').textContent = mins ? clock(mins) : '—'
+
+  document.getElementById('fill').style.width = (p * 100) + '%'
+  document.getElementById('knob').style.left = (p * 100) + '%'
+
+  if (!r.mapped) {
+    document.getElementById('rHd').textContent = 'Open'
+    document.getElementById('rLeg').textContent = 'Every road'
+    document.getElementById('needle').style.transform = 'rotate(0deg)'
+    return
+  }
+
+  /* where the rider is, by path length — which on straight legs is also
+     where they are in kilometres */
+  const at = pathEl.getPointAtLength(p * pathLen)
+  const ahead = pathEl.getPointAtLength(Math.min(pathLen, p * pathLen + 1.5))
+  const deg = Math.atan2(ahead.y - at.y, ahead.x - at.x) * 180 / Math.PI + 90
+  svg.querySelector('#rider').setAttribute('transform',
+    `translate(${at.x.toFixed(1)} ${at.y.toFixed(1)}) rotate(${deg.toFixed(1)})`)
+  pathEl.style.strokeDashoffset = pathLen * (1 - p)
+
+  /* which leg is under the rider */
+  let i = 0, run = 0
+  for (; i < r.legs.length - 1; i++) {
+    if (run + r.legs[i].crow > covered) break
+    run += r.legs[i].crow
+  }
+  const leg = r.legs[i]
+  document.getElementById('rHd').textContent = leg.compass + ' ' + leg.bearing.toFixed(0) + '°'
+  document.getElementById('rLeg').textContent = leg.from.label + ' → ' + leg.to.label
+  document.getElementById('needle').style.transform = `rotate(${leg.bearing}deg)`
+
+  /* waypoint states */
+  document.querySelectorAll('.wp').forEach((w, k) => {
+    const wp = markP(k)
+    w.classList.toggle('past', wp <= p + 1e-6)
+    w.classList.toggle('now', k === (p >= 1 ? r.marks.length - 1 : i))
+  })
+  document.querySelectorAll('.tick').forEach((t, k) =>
+    t.classList.toggle('past', markP(k) <= p + 1e-6))
+}
+
+const clock = m => Math.floor(m / 60) + ':' + String(Math.round(m % 60)).padStart(2, '0')
+
+/* ── transport ────────────────────────────────────────────────────────── */
+function seek(v) { p = Math.max(0, Math.min(1, v)); paint() }
+
+function frame(t) {
+  if (!playing) return
+  const dt = last ? (t - last) / 1000 : 0
+  last = t
+  /* a ride plays in 9 seconds at 1×, whatever its real length — the clock
+     readout carries the true duration */
+  p += dt / 9 * mult
+  if (p >= 1) { p = 1; paint(); stop(); return }
+  paint()
+  raf = requestAnimationFrame(frame)
+}
+function play() {
+  if (!ride.mapped) return
+  if (p >= 1) p = 0
+  playing = true; last = 0
+  document.getElementById('bPlay').textContent = '❚❚'
+  raf = requestAnimationFrame(frame)
+}
+function stop() {
+  playing = false; cancelAnimationFrame(raf)
+  document.getElementById('bPlay').textContent = '▶'
+}
+
+document.getElementById('bPlay').addEventListener('click', () => playing ? stop() : play())
+document.getElementById('bPrev').addEventListener('click', () => {
+  stop()
+  const prev = [...ride.marks].reverse().find((m, k) => markP(ride.marks.length - 1 - k) < p - 0.01)
+  seek(prev ? markP(ride.marks.indexOf(prev)) : 0)
+})
+document.getElementById('bNext').addEventListener('click', () => {
+  stop()
+  const next = ride.marks.find((m, k) => markP(k) > p + 0.01)
+  seek(next ? markP(ride.marks.indexOf(next)) : 1)
+})
+
+document.querySelectorAll('.spd button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.spd button').forEach(o => o.classList.toggle('on', o === b))
+  mult = +b.dataset.x
+}))
+
+/* drag the track */
+const track = document.getElementById('track')
+let scrubbing = false
+const atX = e => {
+  const b = track.getBoundingClientRect()
+  return (e.clientX - b.left) / b.width
+}
+track.addEventListener('pointerdown', e => {
+  if (!ride.mapped) return
+  scrubbing = true; stop(); track.setPointerCapture(e.pointerId); seek(atX(e))
+})
+track.addEventListener('pointermove', e => { if (scrubbing) seek(atX(e)) })
+const endScrub = () => { scrubbing = false }
+track.addEventListener('pointerup', endScrub)
+track.addEventListener('pointercancel', endScrub)
+
+/* keys: space plays, arrows nudge, 1-6 pick a ride */
+addEventListener('keydown', e => {
+  if (e.key === ' ') { e.preventDefault(); playing ? stop() : play() }
+  if (e.key === 'ArrowRight') { stop(); seek(p + 0.02) }
+  if (e.key === 'ArrowLeft') { stop(); seek(p - 0.02) }
+  const n = +e.key
+  if (n >= 1 && n <= RD.rides.length) document.querySelectorAll('.tab')[n - 1].click()
+})
+
+load(RD.rides[0])
+if (!REDUCED) setTimeout(play, 700)
+</script>
+</body>
+</html>

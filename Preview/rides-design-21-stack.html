@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Rides · 21 · Stack</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   STACK — the page builds a physical pile as you scroll.
+
+   Each ride is a full card that STICKS in place while the next one
+   slides up over it. The card behind does not simply sit there: it
+   shrinks, dims and tilts back by an amount computed from exactly how
+   far its slot has been scrolled past, so the pile has depth and the
+   card in front is always the one you are reading.
+
+   Everything is driven off one number per card — how far its slot has
+   travelled past its resting place, 0 to 1 — which is read in a single
+   rAF-throttled pass and written to CSS custom properties. No layout is
+   touched during scroll, so the pile stays smooth with six cards live.
+
+   Brutalist: raw slab type, hard black rules, no rounded corners, one
+   saturated colour per ride doing all the shouting. The ride's own hex
+   from its file drives the whole card, so the palette is the data's.
+   ══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0c0c0c; --paper:#f2f0eb; --ink:#0c0c0c;
+  --d1:rgba(242,240,235,0.64); --d2:rgba(242,240,235,0.4); --d3:rgba(242,240,235,0.22);
+  --slab:'Archivo Black',Impact,sans-serif; --sans:'Space Grotesk',system-ui,sans-serif;
+  --ease:cubic-bezier(.2,.9,.25,1);
+  --cardH:min(660px,82svh);
+}
+body{background:var(--bg);color:var(--d1);font-family:var(--sans);overflow-x:hidden;
+  -webkit-font-smoothing:antialiased}
+::selection{background:var(--paper);color:var(--ink)}
+
+/* ── chrome ── */
+.hud{position:fixed;top:0;left:0;right:0;z-index:80;display:flex;align-items:center;gap:12px;
+  padding:12px clamp(12px,3vw,28px);background:var(--bg);
+  border-bottom:2px solid var(--paper)}
+.hud .mk{font-family:var(--slab);font-size:0.9rem;color:var(--paper);letter-spacing:-0.02em;
+  text-transform:uppercase}
+.hud .count{margin-left:auto;font-size:0.66rem;letter-spacing:0.16em;color:var(--d2);
+  font-variant-numeric:tabular-nums}
+.hud .count b{color:var(--paper);font-family:var(--slab)}
+.hud a{font-size:0.58rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink);
+  background:var(--paper);text-decoration:none;padding:7px 13px;font-weight:700;
+  transition:.2s}
+.hud a:hover{background:var(--hc,#ef4444);color:var(--paper)}
+.prog{position:fixed;top:0;left:0;height:3px;width:0;background:var(--hc,#ef4444);z-index:90;
+  transition:background .6s var(--ease)}
+
+/* ── opening ── */
+.open{min-height:100svh;display:flex;flex-direction:column;justify-content:center;
+  padding:90px clamp(14px,4vw,52px) 60px;max-width:1240px;margin:0 auto}
+.open .kick{font-size:0.58rem;letter-spacing:0.3em;text-transform:uppercase;color:var(--d3);
+  margin-bottom:20px;opacity:0;animation:fade .8s var(--ease) .2s forwards}
+@keyframes fade{to{opacity:1}}
+.open h1{font-family:var(--slab);color:var(--paper);text-transform:uppercase;
+  font-size:clamp(2.8rem,13vw,9rem);line-height:0.82;letter-spacing:-0.045em;margin-bottom:26px}
+.open h1 .w{display:block;overflow:hidden}
+.open h1 .w i{display:block;font-style:normal;transform:translateY(104%);
+  animation:rise 1.05s var(--ease) forwards}
+@keyframes rise{to{transform:none}}
+.open h1 mark{background:none;color:#ef4444}
+.open .band{display:flex;flex-wrap:wrap;gap:0;border-top:2px solid var(--paper);
+  border-bottom:2px solid var(--paper);opacity:0;animation:fade .9s var(--ease) .7s forwards}
+.open .band div{flex:1 1 120px;padding:16px 18px;border-right:1px solid rgba(242,240,235,0.2)}
+.open .band div:last-child{border-right:0}
+.open .band k{display:block;font-size:0.5rem;letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--d3);margin-bottom:8px}
+.open .band v{display:block;font-family:var(--slab);font-size:clamp(1.3rem,3vw,2rem);
+  color:var(--paper);line-height:1;letter-spacing:-0.03em}
+.open p{max-width:48ch;font-size:0.92rem;line-height:1.8;margin-top:22px;
+  opacity:0;animation:fade .9s var(--ease) .85s forwards}
+.open .cue{margin-top:30px;font-size:0.56rem;letter-spacing:0.24em;text-transform:uppercase;
+  color:var(--d3);display:flex;align-items:center;gap:12px;
+  opacity:0;animation:fade .9s var(--ease) 1s forwards}
+.open .cue i{width:2px;height:30px;background:var(--paper);animation:drop 1.9s var(--ease) infinite}
+@keyframes drop{50%{transform:translateY(9px)}}
+
+/* ── the pile ── */
+.pile{padding:0 clamp(10px,3vw,40px) clamp(40px,8vw,90px);max-width:1240px;margin:0 auto}
+.slot{height:var(--cardH);position:relative;margin-bottom:26px}
+.slot:last-child{margin-bottom:0}
+
+.card{position:sticky;top:calc((100svh - var(--cardH)) / 2 + 20px);height:var(--cardH);
+  background:var(--cc);color:var(--ink);overflow:hidden;
+  border:2px solid var(--ink);
+  display:grid;grid-template-columns:1.05fr 1fr;
+  transform-origin:50% 0;will-change:transform,filter;
+  box-shadow:14px 14px 0 rgba(242,240,235,0.9);
+  /* the pile maths, all from --p (0 → 1 past its rest) */
+  transform:scale(calc(1 - var(--p,0) * 0.11)) translateY(calc(var(--p,0) * -30px));
+  filter:brightness(calc(1 - var(--p,0) * 0.5)) saturate(calc(1 - var(--p,0) * 0.35))}
+
+/* left: the plate, on a paper ground */
+.card .plate{position:relative;background:var(--paper);border-right:2px solid var(--ink);
+  display:flex;align-items:center;justify-content:center;overflow:hidden}
+.card .plate svg{width:100%;height:100%;padding:clamp(14px,2.6vw,34px)}
+.card .plate .no{position:absolute;left:14px;top:10px;font-family:var(--slab);
+  font-size:clamp(2.6rem,7vw,4.6rem);line-height:0.8;color:var(--cc);letter-spacing:-0.045em;
+  mix-blend-mode:multiply;opacity:0.55}
+.card .plate .stamp{position:absolute;right:12px;bottom:12px;font-family:var(--slab);
+  font-size:0.56rem;letter-spacing:0.14em;text-transform:uppercase;background:var(--ink);
+  color:var(--paper);padding:5px 10px}
+
+/* right: the words */
+.card .side{padding:clamp(16px,2.6vw,34px);display:flex;flex-direction:column;min-height:0;
+  overflow:hidden}
+.card .tier{display:inline-flex;align-items:center;gap:7px;font-size:0.52rem;font-weight:700;
+  letter-spacing:0.22em;text-transform:uppercase;margin-bottom:12px}
+.card .tier i{width:8px;height:8px;background:var(--ink)}
+.card h2{font-family:var(--slab);text-transform:uppercase;color:var(--ink);
+  font-size:clamp(1.3rem,3.4vw,2.4rem);line-height:0.94;letter-spacing:-0.038em;margin-bottom:12px}
+.card .big{font-family:var(--slab);font-size:clamp(2.4rem,7vw,4.2rem);line-height:0.82;
+  letter-spacing:-0.05em;color:var(--ink);margin-bottom:4px}
+.card .big small{font-size:0.24em;letter-spacing:0.12em;font-family:var(--sans);font-weight:600;
+  vertical-align:super;margin-left:4px}
+.card .route{font-size:0.6rem;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;
+  color:rgba(12,12,12,0.62);line-height:1.8;margin-bottom:14px;
+  padding-bottom:14px;border-bottom:2px solid var(--ink)}
+.card p{font-size:0.84rem;line-height:1.68;color:rgba(12,12,12,0.82);flex:1;overflow:hidden;
+  margin-bottom:12px}
+.card .grid{display:flex;flex-wrap:wrap;gap:0;border-top:2px solid var(--ink);padding-top:12px;
+  margin-bottom:14px}
+.card .grid div{padding-right:16px;margin-right:16px;border-right:1px solid rgba(12,12,12,0.3)}
+.card .grid div:last-child{border-right:0;margin-right:0;padding-right:0}
+.card .grid k{display:block;font-size:0.45rem;font-weight:700;letter-spacing:0.18em;
+  text-transform:uppercase;color:rgba(12,12,12,0.55);margin-bottom:4px}
+.card .grid v{display:block;font-family:var(--slab);font-size:1.1rem;color:var(--ink);line-height:1}
+.card .go{align-self:flex-start;font-family:var(--slab);font-size:0.6rem;letter-spacing:0.14em;
+  text-transform:uppercase;background:var(--ink);color:var(--paper);text-decoration:none;
+  padding:12px 20px;transition:.24s var(--ease)}
+.card .go:hover{transform:translate(3px,-3px);box-shadow:-4px 4px 0 var(--paper)}
+
+/* ── the side index ── */
+.index{position:fixed;left:clamp(8px,1.6vw,18px);top:50%;transform:translateY(-50%);z-index:70;
+  display:flex;flex-direction:column;gap:9px}
+.index button{display:flex;align-items:center;gap:8px;background:none;border:0;cursor:pointer;
+  padding:0;font-family:var(--sans);color:var(--d3);font-size:0.54rem;letter-spacing:0.1em;
+  transition:.3s var(--ease)}
+.index button i{width:16px;height:3px;background:currentColor;transition:.3s var(--ease)}
+.index button span{opacity:0;max-width:0;overflow:hidden;white-space:nowrap;
+  transition:.3s var(--ease)}
+.index button:hover span,.index button.on span{opacity:1;max-width:160px}
+.index button.on{color:var(--paper)}
+.index button.on i{width:34px;background:var(--ic)}
+
+/* ── closing ── */
+.close{border-top:2px solid var(--paper);padding:clamp(46px,8vw,100px) clamp(14px,4vw,52px)
+  calc(70px + env(safe-area-inset-bottom));max-width:1240px;margin:0 auto}
+.close h2{font-family:var(--slab);text-transform:uppercase;color:var(--paper);
+  font-size:clamp(1.8rem,7vw,4.4rem);line-height:0.88;letter-spacing:-0.04em;margin-bottom:18px}
+.close p{max-width:50ch;font-size:0.92rem;line-height:1.85;margin-bottom:26px}
+.close a{display:inline-block;font-family:var(--slab);font-size:0.64rem;letter-spacing:0.16em;
+  text-transform:uppercase;background:var(--paper);color:var(--ink);text-decoration:none;
+  padding:15px 26px;transition:.24s var(--ease)}
+.close a:hover{transform:translate(4px,-4px);box-shadow:-6px 6px 0 #ef4444}
+
+@media(max-width:820px){
+  :root{--cardH:min(580px,80svh)}
+  .index{display:none}
+  .card{grid-template-columns:1fr;grid-template-rows:minmax(0,0.8fr) minmax(0,1.2fr);
+    box-shadow:8px 8px 0 rgba(242,240,235,0.9)}
+  .card .plate{border-right:0;border-bottom:2px solid var(--ink)}
+  .card .side{padding:14px}
+  .card p{font-size:0.78rem}
+}
+@media(max-width:430px){
+  .card .grid div:nth-child(n+3){display:none}
+  .card p{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;animation-iteration-count:1!important;
+    transition-duration:.01ms!important}
+  .open h1 .w i{transform:none}
+  .card{position:relative;top:0;transform:none!important;filter:none!important}
+  .slot{height:auto}
+}
+</style>
+</head>
+<body>
+
+<div class="prog" id="prog"></div>
+<header class="hud">
+  <span class="mk">Rides &amp; Journeys</span>
+  <span class="count"><b id="hN">00</b> / <span id="hAll">00</span></span>
+  <a href="#">✕ Garage</a>
+</header>
+
+<section class="open">
+  <div class="kick">My Garage · Bear 650 · Kangayam</div>
+  <h1>
+    <span class="w"><i>Six rides,</i></span>
+    <span class="w"><i style="animation-delay:.12s">one</i></span>
+    <span class="w"><i style="animation-delay:.24s"><mark>pile</mark></i></span>
+  </h1>
+  <div class="band" id="band"></div>
+  <p id="lede"></p>
+  <div class="cue"><i></i>Scroll — they stack</div>
+</section>
+
+<main class="pile" id="pile"></main>
+
+<nav class="index" id="index"></nav>
+
+<section class="close">
+  <h2>Bottom of<br/>the stack</h2>
+  <p id="closeP"></p>
+  <a href="#">← Back to My Garage</a>
+</section>
+
+<script src="rides-data.js"></script>
+<script>
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches
+const S = RD.summary
+
+document.getElementById('hAll').textContent = String(RD.rides.length).padStart(2, '0')
+document.getElementById('lede').textContent =
+  `${RD.tally}. Each card holds its place while the next slides over it, so the ones you have ` +
+  `read stay underneath rather than disappearing.`
+document.getElementById('closeP').textContent =
+  `${S.done} ridden, ${S.open} still ahead — ${S.doneKm} km against ${S.aheadKm} km already planned.`
+
+document.getElementById('band').innerHTML = [
+  ['Rides', RD.rides.length],
+  ['Ridden', S.doneKm + ' km'],
+  ['Ahead', S.aheadKm + ' km'],
+  ['Waypoints', S.stopCount],
+  ['States', S.stateCount],
+].map(([k, v]) => `<div><k>${k}</k><v>${v}</v></div>`).join('')
+
+/* ── the plate ────────────────────────────────────────────────────────── */
+function plate(r) {
+  const w = 420, h = 420
+  if (!r.mapped) {
+    const bars = Array.from({ length: 16 }, (_, i) => {
+      const a = (i / 16) * Math.PI * 2
+      return `<line x1="${w / 2}" y1="${h / 2}"
+        x2="${(w / 2 + Math.cos(a) * 150).toFixed(1)}" y2="${(h / 2 + Math.sin(a) * 150).toFixed(1)}"
+        stroke="#0c0c0c" stroke-width="${i % 2 ? 2 : 5}" stroke-linecap="butt"/>`
+    }).join('')
+    return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">${bars}
+      <circle cx="${w / 2}" cy="${h / 2}" r="26" fill="${r.color}" stroke="#0c0c0c" stroke-width="5"/>
+    </svg>`
+  }
+  const P = RD.one(r, w, h, 58)
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">
+    <path d="${RD.path(P.pts)}" fill="none" stroke="#0c0c0c" stroke-width="14"
+      stroke-linecap="square" stroke-linejoin="miter"/>
+    <path d="${RD.path(P.pts)}" fill="none" stroke="${r.color}" stroke-width="6"
+      stroke-linecap="square" stroke-linejoin="miter"/>
+    ${P.pts.map((p, i) => {
+      const edge = i === 0 || i === P.pts.length - 1
+      const s = edge ? 17 : 11
+      return `<rect x="${(p[0] - s / 2).toFixed(1)}" y="${(p[1] - s / 2).toFixed(1)}"
+        width="${s}" height="${s}" fill="${edge ? '#0c0c0c' : r.color}"
+        stroke="#0c0c0c" stroke-width="3"/>`
+    }).join('')}</svg>`
+}
+
+/* ── build the pile ───────────────────────────────────────────────────── */
+document.getElementById('pile').innerHTML = RD.rides.map((r, i) => {
+  const dest = r.tbd && /decided/i.test(r.toCity) ? 'Anywhere' : r.toCity
+  return `<div class="slot" data-i="${i}">
+    <article class="card" style="--cc:${r.color}">
+      <div class="plate">
+        <span class="no">${String(i + 1).padStart(2, '0')}</span>
+        ${plate(r)}
+        <span class="stamp">${r.tier.label}</span>
+      </div>
+      <div class="side">
+        <span class="tier"><i></i>${r.date}</span>
+        <div class="big">${r.tbd ? 'TBD' : r.km + '<small>KM</small>'}</div>
+        <div class="route">${r.fromCity} → ${dest}</div>
+        <h2>${r.name}</h2>
+        <p>${r.story}</p>
+        <div class="grid">
+          <div><k>Heading</k><v>${r.mapped ? r.compass : 'Open'}</v></div>
+          <div><k>Stops</k><v>${r.stops.length}</v></div>
+          <div><k>${r.time ? 'Saddle' : r.estimated ? 'Est.' : 'States'}</k>
+            <v>${r.time || r.estimate || r.states.length}</v></div>
+        </div>
+        <a class="go" href="#">Open the ride →</a>
+      </div>
+    </article>
+  </div>`
+}).join('')
+
+/* ── the index ────────────────────────────────────────────────────────── */
+document.getElementById('index').innerHTML = RD.rides.map((r, i) =>
+  `<button data-i="${i}" style="--ic:${r.color}"><i></i><span>${r.name}</span></button>`).join('')
+document.querySelectorAll('.index button').forEach(b =>
+  b.addEventListener('click', () => {
+    const slot = document.querySelector(`.slot[data-i="${b.dataset.i}"]`)
+    if (slot) slot.scrollIntoView({ behavior: REDUCED ? 'auto' : 'smooth', block: 'start' })
+  }))
+
+/* ── the pile maths ───────────────────────────────────────────────────── */
+/* One pass, one number per card: how far its slot has been scrolled past
+   its resting place, 0 → 1. Everything else is CSS reading --p.        */
+const slots = [...document.querySelectorAll('.slot')]
+const cards = slots.map(s => s.querySelector('.card'))
+const idxBtns = [...document.querySelectorAll('.index button')]
+let ticking = false
+
+function frame() {
+  ticking = false
+  const mid = innerHeight / 2
+  let live = 0
+
+  slots.forEach((slot, i) => {
+    const r = slot.getBoundingClientRect()
+    const p = Math.min(1, Math.max(0, -r.top / Math.max(1, r.height)))
+    if (!REDUCED) cards[i].style.setProperty('--p', p.toFixed(4))
+    if (r.top <= mid && r.bottom >= 0) live = i
+  })
+
+  const r = RD.rides[live]
+  document.getElementById('hN').textContent = String(live + 1).padStart(2, '0')
+  document.documentElement.style.setProperty('--hc', r.color)
+  idxBtns.forEach((b, i) => b.classList.toggle('on', i === live))
+
+  const h = document.documentElement.scrollHeight - innerHeight
+  document.getElementById('prog').style.width = (h > 0 ? scrollY / h * 100 : 0) + '%'
+}
+
+addEventListener('scroll', () => {
+  if (!ticking) { ticking = true; requestAnimationFrame(frame) }
+}, { passive: true })
+addEventListener('resize', frame)
+frame()
+</script>
+</body>
+</html>
