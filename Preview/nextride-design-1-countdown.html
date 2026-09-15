@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Next Ride · 1 · Countdown</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   COUNTDOWN — the card answers "how soon" before it answers anything else.
+
+   The old card led with the destination and spent its middle on a route
+   squiggle. But a NEXT RIDE card is read for one reason — is it close? —
+   so the time to it is the headline here, at a size nothing else competes
+   with, and the place, distance and organiser sit underneath as the
+   supporting facts they are.
+
+   The seconds drum rolls continuously rather than snapping, the way a
+   mechanical counter does, so the card is visibly alive without anything
+   blinking at you. The ring around it closes as the ride approaches: it
+   is the fraction of the last 30 days that has elapsed, so a ride a month
+   out starts as a sliver and the day before is nearly a full circle.
+
+   The countdown runs to the ASSEMBLE time where the ride states one —
+   Dhondenling musters at 5:30 AM — and to first light where it does not.
+   Counting to midnight would be a lie about when you actually leave.
+   ══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ink:#0b0a12; --card:rgba(20,18,30,0.72); --card2:rgba(28,25,42,0.9);
+  --off:#f4f2f7; --d1:rgba(244,242,247,0.66); --d2:rgba(244,242,247,0.42);
+  --d3:rgba(244,242,247,0.22); --bd:rgba(244,242,247,0.12); --bd2:rgba(244,242,247,0.22);
+  --sans:'Inter',system-ui,sans-serif; --serif:'Playfair Display',serif;
+  --ease:cubic-bezier(.2,.9,.25,1);
+  --c:#dc2626;
+}
+body{background:var(--ink);color:var(--d1);font-family:var(--sans);min-height:100vh;
+  -webkit-font-smoothing:antialiased;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:22px;padding:clamp(16px,4vw,42px)}
+/* a stand-in for the hero photograph the card actually sits on */
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(70vw 60vh at 22% 18%,rgba(255,196,120,0.14),transparent 62%),
+    radial-gradient(60vw 60vh at 82% 78%,rgba(120,90,220,0.13),transparent 64%),
+    linear-gradient(160deg,#151220,#0b0a12 60%)}
+::selection{background:var(--c);color:#fff}
+
+/* ── the card ── */
+.card{position:relative;z-index:2;width:min(100%,452px);
+  background:var(--card);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border:1px solid var(--bd);border-radius:20px;overflow:hidden;
+  box-shadow:0 34px 70px -28px rgba(0,0,0,0.85);
+  padding:clamp(18px,3vw,26px)}
+/* the ride's colour bleeding in from the top */
+.card::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(90% 60% at 50% -12%,var(--c),transparent 68%);opacity:0.2;
+  transition:background .8s var(--ease)}
+
+.lbl{display:flex;align-items:center;gap:9px;font-size:0.6rem;font-weight:700;
+  letter-spacing:0.28em;text-transform:uppercase;color:var(--c);margin-bottom:20px;
+  position:relative}
+.lbl i{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0;
+  box-shadow:0 0 0 0 currentColor;animation:ping 2.4s var(--ease) infinite}
+@keyframes ping{0%{box-shadow:0 0 0 0 rgba(220,38,38,.5)}70%{box-shadow:0 0 0 9px rgba(220,38,38,0)}100%{box-shadow:0 0 0 0 rgba(220,38,38,0)}}
+.lbl em{margin-left:auto;font-style:normal;letter-spacing:0.14em;color:var(--d3);font-weight:500}
+
+/* ── the clock ── */
+.clock{position:relative;display:flex;align-items:center;gap:clamp(14px,3vw,22px);
+  margin-bottom:22px}
+.ring{position:relative;width:clamp(96px,22vw,116px);flex-shrink:0;aspect-ratio:1}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .trk{fill:none;stroke:rgba(244,242,247,0.09);stroke-width:6}
+.ring .arc{fill:none;stroke:var(--c);stroke-width:6;stroke-linecap:round;
+  transition:stroke-dashoffset 1s var(--ease),stroke .8s var(--ease);
+  filter:drop-shadow(0 0 8px var(--c))}
+.ring .mid{position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:2px}
+.ring .mid b{font-size:clamp(2.1rem,6vw,2.7rem);font-weight:800;color:var(--off);
+  line-height:1;letter-spacing:-0.05em;font-variant-numeric:tabular-nums}
+.ring .mid u{text-decoration:none;font-size:0.5rem;font-weight:600;letter-spacing:0.2em;
+  text-transform:uppercase;color:var(--d3)}
+
+.units{flex:1;min-width:0;display:flex;gap:6px}
+.u{flex:1;min-width:0;background:rgba(244,242,247,0.05);border:1px solid var(--bd);
+  border-radius:11px;padding:10px 6px;text-align:center;overflow:hidden}
+.u b{display:block;font-size:1.22rem;font-weight:700;color:var(--off);line-height:1;
+  font-variant-numeric:tabular-nums;letter-spacing:-0.02em}
+.u span{display:block;font-size:0.46rem;font-weight:600;letter-spacing:0.16em;
+  text-transform:uppercase;color:var(--d3);margin-top:6px}
+/* The seconds tick in the ride's own colour. There is NO clipping box here on
+   purpose: a masked drum looks better for about a second and then hides the
+   digit the moment an animation stalls mid-travel, which is a live value
+   disappearing. The pulse below carries the same "this is running" signal
+   and cannot take the number with it. */
+.u.sec{position:relative}
+.u.sec .roll{height:1.22rem;position:relative}
+.u.sec .roll i{display:block;font-style:normal;font-size:1.22rem;font-weight:700;
+  color:var(--c);line-height:1.22rem;font-variant-numeric:tabular-nums}
+
+/* ── the ride ── */
+.place{position:relative;margin-bottom:6px}
+.place h2{font-family:var(--serif);font-weight:700;font-size:clamp(1.5rem,4.4vw,2rem);
+  color:var(--off);line-height:1.08;letter-spacing:-0.02em}
+.place .sub{display:flex;align-items:center;gap:8px;font-size:0.68rem;color:var(--d2);
+  margin-top:7px}
+.place .sub i{width:4px;height:4px;border-radius:50%;background:var(--d3)}
+
+.meta{display:flex;gap:0;margin:18px 0;border-top:1px solid var(--bd);
+  border-bottom:1px solid var(--bd);padding:14px 0}
+.meta div{flex:1;min-width:0;padding-right:12px;border-right:1px solid var(--bd)}
+.meta div:last-child{border-right:0;padding-right:0}
+.meta k{display:block;font-size:0.45rem;font-weight:600;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--d3);margin-bottom:6px}
+.meta v{display:block;font-size:0.92rem;font-weight:700;color:var(--off);line-height:1.2;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* organiser: badge if there is a logo, initials if not */
+.org{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.org .badge{width:36px;height:36px;border-radius:9px;flex-shrink:0;display:grid;
+  place-items:center;background:rgba(244,242,247,0.08);border:1px solid var(--bd);
+  overflow:hidden}
+/* The supplied logos are dark artwork on transparent, which is invisible on a
+   dark badge. Knocking them to flat white is the only treatment that works
+   for every brand without knowing what colour each one is. */
+.org .badge img{width:100%;height:100%;object-fit:contain;padding:4px;
+  filter:brightness(0) invert(1)}
+.org .badge span{font-size:0.66rem;font-weight:800;letter-spacing:0.04em;color:var(--c)}
+.org .tx k{display:block;font-size:0.45rem;font-weight:600;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--d3);margin-bottom:4px}
+.org .tx v{display:block;font-size:0.82rem;font-weight:600;color:var(--off)}
+.org .fee{margin-left:auto;text-align:right}
+.org .fee b{display:block;font-size:1.02rem;font-weight:800;color:var(--c);line-height:1}
+.org .fee u{display:block;text-decoration:none;font-size:0.45rem;font-weight:600;
+  letter-spacing:0.16em;text-transform:uppercase;color:var(--d3);margin-top:5px}
+
+.go{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;
+  padding:15px;border-radius:12px;background:var(--c);color:#fff;text-decoration:none;
+  font-size:0.74rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;
+  transition:.3s var(--ease);position:relative;overflow:hidden}
+.go span{position:relative;z-index:2;display:flex;align-items:center;gap:10px}
+.go::after{content:'';position:absolute;inset:0;z-index:1;
+  background:linear-gradient(100deg,transparent 20%,rgba(255,255,255,0.28),transparent 80%);
+  transform:translateX(-120%);animation:sheen 4.5s var(--ease) infinite}
+@keyframes sheen{0%,70%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+.go:hover{transform:translateY(-2px);box-shadow:0 14px 30px -10px var(--c)}
+.go:hover .arrow{transform:translateX(5px)}
+.arrow{transition:transform .3s var(--ease)}
+
+/* ── the preview switcher, outside the card ── */
+.switch{position:relative;z-index:2;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  justify-content:center;font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;
+  color:var(--d3)}
+.switch button{font-family:var(--sans);font-size:0.6rem;letter-spacing:0.1em;
+  padding:7px 13px;border-radius:99px;border:1px solid var(--bd2);background:transparent;
+  color:var(--d2);cursor:pointer;transition:.24s var(--ease)}
+.switch button.on{background:var(--off);color:var(--ink);border-color:var(--off);font-weight:700}
+.switch button:hover{color:var(--off)}
+.switch button.on:hover{color:var(--ink)}
+
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+
+<article class="card" id="card">
+  <div class="lbl"><i></i>Next ride<em id="lblWhen"></em></div>
+
+  <div class="clock">
+    <div class="ring">
+      <svg viewBox="0 0 100 100">
+        <circle class="trk" cx="50" cy="50" r="44"/>
+        <circle class="arc" id="arc" cx="50" cy="50" r="44"/>
+      </svg>
+      <div class="mid"><b id="dNum">0</b><u id="dLab">days</u></div>
+    </div>
+    <div class="units">
+      <div class="u"><b id="uh">00</b><span>hrs</span></div>
+      <div class="u"><b id="um">00</b><span>min</span></div>
+      <div class="u sec"><div class="roll"><i id="us">00</i></div><span>sec</span></div>
+    </div>
+  </div>
+
+  <div class="place">
+    <h2 id="dest"></h2>
+    <div class="sub"><span id="states"></span><i></i><span id="longDate"></span></div>
+  </div>
+
+  <div class="meta">
+    <div><k>Distance</k><v id="km"></v></div>
+    <div><k id="tk">Starts</k><v id="tv"></v></div>
+    <div><k>Stops</k><v id="stops"></v></div>
+  </div>
+
+  <div class="org">
+    <div class="badge" id="badge"></div>
+    <div class="tx"><k>Organised by</k><v id="orgName"></v></div>
+    <div class="fee" id="feeBox"></div>
+  </div>
+
+  <a class="go" href="#"><span>Explore ride <em class="arrow">→</em></span></a>
+</article>
+
+<div class="switch" id="switch"><span>Preview with:</span></div>
+
+<script src="nextride-data.js"></script>
+<script>
+let ride = NR.next
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches
+
+/* ── the switcher, so both shapes of ride can be judged ───────────────── */
+const sw = document.getElementById('switch')
+NR.rides.forEach(r => {
+  const b = document.createElement('button')
+  b.textContent = r.name.split(' ').slice(0, 2).join(' ')
+  b.onclick = () => { ride = r; paint(); tick() }
+  b.dataset.id = r.id
+  sw.appendChild(b)
+})
+
+/* ── the static half ──────────────────────────────────────────────────── */
+function paint() {
+  document.documentElement.style.setProperty('--c', ride.color)
+  document.getElementById('dest').textContent = ride.dest
+  document.getElementById('states').textContent = ride.states.join(' · ')
+  document.getElementById('longDate').textContent = NR.longDate(ride)
+  document.getElementById('km').textContent = ride.distance
+  document.getElementById('stops').textContent =
+    ride.stopCount + (ride.loop ? ' · loop' : '')
+
+  /* a ride that states a muster time says so; one that does not shows the
+     day it falls on rather than inventing a clock */
+  const t = document.getElementById('tv'), tk = document.getElementById('tk')
+  if (ride.assemble) { tk.textContent = 'Assemble'; t.textContent = ride.assemble }
+  else if (ride.rideStart) { tk.textContent = 'Rolls out'; t.textContent = ride.rideStart }
+  else { tk.textContent = 'Day'; t.textContent = NR.weekday(ride) }
+
+  document.getElementById('orgName').textContent = ride.organizer
+  const badge = document.getElementById('badge')
+  badge.innerHTML = ride.logo
+    ? `<img src="${ride.logo}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${ride.initials}'}))" />`
+    : `<span>${ride.initials}</span>`
+
+  const fee = document.getElementById('feeBox')
+  fee.innerHTML = ride.fee ? `<b>${ride.fee}</b><u>Entry</u>` : ''
+
+  document.querySelectorAll('.switch button').forEach(b =>
+    b.classList.toggle('on', b.dataset.id === ride.id))
+}
+
+/* ── the moving half ──────────────────────────────────────────────────── */
+const C = 2 * Math.PI * 44
+const arc = document.getElementById('arc')
+arc.style.strokeDasharray = C
+let lastSec = -1
+
+function tick() {
+  const c = NR.countdown(ride)
+
+  const dNum = document.getElementById('dNum'), dLab = document.getElementById('dLab')
+  if (c.phase === 'riding') { dNum.textContent = '0'; dLab.textContent = 'today' }
+  else if (c.phase === 'past') { dNum.textContent = '—'; dLab.textContent = 'ridden' }
+  else { dNum.textContent = c.d; dLab.textContent = c.d === 1 ? 'day' : 'days' }
+
+  document.getElementById('uh').textContent = NR.pad(c.h)
+  document.getElementById('um').textContent = NR.pad(c.m)
+
+  /* The digit is written synchronously; the pulse is played on top with the
+     Web Animations API, which reverts to the base style when it ends and
+     leaves the number exactly where it was if it never runs at all. */
+  const s = document.getElementById('us')
+  if (c.s !== lastSec) {
+    lastSec = c.s
+    s.textContent = NR.pad(c.s)
+    if (!REDUCED && s.animate) {
+      s.animate(
+        [{ opacity: 0.3, transform: 'translateY(-3px)' }, { opacity: 1, transform: 'none' }],
+        { duration: 400, easing: 'cubic-bezier(.2,.9,.25,1)' })
+    }
+  }
+
+  document.getElementById('lblWhen').textContent = NR.whenWords(ride)
+
+  /* the ring is the last 30 days closing up */
+  const WINDOW = 30 * 86400000
+  const left = Math.max(0, Math.min(WINDOW, c.total))
+  arc.style.strokeDashoffset = C * (left / WINDOW)
+}
+
+paint()
+tick()
+setInterval(tick, 1000)
+</script>
+</body>
+</html>

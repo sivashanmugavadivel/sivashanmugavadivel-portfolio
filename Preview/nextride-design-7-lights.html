@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Next Ride · 7 · Starting Lights</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   STARTING LIGHTS — the grid gantry, counting a ride in.
+
+   Five pods across the top, lighting one at a time as the ride closes.
+   Six or more days out the gantry is dark; at five days the first pod
+   comes on, and on ride morning all five are lit — then they go out, and
+   lights out is go. Anyone who has watched a start reads the state
+   without reading a number, which is the whole point of borrowing it.
+
+   The mapping is deliberately coarse. A gantry with five pods can say
+   six things, so it says the six that matter — far off, five, four,
+   three, two, tomorrow, today — and the precise figure sits underneath
+   for anyone who wants it. A countdown that needs to be parsed is a
+   clock, not a signal.
+
+   The pods light left to right on a stagger with the lamp glow spilling
+   onto the housing, and the whole rail flashes on the day. No route
+   drawing: a gantry tells you WHEN to go, never which way.
+   ══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ink:#0b0a12; --carbon:#111116; --carbon2:#191a21; --pod:#0a0a0d;
+  --off:#f2f4f7; --d1:rgba(242,244,247,0.62); --d2:rgba(242,244,247,0.4);
+  --d3:rgba(242,244,247,0.2); --bd:rgba(242,244,247,0.1); --bd2:rgba(242,244,247,0.2);
+  --lamp:#ff2d2d; --green:#2ee86a;
+  --cond:'Barlow Condensed',sans-serif; --sans:'Inter',system-ui,sans-serif;
+  --ease:cubic-bezier(.2,.9,.25,1);
+  --c:#dc2626;
+}
+body{background:var(--ink);color:var(--d1);font-family:var(--sans);min-height:100vh;
+  -webkit-font-smoothing:antialiased;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:22px;padding:clamp(16px,4vw,42px)}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(70vw 60vh at 22% 18%,rgba(255,196,120,0.14),transparent 62%),
+    radial-gradient(60vw 60vh at 82% 78%,rgba(120,90,220,0.13),transparent 64%),
+    linear-gradient(160deg,#151220,#0b0a12 60%)}
+::selection{background:var(--lamp);color:#fff}
+
+.card{position:relative;z-index:2;width:min(100%,452px);
+  background:linear-gradient(172deg,var(--carbon2),var(--carbon));
+  border:1px solid var(--bd);border-radius:18px;overflow:hidden;
+  box-shadow:0 34px 70px -28px rgba(0,0,0,0.9),inset 0 1px 0 rgba(255,255,255,0.05)}
+/* the carbon weave */
+.card::before{content:'';position:absolute;inset:0;pointer-events:none;opacity:0.5;
+  background:
+    repeating-linear-gradient(45deg,rgba(255,255,255,0.016) 0 2px,transparent 2px 4px),
+    repeating-linear-gradient(-45deg,rgba(255,255,255,0.016) 0 2px,transparent 2px 4px)}
+
+/* ── the gantry ── */
+.gantry{position:relative;background:var(--pod);border-bottom:1px solid var(--bd);
+  padding:clamp(15px,2.6vw,20px) clamp(14px,2.4vw,20px) clamp(13px,2.2vw,17px)}
+.rail{display:flex;gap:clamp(6px,1.6vw,10px);justify-content:center;margin-bottom:11px}
+.pod{flex:1;max-width:66px;aspect-ratio:1/1.24;border-radius:9px;
+  background:linear-gradient(180deg,#25262d,#101116);border:1px solid rgba(255,255,255,0.07);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  padding:6px 0;position:relative;overflow:hidden;
+  transition:box-shadow .45s var(--ease),background .45s var(--ease)}
+.pod i{width:clamp(13px,3.4vw,17px);height:clamp(13px,3.4vw,17px);border-radius:50%;
+  background:#2a1417;box-shadow:inset 0 1px 2px rgba(0,0,0,0.8);
+  transition:background .4s var(--ease),box-shadow .4s var(--ease)}
+.pod.on i{background:var(--lamp);
+  box-shadow:0 0 12px var(--lamp),0 0 26px rgba(255,45,45,0.55),inset 0 0 4px rgba(255,255,255,0.5)}
+.pod.on{background:linear-gradient(180deg,#3a1d20,#14090b);
+  box-shadow:0 0 22px -6px rgba(255,45,45,0.5)}
+/* ride day: the whole rail flashes, then goes out */
+.rail.go .pod i{background:var(--green);
+  box-shadow:0 0 14px var(--green),0 0 30px rgba(46,232,106,0.5)}
+.rail.go .pod{animation:flash 1.1s steps(2,end) infinite}
+@keyframes flash{50%{opacity:.35}}
+
+.state{display:flex;align-items:center;gap:9px;font-family:var(--cond);font-weight:600;
+  font-size:0.8rem;letter-spacing:0.26em;text-transform:uppercase;color:var(--d2);
+  justify-content:center}
+.state b{color:var(--off);font-weight:700}
+.state.hot b{color:var(--lamp)}
+.state.go b{color:var(--green)}
+
+/* ── the body ── */
+.body{position:relative;padding:clamp(16px,2.8vw,22px)}
+.lbl{display:flex;align-items:center;gap:9px;font-size:0.56rem;font-weight:700;
+  letter-spacing:0.28em;text-transform:uppercase;color:var(--c);margin-bottom:13px}
+.lbl i{width:7px;height:7px;border-radius:50%;background:currentColor}
+.lbl em{margin-left:auto;font-style:normal;color:var(--d3);letter-spacing:0.14em;
+  font-weight:500}
+
+h2{font-family:var(--cond);font-weight:700;font-size:clamp(1.9rem,6vw,2.6rem);
+  color:var(--off);line-height:0.94;letter-spacing:0.005em;text-transform:uppercase;
+  margin-bottom:6px}
+.sub{font-size:0.66rem;color:var(--d2);line-height:1.6;margin-bottom:16px}
+.sub b{color:var(--d1);font-weight:600}
+
+/* the precise figure, for anyone who wants it */
+.exact{display:flex;align-items:baseline;gap:5px;font-family:var(--cond);
+  font-variant-numeric:tabular-nums;margin-bottom:16px;padding-bottom:15px;
+  border-bottom:1px solid var(--bd)}
+.exact b{font-size:1.9rem;font-weight:700;color:var(--off);line-height:1}
+.exact em{font-style:normal;font-size:0.72rem;color:var(--d3);margin-right:7px;
+  letter-spacing:0.1em;text-transform:uppercase}
+
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--bd);
+  border:1px solid var(--bd);border-radius:9px;overflow:hidden;margin-bottom:15px}
+.grid > div{background:var(--carbon2);padding:11px 12px}
+.grid k{display:block;font-size:0.44rem;font-weight:700;letter-spacing:0.16em;
+  text-transform:uppercase;color:var(--d3);margin-bottom:5px}
+.grid v{display:block;font-family:var(--cond);font-weight:700;font-size:1.1rem;
+  color:var(--off);line-height:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.who{display:flex;align-items:center;gap:10px;margin-bottom:15px}
+.who .badge{width:34px;height:34px;border-radius:8px;flex-shrink:0;display:grid;
+  place-items:center;background:rgba(242,244,247,0.07);border:1px solid var(--bd);overflow:hidden}
+.who .badge img{width:100%;height:100%;object-fit:contain;padding:4px;
+  filter:brightness(0) invert(1)}
+.who .badge span{font-family:var(--cond);font-weight:700;font-size:0.76rem;color:var(--lamp)}
+.who .tx{min-width:0}
+.who .tx b{display:block;font-size:0.78rem;font-weight:700;color:var(--off);line-height:1.2;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.who .tx u{display:block;text-decoration:none;font-size:0.46rem;letter-spacing:0.16em;
+  text-transform:uppercase;color:var(--d3);margin-top:3px}
+.who .fee{margin-left:auto;text-align:right;flex-shrink:0}
+.who .fee b{display:block;font-family:var(--cond);font-weight:700;font-size:1.22rem;
+  color:var(--lamp);line-height:1}
+.who .fee u{display:block;text-decoration:none;font-size:0.44rem;letter-spacing:0.16em;
+  text-transform:uppercase;color:var(--d3);margin-top:4px}
+
+.go{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:15px;
+  border-radius:10px;background:var(--lamp);color:#fff;text-decoration:none;
+  font-family:var(--cond);font-size:0.92rem;font-weight:700;letter-spacing:0.2em;
+  text-transform:uppercase;transition:.3s var(--ease)}
+.go:hover{background:var(--off);color:var(--ink);transform:translateY(-2px);
+  box-shadow:0 14px 30px -12px rgba(242,244,247,0.45)}
+.go:hover .arrow{transform:translateX(5px)}
+.arrow{transition:transform .3s var(--ease);display:inline-block}
+
+.switch{position:relative;z-index:2;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  justify-content:center;font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;
+  color:var(--d3)}
+.switch button{font-family:var(--sans);font-size:0.6rem;letter-spacing:0.1em;padding:7px 13px;
+  border-radius:99px;border:1px solid var(--bd2);background:transparent;color:var(--d2);
+  cursor:pointer;transition:.24s var(--ease)}
+.switch button.on{background:var(--off);color:var(--ink);border-color:var(--off);font-weight:700}
+.switch button:hover{color:var(--off)}
+.switch button.on:hover{color:var(--ink)}
+
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<article class="card">
+  <div class="gantry">
+    <div class="rail" id="rail"></div>
+    <div class="state" id="state"></div>
+  </div>
+
+  <div class="body">
+    <div class="lbl"><i></i>Next ride<em id="whenWords"></em></div>
+    <h2 id="dest"></h2>
+    <div class="sub" id="sub"></div>
+
+    <div class="exact" id="exact"></div>
+
+    <div class="grid">
+      <div><k>Distance</k><v id="km"></v></div>
+      <div><k>Date</k><v id="dateV"></v></div>
+      <div><k id="tk">Stops</k><v id="tv"></v></div>
+    </div>
+
+    <div class="who">
+      <div class="badge" id="badge"></div>
+      <div class="tx"><b id="orgName"></b><u>Organiser</u></div>
+      <div class="fee" id="feeBox"></div>
+    </div>
+
+    <a class="go" href="#">Explore ride <em class="arrow">→</em></a>
+  </div>
+</article>
+
+<div class="switch" id="switch"><span>Preview with:</span></div>
+
+<script src="nextride-data.js"></script>
+<script>
+let ride = NR.next
+const PODS = 5
+
+const sw = document.getElementById('switch')
+NR.rides.forEach(r => {
+  const b = document.createElement('button')
+  b.textContent = r.name.split(' ').slice(0, 2).join(' ')
+  b.dataset.id = r.id
+  b.onclick = () => { ride = r; paint(); tick() }
+  sw.appendChild(b)
+})
+
+document.getElementById('rail').innerHTML =
+  Array.from({ length: PODS }, () => '<span class="pod"><i></i></span>').join('')
+
+function paint() {
+  document.documentElement.style.setProperty('--c', ride.color)
+  document.getElementById('dest').textContent = ride.dest
+  document.getElementById('sub').innerHTML = ride.loop
+    ? `A loop out of <b>${ride.fromCity}</b> and back · ${ride.states.join(' · ')}`
+    : `From <b>${ride.fromCity}</b> · ${ride.states.join(' · ')}`
+  document.getElementById('km').textContent = ride.distance
+  document.getElementById('dateV').textContent = ride.date.replace(/ \d{4}$/, '')
+
+  const tk = document.getElementById('tk'), tv = document.getElementById('tv')
+  if (ride.assemble) { tk.textContent = 'Assemble'; tv.textContent = ride.assemble }
+  else if (ride.rideStart) { tk.textContent = 'Rolls out'; tv.textContent = ride.rideStart }
+  else { tk.textContent = 'Stops'; tv.textContent = ride.stopCount }
+
+  const badge = document.getElementById('badge')
+  badge.innerHTML = ride.logo
+    ? `<img src="${ride.logo}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${ride.initials}'}))" />`
+    : `<span>${ride.initials}</span>`
+  document.getElementById('orgName').textContent = ride.organizer
+  document.getElementById('feeBox').innerHTML =
+    ride.fee ? `<b>${ride.fee}</b><u>Entry</u>` : ''
+
+  document.querySelectorAll('.switch button').forEach(b =>
+    b.classList.toggle('on', b.dataset.id === ride.id))
+}
+
+function tick() {
+  const c = NR.countdown(ride)
+  const rail = document.getElementById('rail')
+  const pods = rail.querySelectorAll('.pod')
+  const state = document.getElementById('state')
+
+  /* six or more days out the gantry is dark; a pod lights per day from five
+     down to one, and ride day lights the lot */
+  let lit, word
+  if (c.phase === 'riding') { lit = PODS; word = '<b>Lights out — go</b>' }
+  else if (c.phase === 'past') { lit = 0; word = '<b>Ridden</b>' }
+  else if (c.d >= PODS + 1) { lit = 0; word = `Gantry dark · <b>${c.d} days</b> out` }
+  else { lit = PODS - c.d; word = c.d === 0
+    ? '<b>Today</b>' : c.d === 1 ? '<b>Tomorrow</b>' : `<b>${c.d} days</b> to go` }
+
+  pods.forEach((p, i) => {
+    p.classList.toggle('on', i < lit)
+    /* stagger the lamps so the rail fills left to right */
+    p.style.transitionDelay = `${i * 90}ms`
+  })
+  rail.classList.toggle('go', c.phase === 'riding')
+
+  state.innerHTML = word
+  state.className = 'state' + (c.phase === 'riding' ? ' go' : lit >= PODS - 1 ? ' hot' : '')
+
+  document.getElementById('whenWords').textContent = NR.whenWords(ride)
+
+  const ex = document.getElementById('exact')
+  if (c.phase === 'riding') ex.innerHTML = `<em>Status</em><b>On the road today</b>`
+  else if (c.phase === 'past') ex.innerHTML = `<em>Status</em><b>Ridden</b>`
+  else ex.innerHTML =
+    `<em>Exact</em><b>${c.d}</b><em>d</em><b>${NR.pad(c.h)}</b><em>h</em><b>${NR.pad(c.m)}</b><em>m</em><b>${NR.pad(c.s)}</b><em>s</em>`
+}
+
+paint()
+tick()
+setInterval(tick, 1000)
+</script>
+</body>
+</html>

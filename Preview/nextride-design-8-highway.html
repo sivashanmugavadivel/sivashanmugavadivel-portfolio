@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Next Ride · 8 · Highway Sign</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   HIGHWAY SIGN — one board, carrying the whole ride.
+
+   Everything lives on the sign now. The earlier version hung a separate
+   dark plate underneath for the details, which quietly admitted the sign
+   could not hold them — two objects where the idea only supports one. So
+   the board grew instead: the place and the distance at the top the way a
+   gantry states them, then a ruled band for the countdown, then the lower
+   section with the date, who is running it and the way in.
+
+   White rules divide the sections rather than panels, because that is how
+   a real sign is laid out — one sheet, ruled, never a sandwich of boards.
+
+   What makes it read as sheeting rather than paint:
+   · the keyline is INSET from the edge, as it is actually printed
+   · the retroreflective sweep is a soft travelling band, not a glint —
+     sheeting lights up, it does not sparkle
+   · the chevrons march rather than sit
+
+   The countdown runs to the second and the seconds pulse as they land, so
+   the board is visibly live. No route drawing: a sign names the place and
+   the distance, which is the whole convention.
+   ══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ink:#0b0a12;
+  --signG:#0f6b3d; --signG2:#0c5c34; --signW:#f7faf8;
+  --w1:rgba(247,250,248,0.78); --w2:rgba(247,250,248,0.58); --w3:rgba(247,250,248,0.34);
+  --rule:rgba(247,250,248,0.3); --rule2:rgba(247,250,248,0.18);
+  --disp:'Archivo',system-ui,sans-serif; --sans:'Inter',system-ui,sans-serif;
+  --ease:cubic-bezier(.2,.9,.25,1);
+  --c:#dc2626;
+}
+body{background:var(--ink);color:var(--w1);font-family:var(--sans);min-height:100vh;
+  -webkit-font-smoothing:antialiased;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:22px;padding:clamp(16px,4vw,42px)}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(70vw 60vh at 22% 18%,rgba(255,196,120,0.14),transparent 62%),
+    radial-gradient(60vw 60vh at 82% 78%,rgba(120,90,220,0.13),transparent 64%),
+    linear-gradient(160deg,#151220,#0b0a12 60%)}
+::selection{background:var(--signW);color:var(--signG)}
+
+/* ── the board ── */
+.sign{position:relative;z-index:2;width:min(100%,452px);
+  background:linear-gradient(168deg,var(--signG),var(--signG2));
+  border-radius:14px;overflow:hidden;
+  padding:clamp(16px,2.8vw,22px);
+  box-shadow:0 34px 70px -26px rgba(0,0,0,0.85)}
+/* the printed keyline, inset the way a real sign carries it */
+.sign::before{content:'';position:absolute;inset:8px;border:2.4px solid var(--signW);
+  border-radius:8px;pointer-events:none;opacity:0.92;z-index:4}
+/* retroreflective sheeting: a soft band, not a glint */
+.sign::after{content:'';position:absolute;top:-60%;left:-45%;width:55%;height:220%;
+  pointer-events:none;z-index:3;transform:rotate(16deg);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);
+  animation:sweep 7s var(--ease) infinite}
+@keyframes sweep{0%,64%{transform:translateX(-45%) rotate(16deg)}
+  100%{transform:translateX(330%) rotate(16deg)}}
+
+.in{position:relative;z-index:2;padding:10px 9px}
+
+/* ── head ── */
+.top{display:flex;align-items:center;gap:9px;margin-bottom:13px}
+.top .tag{font-family:var(--disp);font-weight:700;font-size:0.56rem;letter-spacing:0.26em;
+  text-transform:uppercase;color:var(--w1)}
+.top .shield{margin-left:auto;display:flex;align-items:center;gap:6px;
+  background:var(--signW);color:var(--signG);border-radius:5px;padding:3px 10px;
+  font-family:var(--disp);font-weight:800;font-size:0.6rem;letter-spacing:0.1em;
+  white-space:nowrap}
+
+/* ── the place and the distance ── */
+.row{display:flex;align-items:flex-end;gap:12px;margin-bottom:13px}
+.row .place{min-width:0;flex:1}
+.row .place b{display:block;font-family:var(--disp);font-weight:700;
+  font-size:clamp(1.7rem,6.2vw,2.4rem);color:var(--signW);line-height:0.98;
+  letter-spacing:-0.015em;word-break:break-word}
+.row .place u{display:block;text-decoration:none;font-size:0.62rem;color:var(--w2);
+  margin-top:6px;letter-spacing:0.04em;line-height:1.4}
+.row .dist{flex-shrink:0;text-align:right;padding-bottom:2px}
+.row .dist b{display:block;font-family:var(--disp);font-weight:800;
+  font-size:clamp(1.5rem,5vw,2rem);color:var(--signW);line-height:1;
+  font-variant-numeric:tabular-nums}
+.row .dist u{display:block;text-decoration:none;font-family:var(--disp);font-weight:600;
+  font-size:0.7rem;color:var(--w2);letter-spacing:0.14em;margin-top:1px}
+
+/* the arrow bar */
+.arrows{display:flex;align-items:center;gap:8px;padding-top:11px;
+  border-top:2px solid var(--rule)}
+.arrows .ch{display:flex;gap:3px}
+.arrows .ch i{width:0;height:0;border-top:7px solid transparent;border-bottom:7px solid transparent;
+  border-left:9px solid var(--signW);opacity:0.35;animation:march 1.9s var(--ease) infinite}
+.arrows .ch i:nth-child(2){animation-delay:.2s}
+.arrows .ch i:nth-child(3){animation-delay:.4s}
+@keyframes march{40%{opacity:1}}
+.arrows span{font-family:var(--disp);font-weight:600;font-size:0.6rem;letter-spacing:0.2em;
+  text-transform:uppercase;color:var(--w1)}
+.arrows em{margin-left:auto;font-style:normal;font-family:var(--disp);font-weight:600;
+  font-size:0.58rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--w3)}
+
+/* ── the countdown band ── */
+.leaves{margin-top:13px;padding:13px 0;border-top:1px solid var(--rule2);
+  border-bottom:1px solid var(--rule2)}
+.leaves .k{font-family:var(--disp);font-weight:600;font-size:0.54rem;letter-spacing:0.24em;
+  text-transform:uppercase;color:var(--w3);margin-bottom:8px}
+.clock{display:flex;align-items:baseline;gap:2px;font-family:var(--disp);
+  font-variant-numeric:tabular-nums;flex-wrap:wrap}
+.clock b{font-weight:800;font-size:clamp(1.7rem,6vw,2.2rem);color:var(--signW);line-height:1;
+  letter-spacing:-0.02em}
+.clock em{font-style:normal;font-weight:600;font-size:0.68rem;color:var(--w3);
+  margin:0 10px 0 2px;letter-spacing:0.08em;text-transform:uppercase}
+.clock b.sec{color:var(--signW)}
+/* the ticking dot between the figures and the seconds */
+.clock .beat{width:6px;height:6px;border-radius:50%;background:var(--signW);
+  margin:0 8px 4px 2px;opacity:0.45;animation:beat 1s steps(2,end) infinite}
+@keyframes beat{50%{opacity:1}}
+
+/* ── the lower section: date, who, and the way in ── */
+.foot{margin-top:13px}
+.strip{display:flex;align-items:center;gap:12px;margin-bottom:13px}
+.strip .date{flex-shrink:0}
+.strip .date k{display:block;font-family:var(--disp);font-weight:600;font-size:0.46rem;
+  letter-spacing:0.18em;text-transform:uppercase;color:var(--w3);margin-bottom:4px}
+.strip .date v{display:block;font-family:var(--disp);font-weight:700;font-size:1.1rem;
+  color:var(--signW);line-height:1}
+.strip .div{width:1px;align-self:stretch;background:var(--rule2)}
+/* one row: the label on the left, the mark or the name hard right */
+.strip .who{min-width:0;flex:1;display:flex;align-items:center;gap:10px}
+.strip .cap{flex-shrink:0;font-size:0.46rem;letter-spacing:0.16em;text-transform:uppercase;
+  color:var(--w3)}
+.strip .mark{margin-left:auto;min-width:0;display:flex;align-items:center;justify-content:flex-end}
+
+/* The artwork is Royal Enfield red on transparent and is shown exactly as
+   supplied — no plate behind it, no knockout over it.
+
+   It is sized to the INK, not the file. The canvas is 3840 × 2160 but the
+   lockup is a 7.56:1 band filling 98% of the width and only 23% of the
+   height, so setting a height would render the mark about five pixels tall
+   and float it in empty space. Giving the element the ink's own aspect and
+   letting object-fit crop takes the transparent bands off the top and
+   bottom — the band is centred in the canvas, so nothing of the mark is
+   lost. */
+.strip .mark img{display:block;width:clamp(116px,32vw,148px);
+  aspect-ratio:756/100;object-fit:cover}
+.strip .mark b{font-family:var(--disp);font-weight:700;font-size:0.88rem;color:var(--signW);
+  line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* the way in — a white plate, the way a sign prints its action panel */
+.go{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px;
+  border-radius:8px;background:var(--signW);color:var(--signG);text-decoration:none;
+  font-family:var(--disp);font-size:0.78rem;font-weight:800;letter-spacing:0.16em;
+  text-transform:uppercase;transition:.3s var(--ease)}
+.go:hover{transform:translateY(-2px);box-shadow:0 14px 28px -12px rgba(247,250,248,0.5)}
+.go:hover .arrow{transform:translateX(5px)}
+.arrow{transition:transform .3s var(--ease);display:inline-block}
+
+.switch{position:relative;z-index:2;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  justify-content:center;font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;
+  color:rgba(247,250,248,0.24)}
+.switch button{font-family:var(--sans);font-size:0.6rem;letter-spacing:0.1em;padding:7px 13px;
+  border-radius:99px;border:1px solid rgba(247,250,248,0.24);background:transparent;
+  color:rgba(247,250,248,0.5);cursor:pointer;transition:.24s var(--ease)}
+.switch button.on{background:var(--signW);color:var(--signG);border-color:var(--signW);font-weight:700}
+.switch button:hover{color:var(--signW)}
+.switch button.on:hover{color:var(--signG)}
+
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<article class="sign">
+  <div class="in">
+    <div class="top">
+      <span class="tag">Next ride</span>
+      <span class="shield" id="shield"></span>
+    </div>
+
+    <div class="row">
+      <div class="place">
+        <b id="dest"></b>
+        <u id="destSub"></u>
+      </div>
+      <div class="dist">
+        <b id="kmNum"></b>
+        <u id="kmUnit">km</u>
+      </div>
+    </div>
+
+    <div class="arrows">
+      <span class="ch"><i></i><i></i><i></i></span>
+      <span id="arrowTx"></span>
+      <em id="stopsTx"></em>
+    </div>
+
+    <div class="leaves">
+      <div class="k" id="leavesK">Leaves in</div>
+      <div class="clock" id="clock"></div>
+    </div>
+
+    <div class="foot">
+      <div class="strip">
+        <div class="date">
+          <k>Date</k>
+          <v id="dateV"></v>
+        </div>
+        <span class="div"></span>
+        <div class="who" id="who"></div>
+      </div>
+
+      <a class="go" href="#">Explore ride <em class="arrow">→</em></a>
+    </div>
+  </div>
+</article>
+
+<div class="switch" id="switch"><span>Preview with:</span></div>
+
+<script src="nextride-data.js"></script>
+<script>
+let ride = NR.next
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches
+
+const sw = document.getElementById('switch')
+NR.rides.forEach(r => {
+  const b = document.createElement('button')
+  b.textContent = r.name.split(' ').slice(0, 2).join(' ')
+  b.dataset.id = r.id
+  b.onclick = () => { ride = r; paint(); tick() }
+  sw.appendChild(b)
+})
+
+function paint() {
+  document.documentElement.style.setProperty('--c', ride.color)
+
+  document.getElementById('dest').textContent = ride.dest
+  document.getElementById('destSub').textContent =
+    ride.loop ? `via ${ride.via.slice(0, 2).join(', ')} · and back` : ride.destPlace
+
+  /* a sign carries a bare number and a unit, so split them */
+  const n = parseFloat(String(ride.distance).replace(/[^\d.]/g, ''))
+  document.getElementById('kmNum').textContent = Number.isFinite(n) && n ? n : '—'
+  document.getElementById('kmUnit').textContent = Number.isFinite(n) && n ? 'km' : ''
+
+  document.getElementById('shield').textContent = ride.states.join(' · ')
+  document.getElementById('arrowTx').textContent =
+    ride.loop ? 'Out and back' : `From ${ride.fromCity}`
+  document.getElementById('stopsTx').textContent = `${ride.stopCount} stops`
+
+  document.getElementById('dateV').textContent = ride.date.replace(/ \d{4}$/, '')
+
+  /* say what is actually being counted to */
+  document.getElementById('leavesK').textContent =
+    ride.assemble ? `Assembles ${ride.assemble} · leaves in`
+      : ride.rideStart ? `Rolls out ${ride.rideStart} · leaves in`
+      : 'Leaves in'
+
+  organiser()
+
+  document.querySelectorAll('.switch button').forEach(b =>
+    b.classList.toggle('on', b.dataset.id === ride.id))
+}
+
+/**
+ * The organiser: the mark where there is one, the name where there is not.
+ *
+ * Both rides need this. Royal Enfield ships artwork; the Biker's Club has
+ * none and its folder does not exist yet, so the name — set properly, with
+ * its initials — IS the treatment there, not a placeholder for one. The
+ * image also falls back to the same text block if the file fails to load,
+ * so a broken path degrades to a readable credit rather than a gap.
+ */
+function organiser() {
+  const who = document.getElementById('who')
+  const label = '<span class="cap">Organiser</span>'
+
+  const asText = () => {
+    who.innerHTML = label + `<span class="mark"><b>${ride.organizer}</b></span>`
+  }
+
+  if (!ride.logo) { asText(); return }
+
+  who.innerHTML = label + `<span class="mark"><img alt="${ride.organizer}" /></span>`
+  const img = who.querySelector('img')
+  img.onerror = asText
+  img.src = ride.logo
+}
+
+/* ── the running clock ──────────────────────────────────────────────────
+   Rebuilt only when the minute changes; on every other tick just the
+   seconds are rewritten, so the pulse lands on the seconds alone and the
+   rest of the line does not flicker. The digits are written synchronously
+   and the pulse is played on top — an animation that never runs must not
+   be able to take the number with it.                                   */
+let lastMin = -1, secEl = null
+
+function tick() {
+  const c = NR.countdown(ride)
+  const clock = document.getElementById('clock')
+
+  if (c.phase === 'riding' || c.phase === 'past') {
+    clock.innerHTML = `<b>${c.phase === 'riding' ? 'Today' : 'Ridden'}</b>`
+    lastMin = -1; secEl = null
+    return
+  }
+
+  const key = c.d * 10000 + c.h * 100 + c.m
+  if (key !== lastMin || !secEl) {
+    lastMin = key
+    clock.innerHTML =
+      `<b>${c.d}</b><em>d</em>` +
+      `<b>${NR.pad(c.h)}</b><em>h</em>` +
+      `<b>${NR.pad(c.m)}</b><em>m</em>` +
+      `<span class="beat"></span>` +
+      `<b class="sec">${NR.pad(c.s)}</b><em>s</em>`
+    secEl = clock.querySelector('.sec')
+  } else {
+    secEl.textContent = NR.pad(c.s)
+  }
+
+  if (!REDUCED && secEl && secEl.animate) {
+    secEl.animate(
+      [{ opacity: 0.45, transform: 'translateY(-2px)' }, { opacity: 1, transform: 'none' }],
+      { duration: 320, easing: 'cubic-bezier(.2,.9,.25,1)' })
+  }
+}
+
+paint()
+tick()
+setInterval(tick, 1000)
+</script>
+</body>
+</html>

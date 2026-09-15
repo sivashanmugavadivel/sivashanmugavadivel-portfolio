@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Next Ride · 9 · Shutter</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   SHUTTER — the garage door going up on the next ride.
+
+   The page is called My Garage, and a garage has one gesture: the roller
+   door lifting. So the card opens rather than fades in — corrugated
+   slats rolling up off the top, a pull handle riding with them, and the
+   ride sitting underneath in the light.
+
+   The slats are a repeating gradient rather than elements, so the door
+   costs one paint no matter how tall the card is, and the highlight band
+   across them stays fixed while the door moves — which is what makes it
+   read as rolling steel instead of a sliding panel.
+
+   THE DOOR IS OPEN BY DEFAULT and the closing is an animation played on
+   top. That ordering matters: a shutter whose open state depends on an
+   animation completing is a card that hides itself the moment anything
+   goes wrong with that animation. Reduced motion skips the roll and
+   shows the ride immediately.
+   ══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ink:#0b0a12; --bay:#14151a; --bay2:#1b1d23;
+  --steel:#6e747e; --steel2:#474c55; --steel3:#3a3e46;
+  --off:#eef1f5; --d1:rgba(238,241,245,0.62); --d2:rgba(238,241,245,0.4);
+  --d3:rgba(238,241,245,0.2); --bd:rgba(238,241,245,0.1); --bd2:rgba(238,241,245,0.2);
+  --hazard:#f2b705;
+  --disp:'Oswald',system-ui,sans-serif; --sans:'Inter',system-ui,sans-serif;
+  --ease:cubic-bezier(.3,.02,.2,1);
+  --c:#dc2626;
+}
+body{background:var(--ink);color:var(--d1);font-family:var(--sans);min-height:100vh;
+  -webkit-font-smoothing:antialiased;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:22px;padding:clamp(16px,4vw,42px)}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(70vw 60vh at 22% 18%,rgba(255,196,120,0.14),transparent 62%),
+    radial-gradient(60vw 60vh at 82% 78%,rgba(120,90,220,0.13),transparent 64%),
+    linear-gradient(160deg,#151220,#0b0a12 60%)}
+::selection{background:var(--hazard);color:var(--ink)}
+
+/* ── the bay ── */
+.bay{position:relative;z-index:2;width:min(100%,452px);
+  background:linear-gradient(175deg,var(--bay2),var(--bay));
+  border:1px solid var(--bd);border-radius:16px;overflow:hidden;
+  box-shadow:0 34px 70px -28px rgba(0,0,0,0.9),inset 0 1px 0 rgba(255,255,255,0.05)}
+
+/* the lintel the door rolls into */
+.lintel{position:relative;z-index:6;display:flex;align-items:center;gap:10px;
+  padding:11px clamp(14px,2.4vw,18px);background:#101117;border-bottom:1px solid var(--bd)}
+.lintel .tag{font-family:var(--disp);font-weight:600;font-size:0.68rem;letter-spacing:0.26em;
+  text-transform:uppercase;color:var(--hazard)}
+.lintel .st{margin-left:auto;font-size:0.54rem;letter-spacing:0.16em;text-transform:uppercase;
+  color:var(--d3)}
+.lintel button{background:transparent;border:1px solid var(--bd2);border-radius:99px;
+  color:var(--d2);font-family:var(--sans);font-size:0.54rem;letter-spacing:0.12em;
+  text-transform:uppercase;padding:5px 11px;cursor:pointer;transition:.24s var(--ease)}
+.lintel button:hover{color:var(--ink);background:var(--hazard);border-color:var(--hazard)}
+
+/* ── the opening ── */
+.opening{position:relative;overflow:hidden}
+
+/* the door: OPEN in the base rule, closed only while the animation plays */
+.door{position:absolute;inset:0;z-index:5;transform:translateY(-101%);
+  background:
+    /* the fixed highlight band across the steel */
+    linear-gradient(180deg,rgba(255,255,255,0.1),transparent 30%),
+    /* the slats */
+    repeating-linear-gradient(180deg,
+      var(--steel3) 0 2px,
+      var(--steel2) 2px 9px,
+      var(--steel) 9px 11px,
+      var(--steel2) 11px 18px);
+  box-shadow:0 14px 26px -8px rgba(0,0,0,0.7)}
+.door.roll{animation:roll 1.5s var(--ease) .35s backwards}
+@keyframes roll{from{transform:none}to{transform:translateY(-101%)}}
+/* the pull handle and its rubber lip, riding the bottom edge */
+.door .lip{position:absolute;left:0;right:0;bottom:0;height:16px;
+  background:linear-gradient(180deg,var(--steel),#20232a);
+  border-top:1px solid rgba(255,255,255,0.12)}
+.door .lip::after{content:'';position:absolute;left:50%;bottom:4px;width:64px;height:6px;
+  transform:translateX(-50%);border-radius:3px;background:#12141a;
+  box-shadow:inset 0 1px 1px rgba(0,0,0,0.8)}
+/* hazard striping along the lip, the way a workshop door is marked */
+.door .hz{position:absolute;left:0;right:0;bottom:16px;height:7px;
+  background:repeating-linear-gradient(45deg,var(--hazard) 0 8px,#141519 8px 16px);
+  opacity:0.85}
+
+/* ── the ride, in the bay ── */
+.in{position:relative;z-index:2;padding:clamp(16px,2.8vw,22px)}
+h2{font-family:var(--disp);font-weight:600;font-size:clamp(1.7rem,5.6vw,2.3rem);color:var(--off);
+  line-height:1;letter-spacing:0.01em;text-transform:uppercase;margin-bottom:6px}
+.sub{font-size:0.66rem;color:var(--d2);line-height:1.6;margin-bottom:15px}
+.sub b{color:var(--d1);font-weight:600}
+
+.cd{display:flex;align-items:baseline;gap:5px;font-family:var(--disp);
+  font-variant-numeric:tabular-nums;margin-bottom:15px;padding-bottom:14px;
+  border-bottom:1px solid var(--bd)}
+.cd b{font-size:2rem;font-weight:600;color:var(--hazard);line-height:1}
+.cd em{font-style:normal;font-size:0.68rem;color:var(--d3);margin-right:8px;
+  letter-spacing:0.1em;text-transform:uppercase}
+
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--bd);
+  border:1px solid var(--bd);border-radius:9px;overflow:hidden;margin-bottom:14px}
+.grid > div{background:var(--bay2);padding:11px 12px}
+.grid k{display:block;font-size:0.44rem;font-weight:700;letter-spacing:0.16em;
+  text-transform:uppercase;color:var(--d3);margin-bottom:5px}
+.grid v{display:block;font-family:var(--disp);font-weight:600;font-size:1.06rem;color:var(--off);
+  line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.who{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.who .badge{width:34px;height:34px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;
+  background:rgba(238,241,245,0.07);border:1px solid var(--bd);overflow:hidden}
+.who .badge img{width:100%;height:100%;object-fit:contain;padding:4px;
+  filter:brightness(0) invert(1)}
+.who .badge span{font-family:var(--disp);font-weight:600;font-size:0.76rem;color:var(--hazard)}
+.who .tx{min-width:0}
+.who .tx b{display:block;font-size:0.78rem;font-weight:700;color:var(--off);line-height:1.2;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.who .tx u{display:block;text-decoration:none;font-size:0.46rem;letter-spacing:0.16em;
+  text-transform:uppercase;color:var(--d3);margin-top:3px}
+.who .fee{margin-left:auto;text-align:right;flex-shrink:0}
+.who .fee b{display:block;font-family:var(--disp);font-weight:600;font-size:1.22rem;
+  color:var(--off);line-height:1}
+.who .fee u{display:block;text-decoration:none;font-size:0.44rem;letter-spacing:0.16em;
+  text-transform:uppercase;color:var(--d3);margin-top:4px}
+
+.go{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px;
+  border-radius:9px;background:var(--hazard);color:var(--ink);text-decoration:none;
+  font-family:var(--disp);font-size:0.82rem;font-weight:600;letter-spacing:0.18em;
+  text-transform:uppercase;transition:.3s var(--ease)}
+.go:hover{background:var(--off);transform:translateY(-2px);
+  box-shadow:0 14px 28px -12px rgba(238,241,245,0.4)}
+.go:hover .arrow{transform:translateX(5px)}
+.arrow{transition:transform .3s var(--ease);display:inline-block}
+
+.switch{position:relative;z-index:2;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  justify-content:center;font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;
+  color:var(--d3)}
+.switch button{font-family:var(--sans);font-size:0.6rem;letter-spacing:0.1em;padding:7px 13px;
+  border-radius:99px;border:1px solid var(--bd2);background:transparent;color:var(--d2);
+  cursor:pointer;transition:.24s var(--ease)}
+.switch button.on{background:var(--off);color:var(--ink);border-color:var(--off);font-weight:700}
+.switch button:hover{color:var(--off)}
+.switch button.on:hover{color:var(--ink)}
+
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition-duration:.01ms!important}
+  .door{display:none}
+}
+</style>
+</head>
+<body>
+
+<article class="bay">
+  <div class="lintel">
+    <span class="tag">Bay 01 · Next ride</span>
+    <span class="st" id="whenWords"></span>
+    <button id="again">Roll up</button>
+  </div>
+
+  <div class="opening">
+    <div class="door" id="door"><span class="hz"></span><span class="lip"></span></div>
+
+    <div class="in">
+      <h2 id="dest"></h2>
+      <div class="sub" id="sub"></div>
+
+      <div class="cd" id="cd"></div>
+
+      <div class="grid">
+        <div><k>Distance</k><v id="km"></v></div>
+        <div><k>Date</k><v id="dateV"></v></div>
+        <div><k id="tk">Stops</k><v id="tv"></v></div>
+      </div>
+
+      <div class="who">
+        <div class="badge" id="badge"></div>
+        <div class="tx"><b id="orgName"></b><u>Organiser</u></div>
+        <div class="fee" id="feeBox"></div>
+      </div>
+
+      <a class="go" href="#">Explore ride <em class="arrow">→</em></a>
+    </div>
+  </div>
+</article>
+
+<div class="switch" id="switch"><span>Preview with:</span></div>
+
+<script src="nextride-data.js"></script>
+<script>
+let ride = NR.next
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches
+
+const sw = document.getElementById('switch')
+NR.rides.forEach(r => {
+  const b = document.createElement('button')
+  b.textContent = r.name.split(' ').slice(0, 2).join(' ')
+  b.dataset.id = r.id
+  b.onclick = () => { ride = r; paint(); tick(); roll() }
+  sw.appendChild(b)
+})
+
+/* Replay the roll by restarting the animation. The door's resting state is
+   open, so a failed restart leaves the ride visible rather than shut in. */
+function roll() {
+  if (REDUCED) return
+  const d = document.getElementById('door')
+  d.classList.remove('roll')
+  void d.offsetWidth
+  d.classList.add('roll')
+}
+document.getElementById('again').onclick = roll
+
+function paint() {
+  document.documentElement.style.setProperty('--c', ride.color)
+  document.getElementById('dest').textContent = ride.dest
+  document.getElementById('sub').innerHTML = ride.loop
+    ? `A loop out of <b>${ride.fromCity}</b> and back · ${ride.states.join(' · ')}`
+    : `From <b>${ride.fromCity}</b> · ${ride.states.join(' · ')}`
+  document.getElementById('km').textContent = ride.distance
+  document.getElementById('dateV').textContent = ride.date.replace(/ \d{4}$/, '')
+
+  const tk = document.getElementById('tk'), tv = document.getElementById('tv')
+  if (ride.assemble) { tk.textContent = 'Assemble'; tv.textContent = ride.assemble }
+  else if (ride.rideStart) { tk.textContent = 'Rolls out'; tv.textContent = ride.rideStart }
+  else { tk.textContent = 'Stops'; tv.textContent = ride.stopCount }
+
+  const badge = document.getElementById('badge')
+  badge.innerHTML = ride.logo
+    ? `<img src="${ride.logo}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${ride.initials}'}))" />`
+    : `<span>${ride.initials}</span>`
+  document.getElementById('orgName').textContent = ride.organizer
+  document.getElementById('feeBox').innerHTML =
+    ride.fee ? `<b>${ride.fee}</b><u>Entry</u>` : ''
+
+  document.querySelectorAll('.switch button').forEach(b =>
+    b.classList.toggle('on', b.dataset.id === ride.id))
+}
+
+function tick() {
+  const c = NR.countdown(ride)
+  document.getElementById('whenWords').textContent = NR.whenWords(ride)
+  const el = document.getElementById('cd')
+  if (c.phase === 'riding') el.innerHTML = `<em>Status</em><b>Rolling out today</b>`
+  else if (c.phase === 'past') el.innerHTML = `<em>Status</em><b>Back in the bay</b>`
+  else el.innerHTML =
+    `<em>Doors up in</em><b>${c.d}</b><em>d</em><b>${NR.pad(c.h)}</b><em>h</em><b>${NR.pad(c.m)}</b><em>m</em>`
+}
+
+paint()
+tick()
+roll()
+setInterval(tick, 1000)
+</script>
+</body>
+</html>

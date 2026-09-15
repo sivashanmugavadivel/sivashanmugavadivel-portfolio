@@ -1050,16 +1050,42 @@ const chapterSpan = boards => 1 + Math.min(2.4, Math.max(1, boards * 0.3))
  */
 const journeyEnd = win => 1 - 0.5 * win
 
+/** How long a board spends fading up out of the haze as it enters, as a
+ *  fraction of a ride. The START board is exempt — see signPlace. */
+const SIGN_FADE = 0.07
+
 /**
- * And where it BEGINS — behind the start line, by half a window.
+ * How far down the window the START board sits on arrival, as a fraction of it.
  *
- * Starting at 0 put the START board at the near end of the road the instant
- * you landed: bottom corner of the frame, already half swept past, as if you
- * had missed it. Backing up half a window sets it down mid-road instead — the
- * same place, and the same size, the FINISH board occupies when the chapter
- * hands over. You arrive at one board and leave on another, both centred.
+ * A FRACTION OF THE WINDOW, not a fixed distance back from its edge, because
+ * the window is not one size: it is sized to span a ride's biggest gap, so a
+ * two-stop ride carries one nearly twice as wide as a seven-stop ride. Backing
+ * up a fixed amount therefore landed each ride's board at a different depth —
+ * and the shallower ones at a depth the phone still cropped. This lands every
+ * ride's board at the same place, t = 0.84, which measurement says is inside a
+ * portrait frame on every chapter.
  */
-const journeyStart = win => -0.5 * win
+const SIGN_LAND = 0.964
+
+/**
+ * And where it BEGINS — most of a window back, which puts the START board at
+ * the far end of the road when you arrive.
+ *
+ * It used to begin half a window back, setting the board down mid-road: the
+ * right size to read, and the right place — on a wide screen. On a phone it
+ * was off the side of the frame entirely, and the reason is the scene, not the
+ * board. It is 1200 units wide drawn with `slice`, so a portrait viewport only
+ * ever sees the middle ~420 of it; at mid-road the verge the board is planted
+ * beyond has already left the frame, putting the board near x=950 with the
+ * right edge of the screen at about x=808.
+ *
+ * Further down the road the perspective narrows and carries it back inside
+ * that window. So a ride now opens with the START board small and far ahead,
+ * and you ride up to it rather than starting alongside it — which is also the
+ * more honest picture of setting off. The cost is that it is at its smallest
+ * when you first meet it.
+ */
+const journeyStart = win => -SIGN_LAND * win
 
 /**
  * How far the centre line travels across one chapter, in path units.
@@ -1137,9 +1163,16 @@ function signPlace(share, p, win, w, first) {
   const sc = Math.min(0.52, Math.max(1 - t * 0.82, 0.34))
   const half = (w * sc) / 2
   const x = Math.min(VPX + halfW + half + 8, VW - 8 - half)
-  /* fades up out of the haze and back down as it sweeps past the camera —
-     without both ends a board pops into and out of existence */
-  let op = Math.max(0, Math.min(1, (win - u) / 0.07, (u + 0.03) / 0.05))
+  /* Fades up out of the haze and back down as it sweeps past the camera —
+     without both ends a board pops into and out of existence.
+
+     THE START BOARD DOES NOT FADE IN, because it does not arrive: it is where
+     the ride begins, already standing there before a pixel of scroll. It lands
+     deep enough that the generous entry fade would still have it half
+     developed, and the answer is to exempt the one board that never enters
+     rather than to sharpen the fade for the dozen that do. After landing its
+     `u` only falls, so this term is 1 for the rest of its life either way. */
+  let op = Math.max(0, Math.min(1, first ? 1 : (win - u) / SIGN_FADE, (u + 0.03) / 0.05))
 
   /* YOU LAND ON THE START BOARD AND NOTHING ELSE.
      A stop close behind the start — Kangayam is 7 km into an 80 km ride — is
@@ -1605,7 +1638,11 @@ const COVER_CSS = `
   max-width: 1720px; margin: 0 auto; display: grid; align-items: center;
   grid-template-columns: minmax(0, 1.12fr) minmax(300px, 380px);
   column-gap: clamp(28px, 5vw, 80px);
-  padding: clamp(104px,14vh,152px) clamp(18px,5vw,72px) clamp(104px,14vh,148px); }
+  /* THE COVER HAS TO FIT ONE SCREEN. These were generous enough that a 870px
+     laptop window cut the card's button off, so they are now only as big as
+     their jobs: the top clears the navbar, the bottom clears the corner rows
+     below. Everything else on this screen is sized to what is left. */
+  padding: clamp(88px,10vh,112px) clamp(18px,5vw,72px) clamp(72px,9vh,96px); }
 
 /* ── left: the promise ─────────────────────────────────────────────────── */
 .hz-eye { display: flex; align-items: center; gap: 18px; margin-bottom: 22px;
@@ -1657,57 +1694,119 @@ const COVER_CSS = `
 .hz-script i { display: block; height: 1px; margin-top: 9px; font-style: normal;
   background: linear-gradient(90deg, transparent, var(--c), transparent); }
 
-.hz-next { position: relative; border-radius: 20px; overflow: hidden; padding: 15px;
-  border: 1px solid ${BD2};
-  background: linear-gradient(168deg, rgba(23,19,32,.88), rgba(9,7,14,.94));
-  backdrop-filter: blur(20px) saturate(1.25);
-  -webkit-backdrop-filter: blur(20px) saturate(1.25);
-  box-shadow: 0 36px 72px -32px rgba(0,0,0,.92), inset 0 1px 0 rgba(255,255,255,.07); }
-.hz-next .nk { font-size: .56rem; font-weight: 700; letter-spacing: .28em;
-  text-transform: uppercase; color: ${D2}; }
-.hz-next .nh { display: flex; align-items: flex-start; gap: 11px; margin: 9px 0 12px; }
-.hz-next .nh svg { width: 21px; height: 21px; flex-shrink: 0; color: var(--c);
-  margin-top: 3px; }
-.hz-next .nh b { display: block; font-family: 'Playfair Display', serif; font-weight: 700;
-  font-size: clamp(1.4rem,2.6vw,1.85rem); line-height: 1.05; color: ${OFF};
-  text-transform: uppercase; letter-spacing: .012em; overflow-wrap: anywhere; }
-.hz-next .nh span { display: block; margin-top: 4px; font-size: .74rem; color: ${D1}; }
+/* ── Next Ride: a highway sign ─────────────────────────────────────────────
+   The card used to hang a drawing of the route in its middle. The reel behind
+   it already draws every road on the page, so that window was repeating the
+   loudest thing on the screen in the smallest box on it — and a sign is the
+   one format that carries a place, a distance and a direction as its NATIVE
+   content, which is exactly what this card has to say.
 
-/* The window onto the ride. A photograph when the file has one; the ride's own
-   route, drawn from its stops, when it does not — which is every ride today.
-   A grey placeholder box would say the card is unfinished; the line says where
-   it goes, and swaps itself out the moment a photo lands in the file. */
-.hz-next .nw { position: relative; display: block; border-radius: 12px; overflow: hidden;
-  aspect-ratio: 16 / 9; border: 1px solid ${BD};
-  background: radial-gradient(90% 120% at 50% 6%, rgba(255,255,255,.05), transparent 70%),
-    linear-gradient(160deg, #15121f, #0b0912); }
-.hz-next .nw img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.hz-next .nw svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+   It is one board, ruled into sections, never a stack of panels: that is how
+   a real sign is laid out and the difference is what stops it reading as a
+   dark card that happens to be green. */
+.hz-next { position: relative; border-radius: 14px; overflow: hidden;
+  padding: clamp(13px,2.2vw,18px);
+  background: linear-gradient(168deg, #0f6b3d, #0b5531);
+  box-shadow: 0 36px 72px -30px rgba(0,0,0,.92); }
+/* the keyline, inset from the edge the way a sign is actually printed */
+.hz-next::before { content: ''; position: absolute; inset: 7px; z-index: 4;
+  border: 2.4px solid #f7faf8; border-radius: 8px; opacity: .92;
+  pointer-events: none; }
+/* Retroreflective sheeting LIGHTS UP as a soft travelling band when headlights
+   cross it — it does not glint like glass, which is what a hard specular
+   highlight would have said. */
+.hz-next::after { content: ''; position: absolute; top: -60%; left: -45%;
+  width: 55%; height: 220%; z-index: 3; pointer-events: none;
+  transform: rotate(16deg);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.15), transparent);
+  animation: hz-sheeting 7s ${EASE} infinite; }
+@keyframes hz-sheeting {
+  0%, 64% { transform: translateX(-45%) rotate(16deg) }
+  100%    { transform: translateX(330%) rotate(16deg) } }
 
-.hz-nfig { display: flex; margin: 11px 0 12px; }
-.hz-nfig > div { flex: 1 1 0; min-width: 0; text-align: center; padding: 0 6px;
-  border-right: 1px solid ${BD}; }
-.hz-nfig > div:last-child { border-right: 0; }
-.hz-nfig svg { width: 18px; height: 18px; color: ${D1}; margin-bottom: 9px; }
-/* A third of a 380px card is about 100px of room, and "20 Sep 2026" and
-   "Royal Enfield" both want more than that. Rather than shrink the type until
-   the longest organiser name anyone might run fits on one line, the value box
-   is a fixed two lines tall and centres whatever it gets — so one-line and
-   two-line figures sit on the same centre and the row stays level. */
-.hz-nfig b { display: flex; align-items: center; justify-content: center;
-  min-height: 2.2em; font-family: 'Playfair Display', serif; font-weight: 700;
-  font-size: clamp(.8rem,1.45vw,1rem); line-height: 1.25; color: ${OFF};
-  overflow-wrap: anywhere; }
-.hz-nfig span { display: block; margin-top: 6px; font-size: .5rem; font-weight: 600;
-  letter-spacing: .16em; text-transform: uppercase; color: ${D2}; }
+.hz-next .sg { position: relative; z-index: 2; padding: 9px 8px; }
+
+.hz-next .sgt { display: flex; align-items: center; gap: 9px; margin-bottom: 12px; }
+.hz-next .sgt b { font-size: .56rem; font-weight: 800; letter-spacing: .26em;
+  text-transform: uppercase; color: rgba(247,250,248,.82); }
+.hz-next .sgt u { margin-left: auto; text-decoration: none; background: #f7faf8;
+  color: #0f6b3d; border-radius: 5px; padding: 3px 9px; font-size: .58rem;
+  font-weight: 800; letter-spacing: .08em; white-space: nowrap; }
+
+.hz-next .sgr { display: flex; align-items: flex-end; gap: 12px; margin-bottom: 12px; }
+.hz-next .sgr .pl { flex: 1; min-width: 0; }
+.hz-next .sgr .pl b { display: block; font-weight: 800;
+  font-size: clamp(1.5rem,3vw,2.05rem); line-height: .98; color: #f7faf8;
+  letter-spacing: -.018em; text-transform: uppercase; overflow-wrap: anywhere; }
+.hz-next .sgr .pl u { display: block; margin-top: 6px; text-decoration: none;
+  font-size: .64rem; color: rgba(247,250,248,.6); line-height: 1.4; }
+.hz-next .sgr .di { flex-shrink: 0; text-align: right; padding-bottom: 2px; }
+.hz-next .sgr .di b { display: block; font-weight: 800;
+  font-size: clamp(1.4rem,2.6vw,1.85rem); line-height: 1; color: #f7faf8;
+  font-variant-numeric: tabular-nums; }
+.hz-next .sgr .di u { display: block; text-decoration: none; font-weight: 700;
+  font-size: .68rem; letter-spacing: .12em; color: rgba(247,250,248,.6); }
+
+.hz-next .sga { display: flex; align-items: center; gap: 8px;
+  padding-top: 11px; border-top: 2px solid rgba(247,250,248,.3); }
+.hz-next .sga i { width: 0; height: 0; border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent; border-left: 8px solid #f7faf8; opacity: .35;
+  animation: hz-march 1.9s ${EASE} infinite; }
+.hz-next .sga i:nth-child(2) { animation-delay: .2s }
+.hz-next .sga i:nth-child(3) { animation-delay: .4s }
+@keyframes hz-march { 40% { opacity: 1 } }
+.hz-next .sga span { font-size: .58rem; font-weight: 700; letter-spacing: .18em;
+  text-transform: uppercase; color: rgba(247,250,248,.82); }
+.hz-next .sga em { margin-left: auto; font-style: normal; font-size: .56rem;
+  font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+  color: rgba(247,250,248,.42); white-space: nowrap; }
+
+/* ── the countdown band ── */
+.hz-next .sgl { margin-top: 12px; padding: 12px 0;
+  border-top: 1px solid rgba(247,250,248,.18);
+  border-bottom: 1px solid rgba(247,250,248,.18); }
+.hz-next .sgl .kk { display: block; font-size: .52rem; font-weight: 700;
+  letter-spacing: .2em; text-transform: uppercase;
+  color: rgba(247,250,248,.42); margin-bottom: 8px; }
+.hz-next .cl { display: flex; align-items: baseline; gap: 2px; flex-wrap: wrap;
+  font-variant-numeric: tabular-nums; }
+.hz-next .cl b { font-weight: 800; font-size: clamp(1.45rem,2.8vw,1.9rem);
+  line-height: 1; color: #f7faf8; letter-spacing: -.02em; }
+.hz-next .cl em { font-style: normal; font-weight: 700; font-size: .62rem;
+  color: rgba(247,250,248,.42); margin: 0 9px 0 2px; letter-spacing: .06em;
+  text-transform: uppercase; }
+.hz-next .cl i { width: 5px; height: 5px; border-radius: 50%; background: #f7faf8;
+  margin: 0 7px 3px 2px; opacity: .45;
+  animation: hz-beat 1s steps(2,end) infinite; }
+@keyframes hz-beat { 50% { opacity: 1 } }
+
+/* ── date, organiser, and the way in ── */
+.hz-next .sgf { display: flex; align-items: center; gap: 12px; margin: 12px 0; }
+.hz-next .sgf .dt { flex-shrink: 0; }
+.hz-next .sgf .dt span { display: block; font-size: .46rem; font-weight: 700;
+  letter-spacing: .16em; text-transform: uppercase;
+  color: rgba(247,250,248,.42); margin-bottom: 4px; }
+.hz-next .sgf .dt b { display: block; font-weight: 800; font-size: 1.02rem;
+  color: #f7faf8; line-height: 1; }
+.hz-next .sgf .dv { width: 1px; align-self: stretch;
+  background: rgba(247,250,248,.18); }
+.hz-next .sgf .og { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; }
+.hz-next .sgf .og .cap { flex-shrink: 0; font-size: .46rem; font-weight: 700;
+  letter-spacing: .16em; text-transform: uppercase; color: rgba(247,250,248,.42); }
+/* The mark sits hard right on the same row as its label. No plate behind it:
+   the artwork is Royal Enfield red on transparent and is shown as supplied.
+   With no logo, OrganizerMark renders the name instead and inherits this. */
+.hz-next .sgf .og .mk { margin-left: auto; min-width: 0; display: flex;
+  align-items: center; justify-content: flex-end; overflow: hidden;
+  font-weight: 800; font-size: .84rem; color: #f7faf8; }
 
 .hz-ngo { display: flex; align-items: center; justify-content: center; gap: 10px;
-  padding: 12px; border-radius: 11px; text-decoration: none;
-  background: var(--c);
-  background: linear-gradient(100deg, var(--c), color-mix(in srgb, var(--c) 72%, #fff));
-  color: #1a1206; font-size: .72rem; font-weight: 800; letter-spacing: .14em;
+  padding: 13px; border-radius: 8px; text-decoration: none;
+  background: #f7faf8; color: #0f6b3d;
+  font-size: .72rem; font-weight: 800; letter-spacing: .15em;
   text-transform: uppercase; transition: transform .3s ${EASE}, box-shadow .3s ${EASE}; }
-.hz-ngo:hover { transform: translateY(-2px); box-shadow: 0 16px 34px -14px var(--c); }
+.hz-ngo:hover { transform: translateY(-2px);
+  box-shadow: 0 16px 34px -14px rgba(247,250,248,.5); }
 
 /* ── the two corners ───────────────────────────────────────────────────── */
 /* THE CORNERS ARE NOT EMPTY. The site parks fixed furniture in both of them —
@@ -1789,14 +1888,40 @@ const COVER_CSS = `
     margin-top: 10px; padding: 0 clamp(18px,5vw,72px); }
   .hz-motto { justify-content: flex-start; text-align: left; }
 }
+/* ── phone ─────────────────────────────────────────────────────────────────
+   A headline, a tally, a tagline AND a full ride card do not fit a phone
+   screen, and the cover is a title card — it is the one screen that should
+   not need scrolling to understand. So two things go rather than everything
+   shrinking until it all looks cramped:
+
+   THE ROUTE WINDOW, which is the single tallest block in the card and the
+   most decorative thing on the page — the card still says where, when, how
+   far and who without it.
+   THE HANDWRITING, which is the only element carrying no information at all;
+   the motto at the foot keeps a tagline on screen.
+
+   Both come back at 561px. Together they are worth about 240px, which is the
+   difference between a cover you scroll and one you don't. */
 @media (max-width: 560px) {
-  .hz-cover .hz-h1 { font-size: clamp(2.1rem,8.6vw,3rem); }
-  .hz-sub { margin: 14px 0 0; font-size: 1rem; }
-  .hz-tally > div { padding: 12px 14px; gap: 10px; }
+  .hz-cover .hz-h1 { font-size: clamp(2rem,8.2vw,2.8rem); }
+  /* Keep a bottom margin. The row-gap above only separates the GRID items, and
+     the subtitle and the tally are siblings inside one of them — zero here and
+     the tally butts straight into the descenders. */
+  .hz-sub { margin: 12px 0 16px; font-size: .98rem; }
+  .hz-cv { row-gap: clamp(18px,2.6vh,28px); }
+  .hz-tally > div { padding: 11px 13px; gap: 10px; }
   .hz-tally svg { width: 18px; height: 18px; }
-  .hz-script { font-size: 1.15rem; }
-  .hz-next { padding: 13px; }
-  .hz-nfig b { font-size: .86rem; }
+  .hz-script { display: none; }
+  .hz-next { padding: 11px; }
+  .hz-next .sg { padding: 8px 6px; }
+  /* The sign has no route window to drop any more — it was the tallest block
+     in the old card and the reason this breakpoint existed. What is left is
+     all load-bearing, so the phone tightens rather than removes. */
+  .hz-next .sgr { margin-bottom: 10px; }
+  .hz-next .sgl { margin-top: 10px; padding: 10px 0; }
+  .hz-next .cl b { font-size: 1.35rem; }
+  .hz-next .cl em { margin-right: 7px; }
+  .hz-next .sgf { margin: 10px 0; gap: 10px; }
   .hz-motto u { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -2587,92 +2712,6 @@ const MODE_ICON = {
   cancelled: ['M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z', 'M5.6 5.6l12.8 12.8'],
 }
 
-/**
- * A ride's route, drawn from its own stops.
- *
- * The Next Ride card wants a window onto the ride, and no ride file carries a
- * photo yet. A grey placeholder would say the card is unfinished; the route
- * line says where it actually goes, in the ride's own colour, from data that
- * is already there. `photos[0]` wins the moment a file has one.
- *
- * Equirectangular, which is exact enough at this scale: a ride spans a degree
- * or two, so the only distortion worth correcting is longitude converging
- * with latitude, and cos(mean lat) does that. Then it is fitted to the box on
- * whichever axis is tighter, so a north-south ride and an east-west one both
- * fill it without being stretched.
- */
-function RouteThumb({ stops, color }) {
-  const pts = useMemo(() => {
-    const ok = (stops || []).filter(s => Number.isFinite(s.lat) && Number.isFinite(s.lng))
-    if (ok.length < 2) return null
-    const k = Math.cos((ok.reduce((a, s) => a + s.lat, 0) / ok.length) * Math.PI / 180)
-    const xs = ok.map(s => s.lng * k)
-    const ys = ok.map(s => -s.lat)
-    const x0 = Math.min(...xs), x1 = Math.max(...xs)
-    const y0 = Math.min(...ys), y1 = Math.max(...ys)
-    const W = 160, H = 90, P = 15
-    /* A dead-straight ride has zero range on one axis — scaling by it would
-       divide by nothing, so that axis simply doesn't constrain the fit. */
-    const sc = Math.min(
-      x1 - x0 > 1e-9 ? (W - P * 2) / (x1 - x0) : Infinity,
-      y1 - y0 > 1e-9 ? (H - P * 2) / (y1 - y0) : Infinity)
-    if (!Number.isFinite(sc)) return null   // every stop on one point
-    const ox = (W - (x1 - x0) * sc) / 2 - x0 * sc
-    const oy = (H - (y1 - y0) * sc) / 2 - y0 * sc
-    return xs.map((x, i) => [+(x * sc + ox).toFixed(2), +(ys[i] * sc + oy).toFixed(2)])
-  }, [stops])
-
-  if (!pts) return null
-  const d = roadPath(pts)
-  const cap = { fill: 'none', strokeLinecap: 'round', strokeLinejoin: 'round' }
-  const last = pts.length - 1
-  return (
-    <svg viewBox="0 0 160 90" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-      {/* NO GRID HERE, deliberately. A graticule was the first thing tried and
-          it made the picture worse: an even grid behind a line is the single
-          strongest cue for a chart, so it argued for exactly the reading this
-          is trying to avoid. What sells it as a road instead is the casing and
-          the curve — a map has neither axes nor square paper. */}
-      {/* Casing under colour, the way a road is drawn on a real map: the dark
-          outline is what separates it from the ground it crosses. */}
-      <path d={d} {...cap} stroke={color} strokeWidth="9" opacity=".12" />
-      <path d={d} {...cap} stroke={color} strokeWidth="7" opacity=".14" />
-      <path d={d} {...cap} stroke="rgba(6,4,10,.85)" strokeWidth="4.4" />
-      <path d={d} {...cap} stroke={color} strokeWidth="2" />
-      {pts.map(([x, y], i) => {
-        const end = i === 0 || i === last
-        return end
-          ? <g key={i}>
-              <circle cx={x} cy={y} r="3.6" fill="rgba(6,4,10,.9)" />
-              <circle cx={x} cy={y} r="3.6" fill="none" stroke={color} strokeWidth="1.6" />
-              {i === last && <circle cx={x} cy={y} r="1.5" fill={color} />}
-            </g>
-          : <circle key={i} cx={x} cy={y} r="1.6"
-              fill="rgba(255,255,255,.62)" stroke="rgba(6,4,10,.85)" strokeWidth=".8" />
-      })}
-    </svg>
-  )
-}
-
-/**
- * The stops as a road rather than a line chart.
- *
- * Straight segments between pins read as plotted data however they are
- * coloured, because sharp vertices are what a data series has and a road does
- * not. Rounding them off is the difference. Quadratics anchored at each stop
- * and joined at the midpoints between them: the curve passes exactly through
- * every midpoint and bends around each stop, so the shape of the route is
- * preserved while the corners stop being corners.
- */
-function roadPath(pts) {
-  if (pts.length < 3) return 'M' + pts.map(p => p.join(' ')).join('L')
-  const mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]
-  const at = p => `${p[0].toFixed(2)} ${p[1].toFixed(2)}`
-  let d = `M${at(pts[0])}L${at(mid(pts[0], pts[1]))}`
-  for (let i = 1; i < pts.length - 1; i++) d += `Q${at(pts[i])} ${at(mid(pts[i], pts[i + 1]))}`
-  return `${d}L${at(pts[pts.length - 1])}`
-}
-
 const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun',
   'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
 
@@ -2690,6 +2729,67 @@ function rideDate(s) {
   if (!m) return null
   const mo = MONTHS.indexOf(m[2].slice(0, 3).toLowerCase())
   return mo < 0 ? null : new Date(+m[3], mo, +m[1])
+}
+
+/** The leading number of "154 KM"; null for "TBD", "Planned" or nothing. */
+function kmOf(s) {
+  const n = parseFloat(String(s ?? '').replace(/[^\d.]/g, ''))
+  return Number.isFinite(n) && n > 0 ? n : null
+}
+
+/**
+ * How long until the next ride leaves, ticking to the second.
+ *
+ * ITS OWN COMPONENT WITH ITS OWN INTERVAL. Holding the clock in the page
+ * would re-render the cover, the reel and eight memoised SVG scenes once a
+ * second to move one digit; here a second re-renders a clock.
+ *
+ * It counts to first light on the day, not to midnight — midnight is not when
+ * anyone sets off. No ride file states a muster time yet; when one does, this
+ * is the line that should read it.
+ */
+function LeavesIn({ date }) {
+  const target = useMemo(() => {
+    const d = rideDate(date)
+    if (!d) return null
+    d.setHours(6, 0, 0, 0)
+    return d.getTime()
+  }, [date])
+
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    if (!target) return undefined
+    const id = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(id)
+  }, [target])
+
+  /* An undated ride has nothing to count to, and a band reading "-- d" would
+     be worse than no band at all. */
+  if (!target) return null
+
+  const ms = target - now
+  if (ms <= 0) {
+    return (
+      <div className="sgl">
+        <span className="kk">Status</span>
+        <span className="cl"><b>{ms > -18 * 3600e3 ? 'Today' : 'Ridden'}</b></span>
+      </div>
+    )
+  }
+
+  const pad = n => String(n).padStart(2, '0')
+  return (
+    <div className="sgl">
+      <span className="kk">Leaves in</span>
+      <span className="cl">
+        <b>{Math.floor(ms / 864e5)}</b><em>d</em>
+        <b>{pad(Math.floor(ms / 36e5) % 24)}</b><em>h</em>
+        <b>{pad(Math.floor(ms / 6e4) % 60)}</b><em>m</em>
+        <i />
+        <b>{pad(Math.floor(ms / 1e3) % 60)}</b><em>s</em>
+      </span>
+    </div>
+  )
 }
 
 /* The cover's accent. Fixed rather than borrowed from chapter one, because
@@ -2725,6 +2825,10 @@ export function GarageV7AllRides() {
       ?? rides.find(r => r.mode === 'planned')
       ?? null
   }, [rides])
+
+  /* The sign prints the figure and the unit separately; null when the ride has
+     no number yet, so the card can fall back to its own wording. */
+  const nextKm = useMemo(() => kmOf(next?.distance), [next])
 
   const wrapRef = useRef(null)
   /* 0 = cover, 1..n = rides, n + 1 = the closing chapter */
@@ -2961,39 +3065,54 @@ export function GarageV7AllRides() {
 
             {next && (
               <article className="hz-next">
-                <div className="nk">Next Ride</div>
-                <div className="nh">
-                  <Ico d={ICON.pin} />
-                  <div>
-                    <b>{next.destCity || next.destPlace || next.name}</b>
-                    <span>{next.states?.[0] || next.destPlace || next.name}</span>
+                <div className="sg">
+                  <div className="sgt">
+                    <b>Next Ride</b>
+                    {next.states?.length > 0 && <u>{next.states.join(' · ')}</u>}
                   </div>
-                </div>
 
-                <div className="nw">
-                  {next.photos?.[0]
-                    ? <img src={next.photos[0]} alt="" />
-                    : <RouteThumb stops={next.stops} color={next.color} />}
-                </div>
+                  <div className="sgr">
+                    <div className="pl">
+                      <b>{next.destCity || next.destPlace || next.name}</b>
+                      {next.destPlace && next.destPlace !== next.destCity && (
+                        <u>{next.destPlace}</u>
+                      )}
+                    </div>
+                    {/* A sign carries a bare figure and its unit. A ride with no
+                        number yet keeps its own wording instead of a hollow 0. */}
+                    <div className="di">
+                      <b>{nextKm ?? (next.distance || '—')}</b>
+                      {nextKm !== null && <u>km</u>}
+                    </div>
+                  </div>
 
-                <div className="hz-nfig">
-                  <div>
-                    <Ico d={ICON.road} />
-                    <b>{next.distance || '—'}</b><span>Distance</span>
+                  <div className="sga">
+                    <i /><i /><i />
+                    <span>From {next.fromCity || next.fromPlace || 'home'}</span>
+                    {next.stops?.length > 1 && <em>{next.stops.length} stops</em>}
                   </div>
-                  <div>
-                    <Ico d={ICON.cal} />
-                    <b>{next.date || '—'}</b><span>Date</span>
-                  </div>
-                  <div>
-                    <Ico d={ICON.flag} />
-                    <b>{next.organizer}</b><span>Organizer</span>
-                  </div>
-                </div>
 
-                <Link className="hz-ngo" to={`${root.rides}/${next.id}`}>
-                  Explore Ride <span aria-hidden="true">→</span>
-                </Link>
+                  <LeavesIn date={next.date} />
+
+                  <div className="sgf">
+                    <div className="dt">
+                      <span>Date</span>
+                      <b>{next.date || '—'}</b>
+                    </div>
+                    <span className="dv" />
+                    <div className="og">
+                      <span className="cap">Organizer</span>
+                      <span className="mk">
+                        <OrganizerMark name={next.organizer} logo={next.organizerLogo}
+                          size={26} logoOnly />
+                      </span>
+                    </div>
+                  </div>
+
+                  <Link className="hz-ngo" to={`${root.rides}/${next.id}`}>
+                    Explore Ride <span aria-hidden="true">→</span>
+                  </Link>
+                </div>
               </article>
             )}
           </div>

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Next Ride · 6 · Poster</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   POSTER — the card as the ride's own bill, pasted onto the page.
+
+   Both upcoming rides came off a poster before they became data: Royal
+   Enfield's One Ride and the Biker's Club's September ride are events
+   with billing, a tagline and a list of what the ticket includes. So the
+   card is set the way a bill is set — the date stacked hard at the top,
+   the destination huge and cropped to the edges, the tagline running as
+   a rule between them, and the inclusions in small print at the foot.
+
+   The type is the artwork, which is the point: with no photograph and no
+   route drawing, scale and weight are what carry it. The destination is
+   set to fill the width whatever its length, so "ANAIKATTI" and
+   "DHONDENLING" both sit edge to edge rather than one looking lost.
+
+   The corner burst is the fee, printed the way a bill prints a price —
+   angled, stamped over the sheet, and absent entirely when a ride is
+   free rather than showing a hollow zero.
+   ══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ink:#0b0a12; --sheet:#111018; --off:#f7f4ee;
+  --d1:rgba(247,244,238,0.62); --d2:rgba(247,244,238,0.4);
+  --d3:rgba(247,244,238,0.22); --bd:rgba(247,244,238,0.12); --bd2:rgba(247,244,238,0.22);
+  --disp:'Anton',Impact,sans-serif; --sans:'Inter',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --ease:cubic-bezier(.2,.9,.25,1);
+  --c:#dc2626;
+}
+body{background:var(--ink);color:var(--d1);font-family:var(--sans);min-height:100vh;
+  -webkit-font-smoothing:antialiased;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:22px;padding:clamp(16px,4vw,42px)}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(70vw 60vh at 22% 18%,rgba(255,196,120,0.14),transparent 62%),
+    radial-gradient(60vw 60vh at 82% 78%,rgba(120,90,220,0.13),transparent 64%),
+    linear-gradient(160deg,#151220,#0b0a12 60%)}
+::selection{background:var(--c);color:#fff}
+
+/* ── the bill ── */
+.bill{position:relative;z-index:2;width:min(100%,452px);background:var(--sheet);
+  border:1px solid var(--bd);border-radius:16px;overflow:hidden;
+  box-shadow:0 34px 70px -28px rgba(0,0,0,0.88);
+  padding:clamp(18px,3vw,26px)}
+/* the ride's colour washing up from the foot, plus a paper tooth */
+.bill::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(100% 62% at 50% 112%,var(--c),transparent 70%);opacity:0.22;
+  transition:background .8s var(--ease)}
+.bill::after{content:'';position:absolute;inset:0;pointer-events:none;opacity:0.4;
+  background:repeating-linear-gradient(46deg,rgba(255,255,255,0.016) 0 1px,transparent 1px 6px)}
+
+/* the corner burst */
+.burst{position:absolute;top:14px;right:14px;z-index:5;width:78px;height:78px;
+  display:grid;place-items:center;text-align:center;transform:rotate(9deg);
+  animation:bob 4.2s var(--ease) infinite}
+@keyframes bob{50%{transform:rotate(9deg) translateY(-4px)}}
+.burst svg{position:absolute;inset:0;width:100%;height:100%}
+.burst .tx{position:relative;z-index:2}
+.burst .tx b{display:block;font-family:var(--disp);font-size:1.02rem;color:var(--ink);
+  line-height:1}
+.burst .tx u{display:block;text-decoration:none;font-size:0.38rem;font-weight:700;
+  letter-spacing:0.16em;text-transform:uppercase;color:rgba(11,10,18,0.68);margin-top:2px}
+
+/* ── the head ── */
+/* the right padding keeps the "in N days" clear of the fee burst pinned to
+   the corner — without it the two sit on top of each other */
+.kick{position:relative;display:flex;align-items:center;gap:9px;font-family:var(--mono);
+  font-size:0.56rem;letter-spacing:0.26em;text-transform:uppercase;color:var(--c);
+  margin-bottom:16px;padding-right:92px}
+.kick i{width:7px;height:7px;border-radius:50%;background:currentColor;
+  animation:ping 2.4s var(--ease) infinite}
+@keyframes ping{0%{box-shadow:0 0 0 0 currentColor;opacity:1}
+  70%{box-shadow:0 0 0 9px transparent;opacity:.55}100%{box-shadow:0 0 0 0 transparent;opacity:1}}
+
+/* the date, stacked and hard */
+.when{position:relative;display:flex;align-items:flex-end;gap:12px;margin-bottom:14px;
+  padding-right:84px}
+.when .d{font-family:var(--disp);font-size:clamp(3.4rem,13vw,4.6rem);color:var(--off);
+  line-height:0.76;letter-spacing:-0.02em;font-variant-numeric:tabular-nums}
+.when .my{padding-bottom:5px}
+.when .my b{display:block;font-family:var(--disp);font-size:1.16rem;color:var(--c);
+  line-height:1;letter-spacing:0.02em;text-transform:uppercase}
+.when .my u{display:block;text-decoration:none;font-family:var(--mono);font-size:0.54rem;
+  letter-spacing:0.16em;text-transform:uppercase;color:var(--d2);margin-top:5px}
+
+/* the tagline rule */
+.rule{position:relative;display:flex;align-items:center;gap:11px;margin-bottom:14px}
+.rule span{font-family:var(--mono);font-size:0.54rem;letter-spacing:0.16em;
+  text-transform:uppercase;color:var(--d2);white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis}
+.rule i{flex:1;height:1px;background:var(--bd2);min-width:14px}
+
+/* the destination, filling the width whatever its length */
+.dest{position:relative;margin-bottom:12px}
+.dest svg{width:100%;display:block;overflow:visible}
+.dest text{font-family:'Anton',Impact,sans-serif;fill:var(--off);
+  letter-spacing:-0.01em}
+.dest .sub{font-family:var(--mono);font-size:0.56rem;letter-spacing:0.16em;
+  text-transform:uppercase;color:var(--d2);margin-top:8px;display:block}
+
+/* the billing */
+.bands{position:relative;display:flex;flex-wrap:wrap;gap:5px;margin-bottom:16px}
+.bands u{text-decoration:none;font-family:var(--mono);font-size:0.5rem;letter-spacing:0.13em;
+  text-transform:uppercase;padding:5px 10px;border-radius:99px;border:1px solid var(--bd2);
+  color:var(--d1)}
+
+/* the figures */
+.figs{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:1px;
+  background:var(--bd);border:1px solid var(--bd);border-radius:10px;overflow:hidden;
+  margin-bottom:16px}
+.figs > div{background:var(--sheet);padding:12px 13px}
+.figs k{display:block;font-family:var(--mono);font-size:0.44rem;letter-spacing:0.16em;
+  text-transform:uppercase;color:var(--d3);margin-bottom:6px}
+.figs v{display:block;font-family:var(--disp);font-size:1.16rem;color:var(--off);
+  line-height:1;letter-spacing:0.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* what the ticket admits you to, in small print */
+.small{position:relative;border-top:1px solid var(--bd);padding-top:13px;margin-bottom:16px}
+.small k{display:block;font-family:var(--mono);font-size:0.44rem;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--d3);margin-bottom:9px}
+.small ul{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:6px 12px}
+.small li{display:flex;align-items:center;gap:7px;font-size:0.6rem;color:var(--d1);
+  line-height:1.3}
+.small li i{font-style:normal;font-size:0.76rem;line-height:1;flex-shrink:0}
+
+/* the foot */
+.foot{position:relative;display:flex;align-items:center;gap:11px;margin-bottom:15px}
+.foot .badge{width:34px;height:34px;border-radius:8px;flex-shrink:0;display:grid;
+  place-items:center;background:rgba(247,244,238,0.07);border:1px solid var(--bd);overflow:hidden}
+/* dark artwork on a dark badge reads as nothing — knock it to white */
+.foot .badge img{width:100%;height:100%;object-fit:contain;padding:4px;
+  filter:brightness(0) invert(1)}
+.foot .badge span{font-family:var(--disp);font-size:0.72rem;color:var(--c)}
+.foot .tx{min-width:0}
+.foot .tx b{display:block;font-size:0.8rem;font-weight:700;color:var(--off);line-height:1.2;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.foot .tx u{display:block;text-decoration:none;font-family:var(--mono);font-size:0.46rem;
+  letter-spacing:0.16em;text-transform:uppercase;color:var(--d3);margin-top:3px}
+.foot .cd{margin-left:auto;text-align:right;flex-shrink:0}
+.foot .cd b{display:block;font-family:var(--disp);font-size:1.28rem;color:var(--c);line-height:1;
+  font-variant-numeric:tabular-nums}
+.foot .cd u{display:block;text-decoration:none;font-family:var(--mono);font-size:0.44rem;
+  letter-spacing:0.14em;text-transform:uppercase;color:var(--d3);margin-top:4px}
+
+.go{position:relative;display:flex;align-items:center;justify-content:center;gap:10px;
+  width:100%;padding:15px;border-radius:10px;background:var(--off);color:var(--ink);
+  text-decoration:none;font-family:var(--disp);font-size:0.86rem;letter-spacing:0.16em;
+  text-transform:uppercase;transition:.3s var(--ease)}
+.go:hover{background:var(--c);color:var(--off);transform:translateY(-2px);
+  box-shadow:0 16px 32px -12px var(--c)}
+.go:hover .arrow{transform:translateX(5px)}
+.arrow{transition:transform .3s var(--ease);display:inline-block}
+
+@media(max-width:420px){ .small ul{grid-template-columns:1fr} }
+
+.switch{position:relative;z-index:2;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  justify-content:center;font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;
+  color:var(--d3)}
+.switch button{font-family:var(--sans);font-size:0.6rem;letter-spacing:0.1em;padding:7px 13px;
+  border-radius:99px;border:1px solid var(--bd2);background:transparent;color:var(--d2);
+  cursor:pointer;transition:.24s var(--ease)}
+.switch button.on{background:var(--off);color:var(--ink);border-color:var(--off);font-weight:700}
+.switch button:hover{color:var(--off)}
+.switch button.on:hover{color:var(--ink)}
+
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<article class="bill">
+  <div class="burst" id="burst"></div>
+
+  <div class="kick"><i></i>Next ride<span id="whenWords" style="margin-left:auto;color:var(--d3)"></span></div>
+
+  <div class="when">
+    <span class="d" id="dayNum"></span>
+    <span class="my"><b id="monthYear"></b><u id="weekday"></u></span>
+  </div>
+
+  <div class="rule"><span id="tagline"></span><i></i></div>
+
+  <div class="dest">
+    <svg id="destSvg" viewBox="0 0 400 64" preserveAspectRatio="xMinYMid meet">
+      <text id="destText" x="0" y="50" font-size="56">—</text>
+    </svg>
+    <span class="sub" id="destSub"></span>
+  </div>
+
+  <div class="bands" id="bands"></div>
+
+  <div class="figs">
+    <div><k>Distance</k><v id="km"></v></div>
+    <div><k id="tk">Starts</k><v id="tv"></v></div>
+    <div><k>Stops</k><v id="stops"></v></div>
+  </div>
+
+  <div class="small">
+    <k>Your entry includes</k>
+    <ul id="inc"></ul>
+  </div>
+
+  <div class="foot">
+    <div class="badge" id="badge"></div>
+    <div class="tx"><b id="orgName"></b><u>Presented by</u></div>
+    <div class="cd"><b id="cd"></b><u id="cdLab">to go</u></div>
+  </div>
+
+  <a class="go" href="#">Explore ride <em class="arrow">→</em></a>
+</article>
+
+<div class="switch" id="switch"><span>Preview with:</span></div>
+
+<script src="nextride-data.js"></script>
+<script>
+let ride = NR.next
+
+const sw = document.getElementById('switch')
+NR.rides.forEach(r => {
+  const b = document.createElement('button')
+  b.textContent = r.name.split(' ').slice(0, 2).join(' ')
+  b.dataset.id = r.id
+  b.onclick = () => { ride = r; paint(); tick() }
+  sw.appendChild(b)
+})
+
+/* a starburst whose points are generated, so it reads as printed not clipart */
+function burstSvg(color) {
+  const pts = []
+  const N = 22
+  for (let i = 0; i < N * 2; i++) {
+    const a = (i / (N * 2)) * Math.PI * 2
+    const r = i % 2 ? 36 : 46
+    pts.push(`${(50 + Math.cos(a) * r).toFixed(1)},${(50 + Math.sin(a) * r).toFixed(1)}`)
+  }
+  return `<svg viewBox="0 0 100 100"><polygon points="${pts.join(' ')}" fill="${color}"/></svg>`
+}
+
+function paint() {
+  document.documentElement.style.setProperty('--c', ride.color)
+
+  const w = ride.when
+  document.getElementById('dayNum').textContent = w ? w.getDate() : '—'
+  document.getElementById('monthYear').textContent =
+    `${NR.monthShort(ride)} ${w ? w.getFullYear() : ''}`
+  document.getElementById('weekday').textContent = NR.weekday(ride)
+  document.getElementById('tagline').textContent = ride.tagline || ride.name
+
+  /* the destination, scaled to fill the sheet's width whatever its length */
+  const t = document.getElementById('destText')
+  t.textContent = (ride.dest || '').toUpperCase()
+  requestAnimationFrame(() => {
+    const box = t.getBBox()
+    const svg = document.getElementById('destSvg')
+    /* re-frame the viewBox around the actual glyphs, so the word always
+       touches both edges — a fixed font-size would leave short names adrift */
+    svg.setAttribute('viewBox', `${box.x} ${box.y} ${box.width} ${box.height}`)
+  })
+  document.getElementById('destSub').textContent =
+    ride.loop ? `Out and back · ${ride.states.join(' · ')}` : ride.states.join(' · ')
+
+  document.getElementById('bands').innerHTML = ride.highlights
+    .slice(0, 3).map(h => `<u>${h}</u>`).join('')
+
+  document.getElementById('km').textContent = ride.distance
+  const tk = document.getElementById('tk'), tv = document.getElementById('tv')
+  if (ride.assemble) { tk.textContent = 'Assemble'; tv.textContent = ride.assemble }
+  else if (ride.rideStart) { tk.textContent = 'Rolls out'; tv.textContent = ride.rideStart }
+  else { tk.textContent = 'Day'; tv.textContent = NR.weekday(ride).slice(0, 3) }
+  document.getElementById('stops').textContent =
+    ride.stopCount + (ride.loop ? ' · loop' : '')
+
+  document.getElementById('inc').innerHTML = ride.compliments
+    .map(c => `<li><i>${c.icon}</i>${c.text}</li>`).join('')
+
+  const badge = document.getElementById('badge')
+  badge.innerHTML = ride.logo
+    ? `<img src="${ride.logo}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${ride.initials}'}))" />`
+    : `<span>${ride.initials}</span>`
+  document.getElementById('orgName').textContent = ride.organizer
+
+  /* the burst is the price — no price, no burst, rather than a hollow zero */
+  const burst = document.getElementById('burst')
+  if (ride.fee) {
+    burst.style.display = 'grid'
+    burst.innerHTML = burstSvg(ride.color) +
+      `<span class="tx"><b>${ride.fee}</b><u>entry</u></span>`
+  } else {
+    burst.style.display = 'none'
+  }
+
+  document.querySelectorAll('.switch button').forEach(b =>
+    b.classList.toggle('on', b.dataset.id === ride.id))
+}
+
+function tick() {
+  const c = NR.countdown(ride)
+  document.getElementById('whenWords').textContent = NR.whenWords(ride)
+  const el = document.getElementById('cd'), lab = document.getElementById('cdLab')
+  if (c.phase === 'riding') { el.textContent = 'TODAY'; lab.textContent = 'ride day' }
+  else if (c.phase === 'past') { el.textContent = '—'; lab.textContent = 'ridden' }
+  else if (c.d === 0) { el.textContent = `${NR.pad(c.h)}:${NR.pad(c.m)}`; lab.textContent = 'to go' }
+  else { el.textContent = c.d; lab.textContent = c.d === 1 ? 'day to go' : 'days to go' }
+}
+
+paint()
+tick()
+setInterval(tick, 30000)
+</script>
+</body>
+</html>

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Next Ride · 5 · Signal</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   SIGNAL — a live board rather than a printed card.
+
+   Everything else in this set is an object: a ticket, a dial, a calendar
+   leaf. This one is a broadcast — a transmission about a ride that is
+   coming, dressed as the strip of LEDs on a roadside gantry.
+
+   Three things are moving at once and none of them is decoration:
+
+   · THE BAND SCROLLS the ride's own tagline and the day's facts, so the
+     card carries more than it has room for. It doubles its content and
+     translates by exactly half, which is the only way a marquee loops
+     without a visible seam.
+   · THE BARS ARE THE COUNTDOWN. Fourteen segments, one per remaining day,
+     lighting from the left as the ride nears — a progress read you take
+     in without reading.
+   · THE DOT PULSES on a 2.4s cycle, the universal "this is live".
+
+   Wide and short by design: it sits across a hero rather than beside it,
+   and on a phone the band and the bars stack instead of shrinking into
+   illegibility. No route drawing — a gantry sign never shows you a map.
+   ══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ink:#06070a; --case:#0d0f14; --case2:#12151c;
+  --off:#eaf0f7; --d1:rgba(234,240,247,0.62); --d2:rgba(234,240,247,0.4);
+  --d3:rgba(234,240,247,0.2); --bd:rgba(234,240,247,0.1); --bd2:rgba(234,240,247,0.2);
+  --amber:#ffb62e; --led:#7ee787;
+  --sans:'Space Grotesk',system-ui,sans-serif; --mono:'DM Mono',ui-monospace,monospace;
+  --ease:cubic-bezier(.2,.9,.25,1);
+  --c:#dc2626;
+}
+body{background:var(--ink);color:var(--d1);font-family:var(--sans);min-height:100vh;
+  -webkit-font-smoothing:antialiased;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:22px;padding:clamp(16px,4vw,42px)}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(70vw 60vh at 22% 18%,rgba(255,196,120,0.14),transparent 62%),
+    radial-gradient(60vw 60vh at 82% 78%,rgba(120,90,220,0.13),transparent 64%),
+    linear-gradient(160deg,#151220,#0b0a12 60%)}
+::selection{background:var(--amber);color:var(--ink)}
+
+/* ── the gantry ── */
+.rig{position:relative;z-index:2;width:min(100%,820px);
+  background:linear-gradient(168deg,var(--case2),var(--case));
+  border:1px solid var(--bd);border-radius:16px;overflow:hidden;
+  box-shadow:0 34px 70px -28px rgba(0,0,0,0.9),inset 0 1px 0 rgba(255,255,255,0.05)}
+
+/* ── the marquee band ── */
+.band{position:relative;background:#050608;border-bottom:1px solid var(--bd);
+  padding:11px 0;overflow:hidden;
+  /* the LED grille */
+  background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.028) 0 1px,transparent 1px 3px),
+    repeating-linear-gradient(rgba(255,255,255,0.028) 0 1px,transparent 1px 3px)}
+.band::before,.band::after{content:'';position:absolute;top:0;bottom:0;width:60px;z-index:3;
+  pointer-events:none}
+.band::before{left:0;background:linear-gradient(90deg,#050608,transparent)}
+.band::after{right:0;background:linear-gradient(-90deg,#050608,transparent)}
+.run{display:flex;gap:42px;white-space:nowrap;width:max-content;
+  animation:run 26s linear infinite;
+  font-family:var(--mono);font-size:0.74rem;letter-spacing:0.18em;text-transform:uppercase;
+  color:var(--amber);text-shadow:0 0 10px rgba(255,182,46,0.45)}
+.run b{color:var(--off);font-weight:500}
+.run i{font-style:normal;color:var(--d3)}
+@keyframes run{to{transform:translateX(-50%)}}
+.rig:hover .run{animation-play-state:paused}
+
+/* ── the body ── */
+.body{padding:clamp(16px,2.6vw,24px);display:grid;
+  grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:clamp(16px,3vw,30px);
+  align-items:center}
+
+.lead .lbl{display:flex;align-items:center;gap:9px;font-size:0.58rem;font-weight:700;
+  letter-spacing:0.28em;text-transform:uppercase;color:var(--c);margin-bottom:12px}
+.lead .lbl i{width:8px;height:8px;border-radius:50%;background:currentColor;
+  animation:ping 2.4s var(--ease) infinite}
+@keyframes ping{0%{box-shadow:0 0 0 0 currentColor;opacity:1}
+  70%{box-shadow:0 0 0 10px transparent;opacity:.6}100%{box-shadow:0 0 0 0 transparent;opacity:1}}
+.lead h2{font-weight:700;font-size:clamp(1.5rem,4vw,2.1rem);color:var(--off);line-height:1.04;
+  letter-spacing:-0.035em;margin-bottom:8px}
+.lead .sub{font-family:var(--mono);font-size:0.64rem;color:var(--d2);letter-spacing:0.06em;
+  line-height:1.6;margin-bottom:16px}
+.lead .sub b{color:var(--d1)}
+
+/* the segment bar */
+.segs{display:flex;gap:3px;margin-bottom:8px}
+.segs i{flex:1;height:7px;border-radius:2px;background:rgba(234,240,247,0.09);
+  transition:background .5s var(--ease),box-shadow .5s var(--ease)}
+.segs i.on{background:var(--c);box-shadow:0 0 9px var(--c)}
+.segs i.warm{background:var(--amber);box-shadow:0 0 9px var(--amber)}
+.segLab{display:flex;justify-content:space-between;font-family:var(--mono);font-size:0.52rem;
+  letter-spacing:0.14em;text-transform:uppercase;color:var(--d3)}
+
+/* the readout column */
+.read{display:flex;flex-direction:column;gap:11px;min-width:0}
+.big{background:rgba(234,240,247,0.04);border:1px solid var(--bd);border-radius:12px;
+  padding:13px 15px;position:relative;overflow:hidden}
+.big::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(120deg,transparent 40%,rgba(255,255,255,0.05),transparent 62%)}
+.big k{display:block;font-family:var(--mono);font-size:0.48rem;letter-spacing:0.2em;
+  text-transform:uppercase;color:var(--d3);margin-bottom:8px}
+.big .clock{display:flex;align-items:baseline;gap:4px;font-variant-numeric:tabular-nums}
+.big .clock b{font-size:clamp(1.5rem,4.6vw,2rem);font-weight:700;color:var(--off);line-height:1;
+  letter-spacing:-0.03em}
+.big .clock em{font-style:normal;font-size:0.62rem;font-weight:500;color:var(--d3);
+  margin-right:6px;letter-spacing:0.06em}
+
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--bd);
+  border:1px solid var(--bd);border-radius:12px;overflow:hidden}
+.pair > div{background:var(--case2);padding:11px 13px;min-width:0}
+.pair k{display:block;font-family:var(--mono);font-size:0.46rem;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--d3);margin-bottom:6px}
+.pair v{display:block;font-size:0.92rem;font-weight:700;color:var(--off);line-height:1.15;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ── the foot ── */
+.foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  padding:0 clamp(16px,2.6vw,24px) clamp(16px,2.6vw,24px)}
+.foot .who{display:flex;align-items:center;gap:10px;min-width:0}
+.foot .badge{width:34px;height:34px;border-radius:8px;flex-shrink:0;display:grid;
+  place-items:center;background:rgba(234,240,247,0.07);border:1px solid var(--bd);overflow:hidden}
+/* dark artwork on a dark badge reads as nothing — knock it to white */
+.foot .badge img{width:100%;height:100%;object-fit:contain;padding:4px;
+  filter:brightness(0) invert(1)}
+.foot .badge span{font-size:0.62rem;font-weight:700;color:var(--amber)}
+.foot .who .tx{min-width:0}
+.foot .who b{display:block;font-size:0.78rem;font-weight:600;color:var(--off);line-height:1.2;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.foot .who u{display:block;text-decoration:none;font-family:var(--mono);font-size:0.48rem;
+  letter-spacing:0.16em;text-transform:uppercase;color:var(--d3);margin-top:3px}
+.foot .go{margin-left:auto;display:inline-flex;align-items:center;gap:10px;padding:13px 24px;
+  border-radius:10px;background:var(--amber);color:var(--ink);text-decoration:none;
+  font-size:0.7rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;
+  transition:.3s var(--ease);white-space:nowrap}
+.foot .go:hover{background:var(--off);transform:translateY(-2px);
+  box-shadow:0 14px 28px -12px rgba(234,240,247,0.42)}
+.foot .go:hover .arrow{transform:translateX(5px)}
+.arrow{transition:transform .3s var(--ease);display:inline-block}
+
+@media(max-width:700px){
+  .body{grid-template-columns:1fr;gap:16px}
+  .foot .go{margin-left:0;width:100%;justify-content:center}
+}
+.switch{position:relative;z-index:2;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  justify-content:center;font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;
+  color:var(--d3)}
+.switch button{font-family:var(--sans);font-size:0.6rem;letter-spacing:0.1em;padding:7px 13px;
+  border-radius:99px;border:1px solid var(--bd2);background:transparent;color:var(--d2);
+  cursor:pointer;transition:.24s var(--ease)}
+.switch button.on{background:var(--off);color:var(--ink);border-color:var(--off);font-weight:700}
+.switch button:hover{color:var(--off)}
+.switch button.on:hover{color:var(--ink)}
+
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition-duration:.01ms!important}
+  .run{transform:none!important}
+}
+</style>
+</head>
+<body>
+
+<article class="rig">
+  <div class="band"><div class="run" id="run"></div></div>
+
+  <div class="body">
+    <div class="lead">
+      <div class="lbl"><i></i>Next ride</div>
+      <h2 id="dest"></h2>
+      <div class="sub" id="sub"></div>
+      <div class="segs" id="segs"></div>
+      <div class="segLab"><span id="segA"></span><span id="segB">Ride day</span></div>
+    </div>
+
+    <div class="read">
+      <div class="big">
+        <k id="cdLab">Counting down</k>
+        <div class="clock" id="clock"></div>
+      </div>
+      <div class="pair">
+        <div><k>Distance</k><v id="km"></v></div>
+        <div><k id="tk">Date</k><v id="tv"></v></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div class="who">
+      <div class="badge" id="badge"></div>
+      <div class="tx"><b id="orgName"></b><u id="feeLine"></u></div>
+    </div>
+    <a class="go" href="#">Explore ride <em class="arrow">→</em></a>
+  </div>
+</article>
+
+<div class="switch" id="switch"><span>Preview with:</span></div>
+
+<script src="nextride-data.js"></script>
+<script>
+let ride = NR.next
+
+const sw = document.getElementById('switch')
+NR.rides.forEach(r => {
+  const b = document.createElement('button')
+  b.textContent = r.name.split(' ').slice(0, 2).join(' ')
+  b.dataset.id = r.id
+  b.onclick = () => { ride = r; paint(); tick() }
+  sw.appendChild(b)
+})
+
+const SEGS = 14
+
+function paint() {
+  document.documentElement.style.setProperty('--c', ride.color)
+
+  document.getElementById('dest').textContent = ride.dest
+  document.getElementById('sub').innerHTML = ride.loop
+    ? `A loop out of <b>${ride.fromCity}</b> and back · <b>${ride.stopCount}</b> stops · ${ride.states.join(' · ')}`
+    : `From <b>${ride.fromCity}</b> · <b>${ride.stopCount}</b> stops · ${ride.states.join(' · ')}`
+
+  document.getElementById('km').textContent = ride.distance
+  const tk = document.getElementById('tk'), tv = document.getElementById('tv')
+  if (ride.assemble) { tk.textContent = 'Assemble'; tv.textContent = ride.assemble }
+  else if (ride.rideStart) { tk.textContent = 'Rolls out'; tv.textContent = ride.rideStart }
+  else { tk.textContent = 'Date'; tv.textContent = ride.date.replace(/ \d{4}$/, '') }
+
+  const badge = document.getElementById('badge')
+  badge.innerHTML = ride.logo
+    ? `<img src="${ride.logo}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${ride.initials}'}))" />`
+    : `<span>${ride.initials}</span>`
+  document.getElementById('orgName').textContent = ride.organizer
+  document.getElementById('feeLine').textContent =
+    ride.fee ? `Organiser · ${ride.fee} entry` : 'Organiser'
+
+  document.getElementById('segs').innerHTML =
+    Array.from({ length: SEGS }, () => '<i></i>').join('')
+  document.getElementById('segA').textContent = `${SEGS} days out`
+
+  /* the band: doubled, so translating exactly -50% loops without a seam */
+  const bits = [
+    `<b>${ride.name}</b>`,
+    ride.tagline ? `<i>${ride.tagline}</i>` : '',
+    `<b>${ride.distance}</b> <i>·</i> ${ride.states.join(' · ')}`,
+    `<b>${NR.longDate(ride)}</b>`,
+    ride.fee ? `Entry <b>${ride.fee}</b>` : 'No ticket needed',
+    ride.assemble ? `Assemble <b>${ride.assemble}</b>` : '',
+    `Organised by <b>${ride.organizer}</b>`,
+  ].filter(Boolean).map(t => `<span>${t}</span>`).join('')
+  document.getElementById('run').innerHTML = bits + bits
+
+  document.querySelectorAll('.switch button').forEach(b =>
+    b.classList.toggle('on', b.dataset.id === ride.id))
+}
+
+function tick() {
+  const c = NR.countdown(ride)
+  const clock = document.getElementById('clock')
+  const lab = document.getElementById('cdLab')
+
+  if (c.phase === 'riding') {
+    lab.textContent = 'Status'
+    clock.innerHTML = `<b>Riding today</b>`
+  } else if (c.phase === 'past') {
+    lab.textContent = 'Status'
+    clock.innerHTML = `<b>Ridden</b>`
+  } else {
+    lab.textContent = 'Counting down'
+    clock.innerHTML =
+      `<b>${c.d}</b><em>d</em><b>${NR.pad(c.h)}</b><em>h</em><b>${NR.pad(c.m)}</b><em>m</em><b>${NR.pad(c.s)}</b><em>s</em>`
+  }
+
+  /* segments light from the left as the days run out */
+  const left = c.phase === 'counting' || c.phase === 'tomorrow' ? c.d : 0
+  const lit = Math.max(0, SEGS - Math.min(SEGS, left))
+  document.querySelectorAll('#segs i').forEach((el, i) => {
+    el.classList.toggle('on', i < lit && lit - i > 3)
+    el.classList.toggle('warm', i < lit && lit - i <= 3)
+  })
+}
+
+paint()
+tick()
+setInterval(tick, 1000)
+</script>
+</body>
+</html>

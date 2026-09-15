@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Next Ride · 12 · Invitation</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   INVITATION — the ride as something you were asked to.
+
+   Every other card announces. This one invites, and the difference is
+   the whole design: the organiser stops being a credit line at the foot
+   and becomes the sender at the top, the destination is set as an
+   occasion rather than a destination, and the fee is worded as what the
+   ticket admits you to rather than what it costs.
+
+   It is also the one card where the missing logo stops being a problem
+   and becomes the point. A wax seal carries initials, not artwork — so
+   the Biker's Club's absent badge presses BC into the wax exactly as a
+   seal should, and Royal Enfield's logo is the odd case that has to be
+   fitted INTO the wax rather than the other way round.
+
+   The foil rules and the seal are drawn, not imaged: a gradient sweep
+   across a hairline for the foil, and a wax blob with its own irregular
+   edge and a pressed highlight. Deep ink, warm gold, plenty of air.
+   ══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ink:#0b0a12; --card:#141322; --card2:#1a1930;
+  --cream:#f4efe4; --d1:rgba(244,239,228,0.66); --d2:rgba(244,239,228,0.44);
+  --d3:rgba(244,239,228,0.24); --bd:rgba(214,178,106,0.22); --bd2:rgba(214,178,106,0.42);
+  --gold:#d6b26a; --gold2:#f0d79b; --wax:#8e2b28;
+  --serif:'Cormorant Garamond',Georgia,serif; --sans:'Inter',system-ui,sans-serif;
+  --ease:cubic-bezier(.2,.9,.25,1);
+  --c:#dc2626;
+}
+body{background:var(--ink);color:var(--d1);font-family:var(--sans);min-height:100vh;
+  -webkit-font-smoothing:antialiased;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:22px;padding:clamp(16px,4vw,42px)}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(70vw 60vh at 22% 18%,rgba(255,196,120,0.14),transparent 62%),
+    radial-gradient(60vw 60vh at 82% 78%,rgba(120,90,220,0.13),transparent 64%),
+    linear-gradient(160deg,#151220,#0b0a12 60%)}
+::selection{background:var(--gold);color:var(--ink)}
+
+/* ── the card ── */
+.inv{position:relative;z-index:2;width:min(100%,452px);
+  background:linear-gradient(168deg,var(--card2),var(--card));
+  border:1px solid var(--bd);border-radius:6px;
+  padding:clamp(26px,4.4vw,38px) clamp(20px,3.4vw,30px) clamp(20px,3.4vw,28px);
+  text-align:center;
+  box-shadow:0 34px 70px -28px rgba(0,0,0,0.9),inset 0 0 70px rgba(214,178,106,0.05)}
+/* the printed inner keyline */
+.inv::before{content:'';position:absolute;inset:9px;border:1px solid var(--bd);
+  border-radius:3px;pointer-events:none}
+/* laid-paper tooth */
+.inv::after{content:'';position:absolute;inset:0;pointer-events:none;opacity:0.5;
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,0.012) 0 1px,transparent 1px 4px)}
+
+/* ── the sender ── */
+.from{position:relative;font-family:var(--serif);font-style:italic;font-size:0.9rem;
+  color:var(--d2);margin-bottom:6px}
+.sender{position:relative;font-family:var(--serif);font-weight:600;
+  font-size:clamp(1rem,2.6vw,1.2rem);color:var(--gold2);letter-spacing:0.02em;
+  margin-bottom:20px}
+
+/* a foil rule: a hairline with a sweep travelling along it */
+.foil{position:relative;height:1px;margin:0 auto 20px;max-width:190px;
+  background:var(--bd2);overflow:hidden}
+.foil::after{content:'';position:absolute;top:0;bottom:0;width:60px;left:-60px;
+  background:linear-gradient(90deg,transparent,var(--gold2),transparent);
+  animation:shine 5.5s var(--ease) infinite}
+@keyframes shine{0%,55%{left:-60px}100%{left:100%}}
+.foil.wide{max-width:none}
+
+/* ── the occasion ── */
+.occasion{position:relative;font-family:var(--serif);font-style:italic;font-size:0.94rem;
+  color:var(--d2);margin-bottom:8px}
+h2{position:relative;font-family:var(--serif);font-weight:400;
+  font-size:clamp(2rem,7vw,2.9rem);color:var(--cream);line-height:1.04;
+  letter-spacing:-0.012em;margin-bottom:10px}
+.sub{position:relative;font-family:var(--serif);font-size:0.98rem;color:var(--d2);
+  line-height:1.5;margin-bottom:20px}
+
+/* ── the when ── */
+.when{position:relative;margin-bottom:20px}
+.when .dateline{font-family:var(--serif);font-size:clamp(1.02rem,2.8vw,1.22rem);
+  color:var(--cream);letter-spacing:0.01em;margin-bottom:7px}
+.when .cd{font-size:0.62rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--gold)}
+.when .cd b{font-weight:600;font-variant-numeric:tabular-nums}
+
+/* ── the particulars ── */
+.parts{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:14px 10px;
+  margin-bottom:20px;text-align:left}
+.parts > div{min-width:0}
+.parts k{display:block;font-size:0.44rem;font-weight:600;letter-spacing:0.2em;
+  text-transform:uppercase;color:var(--d3);margin-bottom:5px}
+.parts v{display:block;font-family:var(--serif);font-size:1.08rem;color:var(--cream);
+  line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ── what it admits you to ── */
+.admits{position:relative;text-align:left;margin-bottom:22px}
+.admits k{display:block;font-size:0.44rem;font-weight:600;letter-spacing:0.2em;
+  text-transform:uppercase;color:var(--d3);margin-bottom:9px;text-align:center}
+.admits ul{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:7px 12px}
+.admits li{display:flex;align-items:center;gap:7px;font-family:var(--serif);font-size:0.9rem;
+  color:var(--d1);line-height:1.25}
+.admits li i{font-style:normal;font-size:0.8rem;flex-shrink:0;opacity:0.85}
+
+/* ── the seal ── */
+.sealwrap{position:relative;display:flex;justify-content:center;margin-bottom:20px}
+.seal{position:relative;width:78px;height:78px;display:grid;place-items:center;
+  animation:press .8s var(--ease) both}
+@keyframes press{from{transform:scale(1.35);opacity:0}}
+.seal svg{position:absolute;inset:0;width:100%;height:100%}
+.seal .mark{position:relative;z-index:2;display:grid;place-items:center;text-align:center}
+.seal .mark b{font-family:var(--serif);font-weight:600;font-size:1.34rem;
+  color:rgba(255,236,214,0.9);line-height:1;letter-spacing:0.04em;
+  text-shadow:0 1px 1px rgba(0,0,0,0.45)}
+.seal .mark img{width:38px;height:38px;object-fit:contain;
+  filter:brightness(0) invert(1) opacity(0.88) drop-shadow(0 1px 1px rgba(0,0,0,0.4))}
+
+/* ── the ask ── */
+.go{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  padding:13px 30px;border:1px solid var(--gold);color:var(--gold2);text-decoration:none;
+  font-family:var(--serif);font-size:1.02rem;letter-spacing:0.14em;text-transform:uppercase;
+  background:transparent;transition:.32s var(--ease)}
+.go:hover{background:var(--gold);color:var(--ink);letter-spacing:0.18em}
+.go:hover .arrow{transform:translateX(5px)}
+.arrow{transition:transform .3s var(--ease);display:inline-block}
+.rsvp{position:relative;font-family:var(--serif);font-style:italic;font-size:0.84rem;
+  color:var(--d3);margin-top:13px}
+
+@media(max-width:420px){ .admits ul{grid-template-columns:1fr} }
+
+.switch{position:relative;z-index:2;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  justify-content:center;font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;
+  color:var(--d3)}
+.switch button{font-family:var(--sans);font-size:0.6rem;letter-spacing:0.1em;padding:7px 13px;
+  border-radius:99px;border:1px solid var(--bd2);background:transparent;color:var(--d2);
+  cursor:pointer;transition:.24s var(--ease)}
+.switch button.on{background:var(--gold);color:var(--ink);border-color:var(--gold);font-weight:700}
+.switch button:hover{color:var(--cream)}
+.switch button.on:hover{color:var(--ink)}
+
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<article class="inv">
+  <div class="from">You are invited by</div>
+  <div class="sender" id="sender"></div>
+
+  <div class="foil"></div>
+
+  <div class="occasion" id="occasion"></div>
+  <h2 id="dest"></h2>
+  <div class="sub" id="sub"></div>
+
+  <div class="foil wide"></div>
+
+  <div class="when">
+    <div class="dateline" id="dateline"></div>
+    <div class="cd" id="cd"></div>
+  </div>
+
+  <div class="parts">
+    <div><k>Distance</k><v id="km"></v></div>
+    <div><k id="tk">Setting out</k><v id="tv"></v></div>
+    <div><k>Through</k><v id="region"></v></div>
+    <div><k>Admits</k><v id="fee"></v></div>
+  </div>
+
+  <div class="admits">
+    <k>Your place includes</k>
+    <ul id="inc"></ul>
+  </div>
+
+  <div class="sealwrap"><div class="seal" id="seal"></div></div>
+
+  <a class="go" href="#">Accept <em class="arrow">→</em></a>
+  <div class="rsvp" id="rsvp"></div>
+</article>
+
+<div class="switch" id="switch"><span>Preview with:</span></div>
+
+<script src="nextride-data.js"></script>
+<script>
+let ride = NR.next
+
+const sw = document.getElementById('switch')
+NR.rides.forEach(r => {
+  const b = document.createElement('button')
+  b.textContent = r.name.split(' ').slice(0, 2).join(' ')
+  b.dataset.id = r.id
+  b.onclick = () => { ride = r; paint(); tick() }
+  sw.appendChild(b)
+})
+
+/* A wax blob with an irregular edge, drawn rather than imaged — a perfect
+   circle reads as a sticker. */
+function waxSvg() {
+  let h = 20260920
+  const rnd = () => { h = (h * 1103515245 + 12345) % 2147483648; return (h >>> 9) / 4194304 }
+  const pts = []
+  for (let i = 0; i < 36; i++) {
+    const a = (i / 36) * Math.PI * 2
+    const r = 44 + rnd() * 5
+    pts.push(`${(50 + Math.cos(a) * r * 0.92).toFixed(1)},${(50 + Math.sin(a) * r * 0.92).toFixed(1)}`)
+  }
+  return `<svg viewBox="0 0 100 100">
+    <defs>
+      <radialGradient id="wx" cx="0.38" cy="0.32" r="0.78">
+        <stop offset="0" stop-color="#c2453f"/>
+        <stop offset="0.6" stop-color="#8e2b28"/>
+        <stop offset="1" stop-color="#5e1a19"/>
+      </radialGradient>
+    </defs>
+    <polygon points="${pts.join(' ')}" fill="url(#wx)"/>
+    <ellipse cx="38" cy="33" rx="17" ry="11" fill="rgba(255,255,255,0.14)"/>
+    <circle cx="50" cy="50" r="34" fill="none" stroke="rgba(0,0,0,0.22)" stroke-width="1.4"/>
+  </svg>`
+}
+
+function paint() {
+  document.documentElement.style.setProperty('--c', ride.color)
+
+  document.getElementById('sender').textContent = ride.organizer
+  document.getElementById('occasion').textContent =
+    ride.tagline ? ride.tagline : 'to ride out to'
+  document.getElementById('dest').textContent = ride.dest
+  document.getElementById('sub').textContent = ride.loop
+    ? `A day's loop from ${ride.fromCity} and back again`
+    : `Setting out from ${ride.fromCity}`
+
+  document.getElementById('dateline').textContent = NR.longDate(ride)
+
+  document.getElementById('km').textContent = ride.distance
+  document.getElementById('region').textContent = ride.states.join(' · ')
+  const tk = document.getElementById('tk'), tv = document.getElementById('tv')
+  if (ride.assemble) { tk.textContent = 'Assemble'; tv.textContent = ride.assemble }
+  else if (ride.rideStart) { tk.textContent = 'Setting out'; tv.textContent = ride.rideStart }
+  else { tk.textContent = 'Setting out'; tv.textContent = 'At first light' }
+  /* worded as what it admits you to, not what it costs */
+  document.getElementById('fee').textContent = ride.fee ? `One rider, ${ride.fee}` : 'One rider, free'
+
+  document.getElementById('inc').innerHTML = ride.compliments
+    .map(c => `<li><i>${c.icon}</i>${c.text}</li>`).join('')
+
+  /* The seal takes initials by default — which is what a seal IS. A logo is
+     the exception, pressed into the wax rather than replacing it. */
+  const seal = document.getElementById('seal')
+  seal.innerHTML = waxSvg() + (ride.logo
+    ? `<span class="mark"><img src="${ride.logo}" alt=""
+         onerror="this.replaceWith(Object.assign(document.createElement('b'),{textContent:'${ride.initials}'}))" /></span>`
+    : `<span class="mark"><b>${ride.initials}</b></span>`)
+
+  document.getElementById('rsvp').textContent =
+    ride.fee ? `Kindly register in advance · ${ride.fee}` : 'No registration needed'
+
+  document.querySelectorAll('.switch button').forEach(b =>
+    b.classList.toggle('on', b.dataset.id === ride.id))
+}
+
+function tick() {
+  const c = NR.countdown(ride)
+  const el = document.getElementById('cd')
+  if (c.phase === 'riding') el.innerHTML = `<b>Today</b>`
+  else if (c.phase === 'past') el.innerHTML = `<b>Already ridden</b>`
+  else el.innerHTML =
+    `<b>${c.d}</b> days <b>${NR.pad(c.h)}</b> hrs <b>${NR.pad(c.m)}</b> min from now`
+}
+
+paint()
+tick()
+setInterval(tick, 1000)
+</script>
+</body>
+</html>

@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Next Ride · 3 · Gauge</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   GAUGE — the countdown as the one dial a rider already reads.
+
+   The card borrows the bike's own instrument: a swept dial, a needle, a
+   redline. Days-to-ride runs backwards around it, 30 down to 0, so the
+   needle climbs toward the stop as the ride gets closer and enters the
+   red in the last three days. That is a countdown you can read at a
+   glance without parsing a number — which is the whole job of a gauge.
+
+   Under it sits an LCD strip, because the rest of the ride's facts are
+   exactly what a trip computer shows: destination, distance, fare,
+   muster time. It ticks over between readouts on a timer the way a real
+   trip display cycles, so everything gets its turn without the card
+   growing a scrollbar.
+
+   No route line. A cluster tells you speed, distance and time — never
+   where the road goes.
+   ══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ink:#0b0a12; --case:#15161c; --case2:#1d1f27; --face:#0d0e13;
+  --off:#eef1f6; --d1:rgba(238,241,246,0.64); --d2:rgba(238,241,246,0.4);
+  --d3:rgba(238,241,246,0.2); --bd:rgba(238,241,246,0.1); --bd2:rgba(238,241,246,0.2);
+  --brass:#c9a227; --lcd:#7dd3a0; --red:#ef4444;
+  --disp:'Rajdhani',system-ui,sans-serif; --sans:'Inter',system-ui,sans-serif;
+  --ease:cubic-bezier(.2,.9,.25,1);
+  --c:#dc2626;
+}
+body{background:var(--ink);color:var(--d1);font-family:var(--sans);min-height:100vh;
+  -webkit-font-smoothing:antialiased;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:22px;padding:clamp(16px,4vw,42px)}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(70vw 60vh at 22% 18%,rgba(255,196,120,0.14),transparent 62%),
+    radial-gradient(60vw 60vh at 82% 78%,rgba(120,90,220,0.13),transparent 64%),
+    linear-gradient(160deg,#151220,#0b0a12 60%)}
+::selection{background:var(--brass);color:var(--ink)}
+
+/* ── the housing ── */
+.cluster{position:relative;z-index:2;width:min(100%,452px);
+  background:linear-gradient(170deg,var(--case2),var(--case));
+  border:1px solid var(--bd);border-radius:20px;overflow:hidden;
+  box-shadow:0 34px 70px -28px rgba(0,0,0,0.9),inset 0 1px 0 rgba(255,255,255,0.06);
+  padding:clamp(16px,2.8vw,22px)}
+
+.top{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.top .lbl{font-family:var(--disp);font-weight:700;font-size:0.68rem;letter-spacing:0.3em;
+  text-transform:uppercase;color:var(--brass)}
+.top .warn{margin-left:auto;display:flex;align-items:center;gap:7px;font-size:0.54rem;
+  font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:var(--d3)}
+.top .warn i{width:7px;height:7px;border-radius:50%;background:var(--c);
+  box-shadow:0 0 10px var(--c);animation:blink 1.6s steps(2,end) infinite}
+@keyframes blink{50%{opacity:.28}}
+
+/* ── the dial ── */
+.dial{position:relative;aspect-ratio:33/25;margin:0 auto 4px;max-width:330px}
+.dial svg{width:100%;height:100%;overflow:visible}
+.tick{stroke:rgba(238,241,246,0.32)}
+.tick.maj{stroke:var(--off);stroke-width:2.4}
+.tick.red{stroke:var(--red)}
+.numeral{font-family:'Rajdhani',sans-serif;font-weight:600;font-size:12px;
+  fill:rgba(238,241,246,0.5)}
+.arcbed{fill:none;stroke:rgba(238,241,246,0.07);stroke-width:7;stroke-linecap:round}
+.arcred{fill:none;stroke:rgba(239,68,68,0.5);stroke-width:7;stroke-linecap:round}
+.arclive{fill:none;stroke:var(--c);stroke-width:7;stroke-linecap:round;
+  filter:drop-shadow(0 0 7px var(--c));transition:stroke-dashoffset 1.1s var(--ease),stroke .7s}
+.needle{transform-origin:165px 158px;transition:transform 1.6s cubic-bezier(.34,1.3,.5,1)}
+.needle .arm{stroke:var(--off);stroke-width:4.2;stroke-linecap:round}
+.needle .tipglow{stroke:var(--c);stroke-width:8;stroke-linecap:round;opacity:.5;
+  filter:blur(3px)}
+
+/* centred on the hub — the pointer rides the rim, so nothing crosses this */
+.dialMid{position:absolute;left:50%;top:62%;transform:translate(-50%,-50%);
+  text-align:center;pointer-events:none}
+.dialMid b{display:block;font-family:var(--disp);font-weight:700;
+  font-size:clamp(2.4rem,9vw,3.4rem);color:var(--off);line-height:0.86;
+  letter-spacing:-0.02em;font-variant-numeric:tabular-nums;
+  text-shadow:0 0 22px rgba(238,241,246,0.22)}
+.dialMid u{display:block;text-decoration:none;font-family:var(--disp);font-weight:600;
+  font-size:0.6rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--d3);margin-top:5px}
+
+/* ── the LCD ── */
+.lcd{background:var(--face);border:1px solid var(--bd);border-radius:11px;
+  padding:13px 14px;margin:12px 0 13px;position:relative;overflow:hidden;
+  box-shadow:inset 0 2px 10px rgba(0,0,0,0.7)}
+.lcd::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(rgba(0,0,0,0.18) 0 1px,transparent 1px 3px);opacity:.5}
+.lcd .row{display:flex;align-items:baseline;gap:10px;min-height:26px}
+.lcd k{font-family:var(--disp);font-weight:600;font-size:0.58rem;letter-spacing:0.22em;
+  text-transform:uppercase;color:var(--d3);flex-shrink:0;width:82px}
+.lcd v{font-family:var(--disp);font-weight:700;font-size:1.12rem;color:var(--lcd);
+  letter-spacing:0.02em;line-height:1.2;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;text-shadow:0 0 12px rgba(125,211,160,0.4);
+  animation:flick .5s var(--ease)}
+@keyframes flick{from{opacity:.25}}
+.lcd .dots{display:flex;gap:4px;justify-content:center;margin-top:10px}
+.lcd .dots i{width:4px;height:4px;border-radius:50%;background:rgba(238,241,246,0.18);
+  transition:.3s}
+.lcd .dots i.on{background:var(--lcd);box-shadow:0 0 7px var(--lcd)}
+
+/* ── the plate ── */
+.plate{display:flex;align-items:center;gap:11px;margin-bottom:13px}
+.plate .badge{width:36px;height:36px;border-radius:8px;flex-shrink:0;display:grid;
+  place-items:center;background:rgba(238,241,246,0.07);border:1px solid var(--bd);overflow:hidden}
+/* dark artwork on a dark badge reads as nothing — knock it to white */
+.plate .badge img{width:100%;height:100%;object-fit:contain;padding:4px;
+  filter:brightness(0) invert(1)}
+.plate .badge span{font-family:var(--disp);font-weight:700;font-size:0.72rem;color:var(--brass)}
+.plate .tx{min-width:0}
+.plate .tx b{display:block;font-size:0.84rem;font-weight:700;color:var(--off);line-height:1.2;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.plate .tx u{display:block;text-decoration:none;font-size:0.56rem;color:var(--d3);margin-top:3px;
+  letter-spacing:0.1em;text-transform:uppercase}
+.plate .fee{margin-left:auto;text-align:right;flex-shrink:0}
+.plate .fee b{display:block;font-family:var(--disp);font-weight:700;font-size:1.2rem;
+  color:var(--brass);line-height:1}
+.plate .fee u{display:block;text-decoration:none;font-size:0.46rem;letter-spacing:0.16em;
+  text-transform:uppercase;color:var(--d3);margin-top:4px}
+
+.go{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;
+  padding:14px;border-radius:10px;background:var(--brass);color:var(--ink);
+  text-decoration:none;font-family:var(--disp);font-size:0.82rem;font-weight:700;
+  letter-spacing:0.18em;text-transform:uppercase;transition:.3s var(--ease)}
+.go:hover{background:var(--off);transform:translateY(-2px);
+  box-shadow:0 14px 28px -12px rgba(238,241,246,0.4)}
+.go:hover .arrow{transform:translateX(5px)}
+.arrow{transition:transform .3s var(--ease);display:inline-block}
+
+.switch{position:relative;z-index:2;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  justify-content:center;font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;
+  color:var(--d3)}
+.switch button{font-family:var(--sans);font-size:0.6rem;letter-spacing:0.1em;padding:7px 13px;
+  border-radius:99px;border:1px solid var(--bd2);background:transparent;color:var(--d2);
+  cursor:pointer;transition:.24s var(--ease)}
+.switch button.on{background:var(--off);color:var(--ink);border-color:var(--off);font-weight:700}
+.switch button:hover{color:var(--off)}
+.switch button.on:hover{color:var(--ink)}
+
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<article class="cluster">
+  <div class="top">
+    <span class="lbl">Next ride</span>
+    <span class="warn" id="warn"><i></i><span id="warnTx"></span></span>
+  </div>
+
+  <div class="dial">
+    <svg viewBox="0 0 330 250" id="dialSvg"></svg>
+    <div class="dialMid"><b id="dNum">0</b><u id="dLab">days to go</u></div>
+  </div>
+
+  <div class="lcd">
+    <div class="row"><k id="lk"></k><v id="lv"></v></div>
+    <div class="dots" id="dots"></div>
+  </div>
+
+  <div class="plate">
+    <div class="badge" id="badge"></div>
+    <div class="tx"><b id="orgName"></b><u>Organiser</u></div>
+    <div class="fee" id="feeBox"></div>
+  </div>
+
+  <a class="go" href="#">Explore ride <em class="arrow">→</em></a>
+</article>
+
+<div class="switch" id="switch"><span>Preview with:</span></div>
+
+<script src="nextride-data.js"></script>
+<script>
+let ride = NR.next
+
+const sw = document.getElementById('switch')
+NR.rides.forEach(r => {
+  const b = document.createElement('button')
+  b.textContent = r.name.split(' ').slice(0, 2).join(' ')
+  b.dataset.id = r.id
+  b.onclick = () => { ride = r; paint(); tick(); readout(0) }
+  sw.appendChild(b)
+})
+
+/* ── the dial face ────────────────────────────────────────────────────── */
+/* A 240° sweep with the gap at the bottom, the way a rev counter is drawn:
+   30 days at the lower-left, counting clockwise through 12 o'clock down to
+   ride day at the lower-right.
+
+   Angles are measured CLOCKWISE FROM 12 O'CLOCK, which is the only
+   convention that keeps this readable — the first cut mixed SVG's
+   from-the-x-axis angles with a compass reading and put the arc on the
+   wrong side of the face, hanging out of its own viewBox. */
+const CX = 165, CY = 158, R = 118
+const SWEEP = 240                  // total degrees of travel
+const A0 = -SWEEP / 2, A1 = SWEEP / 2
+const MAXD = 30
+
+const pol = (deg, r) => {
+  const a = deg * Math.PI / 180
+  return [CX + Math.sin(a) * r, CY - Math.cos(a) * r]
+}
+/* days → angle. 30 days sits at A0, ride day at A1. */
+const angOf = d => A0 + (A1 - A0) * (1 - Math.min(MAXD, Math.max(0, d)) / MAXD)
+
+function arcPath(from, to, r) {
+  const [x1, y1] = pol(from, r), [x2, y2] = pol(to, r)
+  return `M${x1.toFixed(1)} ${y1.toFixed(1)} A${r} ${r} 0 ${Math.abs(to - from) > 180 ? 1 : 0} 1 ${x2.toFixed(1)} ${y2.toFixed(1)}`
+}
+
+;(function face() {
+  let out = ''
+  out += `<path class="arcbed" d="${arcPath(A0, A1, R)}"/>`
+  /* the last three days are the redline */
+  out += `<path class="arcred" d="${arcPath(angOf(3), A1, R)}"/>`
+  out += `<path class="arclive" id="live" d="${arcPath(A0, A1, R)}"/>`
+
+  for (let d = 0; d <= MAXD; d++) {
+    const a = angOf(d)
+    const maj = d % 5 === 0
+    const [x1, y1] = pol(a, R - 11)
+    const [x2, y2] = pol(a, R - (maj ? 24 : 18))
+    out += `<line class="tick${maj ? ' maj' : ''}${d <= 3 ? ' red' : ''}"
+      x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`
+    if (maj) {
+      const [tx, ty] = pol(a, R - 40)
+      out += `<text class="numeral" x="${tx.toFixed(1)}" y="${(ty + 4).toFixed(1)}"
+        text-anchor="middle">${d}</text>`
+    }
+  }
+  /* The pointer is a short bar riding the rim, not a full needle from the
+     hub — so it can never cross the reading sitting in the middle. */
+  out += `<g class="needle" id="needle">
+      <line class="tipglow" x1="${CX}" y1="${(CY - R + 8).toFixed(1)}"
+        x2="${CX}" y2="${(CY - R + 38).toFixed(1)}"/>
+      <line class="arm" x1="${CX}" y1="${(CY - R + 8).toFixed(1)}"
+        x2="${CX}" y2="${(CY - R + 38).toFixed(1)}"/>
+    </g>`
+  document.getElementById('dialSvg').innerHTML = out
+})()
+
+const live = document.getElementById('live')
+const liveLen = live.getTotalLength()
+live.style.strokeDasharray = liveLen
+
+/* ── the cycling readout ──────────────────────────────────────────────── */
+let slot = 0, slots = []
+function buildSlots() {
+  slots = [
+    ['Destination', ride.dest],
+    ['Distance', ride.distance],
+    ['Date', ride.date],
+  ]
+  if (ride.assemble) slots.push(['Assemble', ride.assemble])
+  if (ride.rideStart) slots.push(['Rolls out', ride.rideStart])
+  slots.push(['Region', ride.states.join(' · ')])
+  slots.push(['Stops', ride.stopCount + (ride.loop ? ' · loop' : '')])
+  document.getElementById('dots').innerHTML =
+    slots.map(() => '<i></i>').join('')
+}
+function readout(i) {
+  slot = ((i == null ? slot : i) + slots.length) % slots.length
+  const [k, v] = slots[slot]
+  document.getElementById('lk').textContent = k
+  const el = document.getElementById('lv')
+  el.textContent = v
+  el.style.animation = 'none'; void el.offsetWidth; el.style.animation = ''
+  document.querySelectorAll('#dots i').forEach((d, n) => d.classList.toggle('on', n === slot))
+}
+
+/* ── paint ────────────────────────────────────────────────────────────── */
+function paint() {
+  document.documentElement.style.setProperty('--c', ride.color)
+  const badge = document.getElementById('badge')
+  badge.innerHTML = ride.logo
+    ? `<img src="${ride.logo}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${ride.initials}'}))" />`
+    : `<span>${ride.initials}</span>`
+  document.getElementById('orgName').textContent = ride.organizer
+  const fee = document.getElementById('feeBox')
+  fee.innerHTML = ride.fee ? `<b>${ride.fee}</b><u>Entry</u>` : ''
+  buildSlots()
+  document.querySelectorAll('.switch button').forEach(b =>
+    b.classList.toggle('on', b.dataset.id === ride.id))
+}
+
+function tick() {
+  const c = NR.countdown(ride)
+  const d = c.phase === 'riding' || c.phase === 'past' ? 0 : c.d
+
+  document.getElementById('needle').style.transform = `rotate(${angOf(d).toFixed(2)}deg)`
+  live.style.strokeDashoffset = liveLen * (Math.min(MAXD, d) / MAXD)
+
+  const n = document.getElementById('dNum'), l = document.getElementById('dLab')
+  if (c.phase === 'riding') { n.textContent = '0'; l.textContent = 'riding today' }
+  else if (c.phase === 'past') { n.textContent = '—'; l.textContent = 'ridden' }
+  else { n.textContent = c.d; l.textContent = c.d === 1 ? 'day to go' : 'days to go' }
+
+  const warn = document.getElementById('warn')
+  const tx = document.getElementById('warnTx')
+  if (d <= 3) { warn.style.display = 'flex'; tx.textContent = 'Redline' }
+  else { warn.style.display = 'none' }
+}
+
+paint()
+tick()
+readout(0)
+setInterval(tick, 1000)
+setInterval(() => readout(slot + 1), 2600)
+</script>
+</body>
+</html>

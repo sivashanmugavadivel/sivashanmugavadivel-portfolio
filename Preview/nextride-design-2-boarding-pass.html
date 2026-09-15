@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Next Ride · 2 · Boarding Pass</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   BOARDING PASS — the ride as a ticket you have already been issued.
+
+   The card's job is to make the next ride feel booked rather than
+   advertised, and a ticket does that on sight. It also happens to be the
+   right container for this data: a pass has a route line, a date, a
+   departure time, a fare and a stub — and the ride files carry exactly
+   those, right down to a ₹499 registration and a 5:30 AM muster.
+
+   Everything a real pass does is done here for a reason, not as
+   decoration: the perforation is a true notched edge cut into both sides
+   so the stub reads as detachable; the stub carries the fare and the
+   organiser, which is what a stub is for; and the barcode's bar widths
+   are generated from the ride's own id, so no two rides print the same
+   code.
+
+   What it does NOT carry is a route drawing. A pass names where you are
+   going and when you leave — the picture of the road belongs on the page
+   behind it, not on the ticket.
+   ══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ink:#0b0a12; --paper:#f6f3ea; --paper2:#e9e4d6; --stub:#ded7c4;
+  --dark:#16141d; --d1:rgba(22,20,29,0.7); --d2:rgba(22,20,29,0.48);
+  --d3:rgba(22,20,29,0.3); --hair:rgba(22,20,29,0.16);
+  --cond:'Barlow Condensed',sans-serif; --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --sans:'Inter',system-ui,sans-serif;
+  --ease:cubic-bezier(.2,.9,.25,1);
+  --c:#dc2626;
+}
+body{background:var(--ink);color:var(--d1);font-family:var(--sans);min-height:100vh;
+  -webkit-font-smoothing:antialiased;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:22px;padding:clamp(16px,4vw,42px)}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(70vw 60vh at 22% 18%,rgba(255,196,120,0.14),transparent 62%),
+    radial-gradient(60vw 60vh at 82% 78%,rgba(120,90,220,0.13),transparent 64%),
+    linear-gradient(160deg,#151220,#0b0a12 60%)}
+::selection{background:var(--c);color:#fff}
+
+/* ── the pass ── */
+.pass{position:relative;z-index:2;width:min(100%,452px);
+  filter:drop-shadow(0 30px 60px rgba(0,0,0,0.7));
+  animation:in .7s var(--ease) both}
+@keyframes in{from{opacity:0;transform:translateY(16px)}}
+
+.top{background:var(--paper);border-radius:18px 18px 0 0;padding:clamp(18px,3vw,24px);
+  position:relative;overflow:hidden}
+/* a faint guilloche wash, the way a real ticket is printed */
+.top::before{content:'';position:absolute;inset:0;pointer-events:none;opacity:0.5;
+  background:
+    repeating-linear-gradient(58deg,rgba(22,20,29,0.028) 0 1px,transparent 1px 7px),
+    radial-gradient(70% 50% at 100% 0%,var(--c),transparent 62%);
+  mix-blend-mode:multiply}
+
+.head{display:flex;align-items:flex-start;gap:12px;margin-bottom:18px;position:relative}
+.head .who{display:flex;align-items:center;gap:9px;min-width:0}
+.head .badge{width:34px;height:34px;border-radius:7px;flex-shrink:0;display:grid;
+  place-items:center;background:var(--dark);overflow:hidden}
+.head .badge img{width:100%;height:100%;object-fit:contain;padding:4px;
+  filter:brightness(0) invert(1)}
+.head .badge span{font-size:0.62rem;font-weight:800;color:var(--paper);letter-spacing:0.03em}
+.head .who b{display:block;font-size:0.76rem;font-weight:700;color:var(--dark);line-height:1.2}
+.head .who u{display:block;text-decoration:none;font-family:var(--mono);font-size:0.48rem;
+  letter-spacing:0.16em;text-transform:uppercase;color:var(--d3);margin-top:3px}
+.head .tag{margin-left:auto;text-align:right;flex-shrink:0}
+.head .tag b{display:block;font-family:var(--mono);font-size:0.5rem;font-weight:600;
+  letter-spacing:0.18em;text-transform:uppercase;color:var(--c)}
+.head .tag u{display:block;text-decoration:none;font-family:var(--mono);font-size:0.46rem;
+  letter-spacing:0.14em;color:var(--d3);margin-top:4px}
+
+/* the route line, as a ticket states it: two ends, no map */
+.leg{display:flex;align-items:flex-end;gap:10px;position:relative;margin-bottom:16px}
+.leg .end{min-width:0;flex:1}
+.leg .end.r{text-align:right}
+.leg .end k{display:block;font-family:var(--mono);font-size:0.46rem;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--d3);margin-bottom:5px}
+.leg .end b{display:block;font-family:var(--cond);font-weight:700;
+  font-size:clamp(1.5rem,5vw,2rem);color:var(--dark);line-height:0.95;letter-spacing:0.005em;
+  text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.leg .end u{display:block;text-decoration:none;font-size:0.6rem;color:var(--d2);margin-top:4px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.leg .mid{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding-bottom:16px}
+.leg .mid .dots{width:46px;height:1px;
+  background:repeating-linear-gradient(90deg,var(--hair) 0 3px,transparent 3px 6px)}
+.leg .mid i{font-style:normal;font-size:0.9rem;color:var(--c);line-height:1;
+  animation:nudge 2.6s var(--ease) infinite}
+@keyframes nudge{0%,100%{transform:translateX(-2px)}50%{transform:translateX(2px)}}
+
+/* the grid of facts */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--hair);
+  border:1px solid var(--hair);border-radius:9px;overflow:hidden;position:relative}
+.grid > div{background:var(--paper);padding:11px 12px}
+.grid k{display:block;font-family:var(--mono);font-size:0.44rem;letter-spacing:0.16em;
+  text-transform:uppercase;color:var(--d3);margin-bottom:5px}
+.grid v{display:block;font-family:var(--cond);font-weight:700;font-size:1.12rem;
+  color:var(--dark);line-height:1;letter-spacing:0.01em;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.grid v.c{color:var(--c)}
+
+/* ── the perforation ── */
+.perf{position:relative;height:26px;background:var(--paper);overflow:visible}
+.perf::before,.perf::after{content:'';position:absolute;top:50%;width:26px;height:26px;
+  border-radius:50%;background:var(--ink);transform:translateY(-50%)}
+.perf::before{left:-13px}
+.perf::after{right:-13px}
+.perf .cut{position:absolute;left:18px;right:18px;top:50%;height:1px;transform:translateY(-50%);
+  background:repeating-linear-gradient(90deg,var(--hair) 0 5px,transparent 5px 10px)}
+
+/* ── the stub ── */
+.stub{background:var(--stub);border-radius:0 0 18px 18px;padding:clamp(16px,2.6vw,22px);
+  position:relative;overflow:hidden}
+.stub::before{content:'';position:absolute;inset:0;pointer-events:none;opacity:0.45;
+  background:repeating-linear-gradient(-58deg,rgba(22,20,29,0.03) 0 1px,transparent 1px 8px)}
+.stubRow{display:flex;align-items:flex-end;gap:14px;position:relative;margin-bottom:14px}
+.stubRow .cd{min-width:0}
+.stubRow .cd k{display:block;font-family:var(--mono);font-size:0.44rem;letter-spacing:0.16em;
+  text-transform:uppercase;color:var(--d3);margin-bottom:6px}
+.stubRow .cd b{display:block;font-family:var(--cond);font-weight:700;
+  font-size:clamp(1.8rem,6vw,2.5rem);color:var(--dark);line-height:0.88;letter-spacing:-0.01em;
+  font-variant-numeric:tabular-nums}
+.stubRow .cd b em{font-style:normal;font-size:0.42em;color:var(--d2);margin-left:5px;
+  letter-spacing:0.06em}
+.stubRow .fare{margin-left:auto;text-align:right;flex-shrink:0}
+.stubRow .fare k{display:block;font-family:var(--mono);font-size:0.44rem;letter-spacing:0.16em;
+  text-transform:uppercase;color:var(--d3);margin-bottom:6px}
+.stubRow .fare b{display:block;font-family:var(--cond);font-weight:700;font-size:1.55rem;
+  color:var(--c);line-height:1}
+.stubRow .fare u{display:block;text-decoration:none;font-family:var(--mono);font-size:0.44rem;
+  color:var(--d3);margin-top:4px;letter-spacing:0.1em}
+
+/* what the fare admits you to */
+.inc{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:15px;position:relative}
+.inc span{display:inline-flex;align-items:center;gap:5px;font-size:0.58rem;color:var(--d1);
+  background:rgba(22,20,29,0.06);border:1px solid var(--hair);border-radius:99px;
+  padding:4px 9px;white-space:nowrap}
+.inc span i{font-style:normal;font-size:0.72rem;line-height:1}
+
+.code{display:flex;align-items:flex-end;gap:2px;height:34px;margin-bottom:13px;
+  position:relative}
+.code i{flex:1;background:var(--dark);border-radius:0.5px}
+.serial{font-family:var(--mono);font-size:0.46rem;letter-spacing:0.22em;color:var(--d3);
+  text-align:center;margin-bottom:14px;text-transform:uppercase;position:relative}
+
+.go{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;
+  padding:14px;border-radius:10px;background:var(--dark);color:var(--paper);
+  text-decoration:none;font-size:0.72rem;font-weight:700;letter-spacing:0.14em;
+  text-transform:uppercase;transition:.3s var(--ease);position:relative}
+.go:hover{background:var(--c);transform:translateY(-2px)}
+.go:hover .arrow{transform:translateX(5px)}
+.arrow{transition:transform .3s var(--ease);display:inline-block}
+
+.switch{position:relative;z-index:2;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  justify-content:center;font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;
+  color:rgba(244,242,247,0.22)}
+.switch button{font-family:var(--sans);font-size:0.6rem;letter-spacing:0.1em;padding:7px 13px;
+  border-radius:99px;border:1px solid rgba(244,242,247,0.22);background:transparent;
+  color:rgba(244,242,247,0.42);cursor:pointer;transition:.24s var(--ease)}
+.switch button.on{background:var(--paper);color:var(--ink);border-color:var(--paper);font-weight:700}
+.switch button:hover{color:var(--paper)}
+.switch button.on:hover{color:var(--ink)}
+
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<article class="pass" id="pass">
+  <div class="top">
+    <div class="head">
+      <div class="who">
+        <div class="badge" id="badge"></div>
+        <div>
+          <b id="orgName"></b>
+          <u>Organiser</u>
+        </div>
+      </div>
+      <div class="tag">
+        <b>Next ride</b>
+        <u id="serialTop"></u>
+      </div>
+    </div>
+
+    <div class="leg">
+      <div class="end">
+        <k>From</k>
+        <b id="fromC"></b>
+        <u id="fromP"></u>
+      </div>
+      <div class="mid"><span class="dots"></span><i>→</i></div>
+      <div class="end r">
+        <k id="toK">To</k>
+        <b id="toC"></b>
+        <u id="toP"></u>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div><k>Date</k><v id="dateV"></v></div>
+      <div><k id="timeK">Departs</k><v id="timeV"></v></div>
+      <div><k>Distance</k><v class="c" id="kmV"></v></div>
+    </div>
+  </div>
+
+  <div class="perf"><span class="cut"></span></div>
+
+  <div class="stub">
+    <div class="stubRow">
+      <div class="cd">
+        <k>Boards in</k>
+        <b id="cd"></b>
+      </div>
+      <div class="fare" id="fareBox"></div>
+    </div>
+    <div class="inc" id="inc"></div>
+    <div class="code" id="code"></div>
+    <div class="serial" id="serial"></div>
+    <a class="go" href="#">Explore ride <em class="arrow">→</em></a>
+  </div>
+</article>
+
+<div class="switch" id="switch"><span>Preview with:</span></div>
+
+<script src="nextride-data.js"></script>
+<script>
+let ride = NR.next
+
+const sw = document.getElementById('switch')
+NR.rides.forEach(r => {
+  const b = document.createElement('button')
+  b.textContent = r.name.split(' ').slice(0, 2).join(' ')
+  b.dataset.id = r.id
+  b.onclick = () => { ride = r; paint(); tick() }
+  sw.appendChild(b)
+})
+
+/* bar widths generated from the ride id, so each ride prints its own code */
+function bars(seed) {
+  let h = 0
+  for (const c of String(seed)) h = (h * 31 + c.charCodeAt(0)) % 99991
+  return Array.from({ length: 42 }, () => {
+    h = (h * 1103515245 + 12345) % 2147483648
+    const w = 1 + ((h >>> 7) % 3)
+    const tall = ((h >>> 3) % 5) !== 0
+    return `<i style="flex:${w};height:${tall ? 100 : 58}%"></i>`
+  }).join('')
+}
+
+function paint() {
+  document.documentElement.style.setProperty('--c', ride.color)
+
+  const badge = document.getElementById('badge')
+  badge.innerHTML = ride.logo
+    ? `<img src="${ride.logo}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${ride.initials}'}))" />`
+    : `<span>${ride.initials}</span>`
+  document.getElementById('orgName').textContent = ride.organizer
+
+  document.getElementById('fromC').textContent = ride.fromCity
+  document.getElementById('fromP').textContent = ride.fromPlace
+  /* a loop is going somewhere and coming back — the ticket says so rather
+     than printing the turnaround as if it were the end of the line */
+  document.getElementById('toK').textContent = ride.loop ? 'Out to · and back' : 'To'
+  document.getElementById('toC').textContent = ride.destCity
+  document.getElementById('toP').textContent = ride.destPlace
+
+  document.getElementById('dateV').textContent = ride.date.replace(/ \d{4}$/, '')
+  const tk = document.getElementById('timeK'), tv = document.getElementById('timeV')
+  if (ride.assemble) { tk.textContent = 'Assemble'; tv.textContent = ride.assemble }
+  else if (ride.rideStart) { tk.textContent = 'Departs'; tv.textContent = ride.rideStart }
+  else { tk.textContent = 'Day'; tv.textContent = NR.weekday(ride).slice(0, 3) }
+  document.getElementById('kmV').textContent = ride.distance
+
+  const fare = document.getElementById('fareBox')
+  fare.innerHTML = ride.fee
+    ? `<k>Fare</k><b>${ride.fee}</b><u>per rider</u>`
+    : `<k>Fare</k><b>Free</b><u>no ticket</u>`
+
+  document.getElementById('inc').innerHTML = ride.compliments
+    .map(c => `<span><i>${c.icon}</i>${c.text}</span>`).join('')
+
+  document.getElementById('code').innerHTML = bars(ride.id)
+  const serial = ride.id.toUpperCase().replace(/[^A-Z0-9]/g, '') .slice(0, 12)
+  document.getElementById('serial').textContent =
+    serial + ' · ' + ride.states.join(' / ')
+  document.getElementById('serialTop').textContent = 'No. ' + serial.slice(-6)
+
+  document.querySelectorAll('.switch button').forEach(b =>
+    b.classList.toggle('on', b.dataset.id === ride.id))
+}
+
+function tick() {
+  const c = NR.countdown(ride)
+  const el = document.getElementById('cd')
+  if (c.phase === 'riding') { el.innerHTML = 'Today'; return }
+  if (c.phase === 'past') { el.innerHTML = 'Ridden'; return }
+  el.innerHTML = `${c.d}<em>d</em> ${NR.pad(c.h)}<em>h</em> ${NR.pad(c.m)}<em>m</em>`
+}
+
+paint()
+tick()
+setInterval(tick, 1000)
+</script>
+</body>
+</html>
