@@ -42,6 +42,21 @@ function useGarageRoot() {
 /** Badge colour per ride mode; `dream` has none and falls back to the ride's own. */
 const MODE_COLOR = Object.fromEntries(RIDE_MODES.map(m => [m.key, m.color]))
 
+/**
+ * The rows the Ride Stats table should actually carry.
+ *
+ * `stats` holds an organised ride's logistics until the odometer figures
+ * replace them, and one of those — the entry fee — already has a better home:
+ * the compliments ticket prints it as what you paid for the list beside it,
+ * which is the only context that makes it mean anything. Tabulating it a
+ * second time as a lone "REGISTRATION" tile says it twice and says it worse.
+ *
+ * Only dropped when that ticket is on the page. A ride with a fee and no
+ * compliments keeps it here, because then this is the only place it can go.
+ */
+const statRows = ride => Object.entries(ride.stats ?? {})
+  .filter(([k]) => !(k === 'registration' && ride.compliments?.length))
+
 // ─── Tokens ───────────────────────────────────────────────────────────────────
 const BG  = '#0d0b14'
 const BG2 = '#13111c'
@@ -1473,18 +1488,7 @@ html.hz-snap { scroll-snap-type: y proximity; }
   text-transform: uppercase; padding: 6px 11px; border-radius: 999px;
   border: 1px solid ${BD2}; color: ${D1}; }
 
-/* cover + closing */
-.hz-cover { justify-content: center; padding-top: 92px; }
-.hz-cover .hz-body { padding-bottom: 0; }
-.hz-kick { font-size: .62rem; letter-spacing: .2em; text-transform: uppercase; color: ${D3};
-  margin-bottom: 18px; }
-.hz-kick a { color: ${D2}; text-decoration: none; transition: color .2s; }
-.hz-kick a:hover { color: ${OFF}; }
-.hz-cue { display: flex; align-items: center; gap: 12px; margin-top: 34px; font-size: .6rem;
-  letter-spacing: .22em; text-transform: uppercase; color: ${D3}; }
-.hz-cue i { width: 1px; height: 34px; background: linear-gradient(var(--c), transparent);
-  animation: hz-drop 2.1s ${EASE} infinite; }
-@keyframes hz-drop { 50% { transform: translateY(9px); } }
+/* closing — the cover has a stylesheet of its own, see COVER_CSS */
 .hz-end { justify-content: center; }
 .hz-end .hz-title { max-width: 12ch; }
 
@@ -1523,6 +1527,8 @@ html.hz-snap { scroll-snap-type: y proximity; }
   z-index: 40; font-size: .66rem; letter-spacing: .18em; color: ${D2};
   font-variant-numeric: tabular-nums; pointer-events: none; }
 .hz-count b { color: ${OFF}; font-weight: 700; }
+.hz-count { transition: opacity .55s ${EASE}; }
+.hz-count.is-off { opacity: 0; }
 
 @media (max-width: 860px) {
   .hz-rail { display: none; }
@@ -1539,7 +1545,7 @@ html.hz-snap { scroll-snap-type: y proximity; }
 @media (prefers-reduced-motion: reduce) {
   html.hz-snap { scroll-snap-type: none; }
   .hz-ch { scroll-snap-align: none; }
-  .hz-stripe, .hz-cue i { animation: none; }
+  .hz-stripe { animation: none; }
   /* drop the whole hidden state, so nothing is waiting on a reveal to arrive */
   .hz-js .hz-ch:not(.is-live) .hz-no,
   .hz-js .hz-ch:not(.is-live) .hz-tier,
@@ -1554,6 +1560,248 @@ html.hz-snap { scroll-snap-type: y proximity; }
      a mark that arrives square is not a mark, it is a box */
   .hz-js .hz-ch:not(.is-live) .hz-stamp { opacity: 1; transform: rotate(var(--tilt)); }
   .hz-wash { transition: none; }
+}
+`
+
+/* ══════════════════════════════════════════════════════════════════════════
+   THE COVER — a title card, and the one still frame on the page.
+
+   Every chapter below it is a drawn scene that answers to scroll. This one
+   deliberately does not: the reel has not started, so it holds a photograph
+   and says three things instead — what this is, how much of it there is, and
+   which ride is actually next.
+
+   THE PHOTOGRAPH CARRIES THE COLOUR, so the cover takes a gold accent of its
+   own rather than borrowing chapter one's. Everything tinted here — the rule
+   under the eyebrow, the tally icons, the button — reads from --c, so the
+   whole card re-keys from that one value.
+
+   Legibility is two crossed gradients, not a flat wash: one running across
+   the frame so the headline sits on darkness while the rider stays lit, one
+   running down it so the navbar has a top to sit on and the bottom edge
+   dissolves into the page's own ground instead of ending on a seam.
+
+   The right column is the only part that is DATA. The tally counts the ride
+   files by tier, and the card resolves to whichever upcoming ride carries the
+   soonest date — both derived, so neither can disagree with the reel below.
+   ══════════════════════════════════════════════════════════════════════════ */
+const COVER_CSS = `
+.hz-cover { display: block; padding-top: 0; overflow: clip; }
+
+.hz-shot { position: absolute; inset: 0; z-index: 0; }
+/* The frame is 3:2 and the viewport rarely is, so the crop is held slightly
+   above centre — that keeps the rider and the horizon in frame on a short
+   laptop window, where centring would hand back sky and cut off the road. */
+.hz-shot img { width: 100%; height: 100%; display: block;
+  object-fit: cover; object-position: 50% 42%; }
+.hz-shot::after { content: ''; position: absolute; inset: 0;
+  background:
+    linear-gradient(100deg, rgba(8,6,12,.94) 0%, rgba(8,6,12,.74) 26%,
+      rgba(8,6,12,.16) 50%, rgba(8,6,12,.30) 76%, rgba(8,6,12,.62) 100%),
+    linear-gradient(to bottom, rgba(8,6,12,.72) 0%, transparent 20%,
+      transparent 54%, ${BG} 99%); }
+
+.hz-cv { position: relative; z-index: 2; min-height: 100vh; min-height: 100svh;
+  max-width: 1720px; margin: 0 auto; display: grid; align-items: center;
+  grid-template-columns: minmax(0, 1.12fr) minmax(300px, 380px);
+  column-gap: clamp(28px, 5vw, 80px);
+  padding: clamp(104px,14vh,152px) clamp(18px,5vw,72px) clamp(104px,14vh,148px); }
+
+/* ── left: the promise ─────────────────────────────────────────────────── */
+.hz-eye { display: flex; align-items: center; gap: 18px; margin-bottom: 22px;
+  font-size: .66rem; font-weight: 600; letter-spacing: .34em; text-transform: uppercase;
+  color: ${D1}; }
+.hz-eye i { height: 1px; width: clamp(34px,5vw,78px); flex-shrink: 0;
+  background: linear-gradient(90deg, var(--c), transparent); }
+
+/* Playfair's -.03em is drawn for mixed case; set in caps it closes the
+   counters up, so the cover's headline opens the tracking back out. */
+.hz-cover .hz-h1 { text-transform: uppercase; letter-spacing: .004em; line-height: .95;
+  font-size: clamp(2.5rem,7.2vw,5.5rem); max-width: 13ch; margin-bottom: 0;
+  text-shadow: 0 12px 44px rgba(0,0,0,.55); }
+
+.hz-sub { position: relative; margin: clamp(20px,3vh,30px) 0 clamp(26px,4vh,42px);
+  padding-left: 22px; max-width: 34ch;
+  font-family: 'Playfair Display', serif; font-size: clamp(1rem,1.9vw,1.4rem);
+  line-height: 1.5; color: ${D1}; }
+.hz-sub::before { content: ''; position: absolute; left: 0; top: .16em; bottom: .16em;
+  width: 2px; border-radius: 2px;
+  background: linear-gradient(var(--c), transparent); }
+
+/* ── left: how much of it there is ─────────────────────────────────────── */
+.hz-tally { display: flex; flex-wrap: wrap; width: fit-content; max-width: 100%;
+  border: 1px solid ${BD2}; border-radius: 15px; overflow: hidden;
+  background: rgba(11,9,17,.46); backdrop-filter: blur(16px) saturate(1.15);
+  -webkit-backdrop-filter: blur(16px) saturate(1.15); }
+.hz-tally > div { display: flex; align-items: center; gap: 14px; min-width: 0;
+  padding: 15px clamp(16px,2.3vw,30px); border-right: 1px solid ${BD}; }
+.hz-tally > div:last-child { border-right: 0; }
+.hz-tally svg { width: 21px; height: 21px; flex-shrink: 0; color: var(--c); }
+.hz-tally b { display: block; font-family: 'Playfair Display', serif; font-weight: 700;
+  font-size: clamp(1.25rem,2.3vw,1.7rem); line-height: 1; color: ${OFF};
+  font-variant-numeric: tabular-nums; }
+.hz-tally span { display: block; margin-top: 6px; font-size: .54rem; font-weight: 600;
+  letter-spacing: .2em; text-transform: uppercase; color: ${D2}; white-space: nowrap; }
+
+/* ── right: the handwriting, then the next ride ────────────────────────── */
+.hz-rt { display: flex; flex-direction: column; align-items: stretch;
+  gap: clamp(18px,3vh,32px); min-width: 0; }
+/* The handwriting lands on the brightest part of the frame — the sun sits just
+   behind it — so cream on cream needs a ground of its own. Two shadows: a tight
+   one that darkens the sky right against the strokes, and a wide one that holds
+   the whole phrase off the hillside. */
+.hz-script { align-self: center; text-align: center; transform: rotate(-4.5deg);
+  font-family: 'Kaushan Script', cursive; line-height: 1.24; color: ${OFF};
+  font-size: clamp(1.1rem,2.3vw,1.95rem);
+  text-shadow: 0 1px 3px rgba(6,4,10,.95), 0 10px 34px rgba(6,4,10,.8); }
+.hz-script i { display: block; height: 1px; margin-top: 9px; font-style: normal;
+  background: linear-gradient(90deg, transparent, var(--c), transparent); }
+
+.hz-next { position: relative; border-radius: 20px; overflow: hidden; padding: 15px;
+  border: 1px solid ${BD2};
+  background: linear-gradient(168deg, rgba(23,19,32,.88), rgba(9,7,14,.94));
+  backdrop-filter: blur(20px) saturate(1.25);
+  -webkit-backdrop-filter: blur(20px) saturate(1.25);
+  box-shadow: 0 36px 72px -32px rgba(0,0,0,.92), inset 0 1px 0 rgba(255,255,255,.07); }
+.hz-next .nk { font-size: .56rem; font-weight: 700; letter-spacing: .28em;
+  text-transform: uppercase; color: ${D2}; }
+.hz-next .nh { display: flex; align-items: flex-start; gap: 11px; margin: 9px 0 12px; }
+.hz-next .nh svg { width: 21px; height: 21px; flex-shrink: 0; color: var(--c);
+  margin-top: 3px; }
+.hz-next .nh b { display: block; font-family: 'Playfair Display', serif; font-weight: 700;
+  font-size: clamp(1.4rem,2.6vw,1.85rem); line-height: 1.05; color: ${OFF};
+  text-transform: uppercase; letter-spacing: .012em; overflow-wrap: anywhere; }
+.hz-next .nh span { display: block; margin-top: 4px; font-size: .74rem; color: ${D1}; }
+
+/* The window onto the ride. A photograph when the file has one; the ride's own
+   route, drawn from its stops, when it does not — which is every ride today.
+   A grey placeholder box would say the card is unfinished; the line says where
+   it goes, and swaps itself out the moment a photo lands in the file. */
+.hz-next .nw { position: relative; display: block; border-radius: 12px; overflow: hidden;
+  aspect-ratio: 16 / 9; border: 1px solid ${BD};
+  background: radial-gradient(90% 120% at 50% 6%, rgba(255,255,255,.05), transparent 70%),
+    linear-gradient(160deg, #15121f, #0b0912); }
+.hz-next .nw img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.hz-next .nw svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+.hz-nfig { display: flex; margin: 11px 0 12px; }
+.hz-nfig > div { flex: 1 1 0; min-width: 0; text-align: center; padding: 0 6px;
+  border-right: 1px solid ${BD}; }
+.hz-nfig > div:last-child { border-right: 0; }
+.hz-nfig svg { width: 18px; height: 18px; color: ${D1}; margin-bottom: 9px; }
+/* A third of a 380px card is about 100px of room, and "20 Sep 2026" and
+   "Royal Enfield" both want more than that. Rather than shrink the type until
+   the longest organiser name anyone might run fits on one line, the value box
+   is a fixed two lines tall and centres whatever it gets — so one-line and
+   two-line figures sit on the same centre and the row stays level. */
+.hz-nfig b { display: flex; align-items: center; justify-content: center;
+  min-height: 2.2em; font-family: 'Playfair Display', serif; font-weight: 700;
+  font-size: clamp(.8rem,1.45vw,1rem); line-height: 1.25; color: ${OFF};
+  overflow-wrap: anywhere; }
+.hz-nfig span { display: block; margin-top: 6px; font-size: .5rem; font-weight: 600;
+  letter-spacing: .16em; text-transform: uppercase; color: ${D2}; }
+
+.hz-ngo { display: flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 12px; border-radius: 11px; text-decoration: none;
+  background: var(--c);
+  background: linear-gradient(100deg, var(--c), color-mix(in srgb, var(--c) 72%, #fff));
+  color: #1a1206; font-size: .72rem; font-weight: 800; letter-spacing: .14em;
+  text-transform: uppercase; transition: transform .3s ${EASE}, box-shadow .3s ${EASE}; }
+.hz-ngo:hover { transform: translateY(-2px); box-shadow: 0 16px 34px -14px var(--c); }
+
+/* ── the two corners ───────────────────────────────────────────────────── */
+/* THE CORNERS ARE NOT EMPTY. The site parks fixed furniture in both of them —
+   back-to-top bottom-left, share button and its "tap to connect" label
+   bottom-right — and the label's width changes with its text, so clearing it
+   sideways is a guess. Both corners are lifted above that whole band instead,
+   which also keeps them level with each other the way the design has them. */
+.hz-begin { position: absolute; z-index: 3; left: clamp(18px,5vw,72px);
+  bottom: clamp(92px,13vh,124px); display: flex; align-items: center; gap: 15px;
+  font-size: .6rem; font-weight: 600; letter-spacing: .26em; text-transform: uppercase;
+  color: ${D2}; }
+.hz-begin i { position: relative; width: 19px; height: 30px; flex-shrink: 0;
+  border: 1.5px solid ${D2}; border-radius: 10px; }
+.hz-begin i::after { content: ''; position: absolute; left: 50%; top: 6px;
+  width: 2px; height: 6px; border-radius: 2px; background: currentColor;
+  animation: hz-wheel 2s ${EASE} infinite; }
+@keyframes hz-wheel {
+  0% { opacity: 0; transform: translate(-50%,-3px) }
+  35% { opacity: 1 }
+  100% { opacity: 0; transform: translate(-50%,9px) }
+}
+.hz-begin u { text-decoration: none; width: clamp(20px,3vw,38px); height: 1px;
+  background: ${D3}; flex-shrink: 0; }
+
+/* Low and pulled in from the edge: it has to clear the card above it AND the
+   share button in the corner, and the corner is the fixed one of the two. */
+.hz-motto { position: absolute; z-index: 3; right: clamp(80px,10vw,150px);
+  bottom: clamp(40px,6vh,70px); display: flex; align-items: center; gap: 16px;
+  font-size: .58rem; font-weight: 600; letter-spacing: .3em; text-transform: uppercase;
+  color: ${D2}; text-align: right; line-height: 2; }
+.hz-motto u { text-decoration: none; width: clamp(24px,4vw,58px); height: 1px;
+  background: ${D3}; flex-shrink: 0; }
+
+/* ── entrance ──────────────────────────────────────────────────────────── */
+/* Keyframes, not the scroll reveal the chapters use: the cover is ABOVE the
+   fold, so there is no scroll to trigger it and nothing to observe. Each piece
+   starts hidden only for as long as its own delay, so the worst case is a page
+   that arrives already assembled. */
+.hz-cv > div > *, .hz-rt > *, .hz-begin, .hz-motto {
+  animation: hz-cv-in .7s ${EASE} both; }
+.hz-cv .hz-h1 { animation-delay: .06s }
+.hz-cv .hz-sub { animation-delay: .12s }
+.hz-cv .hz-tally { animation-delay: .18s }
+.hz-rt .hz-script { animation-delay: .2s }
+.hz-rt .hz-next { animation-delay: .26s }
+.hz-begin, .hz-motto { animation-delay: .34s }
+@keyframes hz-cv-in { from { opacity: 0; transform: translateY(24px) } }
+
+/* ── narrow ────────────────────────────────────────────────────────────── */
+/* One column below 1040: the card is 300px at its narrowest and the headline
+   needs about 13 characters of Playfair beside it, which stops fitting well
+   before the phone breakpoint the rest of the page uses. */
+@media (max-width: 1040px) {
+  /* Stacked, the cover is taller than the screen however it is set, so the
+     padding stops defending a one-screen fit it cannot win and just gives the
+     column a sensible rhythm instead. The bottom only has to clear the navbar
+     and the fixed corner buttons. */
+  /* min-height goes with the columns. Stacked, the corners below are in the
+     flow rather than pinned, so a 100vh floor here would hold a full screen
+     open above them and push the scroll cue off the bottom. The section keeps
+     its own 100vh, so a short cover still fills the screen. */
+  .hz-cv { grid-template-columns: minmax(0,1fr); row-gap: clamp(22px,3.4vh,40px);
+    min-height: 0; align-items: start; align-content: center;
+    padding-top: clamp(92px,12vh,124px); padding-bottom: clamp(24px,3vh,36px); }
+  .hz-cover .hz-h1 { max-width: 15ch; }
+  .hz-rt { align-items: flex-start; }
+  .hz-script { align-self: flex-start; text-align: left; }
+  .hz-next { width: min(100%, 400px); }
+  /* The corners join the flow — pinned, they would land on top of the card.
+     RELATIVE, NOT STATIC. Static drops them out of the positioned layer, and
+     z-index only applies to positioned boxes — so the whole corner paints
+     behind the photograph, except the mouse glyph, which carries a
+     position:relative of its own and was the only thing left visible. Their
+     offsets have to be cleared with it, or relative just shifts them by the
+     values the pinned layout used. The gutter comes back as padding, since
+     that is what the offsets were providing. */
+  .hz-begin, .hz-motto { position: relative; z-index: 3;
+    left: auto; right: auto; bottom: auto;
+    margin-top: 10px; padding: 0 clamp(18px,5vw,72px); }
+  .hz-motto { justify-content: flex-start; text-align: left; }
+}
+@media (max-width: 560px) {
+  .hz-cover .hz-h1 { font-size: clamp(2.1rem,8.6vw,3rem); }
+  .hz-sub { margin: 14px 0 0; font-size: 1rem; }
+  .hz-tally > div { padding: 12px 14px; gap: 10px; }
+  .hz-tally svg { width: 18px; height: 18px; }
+  .hz-script { font-size: 1.15rem; }
+  .hz-next { padding: 13px; }
+  .hz-nfig b { font-size: .86rem; }
+  .hz-motto u { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hz-cv > div > *, .hz-rt > *, .hz-begin, .hz-motto { animation: none; }
+  .hz-begin i::after { animation: none; opacity: .8; }
 }
 `
 
@@ -2309,27 +2557,178 @@ function HorizonChapter({ ride: r, index, root, tier }) {
   )
 }
 
+/* ── the cover's furniture ─────────────────────────────────────────────────
+   One stroke weight, one viewBox, currentColor throughout, so an icon takes
+   its colour and size from whatever it is sitting in. Paths rather than
+   components because most of these are one line of geometry. */
+function Ico({ d }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"
+      strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {d.map((p, i) => <path key={i} d={p} />)}
+    </svg>
+  )
+}
+
+const CAL = ['M8 2v4M16 2v4M3 10h18',
+  'M19 4H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z']
+const ICON = {
+  pin: ['M20 10c0 6.5-8 12-8 12s-8-5.5-8-12a8 8 0 0 1 16 0z', 'M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z'],
+  road: ['M5 21 8.5 3', 'M19 21 15.5 3', 'M12 5v3M12 10.5v3M12 16v3'],
+  flag: ['M5 21V4', 'M5 5h13l-2.4 4L18 13H5z'],
+  cal: CAL,
+}
+/* One per tier, keyed by mode. A tier without an entry still draws — the
+   fallback is the planned map, which is the honest shape for "not yet". */
+const MODE_ICON = {
+  completed: ['M20 6 9 17l-5-5'],
+  upcoming: CAL,
+  planned: ['M9 4 3 6v15l6-2 6 2 6-2V4l-6 2-6-2z', 'M9 4v15M15 6v15'],
+  cancelled: ['M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z', 'M5.6 5.6l12.8 12.8'],
+}
+
+/**
+ * A ride's route, drawn from its own stops.
+ *
+ * The Next Ride card wants a window onto the ride, and no ride file carries a
+ * photo yet. A grey placeholder would say the card is unfinished; the route
+ * line says where it actually goes, in the ride's own colour, from data that
+ * is already there. `photos[0]` wins the moment a file has one.
+ *
+ * Equirectangular, which is exact enough at this scale: a ride spans a degree
+ * or two, so the only distortion worth correcting is longitude converging
+ * with latitude, and cos(mean lat) does that. Then it is fitted to the box on
+ * whichever axis is tighter, so a north-south ride and an east-west one both
+ * fill it without being stretched.
+ */
+function RouteThumb({ stops, color }) {
+  const pts = useMemo(() => {
+    const ok = (stops || []).filter(s => Number.isFinite(s.lat) && Number.isFinite(s.lng))
+    if (ok.length < 2) return null
+    const k = Math.cos((ok.reduce((a, s) => a + s.lat, 0) / ok.length) * Math.PI / 180)
+    const xs = ok.map(s => s.lng * k)
+    const ys = ok.map(s => -s.lat)
+    const x0 = Math.min(...xs), x1 = Math.max(...xs)
+    const y0 = Math.min(...ys), y1 = Math.max(...ys)
+    const W = 160, H = 90, P = 15
+    /* A dead-straight ride has zero range on one axis — scaling by it would
+       divide by nothing, so that axis simply doesn't constrain the fit. */
+    const sc = Math.min(
+      x1 - x0 > 1e-9 ? (W - P * 2) / (x1 - x0) : Infinity,
+      y1 - y0 > 1e-9 ? (H - P * 2) / (y1 - y0) : Infinity)
+    if (!Number.isFinite(sc)) return null   // every stop on one point
+    const ox = (W - (x1 - x0) * sc) / 2 - x0 * sc
+    const oy = (H - (y1 - y0) * sc) / 2 - y0 * sc
+    return xs.map((x, i) => [+(x * sc + ox).toFixed(2), +(ys[i] * sc + oy).toFixed(2)])
+  }, [stops])
+
+  if (!pts) return null
+  const d = roadPath(pts)
+  const cap = { fill: 'none', strokeLinecap: 'round', strokeLinejoin: 'round' }
+  const last = pts.length - 1
+  return (
+    <svg viewBox="0 0 160 90" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      {/* NO GRID HERE, deliberately. A graticule was the first thing tried and
+          it made the picture worse: an even grid behind a line is the single
+          strongest cue for a chart, so it argued for exactly the reading this
+          is trying to avoid. What sells it as a road instead is the casing and
+          the curve — a map has neither axes nor square paper. */}
+      {/* Casing under colour, the way a road is drawn on a real map: the dark
+          outline is what separates it from the ground it crosses. */}
+      <path d={d} {...cap} stroke={color} strokeWidth="9" opacity=".12" />
+      <path d={d} {...cap} stroke={color} strokeWidth="7" opacity=".14" />
+      <path d={d} {...cap} stroke="rgba(6,4,10,.85)" strokeWidth="4.4" />
+      <path d={d} {...cap} stroke={color} strokeWidth="2" />
+      {pts.map(([x, y], i) => {
+        const end = i === 0 || i === last
+        return end
+          ? <g key={i}>
+              <circle cx={x} cy={y} r="3.6" fill="rgba(6,4,10,.9)" />
+              <circle cx={x} cy={y} r="3.6" fill="none" stroke={color} strokeWidth="1.6" />
+              {i === last && <circle cx={x} cy={y} r="1.5" fill={color} />}
+            </g>
+          : <circle key={i} cx={x} cy={y} r="1.6"
+              fill="rgba(255,255,255,.62)" stroke="rgba(6,4,10,.85)" strokeWidth=".8" />
+      })}
+    </svg>
+  )
+}
+
+/**
+ * The stops as a road rather than a line chart.
+ *
+ * Straight segments between pins read as plotted data however they are
+ * coloured, because sharp vertices are what a data series has and a road does
+ * not. Rounding them off is the difference. Quadratics anchored at each stop
+ * and joined at the midpoints between them: the curve passes exactly through
+ * every midpoint and bends around each stop, so the shape of the route is
+ * preserved while the corners stop being corners.
+ */
+function roadPath(pts) {
+  if (pts.length < 3) return 'M' + pts.map(p => p.join(' ')).join('L')
+  const mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]
+  const at = p => `${p[0].toFixed(2)} ${p[1].toFixed(2)}`
+  let d = `M${at(pts[0])}L${at(mid(pts[0], pts[1]))}`
+  for (let i = 1; i < pts.length - 1; i++) d += `Q${at(pts[i])} ${at(mid(pts[i], pts[i + 1]))}`
+  return `${d}L${at(pts[pts.length - 1])}`
+}
+
+const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun',
+  'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
+
+/**
+ * "20 Sep 2026" → a Date, and anything else → null.
+ *
+ * Written out rather than handed to `new Date(str)`: that parses this shape
+ * only because engines are lenient about it, and a planned ride's date reads
+ * "Planned", which some of them will happily turn into a real date rather
+ * than refusing. Null is the answer that keeps an undated ride out of the
+ * running for "next".
+ */
+function rideDate(s) {
+  const m = /^(\d{1,2})\s+([A-Za-z]{3,})\s+(\d{4})$/.exec(String(s ?? '').trim())
+  if (!m) return null
+  const mo = MONTHS.indexOf(m[2].slice(0, 3).toLowerCase())
+  return mo < 0 ? null : new Date(+m[3], mo, +m[1])
+}
+
+/* The cover's accent. Fixed rather than borrowed from chapter one, because
+   what it has to sit against is the photograph, and the photograph is a
+   sunset. */
+const COVER_ACC = '#e3b04a'
+
 export function GarageV7AllRides() {
   const root = useGarageRoot()
   const rides = useMemo(() => ridesInOrder(), [])
   const tiers = useMemo(() => Object.fromEntries(RIDE_MODES.map(m => [m.key, m])), [])
-  const tally = useMemo(() => RIDE_MODES
-    .map(m => ({ m, n: rides.filter(r => r.mode === m.key).length }))
-    .filter(x => x.n > 0)
-    .map(x => `${x.n} ${x.m.label.toLowerCase()}`)
-    .join(' · '), [rides])
+
+  /* How many of each tier there are, counted off the ride files themselves —
+     add a file and the cover's figures move on their own. Tiers with none are
+     dropped rather than shown as a zero. */
+  const counts = useMemo(() => RIDE_MODES
+    .map(m => ({ ...m, n: rides.filter(r => r.mode === m.key).length }))
+    .filter(x => x.n > 0), [rides])
+
+  /* WHICH RIDE IS NEXT is a question about dates, not about list order: the
+     reel is grouped by tier and then by `order`, so the first upcoming ride in
+     it is simply the one with the lowest `order`. Sorting the dated upcoming
+     rides answers it properly. Falls back to any upcoming ride, then to a
+     planned one, so the card is only ever missing if there is nothing ahead. */
+  const next = useMemo(() => {
+    const dated = rides
+      .filter(r => r.mode === 'upcoming')
+      .map(r => ({ r, t: rideDate(r.date) }))
+      .filter(x => x.t)
+      .sort((a, b) => a.t - b.t)
+    return dated[0]?.r
+      ?? rides.find(r => r.mode === 'upcoming')
+      ?? rides.find(r => r.mode === 'planned')
+      ?? null
+  }, [rides])
 
   const wrapRef = useRef(null)
   /* 0 = cover, 1..n = rides, n + 1 = the closing chapter */
   const [active, setActive] = useState(0)
-
-  /* The cover borrows the first ride's colour but none of its stops — no posts
-     on an opening shot. Its own id keeps the scene's seed distinct, so the
-     ridgeline behind the title isn't a repeat of chapter one's. Built once:
-     a fresh object every render would defeat HorizonView's memo. */
-  const coverRide = useMemo(
-    () => (rides[0] ? { ...rides[0], id: 'cover', stops: [] } : null),
-    [rides])
 
   /* Snapping belongs to the document, and only while this page is on it. */
   useEffect(() => {
@@ -2494,7 +2893,7 @@ export function GarageV7AllRides() {
        also mounts the observer, so the hidden state can only ever exist while
        something is running that will undo it. */
     <div className="hz-wrap hz-js" ref={wrapRef} style={{ background: BG }}>
-      <style>{HORIZON_CSS}</style>
+      <style>{HORIZON_CSS + COVER_CSS}</style>
 
       {/* the tint that follows whichever chapter holds the screen */}
       <div className="hz-wash" style={{ background:
@@ -2516,30 +2915,93 @@ export function GarageV7AllRides() {
         ))}
       </nav>
 
-      <div className="hz-count" aria-hidden="true">
+      {/* Off on the cover, which is a title card and carries its own furniture;
+          it fades in as the reel starts. It stays for the chapters because
+          below 860px the rail is hidden and this is the only thing saying
+          which of the rides you are on. */}
+      <div className={`hz-count${active === 0 ? ' is-off' : ''}`} aria-hidden="true">
         <b>{String(Math.min(Math.max(active, 1), rides.length)).padStart(2, '0')}</b>
         <span> / {String(rides.length).padStart(2, '0')}</span>
       </div>
 
       {/* ── cover ── */}
-      <section className="hz-ch hz-cover is-live" data-i="0" style={{ '--c': rides[0]?.color || '#8b5cf6' }}>
-        {/* no bike on the opening shot — the cover is a title card, and a rider
-            parked under the headline reads as a chapter that lost its name */}
-        {coverRide && <div className="hz-view"><HorizonView ride={coverRide} index={99} rider={false} /></div>}
-        <div className="hz-haze" />
-        <div className="hz-body">
-          <div className="hz-kick">
-            <Link to={root.garage}>{root.label}</Link> <span aria-hidden="true">›</span> All Rides
+      {/* A photograph, not a drawn scene: the chapters below are the reel, and
+          the cover is the card in front of it. No rider either — one parked
+          under the headline reads as a chapter that lost its name. */}
+      <section className="hz-ch hz-cover is-live" data-i="0" style={{ '--c': COVER_ACC }}>
+        <div className="hz-shot">
+          <img src={`${import.meta.env.BASE_URL}riding_background.webp`} alt="" />
+        </div>
+
+        <div className="hz-cv">
+          <div>
+            <div className="hz-eye">Rides &amp; Journeys<i /></div>
+            <h1 className="hz-h1">
+              <span className="w"><i>The road</i></span>
+              <span className="w"><i>becomes</i></span>
+              <span className="w"><i>the story.</i></span>
+            </h1>
+            <p className="hz-sub">Every ride leaves something behind.</p>
+
+            <div className="hz-tally">
+              {counts.map(c => (
+                <div key={c.key}>
+                  <Ico d={MODE_ICON[c.key] ?? MODE_ICON.planned} />
+                  <div>
+                    <b>{String(c.n).padStart(2, '0')}</b>
+                    <span>{c.label}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-          <h1 className="hz-h1">
-            <span className="w"><i>Rides &amp;</i></span>
-            <span className="w"><i style={{ animationDelay: '.13s' }}>Journeys</i></span>
-          </h1>
-          <p className="hz-lede">
-            Every road has a story{tally ? `. ${tally[0].toUpperCase()}${tally.slice(1)}` : ''}.
-            One screen each, from the saddle.
-          </p>
-          <div className="hz-cue"><i />Scroll to ride</div>
+
+          <div className="hz-rt">
+            <p className="hz-script">Good Roads<br />Better Days<i /></p>
+
+            {next && (
+              <article className="hz-next">
+                <div className="nk">Next Ride</div>
+                <div className="nh">
+                  <Ico d={ICON.pin} />
+                  <div>
+                    <b>{next.destCity || next.destPlace || next.name}</b>
+                    <span>{next.states?.[0] || next.destPlace || next.name}</span>
+                  </div>
+                </div>
+
+                <div className="nw">
+                  {next.photos?.[0]
+                    ? <img src={next.photos[0]} alt="" />
+                    : <RouteThumb stops={next.stops} color={next.color} />}
+                </div>
+
+                <div className="hz-nfig">
+                  <div>
+                    <Ico d={ICON.road} />
+                    <b>{next.distance || '—'}</b><span>Distance</span>
+                  </div>
+                  <div>
+                    <Ico d={ICON.cal} />
+                    <b>{next.date || '—'}</b><span>Date</span>
+                  </div>
+                  <div>
+                    <Ico d={ICON.flag} />
+                    <b>{next.organizer}</b><span>Organizer</span>
+                  </div>
+                </div>
+
+                <Link className="hz-ngo" to={`${root.rides}/${next.id}`}>
+                  Explore Ride <span aria-hidden="true">→</span>
+                </Link>
+              </article>
+            )}
+          </div>
+        </div>
+
+        <div className="hz-begin"><i /><u />Scroll to begin</div>
+        <div className="hz-motto">
+          <u /><span>Same roads<br />A different you</span>
         </div>
       </section>
 
@@ -2769,11 +3231,11 @@ export default function GarageV7RideDetail() {
           )}
 
           {/* STATS TABLE */}
-          {ride.stats && (
+          {statRows(ride).length > 0 && (
             <motion.div {...up(0.2)} style={{ background: BG2, border: `1px solid ${BD}`, borderRadius: 16, overflow: 'hidden' }}>
               <div style={{ padding: '16px 22px', borderBottom: `1px solid ${BD}`, fontSize: '0.6rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--accent)', fontWeight: 700 }}>Ride Stats</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(160px,1fr))', gap: 1, background: BD }}>
-                {Object.entries(ride.stats).map(([k, v]) => (
+                {statRows(ride).map(([k, v]) => (
                   <div key={k} style={{ padding: '16px 20px', background: BG2 }}>
                     <div style={{ fontSize: '0.6rem', letterSpacing: '0.14em', textTransform: 'uppercase', color: D3, marginBottom: 5 }}>{k.replace(/([A-Z])/g, ' $1').trim()}</div>
                     <div style={{ fontSize: '1.05rem', fontWeight: 800, color: OFF }}>{v}</div>

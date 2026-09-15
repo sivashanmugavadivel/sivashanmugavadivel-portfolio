@@ -48,8 +48,9 @@
     "distance — 154 KM is the ROUTER's answer for the stops below, not an",
     "        odometer reading. Replace it with the real figure after the 20th;",
     "        only then does it count, since 'completed' rides feed the totals.",
-    "time / rating / stats / photos — after the ride. Move `mode` to 'completed'",
-    "        then, and the totals pick it up."
+    "time / rating / photos — after the ride. Move `mode` to 'completed' then,",
+    "        and the totals pick it up. `stats` currently holds the entry fee;",
+    "        swap it for the real ride figures at the same time."
   ],
 
   "order": 20,
@@ -78,6 +79,14 @@
   "description": "Royal Enfield's global One Ride, ridden west to the Anaikatti hills — Dharapuram, Palladam, Coimbatore, then up to Tuskers Hill.",
   "story": "One Ride is Royal Enfield's annual worldwide ride, and 2026 is the 15th edition of it: Sunday 20 September, riders in every country out on the same day under one line — Every Rider. Every Road. Everywhere. There is no set course, which is the point of it — you pick the road, and this year the road runs west. Out of Kariya Kattu Valasu to Dharapuram, across to Palladam, into Coimbatore, and then the climb out of the city to Poppys Tuskers Hill Resort at Anaikatti, where the Western Ghats start and the Tamil Nadu plain stops. Registration is open, and the first thousand riders to sign up get the One Ride tee. It falls in the year Royal Enfield turns 125, the oldest motorcycle brand still in continuous production since 1901 — so the Bear's first One Ride lands on a good one.",
   "highlights": ["One Ride 2026", "15th Global Edition", "Every Rider. Every Road. Everywhere.", "Anaikatti Hills", "125 Years of Royal Enfield"],
+
+  "_compliments": "What the ₹499 admits you to, in the order it was given. The fee itself lives in `stats.registration` rather than here — this list is what you GET, that is what it costs, and the ticket prints them in different places. The two catering lines deliberately stay separate: they are a morning and an evening, and the ticket merges them into one window on its own because both draw the same scene.",
+  "compliments": [
+    { "icon": "☕", "text": "Breakfast, tea / coffee" },
+    { "icon": "🎯", "text": "Activities" },
+    { "icon": "🍽️", "text": "Tea / coffee and snacks" },
+    { "icon": "🎁", "text": "Welcome kit" }
+  ],
   "via": ["Dharapuram", "Palladam", "Coimbatore"],
 
   "mapCenter": [10.93, 77.18],
@@ -85,7 +94,10 @@
 
   "videoId": null,
   "photos": [],
-  "stats": null,
+  "_stats": "The EVENT's logistics until the ride happens — `registration` is the one the compliments ticket reads, and it prints as typed. Replace the block with actual ride stats (topSpeed, avgSpeed, fuel…) after the 20th.",
+  "stats": {
+    "registration": "₹499"
+  },
 
   "_stops": "Dharapuram is `dharapuram-town` and NOT `dharapuram`: that id already belongs to the Senthur Motors showroom in r1 and r6, and `mapCities` dedups by id, so reusing it would collapse the town into the showroom pin. Same convention as `kangayam-town` in r5 and r6.",
   "stops": [

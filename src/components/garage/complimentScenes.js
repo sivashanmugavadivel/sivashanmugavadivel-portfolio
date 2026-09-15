@@ -69,9 +69,15 @@ const RULES = [
   [/mechanic|spare|backup|van|breakdown|tool|service support/i, 'spanner'],
   [/medical|medic|first.?aid|ambulance|doctor|safety/i, 'aid'],
   [/fuel|petrol|refuel|tank/i, 'fuel'],
-  [/lucky|draw|prize|win|trophy|champion/i, 'trophy'],
+  /* `activit`, `game` and the rest ride along with the prizes: an organised
+     ride's "activities" are contests at the halt, and a trophy is the nearest
+     true thing in the set. Without them the perk falls through to a bare tick,
+     which reads as a line nobody finished drawing. */
+  [/lucky|draw|prize|win|trophy|champion|activit|game|contest/i, 'trophy'],
   [/badge|sticker|patch|tee|t.?shirt|jersey|merch/i, 'badge'],
-  [/gift|surprise|goodie|hamper|souvenir/i, 'gift'],
+  /* A bare `kit` is safe this far down: the kits that are NOT goodie bags are
+     claimed above it — "first aid kit" by `aid`, "tool kit" by `spanner`. */
+  [/gift|surprise|goodie|hamper|souvenir|kit/i, 'gift'],
   [/bike|motorcycle|brand|rider|ride/i, 'bike'],
   [/photo|photograph|picture|shoot|camera/i, 'camera'],
   [/water|bottle|hydrat/i, 'bottle'],
