@@ -1614,9 +1614,9 @@ html.hz-snap { scroll-snap-type: y proximity; }
    running down it so the navbar has a top to sit on and the bottom edge
    dissolves into the page's own ground instead of ending on a seam.
 
-   The right column is the only part that is DATA. The tally counts the ride
-   files by tier, and the card resolves to whichever upcoming ride carries the
-   soonest date — both derived, so neither can disagree with the reel below.
+   The right column is the only part that is DATA: the card resolves to
+   whichever upcoming ride carries the soonest date, derived rather than
+   authored, so it cannot disagree with the reel below it.
    ══════════════════════════════════════════════════════════════════════════ */
 const COVER_CSS = `
 .hz-cover { display: block; padding-top: 0; overflow: clip; }
@@ -1664,21 +1664,6 @@ const COVER_CSS = `
 .hz-sub::before { content: ''; position: absolute; left: 0; top: .16em; bottom: .16em;
   width: 2px; border-radius: 2px;
   background: linear-gradient(var(--c), transparent); }
-
-/* ── left: how much of it there is ─────────────────────────────────────── */
-.hz-tally { display: flex; flex-wrap: wrap; width: fit-content; max-width: 100%;
-  border: 1px solid ${BD2}; border-radius: 15px; overflow: hidden;
-  background: rgba(11,9,17,.46); backdrop-filter: blur(16px) saturate(1.15);
-  -webkit-backdrop-filter: blur(16px) saturate(1.15); }
-.hz-tally > div { display: flex; align-items: center; gap: 14px; min-width: 0;
-  padding: 15px clamp(16px,2.3vw,30px); border-right: 1px solid ${BD}; }
-.hz-tally > div:last-child { border-right: 0; }
-.hz-tally svg { width: 21px; height: 21px; flex-shrink: 0; color: var(--c); }
-.hz-tally b { display: block; font-family: 'Playfair Display', serif; font-weight: 700;
-  font-size: clamp(1.25rem,2.3vw,1.7rem); line-height: 1; color: ${OFF};
-  font-variant-numeric: tabular-nums; }
-.hz-tally span { display: block; margin-top: 6px; font-size: .54rem; font-weight: 600;
-  letter-spacing: .2em; text-transform: uppercase; color: ${D2}; white-space: nowrap; }
 
 /* ── right: the handwriting, then the next ride ────────────────────────── */
 .hz-rt { display: flex; flex-direction: column; align-items: stretch;
@@ -1849,7 +1834,6 @@ const COVER_CSS = `
   animation: hz-cv-in .7s ${EASE} both; }
 .hz-cv .hz-h1 { animation-delay: .06s }
 .hz-cv .hz-sub { animation-delay: .12s }
-.hz-cv .hz-tally { animation-delay: .18s }
 .hz-rt .hz-script { animation-delay: .2s }
 .hz-rt .hz-next { animation-delay: .26s }
 .hz-begin, .hz-motto { animation-delay: .34s }
@@ -1889,30 +1873,27 @@ const COVER_CSS = `
   .hz-motto { justify-content: flex-start; text-align: left; }
 }
 /* ── phone ─────────────────────────────────────────────────────────────────
-   A headline, a tally, a tagline AND a full ride card do not fit a phone
-   screen, and the cover is a title card — it is the one screen that should
-   not need scrolling to understand. So two things go rather than everything
-   shrinking until it all looks cramped:
-
-   THE ROUTE WINDOW, which is the single tallest block in the card and the
-   most decorative thing on the page — the card still says where, when, how
-   far and who without it.
-   THE HANDWRITING, which is the only element carrying no information at all;
-   the motto at the foot keeps a tagline on screen.
-
-   Both come back at 561px. Together they are worth about 240px, which is the
-   difference between a cover you scroll and one you don't. */
+   A headline, a tagline AND a full ride card do not fit a phone screen, and
+   the cover is a title card — it is the one screen that should not need
+   scrolling to understand. So THE HANDWRITING goes rather than everything
+   shrinking until it all looks cramped: it is the only element carrying no
+   information at all, and the motto at the foot keeps a tagline on screen.
+   It comes back at 561px. */
 @media (max-width: 560px) {
   .hz-cover .hz-h1 { font-size: clamp(2rem,8.2vw,2.8rem); }
-  /* Keep a bottom margin. The row-gap above only separates the GRID items, and
-     the subtitle and the tally are siblings inside one of them — zero here and
-     the tally butts straight into the descenders. */
-  .hz-sub { margin: 12px 0 16px; font-size: .98rem; }
+  .hz-sub { margin: 12px 0 0; font-size: .98rem; }
   .hz-cv { row-gap: clamp(18px,2.6vh,28px); }
-  .hz-tally > div { padding: 11px 13px; gap: 10px; }
-  .hz-tally svg { width: 18px; height: 18px; }
   .hz-script { display: none; }
-  .hz-next { padding: 11px; }
+  /* THE SIGN AT 80%, scaled as one thing rather than re-specified.
+     It carries about thirty sizes across a dozen parts — plate, distance,
+     arrows, countdown, footer — and writing each one again at 0.8 here would
+     be thirty numbers to keep in step with the desktop card every time it is
+     touched. Zoom shrinks the used layout box as well as the paint, which is
+     what separates it from a scale transform: that would leave a full-size
+     hole behind and the board floating inside it.
+     Everything below is the phone's own tightening, applied first and scaled
+     with the rest. */
+  .hz-next { zoom: .8; padding: 11px; }
   .hz-next .sg { padding: 8px 6px; }
   /* The sign has no route window to drop any more — it was the tallest block
      in the old card and the reason this breakpoint existed. What is left is
@@ -2703,14 +2684,6 @@ const ICON = {
   flag: ['M5 21V4', 'M5 5h13l-2.4 4L18 13H5z'],
   cal: CAL,
 }
-/* One per tier, keyed by mode. A tier without an entry still draws — the
-   fallback is the planned map, which is the honest shape for "not yet". */
-const MODE_ICON = {
-  completed: ['M20 6 9 17l-5-5'],
-  upcoming: CAL,
-  planned: ['M9 4 3 6v15l6-2 6 2 6-2V4l-6 2-6-2z', 'M9 4v15M15 6v15'],
-  cancelled: ['M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z', 'M5.6 5.6l12.8 12.8'],
-}
 
 const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun',
   'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
@@ -2801,13 +2774,6 @@ export function GarageV7AllRides() {
   const root = useGarageRoot()
   const rides = useMemo(() => ridesInOrder(), [])
   const tiers = useMemo(() => Object.fromEntries(RIDE_MODES.map(m => [m.key, m])), [])
-
-  /* How many of each tier there are, counted off the ride files themselves —
-     add a file and the cover's figures move on their own. Tiers with none are
-     dropped rather than shown as a zero. */
-  const counts = useMemo(() => RIDE_MODES
-    .map(m => ({ ...m, n: rides.filter(r => r.mode === m.key).length }))
-    .filter(x => x.n > 0), [rides])
 
   /* WHICH RIDE IS NEXT is a question about dates, not about list order: the
      reel is grouped by tier and then by `order`, so the first upcoming ride in
@@ -3046,18 +3012,6 @@ export function GarageV7AllRides() {
               <span className="w"><i>the story.</i></span>
             </h1>
             <p className="hz-sub">Every ride leaves something behind.</p>
-
-            <div className="hz-tally">
-              {counts.map(c => (
-                <div key={c.key}>
-                  <Ico d={MODE_ICON[c.key] ?? MODE_ICON.planned} />
-                  <div>
-                    <b>{String(c.n).padStart(2, '0')}</b>
-                    <span>{c.label}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
 
           <div className="hz-rt">
