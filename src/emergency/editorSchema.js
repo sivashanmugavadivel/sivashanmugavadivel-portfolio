@@ -1,6 +1,7 @@
 // Describes the owner's edit form. Add a field here and it appears in the editor.
 // Field types: text (default), tel, date, url, number, textarea, select, bool, strings, group, list.
 
+import { blankHealthPolicy, HEALTH_POLICY_TYPES } from './healthInsurance';
 import { blankCover } from './vehicles';
 
 export const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Unknown'];
@@ -98,12 +99,18 @@ export const EDITOR_TABS = [
       {
         key: 'insurance',
         label: 'Health insurance',
-        type: 'group',
+        type: 'list',
+        itemName: 'policy',
+        hint: 'Add each one, for example a corporate policy through your employer and a personal one. For cashless treatment, hospitals ask for the policy number and the member ID on the health card.',
         fields: [
-          { key: 'provider', label: 'Provider' },
+          { key: 'provider', label: 'Insurer or plan' },
+          { key: 'type', label: 'Type', type: 'select', options: HEALTH_POLICY_TYPES },
           { key: 'policyNumber', label: 'Policy number' },
+          { key: 'memberId', label: 'Member ID (on the health card)' },
+          { key: 'validUntil', label: 'Valid until', type: 'date' },
           { key: 'phone', label: 'Helpline', type: 'tel' },
         ],
+        blank: blankHealthPolicy(),
       },
       { key: 'notes', label: 'Notes for responders', type: 'textarea' },
     ],

@@ -44,11 +44,25 @@ export const sampleData = {
       hospital: 'City General Hospital, Chennai',
       phone: '+91 00000 00011',
     },
-    insurance: {
-      provider: 'Sample Health Insurance',
-      policyNumber: 'TEST-POL-000123',
-      phone: '+91 00000 00012',
-    },
+    // A corporate policy through the employer, and a personal one.
+    insurance: [
+      {
+        provider: 'Sample Group Health (Example Technologies)',
+        type: 'Corporate',
+        policyNumber: 'TEST-GRP-4410',
+        memberId: 'TEST-EMP-00123',
+        validUntil: '2027-03-31',
+        phone: '+91 00000 00012',
+      },
+      {
+        provider: 'Sample Health Insurance',
+        type: 'Personal',
+        policyNumber: 'TEST-POL-000123',
+        memberId: '',
+        validUntil: '2027-06-30',
+        phone: '+91 00000 00013',
+      },
+    ],
     notes: 'Glucose tablets in the left jacket pocket. Inhaler in the front pocket of the bag.',
   },
 
@@ -137,7 +151,7 @@ export const blankProfile = {
     weight: '',
     devices: '',
     doctor: { name: '', hospital: '', phone: '' },
-    insurance: { provider: '', policyNumber: '', phone: '' },
+    insurance: [],
     notes: '',
   },
   contacts: [],

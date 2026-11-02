@@ -616,6 +616,12 @@
   background: var(--em-surface);
 }
 .em-card .em-btn { justify-self: start; margin-top: 10px; min-height: 42px; }
+/* Health insurance: a card per policy, say a corporate one and a personal one. Policy and member
+   numbers can be long with nowhere to break. */
+.em-cards { display: grid; gap: 10px; }
+.em-policy { overflow-wrap: anywhere; }
+.em-policy__head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
+.em-policy__expired { color: var(--em-red-text); font-weight: 700; }
 .em-note {
   max-width: 62ch;
   padding: 12px 16px;

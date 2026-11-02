@@ -1,10 +1,16 @@
 import { Phone, Stethoscope } from 'lucide-react';
 import Section, { Block } from './Section';
-import { severityTone, telHref } from '../utils';
+import { healthPolicies } from '../healthInsurance';
+import { formatDay, isPastDay, severityTone, telHref } from '../utils';
 
 /** Section 3 */
 export default function MedicalInfo({ medical = {}, profile = {} }) {
-  const { allergies = [], conditions = [], medications = [], doctor = {}, insurance = {} } = medical;
+  const { allergies = [], conditions = [], medications = [], doctor = {} } = medical;
+  const policies = healthPolicies(medical);
+  // What a screen reader's links list says for each Call helpline: the policy, by insurer and type,
+  // and its place when two policies would still sound the same.
+  const callNames = policies.map((p) => ['health insurance', p.provider, p.type].filter(Boolean).join(', '));
+  const callName = (i) => (callNames.filter((n) => n === callNames[i]).length > 1 ? `${callNames[i]}, policy ${i + 1}` : callNames[i]);
 
   return (
     <Section id="em-medical" title="Medical info" icon={Stethoscope}>
@@ -79,7 +85,7 @@ export default function MedicalInfo({ medical = {}, profile = {} }) {
         </Block>
       )}
 
-      {(doctor.name || insurance.provider) && (
+      {(doctor.name || policies.length > 0) && (
         <div className="em-split">
           {doctor.name && (
             <Block title="Doctor">
@@ -94,16 +100,35 @@ export default function MedicalInfo({ medical = {}, profile = {} }) {
               </div>
             </Block>
           )}
-          {insurance.provider && (
+          {policies.length > 0 && (
             <Block title="Health insurance">
-              <div className="em-card">
-                <strong>{insurance.provider}</strong>
-                {insurance.policyNumber && <span className="em-sub">Policy {insurance.policyNumber}</span>}
-                {insurance.phone && (
-                  <a className="em-btn" href={telHref(insurance.phone)}>
-                    <Phone aria-hidden="true" /> Call insurer
-                  </a>
-                )}
+              <div className="em-cards">
+                {policies.map((p, i) => (
+                  <div key={i} className="em-card em-policy">
+                    <div className="em-policy__head">
+                      <strong>{p.provider || 'Health insurance'}</strong>
+                      {p.type && <span className="em-pill">{p.type}</span>}
+                    </div>
+                    {(p.policyNumber || p.memberId || p.validUntil) && (
+                      <span className="em-sub em-sub--split">
+                        {p.policyNumber && <span>Policy {p.policyNumber}</span>}
+                        {p.memberId && <span>Member ID {p.memberId}</span>}
+                        {p.validUntil &&
+                          (isPastDay(p.validUntil) ? (
+                            <span className="em-policy__expired">Expired {formatDay(p.validUntil)}</span>
+                          ) : (
+                            <span>Valid until {formatDay(p.validUntil)}</span>
+                          ))}
+                      </span>
+                    )}
+                    {p.phone && (
+                      <a className="em-btn" href={telHref(p.phone)}>
+                        <Phone aria-hidden="true" /> Call helpline
+                        <span className="em-sr-only"> ({callName(i)})</span>
+                      </a>
+                    )}
+                  </div>
+                ))}
               </div>
             </Block>
           )}

@@ -29,6 +29,7 @@ import {
   PIN_LENGTH,
 } from './config';
 import { blankProfile } from './sampleData';
+import { profileWithHealthPolicies } from './healthInsurance';
 import { profileWithCovers } from './vehicles';
 
 // import.meta.env.DEV is a build-time false in production, so the demo store and its sample
@@ -403,7 +404,10 @@ export function loadMember(uid) {
   );
 }
 
-/** The page, or null if it was never saved. Vehicles come in the two-cover shape (vehicles.js). */
+/**
+ * The page, or null if it was never saved. Vehicles come in the two-cover shape (vehicles.js), and
+ * health insurance as a list of policies (healthInsurance.js), as the editor edits them.
+ */
 export async function loadProfile(uid) {
   const profile = await run(
     'Couldn’t load the profile.',
@@ -413,7 +417,7 @@ export async function loadProfile(uid) {
       return snap.exists() ? toPlain(snap.data()) : null;
     },
   );
-  return profileWithCovers(profile);
+  return profileWithHealthPolicies(profileWithCovers(profile));
 }
 
 /** Saves the whole profile and returns it as saved (updatedAt = now). */

@@ -163,7 +163,7 @@ const BLANK_PROFILE = {
     weight: '',
     devices: '',
     doctor: { name: '', hospital: '', phone: '' },
-    insurance: { provider: '', policyNumber: '', phone: '' },
+    insurance: [], // health insurance policies: { provider, type, policyNumber, memberId, validUntil, phone }
     notes: '',
   },
   contacts: [],

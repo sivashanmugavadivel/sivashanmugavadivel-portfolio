@@ -161,6 +161,7 @@ test('adminCreateMember creates the account, page, link and PIN, and shows the s
   assert.deepEqual(profile.get('services').map((s) => s.number), SERVICE_NUMBERS);
   assert.deepEqual(profile.get('contacts'), []);
   assert.deepEqual(profile.get('medical.allergies'), []);
+  assert.deepEqual(profile.get('medical.insurance'), []);
 
   await expectLog(admin, created.uid, 'created');
   // The member reads this entry too, so it says nothing about the admin's own address or browser.
