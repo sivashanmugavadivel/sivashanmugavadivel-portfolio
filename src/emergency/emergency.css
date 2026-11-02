@@ -28,7 +28,7 @@
   --em-r: 12px;
   --em-r-sm: 8px;
   --em-gutter: clamp(16px, 4vw, 28px);
-  --em-top-h: 104px;
+  --em-top-h: 120px; /* the top bar once the page has scrolled (114px on a phone), for scroll-margin */
 
   color-scheme: light;
   min-height: 100vh;
@@ -274,29 +274,263 @@
 .em-gate__notice { font-size: 14px; color: var(--em-red-text); max-width: 34ch; }
 
 /* ---------- Top bar ---------- */
+/* The first name on split-flap tiles beside a heartbeat trace, under a beating heart, with the name
+   drifting in outline behind. It slims down, and the name behind fades, once the page scrolls. */
 .em-top {
+  --em-flap: #1b2a38;
+  --em-outline: rgba(20, 32, 43, 0.15);
+  --em-ecg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 24' width='160' height='24'%3E%3Cpath d='M0 14H50q6-6 12 0H70l3 3 5-15 5 20 4-8H104q10-9 20 0H160' fill='none' stroke='%23000' stroke-width='2.2' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E");
   position: sticky;
   top: 0;
   z-index: 20;
   padding-top: env(safe-area-inset-top, 0px);
-  background: var(--em-bg);
-  background: color-mix(in srgb, var(--em-bg) 90%, transparent);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  background: var(--em-surface);
   border-bottom: 1px solid var(--em-line);
+  font-size: 16px;
+  line-height: 1.5;
+  transition: box-shadow 0.3s;
 }
+@media (prefers-color-scheme: dark) {
+  .em-top { --em-flap: #05090d; --em-outline: rgba(232, 238, 243, 0.13); }
+}
+.em-top.is-scrolled { box-shadow: 0 12px 24px -16px rgba(0, 0, 0, 0.45); }
+/* The background clips itself, not the bar: the owner's menu opens below the bar. */
+.em-top__band { position: relative; }
+.em-top__bg {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: calc(1 - var(--em-top-s, 0) * 0.85);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+}
+.em-top__rise { display: flex; flex: none; }
+.em-top__track { display: flex; flex: none; animation: em-top-drift 30s linear infinite; }
+.em-top__seg {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  padding-right: 30px;
+  white-space: nowrap;
+  font-family: var(--em-display);
+  font-size: 124px;
+  font-weight: 700;
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--em-outline);
+}
+.em-top__x { position: relative; flex: none; width: 20px; height: 20px; transform: scale(1.6); opacity: 0.55; }
+.em-top__x::before,
+.em-top__x::after { content: ''; position: absolute; background: var(--em-outline); border-radius: 2px; }
+.em-top__x::before { left: 7px; top: 0; width: 6px; height: 20px; }
+.em-top__x::after { top: 7px; left: 0; width: 20px; height: 6px; }
+@keyframes em-top-drift { to { transform: translateX(-50%); } }
+
 .em-top__row {
+  position: relative;
   max-width: 1440px;
   margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding: 8px var(--em-gutter) 4px;
+  gap: 12px;
+  padding: 14px var(--em-gutter);
+  transition: padding 0.3s;
 }
-.em-top__title { display: flex; align-items: center; gap: 10px; min-width: 0; font-weight: 700; }
-.em-top__text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.em-top__actions { display: flex; flex: none; }
+.em-top__title { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.em-top__title > picture { display: contents; }
+/* The heart beats in time with the trace. */
+.em-top__icon {
+  display: block;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  transform-origin: 50% 55%;
+  filter: drop-shadow(0 4px 10px rgba(200, 16, 46, 0.28));
+  animation: em-top-beat 1s ease-in-out infinite;
+  transition: width 0.3s, height 0.3s;
+}
+@keyframes em-top-beat {
+  0%, 55%, 100% { transform: scale(1); }
+  10% { transform: scale(1.12); }
+  20% { transform: scale(0.96); }
+  30% { transform: scale(1.06); }
+}
+.em-top__stack { min-width: 0; }
+.em-top__text {
+  margin-bottom: 3px;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--em-ink-2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.em-top__line { display: flex; align-items: center; gap: 14px; min-width: 0; }
+
+/* Split-flap tiles: a darker top half and a hinge line across the middle. */
+.em-top__board { display: flex; gap: 3px; min-width: 0; overflow: hidden; }
+/* A name too long for the bar fades out at the edge, so it reads as cut, not as a shorter name. */
+.em-top__board.is-cut {
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 26px), transparent);
+  mask-image: linear-gradient(90deg, #000 calc(100% - 26px), transparent);
+}
+.em-top__tile {
+  position: relative;
+  flex: 0 1 auto;
+  display: grid;
+  place-items: center;
+  width: 29px;
+  min-width: 15px;
+  height: 40px;
+  overflow: hidden;
+  border-radius: 5px;
+  background: var(--em-flap);
+  color: #f5f7f9;
+  font-family: var(--em-display);
+  font-size: 27px;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: height 0.3s, font-size 0.3s;
+}
+.em-top__tile::before { content: ''; position: absolute; inset: 0 0 50% 0; background: rgba(255, 255, 255, 0.06); pointer-events: none; }
+.em-top__tile::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  margin-top: -0.5px;
+  background: rgba(0, 0, 0, 0.6);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.07);
+  pointer-events: none;
+}
+.em-top__tile--gap { width: 12px; min-width: 8px; background: transparent; box-shadow: none; }
+.em-top__tile--gap::before,
+.em-top__tile--gap::after { display: none; }
+.em-top__tile.is-tick .em-top__ch { animation: em-top-tick 0.07s ease-out; }
+@keyframes em-top-tick { from { transform: translateY(-38%) scaleY(0.5); opacity: 0.35; } }
+.em-top__tile.is-land { animation: em-top-land 0.35s ease-out; }
+@keyframes em-top-land { 40% { transform: translateY(2px); } }
+
+/* The heartbeat trace beside the name. */
+/* It gives way before the name does: it shrinks first, all the way. */
+.em-top__trace {
+  flex: 0 100 auto;
+  width: 130px;
+  min-width: 0;
+  height: 26px;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent);
+}
+.em-top__ecg {
+  display: block;
+  height: 100%;
+  background: var(--em-red);
+  -webkit-mask: var(--em-ecg) repeat-x 0 50% / 110px 26px;
+  mask: var(--em-ecg) repeat-x 0 50% / 110px 26px;
+  animation: em-top-run 1s linear infinite;
+}
+@keyframes em-top-run { to { -webkit-mask-position: -110px 50%; mask-position: -110px 50%; } }
+
+/* Lock, Back, Edit, Menu: pills that lean toward a mouse pointer. */
+.em-top__actions { display: flex; flex: none; gap: 8px; }
+.em-top__act {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin: 0;
+  padding: 0 18px 0 14px;
+  border: 1px solid var(--em-line);
+  border-radius: 999px;
+  background: var(--em-surface-2);
+  color: var(--em-ink);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: translate 0.7s cubic-bezier(0.3, 1.7, 0.4, 1), background-color 0.25s, color 0.25s, border-color 0.25s, transform 0.12s;
+}
+.em-top__act svg { flex: none; width: 18px; height: 18px; transition: transform 0.3s cubic-bezier(0.3, 0.7, 0.3, 1.5); }
+.em-top__act--back:hover svg { transform: translateX(-4px); }
+.em-top__act:active { transform: scale(0.95); }
+.em-top__act[data-pulled] {
+  background: var(--em-ink);
+  color: var(--em-surface);
+  border-color: var(--em-ink);
+  transition: translate 0.15s ease-out, background-color 0.25s, color 0.25s, border-color 0.25s, transform 0.12s;
+}
+
+/* After the page scrolls */
+.em-top.is-scrolled .em-top__row { padding-block: 8px; }
+.em-top.is-scrolled .em-top__tile { height: 34px; font-size: 23px; }
+.em-top.is-scrolled .em-top__icon { width: 40px; height: 40px; }
+
+/* The entrance, once */
+@keyframes em-top-fade-up { from { opacity: 0; transform: translateY(8px); } }
+@keyframes em-top-rise { from { opacity: 0; transform: translateY(35%); } }
+@keyframes em-top-pop { from { opacity: 0; transform: scale(0.3) rotate(-14deg); } }
+@keyframes em-top-draw { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+.em-top.is-entered .em-top__rise { animation: em-top-rise 1s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+.em-top.is-entered .em-top__title { animation: em-top-fade-up 0.5s 0.1s backwards; }
+.em-top.is-entered .em-top__icon { animation: em-top-pop 0.7s 0.1s cubic-bezier(0.34, 1.56, 0.64, 1) backwards, em-top-beat 1s 0.8s ease-in-out infinite; }
+.em-top.is-entered .em-top__trace { animation: em-top-draw 1.3s 0.5s cubic-bezier(0.6, 0, 0.2, 1) backwards; }
+.em-top.is-entered .em-top__act { animation: em-top-fade-up 0.5s 0.25s backwards; }
+
+/* Phone width. The bar always spans the screen, so the screen's width is the bar's: media queries
+   rather than container queries, which iOS 15 and older don't have. */
+@media (max-width: 540px) {
+  .em-top__title { gap: 10px; }
+  .em-top__line { gap: 10px; }
+  .em-top__icon { width: 42px; height: 42px; }
+  .em-top.is-scrolled .em-top__icon { width: 36px; height: 36px; }
+  .em-top__tile { width: 23px; height: 32px; font-size: 21px; }
+  .em-top.is-scrolled .em-top__tile { height: 28px; font-size: 19px; }
+  .em-top__trace { width: 64px; height: 22px; }
+  .em-top__seg { font-size: 100px; }
+  /* The owner's Edit and Menu side by side leave the name too little room: icons only, still named. */
+  .em-top__actions--two .em-top__act { padding: 0 13px; }
+  .em-top__actions--two .em-top__act-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+/* The smallest phones need every pixel for the name. */
+@media (max-width: 360px) {
+  .em-top__trace { display: none; }
+}
+/* Windows Contrast themes paint the outlined name solid, as giant moving text, and the trace not at all. */
+@media (forced-colors: active) {
+  .em-top__bg,
+  .em-top__trace { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .em-top *,
+  .em-top *::before,
+  .em-top *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0s !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 .em-cross { position: relative; flex: none; width: 20px; height: 20px; }
 .em-cross::before,
 .em-cross::after { content: ''; position: absolute; background: var(--em-red); border-radius: 2px; }
@@ -1050,6 +1284,11 @@
 @media (orientation: landscape) and (max-height: 500px) {
   .em-root { --em-top-h: 0px; }
   .em-top { position: static; }
+  /* It scrolls away, so slimming it would only shift the content under the finger. */
+  .em-top.is-scrolled { box-shadow: none; }
+  .em-top.is-scrolled .em-top__row { padding-block: 14px; }
+  .em-top.is-scrolled .em-top__tile { height: 40px; font-size: 27px; }
+  .em-top.is-scrolled .em-top__icon { width: 48px; height: 48px; }
   .em-callbar { padding-block: 6px calc(6px + env(safe-area-inset-bottom, 0px)); }
   .em-callbar__btn { min-height: 44px; }
 }
