@@ -7,17 +7,6 @@ import icon144Webp from '../assets/emergency-icon-144.webp';
 import { usePrefersReducedMotion } from '../hooks';
 import { firstName } from '../utils';
 
-const NAV = [
-  { id: 'em-profile', label: 'Profile' },
-  { id: 'em-actions', label: 'Get help' },
-  { id: 'em-medical', label: 'Medical' },
-  { id: 'em-contacts', label: 'Contacts' },
-  { id: 'em-nearby', label: 'Nearby' },
-  { id: 'em-firstaid', label: 'First aid' },
-  { id: 'em-vehicle', label: 'Vehicle' },
-  { id: 'em-about', label: 'About' },
-];
-
 // What a split-flap tile flips through before it lands on its letter.
 const FLAP_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 const randomChar = () => FLAP_CHARS[Math.floor(Math.random() * FLAP_CHARS.length)];
@@ -48,20 +37,9 @@ export default function TopBar({ name, role, title, onLock, onBack, onEdit, onSi
   const board = useRef(null);
   const track = useRef(null);
   const [scrolled, setScrolled] = useState(false);
-  const [entered, setEntered] = useState(false);
   const shownName = firstName(name || '');
-  // Scroll in-page without touching the URL, so it works with any router. An explicit
-  // 'smooth' overrides the CSS reduced-motion rule, so honour the preference here.
-  const jump = (id) =>
-    document.getElementById(id)?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
   const menu = onSignOut ? [...actions, { label: 'Sign out', icon: LogOut, onClick: onSignOut }] : actions;
   const twoActions = role === 'owner' && Boolean(onEdit) && menu.length > 0;
-
-  // The entrance plays once, from the first frame.
-  useEffect(() => {
-    const frame = requestAnimationFrame(() => setEntered(true));
-    return () => cancelAnimationFrame(frame);
-  }, []);
 
   // Slimmer, and the name behind fading, once the page scrolls.
   useEffect(() => {
@@ -99,7 +77,8 @@ export default function TopBar({ name, role, title, onLock, onBack, onEdit, onSi
         tile.className = 'em-top__tile em-top__tile--gap';
         return;
       }
-      tile.className = 'em-top__tile';
+      // Wider letters than A-Z, such as Tamil கௌ, get a tile as wide as they are.
+      tile.className = /^[A-Z0-9]$/.test(ch) ? 'em-top__tile' : 'em-top__tile em-top__tile--wide';
       if (reduced) {
         face.textContent = ch;
         return;
@@ -195,10 +174,8 @@ export default function TopBar({ name, role, title, onLock, onBack, onEdit, onSi
   };
   const releaseAll = () => buttons().forEach(release);
 
-  const className = ['em-top', scrolled && 'is-scrolled', entered && 'is-entered'].filter(Boolean).join(' ');
-
   return (
-    <header ref={header} className={className} onPointerMove={lean} onPointerLeave={releaseAll}>
+    <header ref={header} className={`em-top${scrolled ? ' is-scrolled' : ''}`} onPointerMove={lean} onPointerLeave={releaseAll}>
       <div className="em-top__band">
         <div className="em-top__bg" aria-hidden="true">
           <div className="em-top__rise">
@@ -244,13 +221,6 @@ export default function TopBar({ name, role, title, onLock, onBack, onEdit, onSi
           </div>
         </div>
       </div>
-      <nav className="em-nav" aria-label="Sections">
-        {NAV.map((item) => (
-          <button key={item.id} type="button" onClick={() => jump(item.id)}>
-            {item.label}
-          </button>
-        ))}
-      </nav>
     </header>
   );
 }

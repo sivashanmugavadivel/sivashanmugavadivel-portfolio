@@ -28,7 +28,7 @@
   --em-r: 12px;
   --em-r-sm: 8px;
   --em-gutter: clamp(16px, 4vw, 28px);
-  --em-top-h: 120px; /* the top bar once the page has scrolled (114px on a phone), for scroll-margin */
+  --em-top-h: 70px; /* the top bar once the page has scrolled (64px on a phone), for scroll-margin */
 
   color-scheme: light;
   min-height: 100vh;
@@ -351,7 +351,7 @@
   object-fit: contain;
   transform-origin: 50% 55%;
   filter: drop-shadow(0 4px 10px rgba(200, 16, 46, 0.28));
-  animation: em-top-beat 1s ease-in-out infinite;
+  animation: em-top-pop 0.7s 0.1s cubic-bezier(0.34, 1.56, 0.64, 1) backwards, em-top-beat 1s 0.8s ease-in-out infinite;
   transition: width 0.3s, height 0.3s;
 }
 @keyframes em-top-beat {
@@ -413,6 +413,7 @@
   pointer-events: none;
 }
 .em-top__tile--gap { width: 12px; min-width: 8px; background: transparent; box-shadow: none; }
+.em-top__tile--wide { flex: none; width: auto; min-width: 29px; padding: 0 4px; }
 .em-top__tile--gap::before,
 .em-top__tile--gap::after { display: none; }
 .em-top__tile.is-tick .em-top__ch { animation: em-top-tick 0.07s ease-out; }
@@ -477,16 +478,16 @@
 .em-top.is-scrolled .em-top__tile { height: 34px; font-size: 23px; }
 .em-top.is-scrolled .em-top__icon { width: 40px; height: 40px; }
 
-/* The entrance, once */
+/* The entrance, once, as the bar first appears: on the base rules, so it's there from the first
+   frame (switched on a frame later, the finished bar would show, vanish and then animate in). */
 @keyframes em-top-fade-up { from { opacity: 0; transform: translateY(8px); } }
 @keyframes em-top-rise { from { opacity: 0; transform: translateY(35%); } }
 @keyframes em-top-pop { from { opacity: 0; transform: scale(0.3) rotate(-14deg); } }
 @keyframes em-top-draw { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
-.em-top.is-entered .em-top__rise { animation: em-top-rise 1s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
-.em-top.is-entered .em-top__title { animation: em-top-fade-up 0.5s 0.1s backwards; }
-.em-top.is-entered .em-top__icon { animation: em-top-pop 0.7s 0.1s cubic-bezier(0.34, 1.56, 0.64, 1) backwards, em-top-beat 1s 0.8s ease-in-out infinite; }
-.em-top.is-entered .em-top__trace { animation: em-top-draw 1.3s 0.5s cubic-bezier(0.6, 0, 0.2, 1) backwards; }
-.em-top.is-entered .em-top__act { animation: em-top-fade-up 0.5s 0.25s backwards; }
+.em-top__rise { animation: em-top-rise 1s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+.em-top__title { animation: em-top-fade-up 0.5s 0.1s backwards; }
+.em-top__trace { animation: em-top-draw 1.3s 0.5s cubic-bezier(0.6, 0, 0.2, 1) backwards; }
+.em-top__act { animation: em-top-fade-up 0.5s 0.25s backwards; }
 
 /* Phone width. The bar always spans the screen, so the screen's width is the bar's: media queries
    rather than container queries, which iOS 15 and older don't have. */
@@ -496,6 +497,7 @@
   .em-top__icon { width: 42px; height: 42px; }
   .em-top.is-scrolled .em-top__icon { width: 36px; height: 36px; }
   .em-top__tile { width: 23px; height: 32px; font-size: 21px; }
+  .em-top__tile--wide { width: auto; min-width: 23px; }
   .em-top.is-scrolled .em-top__tile { height: 28px; font-size: 19px; }
   .em-top__trace { width: 64px; height: 22px; }
   .em-top__seg { font-size: 100px; }
@@ -536,27 +538,6 @@
 .em-cross::after { content: ''; position: absolute; background: var(--em-red); border-radius: 2px; }
 .em-cross::before { left: 7px; top: 0; width: 6px; height: 20px; }
 .em-cross::after { top: 7px; left: 0; width: 20px; height: 6px; }
-.em-nav {
-  max-width: 1440px;
-  margin: 0 auto;
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  padding: 4px var(--em-gutter) 10px;
-  scrollbar-width: none;
-}
-.em-nav::-webkit-scrollbar { display: none; }
-.em-nav button {
-  flex: none;
-  padding: 6px 12px;
-  border: 1px solid var(--em-line);
-  border-radius: 999px;
-  background: var(--em-surface);
-  color: var(--em-ink-2);
-  font-size: 15px;
-  font-weight: 700;
-}
-.em-nav button:hover { color: var(--em-ink); border-color: var(--em-ink-2); }
 
 /* ---------- Layout ---------- */
 .em-main {
