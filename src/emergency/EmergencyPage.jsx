@@ -4,6 +4,7 @@ import './emergency.css';
 import { linkCodeFromLocation } from './config';
 import { CONFIGURED, DEMO_MODE } from './firebase';
 import { useNoIndex } from './hooks';
+import { useSavedTheme } from './theme';
 import PinGate, { PublicCallButtons } from './components/PinGate';
 import EmergencyView from './components/EmergencyView';
 import SectionBoundary from './components/SectionBoundary';
@@ -36,6 +37,7 @@ function readLink(loc = window.location) {
  */
 export default function EmergencyPage() {
   useNoIndex();
+  useSavedTheme();
 
   // Read once: nothing on the page changes the address.
   const [link] = useState(readLink);

@@ -1,10 +1,11 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import { ArrowLeft, Lock, LogOut, Menu, Pencil } from 'lucide-react';
+import { ArrowLeft, Lock, LogOut, Menu, Moon, Pencil, Sun } from 'lucide-react';
 import icon96 from '../assets/emergency-icon-96.png';
 import icon144 from '../assets/emergency-icon-144.png';
 import icon96Webp from '../assets/emergency-icon-96.webp';
 import icon144Webp from '../assets/emergency-icon-144.webp';
 import { usePrefersReducedMotion } from '../hooks';
+import { useTheme } from '../theme';
 import { firstName } from '../utils';
 
 // What a split-flap tile flips through before it lands on its letter.
@@ -27,19 +28,28 @@ function markCut(board) {
 
 /**
  * role 'viewer': a responder's view with Lock (or Back, when `onBack` is given, for the owner's preview).
- * role 'owner': `title`, Edit, and a menu of `actions` ({ label, icon, onClick }) ending in Sign out.
+ * role 'owner': `title`, Edit, and a menu of `actions` ({ label, icon, onClick }), then light or dark
+ * mode, then Sign out.
  * The first name sits on split-flap tiles beside a heartbeat trace, with the name drifting in outline
  * behind; the bar slims down once the page scrolls.
  */
 export default function TopBar({ name, role, title, onLock, onBack, onEdit, onSignOut, actions = [] }) {
   const reduced = usePrefersReducedMotion();
+  const { theme, toggle: toggleTheme } = useTheme();
   const header = useRef(null);
   const board = useRef(null);
   const track = useRef(null);
   const [scrolled, setScrolled] = useState(false);
   const shownName = firstName(name || '');
-  const menu = onSignOut ? [...actions, { label: 'Sign out', icon: LogOut, onClick: onSignOut }] : actions;
-  const twoActions = role === 'owner' && Boolean(onEdit) && menu.length > 0;
+  // In the menu rather than the bar: a third button would leave a phone too little room for the name.
+  const menu = [
+    ...actions,
+    theme === 'dark'
+      ? { label: 'Switch to light mode', icon: Sun, onClick: toggleTheme }
+      : { label: 'Switch to dark mode', icon: Moon, onClick: toggleTheme },
+    ...(onSignOut ? [{ label: 'Sign out', icon: LogOut, onClick: onSignOut }] : []),
+  ];
+  const twoActions = role === 'owner' && Boolean(onEdit);
 
   // Slimmer, and the name behind fading, once the page scrolls.
   useEffect(() => {
@@ -207,7 +217,7 @@ export default function TopBar({ name, role, title, onLock, onBack, onEdit, onSi
                     <Pencil aria-hidden="true" /> <span className="em-top__act-label">Edit</span>
                   </button>
                 )}
-                {menu.length > 0 && <TopMenu items={menu} />}
+                <TopMenu items={menu} />
               </>
             ) : onBack ? (
               <button type="button" className="em-top__act em-top__act--back" onClick={onBack}>
@@ -273,6 +283,9 @@ function TopMenu({ items }) {
               type="button"
               onClick={() => {
                 setOpen(false);
+                // Back to the Menu button, as Escape does, so focus isn't lost with the closed list
+                // (light or dark keeps the screen). An item that opens another screen moves it on.
+                toggle.current?.focus();
                 onClick();
               }}
             >

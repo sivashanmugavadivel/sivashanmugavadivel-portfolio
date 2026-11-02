@@ -39,8 +39,8 @@ function wellInside(map, { lat, lng }) {
   return lat > sw.lat() + padLat && lat < ne.lat() - padLat && lng > sw.lng() + padLng && lng < ne.lng() - padLng;
 }
 
-/** Section 5: live Google map with hospitals, pharmacies, fire and police stations nearby. */
-export default function NearbyHelp({ geo, fallbackCenter }) {
+/** Section 5: live Google map with hospitals, pharmacies, fire and police stations nearby. `theme`: 'light' | 'dark'. */
+export default function NearbyHelp({ geo, fallbackCenter, theme }) {
   const mapNode = useRef(null);
   const gmaps = useRef(null);
   const layers = useRef({});
@@ -94,7 +94,7 @@ export default function NearbyHelp({ geo, fallbackCenter }) {
           center: { lat: start.lat, lng: start.lng },
           zoom: me ? 15 : 13,
           mapId: GOOGLE_MAP_ID,
-          colorScheme: ColorScheme.FOLLOW_SYSTEM, // the phone's light/dark setting
+          colorScheme: theme === 'dark' ? ColorScheme.DARK : ColorScheme.LIGHT, // as the page
           gestureHandling: 'cooperative', // one finger scrolls the page, two move the map
           disableDefaultUI: true,
           zoomControl: true,

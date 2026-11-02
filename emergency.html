@@ -28,11 +28,21 @@
       />
     </noscript>
     <title>Emergency info</title>
+    <script>
+      // Light or dark as picked on this device (src/emergency/theme.js), before the first paint.
+      (function () {
+        try {
+          var theme = localStorage.getItem('emergency_theme');
+          if (theme === 'light' || theme === 'dark') document.documentElement.setAttribute('data-em-theme', theme);
+        } catch (e) {}
+      })();
+    </script>
     <style>
       /* Same as --em-bg in emergency.css, so there's no flash before it loads */
       html, body { margin: 0; background: #edf1f4; color: #14202b; }
+      :root[data-em-theme="dark"], :root[data-em-theme="dark"] body { background: #0b131a; color: #e8eef3; }
       @media (prefers-color-scheme: dark) {
-        html, body { background: #0b131a; color: #e8eef3; }
+        :root:not([data-em-theme="light"]), :root:not([data-em-theme="light"]) body { background: #0b131a; color: #e8eef3; }
       }
       .boot {
         min-height: 100vh; min-height: 100dvh; box-sizing: border-box;

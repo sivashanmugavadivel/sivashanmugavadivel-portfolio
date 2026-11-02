@@ -43,8 +43,33 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Dark: the device's setting, unless light or dark was picked on this device (theme.js marks
+   <html> with the choice). The two blocks are the same colours. */
+:root[data-em-theme="dark"] .em-root {
+  --em-bg: #0b131a;
+  --em-surface: #131f29;
+  --em-surface-2: #1a2833;
+  --em-ink: #e8eef3;
+  --em-ink-2: #a0b0be;
+  --em-line: #2a3b49;
+  --em-red: #d92b42;
+  --em-red-text: #ff8592;
+  --em-red-soft: #3a121a;
+  --em-amber: #f4c36b;
+  --em-amber-soft: #33270f;
+  --em-amber-line: #8c6418;
+  --em-green: #74d6a3;
+  --em-green-soft: #12301f;
+  --em-blue: #8db2f5;
+  --em-water: #5aa6f0;
+  --em-tile: #223444;
+  --em-floor: #24323d;
+  --em-focus: #6cb2ff;
+  --em-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+  color-scheme: dark;
+}
 @media (prefers-color-scheme: dark) {
-  .em-root {
+  :root:not([data-em-theme="light"]) .em-root {
     --em-bg: #0b131a;
     --em-surface: #131f29;
     --em-surface-2: #1a2833;
@@ -156,6 +181,7 @@
 .em-btn--red:hover { border-color: var(--em-red); filter: brightness(1.06); }
 .em-btn--quiet { background: transparent; border-color: transparent; min-height: 42px; padding: 0 10px; }
 .em-btn--quiet:hover { background: var(--em-surface-2); border-color: transparent; }
+.em-btn--icon { min-width: 44px; min-height: 44px; padding: 0; }
 .em-btn--add { justify-self: start; border-style: dashed; }
 
 .em-textbtn {
@@ -290,8 +316,9 @@
   line-height: 1.5;
   transition: box-shadow 0.3s;
 }
+:root[data-em-theme="dark"] .em-top { --em-flap: #05090d; --em-outline: rgba(232, 238, 243, 0.13); }
 @media (prefers-color-scheme: dark) {
-  .em-top { --em-flap: #05090d; --em-outline: rgba(232, 238, 243, 0.13); }
+  :root:not([data-em-theme="light"]) .em-top { --em-flap: #05090d; --em-outline: rgba(232, 238, 243, 0.13); }
 }
 .em-top.is-scrolled { box-shadow: 0 12px 24px -16px rgba(0, 0, 0, 0.45); }
 /* The background clips itself, not the bar: the owner's menu opens below the bar. */

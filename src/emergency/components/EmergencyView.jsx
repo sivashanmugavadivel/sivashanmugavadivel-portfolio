@@ -1,4 +1,5 @@
 import { useGeolocation, useToast } from '../hooks';
+import { useTheme } from '../theme';
 import TopBar from './TopBar';
 import ProfileHeader from './ProfileHeader';
 import EmergencyActions from './EmergencyActions';
@@ -18,6 +19,7 @@ import SectionBoundary from './SectionBoundary';
  */
 export default function EmergencyView({ data, role, title, onLock, onBack, onEdit, onSignOut, actions, banner }) {
   const geo = useGeolocation(true);
+  const { theme } = useTheme();
   const [toastMessage, toast] = useToast();
   const emergencyNumber = data.services?.find((s) => s.number)?.number || '112';
 
@@ -48,7 +50,8 @@ export default function EmergencyView({ data, role, title, onLock, onBack, onEdi
           <EmergencyContacts contacts={data.contacts} name={data.profile?.name} coords={geo.coords} />
         </SectionBoundary>
         <SectionBoundary fallback={<NearbyFallback coords={geo.coords} />}>
-          <NearbyHelp geo={geo} fallbackCenter={data.map} />
+          {/* Google sets a map's colours only when it's made, so switching light or dark makes it again. */}
+          <NearbyHelp key={theme} geo={geo} fallbackCenter={data.map} theme={theme} />
         </SectionBoundary>
         <SectionBoundary>
           <FirstAid emergencyNumber={emergencyNumber} />

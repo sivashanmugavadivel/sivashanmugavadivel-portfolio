@@ -1,5 +1,6 @@
-import { ArrowLeft, LoaderCircle, TriangleAlert } from 'lucide-react';
+import { ArrowLeft, LoaderCircle, Moon, Sun, TriangleAlert } from 'lucide-react';
 import { PublicCallButtons } from '../components/PinGate';
+import { useTheme } from '../theme';
 
 /** Waiting with nothing to show yet. The call buttons stay, as on every screen without a profile. */
 export function Busy({ label = 'Loading…', children }) {
@@ -42,7 +43,19 @@ export function Problem({ title, body, actions = [] }) {
   );
 }
 
-/** A plain account screen: a sticky bar with Back (or the red cross), a title and optional buttons. */
+/** Light or dark for this page, remembered on this device. The member's page has it in its menu. */
+function ThemeButton() {
+  const { theme, toggle } = useTheme();
+  const label = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+  const Icon = theme === 'dark' ? Sun : Moon;
+  return (
+    <button type="button" className="em-btn em-btn--quiet em-btn--icon" onClick={toggle} aria-label={label} title={label}>
+      <Icon aria-hidden="true" />
+    </button>
+  );
+}
+
+/** A plain account screen: a sticky bar with Back (or the red cross), a title, light or dark, and optional buttons. */
 export function Page({ title, onBack, backLabel = 'Back', end, children }) {
   return (
     <div className="em-acct">
@@ -59,6 +72,7 @@ export function Page({ title, onBack, backLabel = 'Back', end, children }) {
           <h1 className="em-acct__title" tabIndex={-1}>
             {title}
           </h1>
+          <ThemeButton />
           {end}
         </div>
       </header>
