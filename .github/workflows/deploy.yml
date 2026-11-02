@@ -31,6 +31,31 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install
+      # The emergency page's settings are baked into the bundle at build time.
+      # They're public web config (anyone can read them in the bundle), so they
+      # live in repository variables, not secrets: Settings → Secrets and
+      # variables → Actions → Variables. .env.local never reaches CI, and
+      # without the Firebase ones the page shows "isn't set up yet".
+      # Only the variables that are set get written: an unset one would arrive
+      # as an empty string, and Vite lets the environment beat .env files.
+      - name: Write the emergency page's build settings
+        run: |
+          for name in $(compgen -e | grep '^VITE_'); do
+            if [ -n "${!name}" ]; then echo "$name=${!name}" >> .env.production.local; fi
+          done
+        env:
+          VITE_FIREBASE_API_KEY: ${{ vars.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ vars.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ vars.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ vars.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ vars.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ vars.VITE_FIREBASE_APP_ID }}
+          VITE_FIREBASE_FUNCTIONS_REGION: ${{ vars.VITE_FIREBASE_FUNCTIONS_REGION }}
+          VITE_EMERGENCY_PIN_LENGTH: ${{ vars.VITE_EMERGENCY_PIN_LENGTH }}
+          VITE_EMERGENCY_PAGE_URL: ${{ vars.VITE_EMERGENCY_PAGE_URL }}
+          VITE_GOOGLE_MAPS_API_KEY: ${{ vars.VITE_GOOGLE_MAPS_API_KEY }}
+          VITE_GOOGLE_MAPS_MAP_ID: ${{ vars.VITE_GOOGLE_MAPS_MAP_ID }}
+          VITE_RECAPTCHA_SITE_KEY: ${{ vars.VITE_RECAPTCHA_SITE_KEY }}
       - run: pnpm build
       - uses: actions/upload-pages-artifact@v3
         with:

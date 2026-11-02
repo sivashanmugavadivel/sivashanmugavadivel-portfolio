@@ -3,10 +3,22 @@
   <head>
     <meta charset="UTF-8" />
     <script>
-      // GitHub Pages SPA redirect trick — custom domain, base is /
       var path = window.location.pathname || '/';
-      sessionStorage.setItem('spa_redirect', path + window.location.search + window.location.hash);
-      window.location.replace('/');
+      // A card's short link, /emergency/<code>: straight on to the emergency page's own entry
+      // (emergency.html, served at /emergency) without the portfolio's bundle. The page checks
+      // the code itself, so a mangled one still shows the call buttons.
+      var card = path.match(/^\/emergency\/([^/]+)\/?$/);
+      if (card) {
+        window.location.replace('/emergency?id=' + encodeURIComponent(card[1]));
+      } else if (path === '/emergency/') {
+        // The sign-in page with a trailing slash: the same entry, keeping any ?id= and #hash,
+        // rather than a detour through the portfolio's redirect.
+        window.location.replace('/emergency' + window.location.search + window.location.hash);
+      } else {
+        // GitHub Pages SPA redirect trick — custom domain, base is /
+        sessionStorage.setItem('spa_redirect', path + window.location.search + window.location.hash);
+        window.location.replace('/');
+      }
     </script>
   </head>
   <body></body>

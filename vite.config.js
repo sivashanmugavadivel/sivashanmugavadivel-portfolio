@@ -62,7 +62,35 @@ function galleryAutoScan() {
   }
 }
 
+/* The emergency page reads its settings at build time (.env.local here, repository
+   variables in CI). Without them the build still succeeds, so say so in the log rather
+   than finding out from a scanned QR code. */
+function emergencyConfigCheck() {
+  return {
+    name: 'emergency-config-check',
+    apply: 'build',
+    configResolved({ env, logger }) {
+      if (!env.VITE_FIREBASE_API_KEY || !env.VITE_FIREBASE_PROJECT_ID) {
+        logger.warn('[emergency] No Firebase settings: /emergency will say it isn’t set up yet (see Doc/EMERGENCY_PAGE.md).')
+      }
+      if (!env.VITE_GOOGLE_MAPS_API_KEY) {
+        logger.warn('[emergency] No VITE_GOOGLE_MAPS_API_KEY: "Nearby help" will show Google Maps links only, no map.')
+      }
+    },
+  }
+}
+
 export default defineConfig({
-  plugins: [react(), galleryAutoScan()],
+  plugins: [react(), galleryAutoScan(), emergencyConfigCheck()],
   base: '/',
+  build: {
+    rolldownOptions: {
+      /* emergency.html is the QR / NFC landing page: its own entry, so it loads
+         only the emergency module. GitHub Pages serves it at /emergency. */
+      input: {
+        main: path.resolve('index.html'),
+        emergency: path.resolve('emergency.html'),
+      },
+    },
+  },
 })

@@ -1,0 +1,87 @@
+rules_version = '2';
+
+// If your project already has Firestore rules, merge these match blocks into them.
+// Cloud Functions use the Admin SDK, which skips these rules: they do every write except profile edits.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // Set by claimAdmin for a verified Google address on ADMIN_EMAILS (functions/.env), and honoured
+    // only in a Google session. The claim sits on the account, and an account can also have a
+    // password sign-in on the same address (someone registered it before the admin's first Google
+    // sign-in), whose session would carry the claim too. The functions check the same (isAdminSession).
+    // get() with a default: a token without the claim must deny, not error.
+    function isAdmin() {
+      return signedIn()
+        && request.auth.token.get('admin', false) == true
+        && request.auth.token.firebase.sign_in_provider == 'google.com';
+    }
+
+    // The member themselves (accounts made any other way have no members doc), in a session that
+    // signed in at or after members.tokensValidAfter: when the admin last reset their password or
+    // switched them off, or they replaced the temporary password. Revoking refresh tokens alone
+    // leaves an ID token already issued valid for up to an hour. Whole seconds, like auth_time, and
+    // a sign-in in that same second counts, as in Auth's own revocation check, so the page signing in
+    // again straight after changeTempPassword isn't locked out.
+    function isMember(uid) {
+      return signedIn()
+        && request.auth.uid == uid
+        && exists(/databases/$(database)/documents/members/$(uid))
+        && request.auth.token.auth_time >= get(/databases/$(database)/documents/members/$(uid)).data.get('tokensValidAfter', 0);
+    }
+
+    // ...switched on, and past the temporary password. The disabled check still matters if switching
+    // off stopped half way, after the members flag but before the sessions were ended.
+    function canEditOwn(uid) {
+      return isMember(uid)
+        && request.auth.token.get('mustChangePassword', false) != true
+        && get(/databases/$(database)/documents/members/$(uid)).data.get('disabled', false) != true;
+    }
+
+    // Exactly the profile shape (blankProfile in src/emergency/sampleData.js) plus a server timestamp.
+    function isProfile() {
+      let data = request.resource.data;
+      return data.keys().hasOnly(['profile', 'services', 'medical', 'contacts', 'vehicles', 'about', 'map', 'updatedAt'])
+        && data.updatedAt == request.time;
+    }
+
+    // Login ID, name, contact email, link code, status and tokensValidAfter. Written only by Cloud
+    // Functions.
+    match /members/{uid} {
+      allow read: if isMember(uid) || isAdmin();
+    }
+
+    // The emergency profile. Responders get it through unlockProfile, never directly.
+    match /profiles/{uid} {
+      allow read: if isMember(uid) || isAdmin();
+      allow create, update: if (isAdmin() || canEditOwn(uid)) && isProfile();
+    }
+
+    // Who opened a card and what the admin changed. Written only by Cloud Functions.
+    // Members query their own: where('uid', '==', uid), orderBy('at', 'desc').
+    match /accessLogs/{id} {
+      allow read: if isAdmin()
+        || (signedIn() && resource.data.uid == request.auth.uid && isMember(request.auth.uid));
+    }
+
+    // Link codes, PINs and their hashes (secrets/{uid}; the admin and the member see a PIN only
+    // through getCard), the key the functions hash visitors' addresses with (secrets/_visitor),
+    // rate-limit counters, and the emulator's copy of every email (outbox, never written in
+    // production; it holds temporary passwords): no browser access at all.
+    match /links/{code} {
+      allow read, write: if false;
+    }
+    match /secrets/{id} {
+      allow read, write: if false;
+    }
+    match /pinAttempts/{id} {
+      allow read, write: if false;
+    }
+    match /outbox/{id} {
+      allow read, write: if false;
+    }
+  }
+}

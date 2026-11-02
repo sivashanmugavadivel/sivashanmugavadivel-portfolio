@@ -51,6 +51,33 @@ const MyGarageStorefront = lazy(() => import('./pages/GarageStorefront'))
    files in public/mygarage/vlog/config — see src/data/vlogs.js. */
 const MyGarageVlogDetail = lazy(() => import('./pages/MyGarageVlogDetail'))
 
+/* The emergency page — PIN-protected medical info behind each member's QR card
+   (see Doc/EMERGENCY_PAGE.md). The QR card and NFC tag land on emergency.html,
+   its own lightweight entry; this route is the same page for /emergency/ and the
+   dev server, rendered without any of the portfolio around it.
+   /emergency/<code> is a card's short link. In production public/404.html sends
+   it on to /emergency?id=<code>; the dev server has no 404.html and lands here,
+   where the page reads the code from the path. Any single segment is taken, so a
+   mangled code still gets the call buttons and "isn't valid", not NotFound. */
+const EmergencyPage = lazy(() => import('./emergency/EmergencyPage'))
+const isEmergencyPath = (pathname) => /^\/emergency(\/[^/]+)?\/?$/.test(pathname)
+
+/* While the emergency chunk downloads: the same two numbers emergency.html shows
+   before its script runs, so nobody waits on a blank screen to call for help. */
+const callLink = {
+  display: 'block', padding: 16, borderRadius: 12, background: '#c8102e', color: '#fff',
+  textAlign: 'center', fontSize: 20, fontWeight: 700, textDecoration: 'none',
+}
+function EmergencyLoading() {
+  return (
+    <div style={{ display: 'grid', alignContent: 'center', gap: 12, minHeight: '100svh', maxWidth: 420, margin: '0 auto', padding: '24px 16px', boxSizing: 'border-box' }}>
+      <p style={{ textAlign: 'center' }}>Loading emergency info…</p>
+      <a href="tel:112" style={callLink}>Call 112 · Emergency</a>
+      <a href="tel:108" style={callLink}>Call 108 · Ambulance</a>
+    </div>
+  )
+}
+
 /**
  * Where the reader was on each history entry.
  *
@@ -196,6 +223,16 @@ export default function App() {
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const location = useLocation()
   const showFeedback = location.pathname !== '/contact'
+
+  /* No intro, navbar, butterfly cursor or floating buttons — whoever is
+     reading this is helping someone who's hurt. */
+  if (isEmergencyPath(location.pathname)) {
+    return (
+      <Suspense fallback={<EmergencyLoading />}>
+        <EmergencyPage />
+      </Suspense>
+    )
+  }
 
   return (
     <>

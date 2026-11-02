@@ -2,5 +2,9 @@ overrides:
   d3-color: '>=3.1.0'
 
 allowBuilds:
+  # Both only matter outside a browser build: @firebase/util's writes Firebase
+  # App Hosting auto-config, protobufjs's checks its own CLI.
+  '@firebase/util': false
   esbuild: true
   ffmpeg-static: true
+  protobufjs: false

@@ -1,0 +1,163 @@
+// Describes the owner's edit form. Add a field here and it appears in the editor.
+// Field types: text (default), tel, date, url, number, textarea, select, bool, strings, group, list.
+
+export const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Unknown'];
+const SEVERITIES = ['Mild', 'Moderate', 'Severe'];
+
+export const EDITOR_TABS = [
+  {
+    id: 'profile',
+    label: 'Profile',
+    path: 'profile',
+    kind: 'group',
+    fields: [
+      { key: 'name', label: 'Full name' },
+      { key: 'photoUrl', label: 'Photo link', type: 'url', placeholder: 'https://…', hint: 'A clear face photo helps responders confirm it’s you.' },
+      { key: 'dob', label: 'Date of birth', type: 'date' },
+      { key: 'gender', label: 'Gender' },
+      { key: 'bloodGroup', label: 'Blood group', type: 'select', options: BLOOD_GROUPS },
+      { key: 'languages', label: 'Languages you speak', type: 'strings', placeholder: 'Add a language' },
+      { key: 'address', label: 'Home address', type: 'textarea' },
+      { key: 'organDonor', label: 'I’m a registered organ donor', type: 'bool' },
+      {
+        key: 'criticalNote',
+        label: 'Most important thing to know',
+        type: 'textarea',
+        hint: 'Shown in red at the very top. Keep it to one or two sentences.',
+      },
+    ],
+  },
+  {
+    id: 'services',
+    label: 'Emergency numbers',
+    path: 'services',
+    kind: 'list',
+    itemName: 'number',
+    hint: 'The first number is used for the red “Call” button at the bottom of the page.',
+    fields: [
+      { key: 'label', label: 'Name' },
+      { key: 'number', label: 'Number', type: 'tel' },
+      { key: 'description', label: 'Short description', wide: true },
+    ],
+    blank: { label: '', number: '', description: '' },
+  },
+  {
+    id: 'medical',
+    label: 'Medical',
+    path: 'medical',
+    kind: 'group',
+    fields: [
+      { key: 'height', label: 'Height', placeholder: '175 cm' },
+      { key: 'weight', label: 'Weight', placeholder: '70 kg' },
+      { key: 'conditions', label: 'Conditions', type: 'strings', placeholder: 'Add a condition' },
+      {
+        key: 'allergies',
+        label: 'Allergies',
+        type: 'list',
+        itemName: 'allergy',
+        fields: [
+          { key: 'name', label: 'Allergic to' },
+          { key: 'severity', label: 'Severity', type: 'select', options: SEVERITIES },
+          { key: 'reaction', label: 'Reaction', wide: true },
+        ],
+        blank: { name: '', severity: '', reaction: '' },
+      },
+      {
+        key: 'medications',
+        label: 'Medications',
+        type: 'list',
+        itemName: 'medication',
+        fields: [
+          { key: 'name', label: 'Medicine' },
+          { key: 'dose', label: 'Dose' },
+          { key: 'frequency', label: 'How often', wide: true },
+        ],
+        blank: { name: '', dose: '', frequency: '' },
+      },
+      { key: 'devices', label: 'Devices and implants', type: 'textarea', placeholder: 'Pacemaker, insulin pump, glucose monitor…' },
+      {
+        key: 'doctor',
+        label: 'Doctor',
+        type: 'group',
+        fields: [
+          { key: 'name', label: 'Name' },
+          { key: 'phone', label: 'Phone', type: 'tel' },
+          { key: 'hospital', label: 'Hospital or clinic', wide: true },
+        ],
+      },
+      {
+        key: 'insurance',
+        label: 'Health insurance',
+        type: 'group',
+        fields: [
+          { key: 'provider', label: 'Provider' },
+          { key: 'policyNumber', label: 'Policy number' },
+          { key: 'phone', label: 'Helpline', type: 'tel' },
+        ],
+      },
+      { key: 'notes', label: 'Notes for responders', type: 'textarea' },
+    ],
+  },
+  {
+    id: 'contacts',
+    label: 'Contacts',
+    path: 'contacts',
+    kind: 'list',
+    itemName: 'contact',
+    hint: 'Include the country code, for example +91 98765 43210, so calls and WhatsApp work from any phone.',
+    fields: [
+      { key: 'name', label: 'Name' },
+      { key: 'relation', label: 'Relationship' },
+      { key: 'phone', label: 'Phone', type: 'tel' },
+      { key: 'primary', label: 'Call this person first', type: 'bool', exclusive: true },
+      { key: 'notes', label: 'Notes', wide: true },
+    ],
+    blank: { name: '', relation: '', phone: '', primary: false, notes: '' },
+  },
+  {
+    id: 'vehicles',
+    label: 'Vehicles',
+    path: 'vehicles',
+    kind: 'list',
+    itemName: 'vehicle',
+    fields: [
+      { key: 'plate', label: 'Registration number' },
+      { key: 'country', label: 'Plate country code', placeholder: 'IND' },
+      { key: 'type', label: 'Type', type: 'select', options: ['Car', 'Motorcycle', 'Scooter', 'Bicycle', 'Other'] },
+      { key: 'color', label: 'Colour' },
+      { key: 'make', label: 'Make' },
+      { key: 'model', label: 'Model' },
+      { key: 'insurer', label: 'Insurer' },
+      { key: 'policyNumber', label: 'Policy number' },
+      { key: 'notes', label: 'Notes', wide: true },
+    ],
+    blank: { plate: '', country: 'IND', type: 'Car', color: '', make: '', model: '', insurer: '', policyNumber: '', notes: '' },
+  },
+  {
+    id: 'about',
+    label: 'About me',
+    path: 'about',
+    kind: 'group',
+    fields: [
+      { key: 'headline', label: 'One-line summary', wide: true },
+      { key: 'bio', label: 'Short bio', type: 'textarea' },
+      { key: 'occupation', label: 'Occupation' },
+      { key: 'employer', label: 'Employer' },
+      { key: 'website', label: 'Website', type: 'url' },
+      { key: 'linkedin', label: 'LinkedIn', type: 'url' },
+      { key: 'github', label: 'GitHub', type: 'url' },
+    ],
+  },
+  {
+    id: 'map',
+    label: 'Map area',
+    path: 'map',
+    kind: 'group',
+    hint: 'Where the map starts if the visitor’s phone can’t share its location. Find the numbers by long-pressing a spot in Google Maps.',
+    fields: [
+      { key: 'label', label: 'Area name', wide: true },
+      { key: 'lat', label: 'Latitude', type: 'number' },
+      { key: 'lng', label: 'Longitude', type: 'number' },
+    ],
+  },
+];

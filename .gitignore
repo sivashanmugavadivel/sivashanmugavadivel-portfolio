@@ -26,6 +26,18 @@ dist-ssr
 # Local originals of compressed video previews (not deployed)
 public/video-previews/_orig/
 
+# Firebase backend of the emergency page: the functions' settings (.env.example is the
+# committed template), the CLI's cache and emulator leftovers. Their *-debug.log files
+# are covered by *.log above.
+firebase/functions/.env
+firebase/functions/.env.*
+!firebase/functions/.env.example
+# The emulators' stand-in for the GMAIL_APP_PASSWORD secret (*.local above covers it too).
+firebase/functions/.secret.local
+.firebase/
+.runtimeconfig.json
+firebase-export-*/
+
 # This is a pnpm project — pnpm-lock.yaml is the lockfile, and CI installs
 # with it. An npm lockfile alongside it resolves a different dependency tree
 # to the one that actually ships, so keep it out of the repo.

@@ -26,4 +26,29 @@ export default defineConfig([
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
     },
   },
+  {
+    // The emergency page's Cloud Functions run on Node as CommonJS, not in the browser.
+    files: ['firebase/functions/**/*.js'],
+    languageOptions: {
+      globals: globals.node,
+      sourceType: 'commonjs',
+    },
+  },
+  {
+    // Its emulator tests: Node ES modules (no block above matches .mjs).
+    files: ['firebase/test/**/*.mjs'],
+    extends: [js.configs.recommended],
+    languageOptions: {
+      globals: globals.node,
+      sourceType: 'module',
+    },
+    rules: {
+      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+    },
+  },
+  {
+    // The first-aid drawing kit shares colours and helpers with its scenes on purpose.
+    files: ['src/emergency/components/firstaid/kit.jsx'],
+    rules: { 'react-refresh/only-export-components': 'off' },
+  },
 ])
