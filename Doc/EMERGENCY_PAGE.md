@@ -9,19 +9,20 @@ A PIN-protected emergency page at **https://sivashanmugavadivel.in/emergency**, 
 | Anyone with a card link | Nothing | Call 112 / 108 from the locked screen. Nothing personal is shown. |
 | Responder (helper, paramedic, family) | Scans the card (`/emergency?id=<link code>`), enters the PIN printed on it, taps **Unlock** | Read that one member's page. Nothing is saved on their phone; **Lock** or a refresh clears it. |
 | Member | `/emergency` → ID and password from the admin (by email, or handed over), then their own password | View, edit and preview their own page; under **My card** see their PIN and download their QR code or the card with the PIN; write an NFC tag; see who opened it; change their password. Not the PIN: only the admin sets PINs. |
-| You (admin) | `/emergency` → **Admin? Sign in with Google**, with an address on `ADMIN_EMAILS` | Make members (ID, temporary password, PIN, card link, optional email), see any member's **Card details** again (ID, PIN, link, QR, card), email members their welcome and their card, edit their email, reset passwords and PINs, make a new link, switch a member off or on, open and edit any page, see any access log. |
+| You (admin) | `/emergency` → **Admin? Sign in with Google**, with an address on `ADMIN_EMAILS` | Make members (ID, temporary password, PIN, card link, optional email), see any member's **Card details** again (ID, PIN, link, QR, card), email members their welcome and their card, edit their email, reset passwords and PINs, make a new link, switch a member off or on, delete a member for good, open and edit any page, see any access log. |
 
 Why it's built this way:
 
 - **The PIN is checked on the server, never in the browser.** A Cloud Function (`unlockProfile`) compares it with a salted scrypt hash and returns the profile only on a match. Next to the hash, in the same Firestore collection (`secrets/`, which no browser can read), the server keeps the PIN itself, so that the admin (**Card details**) and the member (**My card**) can see it again through the `getCard` function. Only the admin and that member, once they've chosen their own password, can get it. It's printed on the card anyway, so this exposes nothing a card doesn't.
 - **Temporary passwords are never stored.** The admin sees each one once, when the member is made or the password reset, and the page can email it to the member. After that it exists only in that email and on the admin's screen until **Done**. A copy of each email also lands in the sending Gmail's **Sent** folder, so keep that account well protected.
-- **Pages are locked by Firestore rules**: a member can read and write only their own, and only after replacing the temporary password; the admin can read and write all of them. Responders only ever receive a page through the function.
+- **Pages are locked by Firestore rules**: a member can read and write only their own, and only after replacing the temporary password; the admin can read all of them and write any current member's (so an editor left open on someone just deleted can't put their page back). Responders only ever receive a page through the function.
 - **Old sessions end straight away** when the admin resets a member's password or switches them off, and when a member chooses or changes their own password: every device signed in before that loses access to the page at once, not when its sign-in token runs out an hour later.
 - **A scan never loads sign-in code.** The card link opens the keypad with only Firebase's app, App Check and Functions code; Auth and Firestore come with the sign-in page, loaded only at `/emergency`.
 - **Guessing is rate-limited per card.** 5 wrong PINs from one visitor (one IPv4 address, or one IPv6 /64) locks that visitor out of that card for 15 minutes. Across everyone, 60 wrong PINs on one card within an hour trips a lock on that card for 30–60 minutes; right PINs never count, and other cards aren't affected. While a card is locked, each visitor still gets **one try every 15 minutes**, so someone else's guessing can't keep a paramedic with the printed PIN out. The trade-off: those tries have no overall cap. Someone who has a card's link (not its PIN) and many addresses gets one guess per address every 15 minutes. An IPv6 /48, free from tunnel brokers, is 65,536 /64s: about 2 hours to find a 6-digit PIN, and a 4-digit one inside the first 15 minutes. The limiter doesn't stop that; App Check does, so turn it on before you hand out cards (see **Hardening**).
 - **Every unlock, lockout and admin change is logged** per member, so a member sees under **Who opened my page** (and the admin under **Access log**) if their page has been opened. So is each look at the card (by the admin or the member) and each email sent or failed; the log says which email, never what was in it.
 - **Emails go through Gmail from your own account** (an App Password, kept in Secret Manager), so there's no mail service to sign up for. If sending fails, the admin panel says why and still shows everything on screen.
 - **A switched-off member's card looks like an unknown link**, and a new link makes the old QR code stop working, so a lost card can be retired.
+- **Deleting a member can't be undone.** **Delete member** removes everything stored about them, nothing is kept to restore it from, and their printed card then answers like an unknown link. Switch a member off instead if they might come back.
 - **It keeps working when parts fail.** `emergency.html` shows 112 / 108 call links before any JavaScript loads. Each section is isolated, so a broken map can't take the medical info with it. If Google Maps doesn't load, the section falls back to "Search in Google Maps" links.
 
 > **About the PIN in a real emergency:** whoever finds a member needs the PIN. Print it next to the QR code (**Download card with PIN** does this), or share it with family. The PIN mainly protects members from people who come across a link online. The page also tells search engines not to index it.
@@ -77,7 +78,8 @@ firebase/
   firestore.indexes.json     the access-log index and the pinAttempts clean-up (TTL)
   functions/index.js         Cloud Functions (Node.js 22): unlockProfile, claimAdmin, changeTempPassword,
                              passwordChanged, getCard, adminCreateMember, adminResetPassword, adminResetPin,
-                             adminNewLink, adminSetDisabled, adminEmailMember, adminUpdateMember
+                             adminNewLink, adminSetDisabled, adminEmailMember, adminUpdateMember,
+                             adminDeleteMember
   functions/mail.js          the three emails (welcome, password reset, new card) and sending them through Gmail
   functions/.env.example     ADMIN_EMAILS, GMAIL_USER, MAIL_FROM_NAME, and how to set the App Password secret
   test/                      integration tests against the emulators (see test/README.md)
@@ -199,7 +201,14 @@ Push, then open https://sivashanmugavadivel.in/emergency and check it shows the 
 4. Each card link looks like `https://sivashanmugavadivel.in/emergency?id=<code>` (set `VITE_EMERGENCY_PAGE_URL` only if the address changes). **Test-scan the QR code with another phone**, then print it on a card, sticker, phone case or helmet with the PIN. On Android Chrome a member can write an NFC tag from **My card**; otherwise write the link as a URL record with an app like NFC Tools.
 5. Later, for each member:
    - **Card details** shows their ID, email, PIN, card link and QR code again, with **Download card with PIN** and, when they have an email, **Email card to member**.
-   - Under **Manage**: **Edit email** (empty removes it, and they get no more emails), **Reset password** (every device they're signed in on is signed out at once and they choose a new password at next sign-in; with an email on file, the new temporary password is emailed to them), **Reset PIN** and **New link** (the old card stops working; the result offers **Email the new card**), **Switch off / on**, **Access log**, **Download QR**. **Open profile** shows and edits their page.
+   - Under **Manage**: **Edit email** (empty removes it, and they get no more emails), **Reset password** (every device they're signed in on is signed out at once and they choose a new password at next sign-in; with an email on file, the new temporary password is emailed to them), **Reset PIN** and **New link** (the old card stops working; the result offers **Email the new card**), **Switch off / on**, **Access log**, **Download QR**, **Delete member**. **Open profile** shows and edits their page.
+   - **Delete member** deletes a member permanently. Type their ID to confirm, then **Delete permanently**. It can't be undone. It removes:
+     - their sign-in account (Firebase Authentication), so the ID and password stop working;
+     - their record (`members/`: ID, name, email, status) and their page (`profiles/`);
+     - their card link (`links/`), so the printed card or NFC tag says the link isn't active, and their PIN (the hash and the stored PIN, `secrets/`);
+     - their PIN-try counters (`pinAttempts/`) and their whole access log (`accessLogs/`).
+
+     The deletion itself isn't logged in any access log; only a line with their uid and ID goes into the Cloud Functions log. It doesn't reach emails already sent (their inbox, and your Gmail's **Sent** folder) or anyone else's data. To have them back, add them again: they get a new card link, PIN and password. If it stops part-way (a dropped connection), the member stays in the list: press **Delete permanently** again and it clears what's left.
 
 Gmail lets a personal account send about 500 emails a day, far more than this needs. Emails come from `GMAIL_USER` and show in its **Sent** folder. Their links, and the QR code on the attached card, always open the live site, even when you send them from `pnpm dev`.
 
@@ -220,6 +229,16 @@ The version before this one showed PINs and temporary passwords once and sent no
 5. Check it: give yourself an email with **Edit email**, then **Card details → Email card to member**. The email should arrive within a minute.
 
 Members made before this have no email on file (add one with **Edit email**), and their **Card details** say "PIN not on file": the server only ever had a hash of their PIN. Their card keeps working. To see a PIN there, **Reset PIN**, which also means a new card for them (**Email the new card**, or print it).
+
+### Adding Delete member to a page that's already running
+
+The site's GitHub deploy doesn't touch Firebase, so deploy the new function and the rules first. From `firebase/`:
+
+```bash
+npx firebase-tools@15 deploy --only firestore,functions
+```
+
+This adds `adminDeleteMember`, and a rule that the admin can write a page only for a current member. Then push the site, so the admin panel gets **Delete member**. Until the function is deployed, **Delete member** only shows an error and deletes nothing.
 
 ### Moving from the single-owner version
 

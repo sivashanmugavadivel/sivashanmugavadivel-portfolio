@@ -84,6 +84,7 @@ test('the admin claim counts only in a Google session, and refusing another one 
     ['adminSetDisabled', { uid: m.uid, disabled: true }],
     ['adminUpdateMember', { uid: m.uid, name: 'Nope' }],
     ['adminEmailMember', { uid: m.uid, template: 'card', cardPng: TINY_PNG }],
+    ['adminDeleteMember', { uid: m.uid, confirmLoginId: m.loginId }],
     ['getCard', { uid: m.uid }],
   ];
   for (const [name, data] of calls) {

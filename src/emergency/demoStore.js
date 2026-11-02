@@ -457,6 +457,22 @@ export async function setMemberDisabled(uid, disabled) {
   logAction(uid, disabled ? 'disabled' : 'enabled', 'admin');
 }
 
+/**
+ * Like adminDeleteMember: the confirm has to be their ID, then everything about them goes (their
+ * card answers like an unknown link from now on) and no other member is touched.
+ */
+export async function deleteMember(uid, confirmLoginId) {
+  const m = target(uid);
+  if (confirmLoginId !== m.loginId) throw appError('Type the member’s ID to confirm.', 'invalid-argument');
+  await wait(700);
+  members.delete(uid);
+  const kept = logs.filter((entry) => entry.uid !== uid);
+  const removedLogs = logs.length - kept.length;
+  logs.splice(0, logs.length, ...kept);
+  // The server's pinAttempts docs live on the member here: one counter if any tries were counted.
+  return { ok: true, removed: { logs: removedLogs, attempts: m.fails || m.lockedUntil ? 1 : 0 } };
+}
+
 /** accountApi.js has already normalised and checked the fields it passes. */
 export async function updateMember(uid, { email, name } = {}) {
   const m = target(uid);

@@ -155,6 +155,8 @@ test('a member can’t use the admin functions, not even on themselves', async (
     ['adminSetDisabled', { uid: b.uid, disabled: true }],
     ['adminUpdateMember', { uid: a.uid, email: 'me@example.com' }],
     ['adminEmailMember', { uid: a.uid, template: 'card', cardPng: TINY_PNG }],
+    ['adminDeleteMember', { uid: a.uid, confirmLoginId: a.loginId }],
+    ['adminDeleteMember', { uid: b.uid, confirmLoginId: b.loginId }],
     ['getCard', { uid: b.uid }],
   ];
   for (const [name, data] of calls) {

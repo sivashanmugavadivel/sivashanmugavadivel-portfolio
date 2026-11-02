@@ -14,13 +14,16 @@ import {
   PowerOff,
   RefreshCw,
   ScrollText,
+  Trash2,
   UserPlus,
   Users,
 } from 'lucide-react';
 import {
   createMember,
+  deleteMember,
   emailProblem,
   listMembers,
+  loadMember,
   loadProfile,
   newMemberLink,
   normalizeEmail,
@@ -66,6 +69,8 @@ export default function AdminPanel({ account, onSignOut }) {
   const [results, setResults] = useState([]);
   const [freshId, setFreshId] = useState(null); // the card that just arrived; it takes focus
   const [view, setView] = useState(null); // null = the list | { kind: 'profile' | 'card' | 'log', member }
+  const [notice, setNotice] = useState(''); // "Deleted Ravi Kumar." under the Members heading
+  const membersTitle = useRef(null);
   const working = useRef(0); // requests that will come back with a temporary password
   // Only an un-emailed temporary password is lost by leaving: the PIN, link and QR code can be
   // seen again under Card details.
@@ -89,6 +94,8 @@ export default function AdminPanel({ account, onSignOut }) {
     // Cards seen before leaving don't take focus again on the way back; one that arrived
     // meanwhile (a member still being made) does.
     if (next) setFreshId(null);
+    // It was about the list as it stood; the way back shouldn't read it out again.
+    setNotice('');
     setView(next);
   };
 
@@ -149,6 +156,19 @@ export default function AdminPanel({ account, onSignOut }) {
     members.update((prev) => prev.map((m) => (m.uid === uid ? { ...m, ...changes } : m)));
     // A card on screen offers to email only while there's an address to email.
     if ('email' in changes) setResults((prev) => prev.map((r) => (r.uid === uid ? { ...r, email: changes.email } : r)));
+  };
+
+  // Deleted from its row: the row goes, and so do their cards on screen, without the "can’t be
+  // shown again" question, as their password, PIN and link no longer open anything. Focus went
+  // with the row, so it moves to the Members heading.
+  const removeMember = (m) => {
+    flushSync(() => {
+      members.update((prev) => prev.filter((x) => x.uid !== m.uid));
+      setResults((prev) => prev.filter((r) => r.uid !== m.uid));
+      setNotice(`Deleted ${m.name || m.loginId}.`);
+    });
+    membersTitle.current?.scrollIntoView({ block: 'nearest' });
+    membersTitle.current?.focus({ preventScroll: true });
   };
 
   if (view?.kind === 'profile') {
@@ -217,6 +237,7 @@ export default function AdminPanel({ account, onSignOut }) {
           };
           // A list that failed or is still loading loads again instead, with them in it.
           members.update((prev) => [added, ...(prev || []).filter((m) => m.uid !== uid)]);
+          setNotice('');
           show({
             ...created,
             title: `${firstName(created.name) || created.loginId} is set up`,
@@ -230,13 +251,26 @@ export default function AdminPanel({ account, onSignOut }) {
 
       <section className="em-acct__section" aria-labelledby="em-members-title">
         <div className="em-panel__head">
-          <h2 id="em-members-title" className="em-acct__h2">
+          {/* tabIndex: focus lands here after a member is deleted. */}
+          <h2 id="em-members-title" ref={membersTitle} className="em-acct__h2" tabIndex={-1}>
             <Users aria-hidden="true" /> Members{members.status === 'ready' ? ` (${list.length})` : ''}
           </h2>
-          <button type="button" className="em-btn em-btn--quiet" onClick={members.retry} disabled={members.status === 'loading'}>
+          <button
+            type="button"
+            className="em-btn em-btn--quiet"
+            onClick={() => {
+              setNotice('');
+              members.retry();
+            }}
+            disabled={members.status === 'loading'}
+          >
             <RefreshCw aria-hidden="true" /> Refresh
           </button>
         </div>
+        {/* Stays mounted, hidden while empty, so a screen reader hears it when a member is deleted. */}
+        <p className={notice ? 'em-msg em-msg--ok' : 'em-sr-only'} role="status">
+          {notice}
+        </p>
         {members.status === 'loading' ? (
           <p className="em-hint" role="status">
             Loading members…
@@ -262,6 +296,7 @@ export default function AdminPanel({ account, onSignOut }) {
                 onPatch={(changes) => patch(m.uid, changes)}
                 onResult={show}
                 onTrack={track}
+                onDeleted={() => removeMember(m)}
               />
             ))}
           </ul>
@@ -369,15 +404,17 @@ function CreateMember({ onCreated, onTrack }) {
   );
 }
 
-function MemberRow({ member: m, onOpen, onCard, onLog, onPatch, onResult, onTrack }) {
+function MemberRow({ member: m, onOpen, onCard, onLog, onPatch, onResult, onTrack, onDeleted }) {
   const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState(false); // the Edit email form
+  const [panel, setPanel] = useState(null); // the form open under Manage: null | 'email' | 'delete'
   const [busy, setBusy] = useState('');
   const [msg, setMsg] = useState(null); // { ok, text }
   const editButton = useRef(null);
+  const deleteButton = useRef(null);
   const who = shortName(m);
   const moreId = `em-more-${m.uid}`;
   const editId = `em-email-${m.uid}`;
+  const deleteId = `em-delete-${m.uid}`;
 
   const run = async (kind, confirmText, task) => {
     if (busy) return;
@@ -479,7 +516,7 @@ function MemberRow({ member: m, onOpen, onCard, onLog, onPatch, onResult, onTrac
   // The form goes with the button that was pressed in it, so focus returns to Edit email.
   const closeEditor = (saved) => {
     flushSync(() => {
-      setEditing(false);
+      setPanel(null);
       if (saved !== undefined) {
         setMsg({ ok: true, text: saved ? `Email saved. We’ll write to ${saved}.` : `Email removed. ${who} gets no emails now.` });
       }
@@ -487,9 +524,35 @@ function MemberRow({ member: m, onOpen, onCard, onLog, onPatch, onResult, onTrac
     editButton.current?.focus();
   };
 
+  // Cancel goes with the confirm panel, so focus returns to Delete member.
+  const closeDelete = () => {
+    flushSync(() => setPanel(null));
+    deleteButton.current?.focus();
+  };
+
+  // Delete permanently. A failure rejects, for the confirm panel to show; success takes the whole
+  // row away (onDeleted), so nothing here is set after it.
+  const remove = async (typed) => {
+    if (busy) return;
+    setBusy('delete');
+    setMsg(null);
+    try {
+      await deleteMember(m.uid, typed);
+    } catch (err) {
+      // 'not-found' again after a try whose answer was lost: that try finished if the member is
+      // gone. Look, though: a function that isn't deployed answers 'not-found' too.
+      const gone = err.code === 'not-found' && (await loadMember(m.uid).then((x) => !x, () => false));
+      if (!gone) {
+        setBusy('');
+        throw err;
+      }
+    }
+    onDeleted();
+  };
+
   const toggleMore = () => {
     setOpen((o) => !o);
-    setEditing(false);
+    setPanel(null);
   };
 
   const label = (kind, idle, working) => (busy === kind ? working : idle);
@@ -521,7 +584,15 @@ function MemberRow({ member: m, onOpen, onCard, onLog, onPatch, onResult, onTrac
         <button type="button" className="em-btn" onClick={onCard} disabled={Boolean(busy)}>
           <IdCard aria-hidden="true" /> Card details<span className="em-sr-only">: {m.name || m.loginId}</span>
         </button>
-        <button type="button" className="em-btn" aria-expanded={open} aria-controls={moreId} onClick={toggleMore}>
+        {/* Not while deleting: the confirm panel, and any problem it reports, would fold away. */}
+        <button
+          type="button"
+          className="em-btn"
+          aria-expanded={open}
+          aria-controls={moreId}
+          onClick={toggleMore}
+          disabled={busy === 'delete'}
+        >
           Manage<span className="em-sr-only"> {m.name || m.loginId}</span>
           <ChevronDown className={open ? 'em-flip' : undefined} aria-hidden="true" />
         </button>
@@ -532,9 +603,9 @@ function MemberRow({ member: m, onOpen, onCard, onLog, onPatch, onResult, onTrac
           ref={editButton}
           type="button"
           className="em-btn"
-          aria-expanded={editing}
+          aria-expanded={panel === 'email'}
           aria-controls={editId}
-          onClick={() => setEditing((e) => !e)}
+          onClick={() => setPanel((p) => (p === 'email' ? null : 'email'))}
           disabled={Boolean(busy)}
         >
           <AtSign aria-hidden="true" /> Edit email
@@ -558,9 +629,20 @@ function MemberRow({ member: m, onOpen, onCard, onLog, onPatch, onResult, onTrac
           {m.disabled ? <Power aria-hidden="true" /> : <PowerOff aria-hidden="true" />}{' '}
           {label('power', m.disabled ? 'Switch on' : 'Switch off', 'Saving…')}
         </button>
+        <button
+          ref={deleteButton}
+          type="button"
+          className="em-btn em-btn--danger"
+          aria-expanded={panel === 'delete'}
+          aria-controls={deleteId}
+          onClick={() => setPanel((p) => (p === 'delete' ? null : 'delete'))}
+          disabled={Boolean(busy)}
+        >
+          <Trash2 aria-hidden="true" /> Delete member
+        </button>
       </div>
 
-      {open && editing && (
+      {open && panel === 'email' && (
         <EmailEditor
           id={editId}
           member={m}
@@ -570,6 +652,10 @@ function MemberRow({ member: m, onOpen, onCard, onLog, onPatch, onResult, onTrac
             closeEditor(email);
           }}
         />
+      )}
+
+      {open && panel === 'delete' && (
+        <DeleteMember id={deleteId} member={m} busy={busy === 'delete'} onCancel={closeDelete} onDelete={remove} />
       )}
 
       {msg && (
@@ -648,6 +734,91 @@ function EmailEditor({ id, member, onCancel, onSaved }) {
           {busy ? 'Saving…' : 'Save email'}
         </button>
         <button type="button" className="em-btn" onClick={onCancel}>
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+}
+
+/**
+ * Delete member: what goes, and the member's ID typed out before anything is deleted. `onDelete(typed)`
+ * rejects with the message to show here; `busy` while it runs.
+ */
+function DeleteMember({ id, member, busy, onCancel, onDelete }) {
+  const [value, setValue] = useState('');
+  const [error, setError] = useState('');
+  const input = useRef(null);
+  const titleId = useId();
+  const textId = useId();
+  const inputId = useId();
+  const name = member.name || member.loginId;
+  // Compared as the server compares them: trimmed and lowercased.
+  const matches = normalizeLoginId(value) === member.loginId;
+
+  // Opened from Delete member: straight to the field.
+  useEffect(() => {
+    input.current?.focus();
+  }, []);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!matches || busy) return;
+    setError('');
+    try {
+      await onDelete(value);
+    } catch (err) {
+      setError(err.message || 'Couldn’t delete the member. Try again.');
+      // Delete permanently was switched off while it ran, which dropped focus: back to the field.
+      if (!document.activeElement || document.activeElement === document.body) input.current?.focus();
+    }
+  };
+
+  return (
+    <form id={id} className="em-member__delete" onSubmit={submit} aria-labelledby={titleId} noValidate>
+      <h3 id={titleId} className="em-member__delete-title">
+        <Trash2 aria-hidden="true" />
+        Delete {name} permanently?
+      </h3>
+      <p id={textId}>
+        This removes their sign-in, their page, card link, PIN and access log. Their printed card stops working. This can’t be
+        undone.
+      </p>
+      <label className="em-field" htmlFor={inputId}>
+        <span>
+          Type <span className="em-secret">{member.loginId}</span> to confirm
+        </span>
+        <input
+          ref={input}
+          id={inputId}
+          autoComplete="off"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          // Focus lands here first, so the field also reads out what's about to happen.
+          aria-describedby={`${titleId} ${textId}`}
+          value={value}
+          readOnly={busy}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape' && !busy) onCancel();
+          }}
+        />
+      </label>
+      {error && (
+        <p className="em-msg em-msg--error" role="alert">
+          {error}
+        </p>
+      )}
+      {/* The button below is switched off while it works, so its "Deleting…" isn't read out by itself. */}
+      <p className="em-sr-only" role="status">
+        {busy ? `Deleting ${name}…` : ''}
+      </p>
+      <div className="em-btnrow">
+        <button type="submit" className="em-btn em-btn--red" disabled={!matches || busy}>
+          <Trash2 aria-hidden="true" /> {busy ? 'Deleting…' : 'Delete permanently'}
+        </button>
+        <button type="button" className="em-btn" onClick={onCancel} disabled={busy}>
           Cancel
         </button>
       </div>

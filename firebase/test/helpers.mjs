@@ -307,21 +307,44 @@ export async function ownerDeleteField(path, field) {
   });
 }
 
-/** The emulator's copies of the emails sent to one member, oldest first, each with its doc `id`. */
-export async function outbox(uid) {
+/** Deletes one document past the rules; nothing happens if there's none. */
+export async function ownerDelete(path) {
+  await ownerFetch(`/${path}`, { method: 'DELETE' });
+}
+
+/** Every document in `collectionId` whose `field` is the string `value`, past the rules, each with its `id`. */
+export async function ownerWhere(collectionId, field, value) {
   const res = await ownerFetch(':runQuery', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       structuredQuery: {
-        from: [{ collectionId: 'outbox' }],
-        where: { fieldFilter: { field: { fieldPath: 'uid' }, op: 'EQUAL', value: { stringValue: uid } } },
+        from: [{ collectionId }],
+        where: { fieldFilter: { field: { fieldPath: field }, op: 'EQUAL', value: { stringValue: value } } },
       },
     }),
   });
-  const rows = (await res.json())
+  return (await res.json())
     .filter((row) => row.document)
     .map(({ document }) => ({ id: document.name.split('/').pop(), ...fromFields(document.fields) }));
+}
+
+/** The ID of every document in `collectionId`, past the rules, page by page. */
+export async function ownerIds(collectionId) {
+  const ids = [];
+  let pageToken = '';
+  do {
+    const params = new URLSearchParams({ pageSize: '1000', ...(pageToken && { pageToken }) });
+    const body = await (await ownerFetch(`/${collectionId}?${params}`)).json();
+    for (const document of body.documents || []) ids.push(document.name.split('/').pop());
+    pageToken = body.nextPageToken || '';
+  } while (pageToken);
+  return ids;
+}
+
+/** The emulator's copies of the emails sent to one member, oldest first, each with its doc `id`. */
+export async function outbox(uid) {
+  const rows = await ownerWhere('outbox', 'uid', uid);
   return rows.sort((a, b) => a.createdAt - b.createdAt);
 }
 

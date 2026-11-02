@@ -105,6 +105,8 @@ test('profiles: members read and write only their own, the admin any, and only t
   await saveProfile(admin, b.uid, { ...theirs, about: { ...theirs.about, headline: 'Edited by the admin' } });
   assert.equal((await getProfile(b.actor, b.uid)).get('about.headline'), 'Edited by the admin');
   await denied(saveProfile(admin, b.uid, { ...theirs, linkCode: unknownLinkCode() }));
+  // But only a member's: not a page for an account with no members doc (as after adminDeleteMember).
+  await denied(saveProfile(admin, stranger.auth.currentUser.uid, theirs));
 });
 
 test('the admin claim opens nothing outside a Google session', async () => {

@@ -16,6 +16,7 @@
  *   adminNewLink         New link code (the old QR code stops working).
  *   adminSetDisabled     Switch a member off or on.
  *   adminUpdateMember    Change a member's email address or name.
+ *   adminDeleteMember    Delete a member for good: sign-in, page, card link, PIN, attempts, access log.
  *   getCard              The card details again (ID, link, PIN): for the admin, or the member themself.
  *   changeTempPassword   A member replaces the temporary password with their own.
  *
@@ -28,9 +29,10 @@
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { setGlobalOptions } = require('firebase-functions/v2');
 const { defineString } = require('firebase-functions/params');
+const logger = require('firebase-functions/logger');
 const { initializeApp } = require('firebase-admin/app');
 const { getAuth } = require('firebase-admin/auth');
-const { getFirestore, FieldValue, Timestamp } = require('firebase-admin/firestore');
+const { getFirestore, FieldPath, FieldValue, Timestamp } = require('firebase-admin/firestore');
 const crypto = require('node:crypto');
 const { GMAIL_APP_PASSWORD, deliverEmail, renderEmail } = require('./mail');
 
@@ -91,6 +93,8 @@ const EMAIL_PATTERN = /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9-]+(?:\.[a-z0-9-]+)
 const CARD_MAX_BYTES = 1.5 * 1024 * 1024;
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 const EMAIL_TEMPLATES = ['welcome', 'card']; // the ones the admin sends by hand
+// A batch takes up to 500 writes; deleting a member's logs and attempts goes 400 at a time.
+const DELETE_PAGE = 400;
 
 // Kept short on purpose: the length rule does most of the work. Same list as COMMON_PASSWORDS in
 // src/emergency/config.js, which checks a member's own password change in the browser.
@@ -123,6 +127,7 @@ const NOT_ADMIN = 'Only the admin can do this.';
 const NO_MEMBER = 'There’s no member with that ID.';
 const SWITCHED_OFF = 'This account is switched off. Ask the admin.';
 const BAD_CARD = 'The card image has to be a PNG of up to 1.5 MB.';
+const CONFIRM_DELETE = 'Type the member’s ID to confirm.';
 
 // Same as SERVICES and blankProfile in src/emergency/sampleData.js. Keep them in sync.
 const SERVICES = [
@@ -616,6 +621,83 @@ async function sendMemberEmail(uid, template, { tempPassword = null, cardPng = n
   return result.sent ? { sent: true, to } : { sent: false, reason: result.reason };
 }
 
+// ---------------------------------------------------------------------------
+// Helpers: deleting a member
+// ---------------------------------------------------------------------------
+/**
+ * Everything filed under a member outside members/, profiles/ and secrets/{uid}, found by uid
+ * alone, so a delete that stopped part-way can find the rest without the members doc.
+ */
+function memberQueries(uid) {
+  const byUid = (name) => db.collection(name).where('uid', '==', uid);
+  return {
+    links: byUid('links'),
+    // Rate-limit buckets are ${uid}_${visitor} and ${uid}__global: document IDs from `${uid}_` up to
+    // `${uid}\``, the character after '_'. UID_PATTERN has no '_', so no other uid shares the prefix.
+    attempts: db
+      .collection('pinAttempts')
+      .where(FieldPath.documentId(), '>=', `${uid}_`)
+      .where(FieldPath.documentId(), '<', `${uid}\``),
+    logs: byUid('accessLogs'),
+    // Only the Functions emulator files emails there (mail.js).
+    outbox: process.env.FUNCTIONS_EMULATOR === 'true' ? byUid('outbox') : null,
+  };
+}
+
+/** Deletes every document `query` finds, DELETE_PAGE at a time, and says how many there were. */
+async function deleteAll(query) {
+  let removed = 0;
+  for (;;) {
+    const page = await query.select().limit(DELETE_PAGE).get(); // references only
+    if (page.empty) return removed;
+    const batch = db.batch();
+    for (const doc of page.docs) batch.delete(doc.ref);
+    await batch.commit();
+    removed += page.size;
+    if (page.size < DELETE_PAGE) return removed;
+  }
+}
+
+/** Whether anything at all is still stored under a uid that has neither a members doc nor an account. */
+async function hasLeftovers(uid) {
+  const docs = await db.getAll(profileRef(uid), secretRef(uid));
+  if (docs.some((d) => d.exists)) return true;
+  const queries = Object.values(memberQueries(uid)).filter(Boolean);
+  const found = await Promise.all(queries.map((q) => q.select().limit(1).get()));
+  return found.some((snap) => !snap.empty);
+}
+
+/**
+ * The login ID of the member adminDeleteMember is to remove, once `typed` (trimmed, lowercased)
+ * matches it. Normally from members/{uid}. A retry after a run that stopped part-way may find that
+ * doc gone (it goes early); the sign-in account, deleted last, still names the ID then. Anyone who
+ * isn't and wasn't a member is not-found, the admin's own account above all.
+ */
+async function loginIdToDelete(uid, typed) {
+  const member = await memberRef(uid).get();
+  if (member.exists) {
+    if (typed !== member.get('loginId')) throw new HttpsError('invalid-argument', CONFIRM_DELETE);
+    return typed;
+  }
+  const user = await auth.getUser(uid).catch((err) => {
+    if (err?.code === 'auth/user-not-found') return null;
+    throw err;
+  });
+  if (user) {
+    // Only a member's hidden sign-in address names an ID. The admin's own Google account, or anyone
+    // else's, isn't a member whatever its address starts with.
+    const email = String(user.email || '');
+    if (!email.endsWith(`@${LOGIN_DOMAIN}`)) throw new HttpsError('not-found', NO_MEMBER);
+    if (email !== `${typed}@${LOGIN_DOMAIN}`) throw new HttpsError('invalid-argument', CONFIRM_DELETE);
+    return typed;
+  }
+  // The account is gone too (members can delete their own). Nothing names an ID to check against any
+  // more, and what's left belongs to nobody, so it may go; but only if something is left.
+  if (!(await hasLeftovers(uid))) throw new HttpsError('not-found', NO_MEMBER);
+  if (!LOGIN_ID_PATTERN.test(typed)) throw new HttpsError('invalid-argument', CONFIRM_DELETE);
+  return typed;
+}
+
 function toPlain(value) {
   if (value instanceof Timestamp) return value.toMillis();
   if (Array.isArray(value)) return value.map(toPlain);
@@ -1015,4 +1097,38 @@ exports.adminUpdateMember = callable(async (request) => {
     }
   });
   return { ok: true };
+});
+
+/**
+ * Deletes a member for good, once the admin has typed their ID: the card link first, so the printed
+ * card stops at once, then their members, profiles and secrets docs, their PIN attempts, their access
+ * log and, last, their sign-in account. Each step finds what's left by uid and deleting twice is
+ * harmless, so a run that stops part-way is simply repeated. Nobody else's docs are touched.
+ */
+exports.adminDeleteMember = callable(async (request) => {
+  await requireAdmin(request);
+  const data = input(request);
+  const uid = readUid(data.uid);
+  const typed = typeof data.confirmLoginId === 'string' ? data.confirmLoginId.trim().toLowerCase() : '';
+  const loginId = await loginIdToDelete(uid, typed);
+  const queries = memberQueries(uid);
+
+  // By uid rather than members.linkCode: a link that isn't theirs can never go.
+  await deleteAll(queries.links);
+  const batch = db.batch();
+  batch.delete(memberRef(uid));
+  batch.delete(profileRef(uid));
+  batch.delete(secretRef(uid)); // never secrets/_visitor: readUid lets no '_' through
+  await batch.commit();
+  const attempts = await deleteAll(queries.attempts);
+  const logs = await deleteAll(queries.logs);
+  if (queries.outbox) await deleteAll(queries.outbox);
+  // Last: while anything else is left, the account still names the ID a retry is checked against.
+  await auth.deleteUser(uid).catch((err) => {
+    if (err?.code !== 'auth/user-not-found') throw err;
+  });
+
+  // No access-log entry: there's no member left to read it.
+  logger.info('member deleted', { uid, loginId });
+  return { ok: true, removed: { logs, attempts } };
 });

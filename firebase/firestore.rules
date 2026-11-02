@@ -54,10 +54,14 @@ service cloud.firestore {
       allow read: if isMember(uid) || isAdmin();
     }
 
-    // The emergency profile. Responders get it through unlockProfile, never directly.
+    // The emergency profile. Responders get it through unlockProfile, never directly. The admin
+    // writes only a member's: an editor still open on someone just deleted (adminDeleteMember)
+    // mustn't put their page back.
     match /profiles/{uid} {
       allow read: if isMember(uid) || isAdmin();
-      allow create, update: if (isAdmin() || canEditOwn(uid)) && isProfile();
+      allow create, update: if ((isAdmin() && exists(/databases/$(database)/documents/members/$(uid)))
+          || canEditOwn(uid))
+        && isProfile();
     }
 
     // Who opened a card and what the admin changed. Written only by Cloud Functions.

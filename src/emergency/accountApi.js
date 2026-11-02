@@ -588,3 +588,22 @@ export function setMemberDisabled(uid, disabled) {
     },
   );
 }
+
+/** What adminDeleteMember says it removed besides the member's own records: { logs, attempts }. */
+const toRemoved = (r) => ({ removed: { logs: Number(r?.removed?.logs) || 0, attempts: Number(r?.removed?.attempts) || 0 } });
+
+/**
+ * Deletes a member for good: their sign-in, their page, card link, PIN and access log. Their card
+ * stops opening anything at once. `loginId` is the ID the admin typed to confirm; the server checks
+ * it against the member's own. Resolves to { removed: { logs, attempts } }, the access-log entries
+ * and PIN-try counters that went with them. Safe to call again after a failure part-way.
+ */
+export async function deleteMember(uid, loginId) {
+  const confirmLoginId = normalizeLoginId(loginId);
+  if (!confirmLoginId) throw appError('Type the member’s ID to confirm.', 'invalid-argument');
+  return run(
+    'Couldn’t delete the member. Try again.',
+    async (demo) => toRemoved(await demo.deleteMember(uid, confirmLoginId)),
+    async () => toRemoved(await callable('adminDeleteMember', { uid, confirmLoginId })),
+  );
+}
