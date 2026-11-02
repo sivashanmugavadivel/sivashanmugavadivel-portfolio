@@ -7,6 +7,8 @@
  *   claimAdmin           The site owner signs in with Google; a verified address on
  *                        ADMIN_EMAILS gets the custom claim { admin: true }. It, and every
  *                        admin function, counts only in a Google session.
+ *   adminCheckLoginIds   Which of a few login IDs are free: the one typed into Add member and the
+ *                        alternatives the page offers when it's taken.
  *   adminCreateMember    The admin makes a member: login ID, temporary password, PIN, link code,
  *                        and optionally their email address.
  *   adminEmailMember     Emails a member their welcome (ID, temporary password, card) or a new card.
@@ -95,6 +97,8 @@ const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0
 const EMAIL_TEMPLATES = ['welcome', 'card']; // the ones the admin sends by hand
 // A batch takes up to 500 writes; deleting a member's logs and attempts goes 400 at a time.
 const DELETE_PAGE = 400;
+// The ID typed plus the alternatives the page offers; Firestore's 'in' takes up to 30.
+const CHECK_IDS_MAX = 20;
 
 // Kept short on purpose: the length rule does most of the work. Same list as COMMON_PASSWORDS in
 // src/emergency/config.js, which checks a member's own password change in the browser.
@@ -128,6 +132,7 @@ const NO_MEMBER = 'There’s no member with that ID.';
 const SWITCHED_OFF = 'This account is switched off. Ask the admin.';
 const BAD_CARD = 'The card image has to be a PNG of up to 1.5 MB.';
 const CONFIRM_DELETE = 'Type the member’s ID to confirm.';
+const ID_TAKEN = 'That ID is taken. Pick another.';
 
 // Same as SERVICES and blankProfile in src/emergency/sampleData.js. Keep them in sync.
 const SERVICES = [
@@ -621,6 +626,25 @@ async function sendMemberEmail(uid, template, { tempPassword = null, cardPng = n
   return result.sent ? { sent: true, to } : { sent: false, reason: result.reason };
 }
 
+/**
+ * Which of `loginIds` are in use: a sign-in account on the hidden address (what createUser would
+ * trip over) or a members doc naming it, which can outlive its account, and would otherwise end
+ * up sharing the ID with a new member.
+ */
+async function takenLoginIds(loginIds) {
+  const suffix = `@${LOGIN_DOMAIN}`;
+  const [accounts, members] = await Promise.all([
+    auth.getUsers(loginIds.map((id) => ({ email: `${id}${suffix}` }))),
+    db.collection('members').where('loginId', 'in', loginIds).select('loginId').get(),
+  ]);
+  const taken = new Set(members.docs.map((d) => d.get('loginId')));
+  for (const user of accounts.users) {
+    const email = String(user.email || '').toLowerCase();
+    if (email.endsWith(suffix)) taken.add(email.slice(0, -suffix.length));
+  }
+  return taken;
+}
+
 // ---------------------------------------------------------------------------
 // Helpers: deleting a member
 // ---------------------------------------------------------------------------
@@ -892,6 +916,21 @@ exports.claimAdmin = callable(async (request) => {
   return { admin: true };
 });
 
+/**
+ * For the Add member form, as the admin types: { free, taken }, which of up to CHECK_IDS_MAX login
+ * IDs anyone has. Advice only: adminCreateMember checks again.
+ */
+exports.adminCheckLoginIds = callable(async (request) => {
+  await requireAdmin(request);
+  const { loginIds } = input(request);
+  if (!Array.isArray(loginIds) || loginIds.length === 0 || loginIds.length > CHECK_IDS_MAX) {
+    throw new HttpsError('invalid-argument', `Send 1 to ${CHECK_IDS_MAX} IDs to check.`);
+  }
+  const ids = [...new Set(loginIds.map(readLoginId))];
+  const taken = await takenLoginIds(ids);
+  return { free: ids.filter((id) => !taken.has(id)), taken: ids.filter((id) => taken.has(id)) };
+});
+
 exports.adminCreateMember = callable(async (request) => {
   await requireAdmin(request);
   const data = input(request);
@@ -900,6 +939,7 @@ exports.adminCreateMember = callable(async (request) => {
   const email = readEmail(data.email);
   const pin = makePin(readPinLength(data.pinLength));
   const tempPassword = makeTempPassword();
+  if ((await takenLoginIds([loginId])).size) throw new HttpsError('already-exists', ID_TAKEN);
   const secret = await hashPin(pin);
 
   let user;
@@ -913,7 +953,7 @@ exports.adminCreateMember = callable(async (request) => {
     });
   } catch (err) {
     if (err?.code === 'auth/email-already-exists') {
-      throw new HttpsError('already-exists', 'That ID is taken. Pick another.');
+      throw new HttpsError('already-exists', ID_TAKEN);
     }
     if (err?.code === 'auth/invalid-email') {
       throw new HttpsError('invalid-argument', 'That ID can’t be used. Try another.');

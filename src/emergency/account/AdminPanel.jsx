@@ -4,11 +4,15 @@ import {
   ArrowLeft,
   AtSign,
   ChevronDown,
+  CircleAlert,
+  CircleCheck,
+  CircleX,
   Download,
   Hash,
   IdCard,
   KeyRound,
   Link2,
+  LoaderCircle,
   LogOut,
   Power,
   PowerOff,
@@ -33,7 +37,7 @@ import {
   setMemberDisabled,
   updateMember,
 } from '../accountApi';
-import { LOGIN_ID_HINT, LOGIN_ID_PATTERN, PIN_LENGTH, linkUrl, normalizeLoginId } from '../config';
+import { LOGIN_ID_PATTERN, PIN_LENGTH, linkUrl, loginIdProblem, normalizeLoginId } from '../config';
 import { firstName } from '../utils';
 import AccessLog from './AccessLog';
 import CardDetails from './CardDetails';
@@ -44,6 +48,7 @@ import { mailState, passwordAtRisk, sendCard, sendingTo, sendWelcome } from './m
 import { downloadDataUrl, qrDataUrl, qrFileName } from './qr';
 import { focusScreen, requestScreenFocus, useScreenFocus } from './screenFocus';
 import { useLoad } from './useLoad';
+import { useLoginIdCheck } from './useLoginIdCheck';
 
 const shortName = (m) => firstName(m.name || '') || m.loginId;
 const formatDate = (ms) => new Date(ms).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
@@ -221,6 +226,7 @@ export default function AdminPanel({ account, onSignOut }) {
       ))}
 
       <CreateMember
+        members={members.value}
         onTrack={track}
         onCreated={(created) => {
           const { uid, loginId, name, email, linkCode } = created;
@@ -306,12 +312,21 @@ export default function AdminPanel({ account, onSignOut }) {
   );
 }
 
-function CreateMember({ onCreated, onTrack }) {
+function CreateMember({ members, onCreated, onTrack }) {
   const [loginId, setLoginId] = useState('');
+  const [idFocused, setIdFocused] = useState(false); // still typing in it: too short isn't a problem yet
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const idInput = useRef(null);
+  const idCheck = useLoginIdCheck(loginId, name, members);
+  const idProblem = loginIdProblem(idCheck.id, { typing: idFocused });
+
+  const backToId = (message) => {
+    setError(message);
+    idInput.current?.focus();
+  };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -319,19 +334,26 @@ function CreateMember({ onCreated, onTrack }) {
     const id = normalizeLoginId(loginId);
     const fullName = name.trim();
     const contact = normalizeEmail(email);
-    if (!LOGIN_ID_PATTERN.test(id)) return setError(LOGIN_ID_HINT);
+    if (!id) return backToId('Enter the ID they’ll sign in with.');
+    if (!LOGIN_ID_PATTERN.test(id)) return backToId(loginIdProblem(id));
+    if (idCheck.status === 'taken') return backToId(`“${id}” is taken. Pick an available ID under the box, or type another.`);
     if (!fullName) return setError('Enter their name.');
     if (emailProblem(contact)) return setError(emailProblem(contact));
     setBusy(true);
     setError('');
     try {
       const created = await onTrack(() => createMember({ loginId: id, name: fullName, email: contact }));
+      // The list reloads with them in it, but a list that failed to load wouldn't know.
+      idCheck.markTaken(created.loginId);
       setLoginId('');
       setName('');
       setEmail('');
       onCreated(created);
     } catch (err) {
-      setError(err.code === 'already-exists' ? `The ID “${id}” is taken. Pick another one.` : err.message);
+      if (err.code !== 'already-exists') return setError(err.message);
+      // Taken between the check and the click: the box now says so, with others to pick.
+      idCheck.markTaken(id);
+      backToId(`“${id}” was just taken. Pick another one.`);
     } finally {
       setBusy(false);
     }
@@ -346,28 +368,49 @@ function CreateMember({ onCreated, onTrack }) {
         They get a temporary password, a {PIN_LENGTH}-digit PIN and a card link. The password is shown only once, so give their
         email and we’ll send it to them, or have somewhere to keep it.
       </p>
-      <form className="em-form-grid" onSubmit={submit} noValidate>
-        <label className="em-field" htmlFor="em-new-id">
-          <span>ID they sign in with</span>
-          <input
-            id="em-new-id"
-            autoComplete="off"
-            autoCapitalize="none"
-            autoCorrect="off"
-            spellCheck={false}
-            placeholder="ravi"
-            aria-describedby="em-new-id-hint"
-            value={loginId}
-            onChange={(e) => setLoginId(e.target.value)}
+      <form className="em-form-grid em-form-grid--top" onSubmit={submit} noValidate>
+        <div className="em-idfield">
+          <label className="em-field" htmlFor="em-new-id">
+            <span>ID they sign in with</span>
+            <input
+              ref={idInput}
+              id="em-new-id"
+              className={!idProblem && idCheck.status === 'free' ? 'is-free' : undefined}
+              autoComplete="off"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              placeholder="ravi"
+              aria-describedby="em-new-id-status"
+              aria-invalid={idProblem || idCheck.status === 'taken' ? true : undefined}
+              value={loginId}
+              onChange={(e) => {
+                setLoginId(e.target.value);
+                setError('');
+              }}
+              onFocus={() => setIdFocused(true)}
+              onBlur={() => setIdFocused(false)}
+            />
+          </label>
+          <IdAvailability
+            check={idCheck}
+            problem={idProblem}
+            onPick={(id) => {
+              setLoginId(id);
+              setError('');
+              idInput.current?.focus();
+            }}
+            // The button goes while it checks, so focus would fall to the page.
+            onRetry={() => {
+              idCheck.retry();
+              idInput.current?.focus();
+            }}
           />
-        </label>
+        </div>
         <label className="em-field" htmlFor="em-new-name">
           <span>Full name</span>
           <input id="em-new-name" autoComplete="off" placeholder="Ravi Kumar" value={name} onChange={(e) => setName(e.target.value)} />
         </label>
-        <p id="em-new-id-hint" className="em-hint em-span-2">
-          3 to 30 letters or digits; dots, dashes and underscores are fine. Capitals become lowercase. Keep it simple, like ravi or ravi.kumar.
-        </p>
         <label className="em-field em-span-2" htmlFor="em-new-email">
           <span>
             Email <span className="em-field__optional">(optional)</span>
@@ -401,6 +444,81 @@ function CreateMember({ onCreated, onTrack }) {
         </div>
       </form>
     </section>
+  );
+}
+
+/**
+ * Under the ID box: the rules while it's empty, what's wrong with it, or whether it's available,
+ * with available ones to pick when it's taken. Results are read out; "Checking…" isn't.
+ */
+function IdAvailability({ check, problem, onPick, onRetry }) {
+  const { id, status, ideas, ideasPending } = check;
+  let tone = '';
+  let say;
+  if (problem) {
+    tone = 'bad';
+    say = (
+      <>
+        <CircleX aria-hidden="true" /> {problem}
+      </>
+    );
+  } else if (status === 'checking') {
+    say = (
+      <span aria-hidden="true">
+        <LoaderCircle className="em-spin" /> Checking “{id}”…
+      </span>
+    );
+  } else if (status === 'free') {
+    tone = 'ok';
+    say = (
+      <>
+        <CircleCheck aria-hidden="true" /> “{id}” is available.
+      </>
+    );
+  } else if (status === 'taken') {
+    tone = 'bad';
+    let next = ' Try adding a number, or their surname.';
+    if (ideas.length) next = ' Available instead:';
+    else if (ideasPending) next = ' Looking for available ones…';
+    say = (
+      <>
+        <CircleX aria-hidden="true" /> “{id}” is taken.{next}
+      </>
+    );
+  } else if (status === 'error') {
+    say = (
+      <>
+        <CircleAlert aria-hidden="true" /> Couldn’t check “{id}” just now. It’s checked again when you add them.
+      </>
+    );
+  } else {
+    say = '3 to 30 letters or digits; dots, dashes and underscores are fine. Keep it simple, like ravi or ravi.kumar.';
+  }
+
+  return (
+    <div id="em-new-id-status" className="em-idcheck">
+      {/* Atomic: going from one taken ID to another changes only the ID, and all of it is news. */}
+      <p className={`em-idcheck__msg${tone ? ` is-${tone}` : ''}`} aria-live="polite" aria-atomic="true">
+        {say}
+      </p>
+      {!problem && status === 'taken' && ideas.length > 0 && (
+        <ul className="em-idcheck__ideas" aria-label="Available IDs">
+          {ideas.map((idea) => (
+            <li key={idea}>
+              <button type="button" className="em-idcheck__idea" onClick={() => onPick(idea)}>
+                <span className="em-sr-only">Use </span>
+                {idea}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {!problem && status === 'error' && (
+        <button type="button" className="em-btn em-btn--quiet em-idcheck__retry" onClick={onRetry}>
+          <RefreshCw aria-hidden="true" /> Check again
+        </button>
+      )}
+    </div>
   );
 }
 

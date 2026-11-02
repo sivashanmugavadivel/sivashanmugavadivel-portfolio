@@ -463,6 +463,29 @@ export function listMembers() {
   );
 }
 
+/** How many IDs one checkLoginIds call takes (CHECK_IDS_MAX in functions/index.js). */
+export const CHECK_IDS_MAX = 20;
+
+/**
+ * Which of `loginIds` someone already has, for the Add member form: { free, taken }, each a list
+ * of normalised IDs. Invalid ones are left out, and only the first CHECK_IDS_MAX are asked about.
+ * Advice only: createMember checks again.
+ */
+export function checkLoginIds(loginIds) {
+  const ids = [...new Set(loginIds.map(normalizeLoginId))].filter((id) => LOGIN_ID_PATTERN.test(id)).slice(0, CHECK_IDS_MAX);
+  if (!ids.length) return Promise.resolve({ free: [], taken: [] });
+  const toAnswer = (r) => {
+    const free = new Set(r?.free);
+    // Anything the answer leaves out counts as taken: never offered, never called free.
+    return { free: ids.filter((id) => free.has(id)), taken: ids.filter((id) => !free.has(id)) };
+  };
+  return run(
+    'Couldn’t check the ID.',
+    async (demo) => toAnswer(await demo.checkLoginIds(ids)),
+    async () => toAnswer(await callable('adminCheckLoginIds', { loginIds: ids })),
+  );
+}
+
 /**
  * { uid, loginId, name, email, tempPassword, pin, linkCode }. The temporary password is never
  * shown again (emailMember 'welcome' can send it); the PIN and link are, through getCard.

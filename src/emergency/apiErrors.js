@@ -51,6 +51,9 @@ export function friendlyError(error, fallback = 'Something went wrong. Try again
       return 'This browser can’t open the sign-in window. Open the page in Chrome or Safari to sign in.';
     case 'unauthorized-domain':
       return 'Google sign-in isn’t allowed on this address yet. Add it under Authorized domains in the Firebase console.';
+    case 'operation-not-allowed':
+      // The provider is off: Email/Password for members, Google for the admin.
+      return 'Signing in this way isn’t switched on yet. The admin turns it on in the Firebase console, under Authentication → Sign-in method.';
     case 'wrong-password':
     case 'user-not-found':
     case 'invalid-credential':

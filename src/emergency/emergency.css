@@ -1124,6 +1124,32 @@
    Show / Add button out of a 320px-wide card. */
 .em-inline input { flex: 1 1 auto; min-width: 0; }
 .em-inline > .em-btn { flex: none; }
+/* Add member: the ID box says whether the ID is available, with available ones to pick when it isn't.
+   Its column grows with them, so the name next to it keeps to the top. */
+.em-form-grid--top { align-items: start; }
+.em-idfield { display: grid; gap: 8px; }
+.em-field input.is-free { border-color: var(--em-green); }
+.em-field input[aria-invalid='true'] { border-color: var(--em-red); }
+.em-idcheck { display: grid; gap: 8px; justify-items: start; }
+.em-idcheck__msg, .em-idcheck__msg > span { display: flex; align-items: flex-start; gap: 6px; }
+/* A 30-character ID has no place to break, and would push a 320px screen sideways. */
+.em-idcheck__msg, .em-idcheck__idea { overflow-wrap: anywhere; }
+.em-idcheck__msg { margin: 0; font-size: 14px; color: var(--em-ink-2); }
+.em-idcheck__msg svg { width: 18px; height: 18px; margin-top: 1px; }
+.em-idcheck__msg.is-ok { color: var(--em-green); font-weight: 700; }
+.em-idcheck__msg.is-bad { color: var(--em-red-text); font-weight: 700; }
+.em-idcheck__ideas { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.em-idcheck__idea {
+  min-height: 38px;
+  padding: 6px 14px;
+  border: 1.5px solid var(--em-green);
+  border-radius: 999px;
+  background: var(--em-green-soft);
+  color: var(--em-green);
+  font-size: 15px;
+  font-weight: 700;
+}
+.em-idcheck__idea:hover { filter: brightness(0.96); }
 .em-msg { margin-bottom: 12px; padding: 10px 14px; border-radius: 10px; font-weight: 700; }
 .em-msg--error { background: var(--em-red-soft); color: var(--em-red-text); }
 .em-msg--ok { background: var(--em-green-soft); color: var(--em-green); }

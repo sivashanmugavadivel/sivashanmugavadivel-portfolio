@@ -77,9 +77,9 @@ firebase/
   firestore.rules            who may read and write what
   firestore.indexes.json     the access-log index and the pinAttempts clean-up (TTL)
   functions/index.js         Cloud Functions (Node.js 22): unlockProfile, claimAdmin, changeTempPassword,
-                             passwordChanged, getCard, adminCreateMember, adminResetPassword, adminResetPin,
-                             adminNewLink, adminSetDisabled, adminEmailMember, adminUpdateMember,
-                             adminDeleteMember
+                             passwordChanged, getCard, adminCheckLoginIds, adminCreateMember,
+                             adminResetPassword, adminResetPin, adminNewLink, adminSetDisabled,
+                             adminEmailMember, adminUpdateMember, adminDeleteMember
   functions/mail.js          the three emails (welcome, password reset, new card) and sending them through Gmail
   functions/.env.example     ADMIN_EMAILS, GMAIL_USER, MAIL_FROM_NAME, and how to set the App Password secret
   test/                      integration tests against the emulators (see test/README.md)
@@ -171,6 +171,10 @@ npx firebase-tools@15 emulators:exec --project demo-emergency --only auth,firest
    1. Authentication → Settings → User actions → turn off **Enable create (sign-up)**. Then only the admin panel can make accounts. Not before your first Google sign-in, which it would block too.
    2. Authentication → Sign-in method → enable **Email/Password** for members.
 
+   If members can't sign in and the page says "Signing in this way isn't switched on yet", it's this
+   second switch: Email/Password is off. Adding members still works then, because the server makes
+   their accounts itself, but no password sign-in does.
+
    Both are required. With sign-up on, anyone can register an address before you use it: a member ID you're about to hand out (adding that member then fails with "That ID is taken"), or your own Google address before your first sign-in, which then joins their account. The admin panel and the rules accept only a Google session, so that second case gets them nothing, but it still leaves a stranger's sign-in on your account. If Email/Password was already on before your first sign-in, check Authentication → Users first: your address should have no account yet, or only one whose provider is Google.
 
 ### 2. Google Maps
@@ -194,7 +198,7 @@ Push, then open https://sivashanmugavadivel.in/emergency and check it shows the 
 ### 4. Members and their cards
 
 1. Open `/emergency` and tap **Admin? Sign in with Google** with the address from `ADMIN_EMAILS`. The first time, finish step 7 of **Firebase** before adding anyone.
-2. Under **Add a member**, enter the ID they'll sign in with (like `ravi`), their name and, if you have it, their email. The result shows their **ID, temporary password, PIN and card link**, with the QR code, **Download QR** and **Download card with PIN** (a printable card with the QR code and the PIN). PINs have `VITE_EMERGENCY_PIN_LENGTH` digits (6 by default).
+2. Under **Add a member**, enter the ID they'll sign in with (like `ravi`), their name and, if you have it, their email. IDs are unique: as you type, the line under the ID box says whether it's **available** or **taken**. When it's taken, it offers up to four available ones made from their name or the ID with a number (like `ravi.kumar` or `ravi2`); tap one to use it. **Add member** won't go ahead with a taken ID, and the server checks again when you add them. The result shows their **ID, temporary password, PIN and card link**, with the QR code, **Download QR** and **Download card with PIN** (a printable card with the QR code and the PIN). PINs have `VITE_EMERGENCY_PIN_LENGTH` digits (6 by default).
    - **With an email**, the page draws their card and emails them the welcome: their ID, the temporary password, the sign-in link, the card as `emergency-card-<ID>.png` and its link. The result says "Emailed … to …", or why it didn't go, with **Try again**. Once it has gone, **Done** closes the result without asking.
    - **Without one** (or if the email failed), the temporary password exists only on your screen: **Copy all** and pass it on yourself. **Done**, **Sign out** and closing the tab ask first, because it can't be shown again; you'd have to reset it.
 3. At their first sign-in the member chooses their own password, then fills in their page. Under **My card** they see their PIN and can download their QR code and card. Make yourself a member the same way for your own card.
@@ -239,6 +243,16 @@ npx firebase-tools@15 deploy --only firestore,functions
 ```
 
 This adds `adminDeleteMember`, and a rule that the admin can write a page only for a current member. Then push the site, so the admin panel gets **Delete member**. Until the function is deployed, **Delete member** only shows an error and deletes nothing.
+
+### Adding the ID check to a page that's already running
+
+The availability line under the ID box asks a new function, `adminCheckLoginIds`. Deploy it before pushing the site, from `firebase/`:
+
+```bash
+npx firebase-tools@15 deploy --only functions
+```
+
+Until it's deployed, the line says it couldn't check, and adding a member works as before.
 
 ### Moving from the single-owner version
 

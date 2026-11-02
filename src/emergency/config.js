@@ -49,6 +49,20 @@ export const LINK_CODE_PATTERN = /^[a-hjkmnp-z2-9]{10}$/;
 /** IDs are case-insensitive, and a phone keyboard likes to add a capital or a trailing space. */
 export const normalizeLoginId = (loginId) => String(loginId ?? '').trim().toLowerCase();
 
+/**
+ * What's wrong with a login ID (after normalizeLoginId), or '' if LOGIN_ID_PATTERN takes it.
+ * `typing`: more may be on its way, so a short ID isn't a problem yet.
+ */
+export function loginIdProblem(id, { typing = false } = {}) {
+  if (/\s/.test(id)) return 'No spaces. Use a dot or a dash instead, like ravi.kumar.';
+  if (/[^a-z0-9._-]/.test(id)) return 'Use only a–z, 0–9, dots, dashes and underscores.';
+  if (id && !/^[a-z0-9]/.test(id)) return 'Start with a letter or a digit.';
+  if (id.length > 30) return 'Use at most 30 characters.';
+  // An empty box isn't wrong yet: Add member says "Enter the ID" itself.
+  if (id && id.length < 3 && !typing) return 'Use at least 3 characters.';
+  return '';
+}
+
 export const loginEmail = (loginId) => `${normalizeLoginId(loginId)}@${LOGIN_DOMAIN}`;
 
 /** The address a member's QR code and NFC tag open. */

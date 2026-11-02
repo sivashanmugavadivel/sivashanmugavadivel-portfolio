@@ -397,6 +397,13 @@ export async function listMembers() {
     .map((m) => ({ ...publicMember(m), profileUpdatedAt: m.profile?.updatedAt ?? null }));
 }
 
+export async function checkLoginIds(loginIds) {
+  if (session !== ADMIN.uid) throw appError('Only the admin can do this.', 'permission-denied');
+  await wait(250);
+  const taken = new Set([...members.values()].map((m) => m.loginId));
+  return { free: loginIds.filter((id) => !taken.has(id)), taken: loginIds.filter((id) => taken.has(id)) };
+}
+
 export async function createMember({ loginId, name, email = '' }) {
   if (session !== ADMIN.uid) throw appError('Only the admin can do this.', 'permission-denied');
   await wait(600);
