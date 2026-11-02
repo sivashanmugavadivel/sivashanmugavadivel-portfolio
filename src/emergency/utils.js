@@ -38,6 +38,28 @@ export function ageFrom(dob) {
   return age >= 0 ? age : null;
 }
 
+/** "2030-03-12" (a date field's value) → that day at local midnight, or null. */
+function parseDay(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso ?? ''));
+  if (!m) return null;
+  const day = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  return day.getDate() === Number(m[3]) ? day : null; // not 2030-02-31
+}
+
+/** "2030-03-12" → "12 Mar 2030"; anything else stays as it was typed. */
+export function formatDay(iso) {
+  const day = parseDay(iso);
+  return day ? day.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : String(iso ?? '');
+}
+
+/** Whether the day is over. "Valid until 12 Mar" still holds on 12 Mar. */
+export function isPastDay(iso) {
+  const day = parseDay(iso);
+  if (!day) return false;
+  const now = new Date();
+  return day < new Date(now.getFullYear(), now.getMonth(), now.getDate());
+}
+
 export function initials(name = '') {
   return (
     name

@@ -1,8 +1,18 @@
 // Describes the owner's edit form. Add a field here and it appears in the editor.
 // Field types: text (default), tel, date, url, number, textarea, select, bool, strings, group, list.
 
+import { blankCover } from './vehicles';
+
 export const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Unknown'];
 const SEVERITIES = ['Mild', 'Moderate', 'Severe'];
+
+/** One insurance cover of a vehicle (vehicles.js): third-party or own damage. */
+const COVER_FIELDS = [
+  { key: 'insurer', label: 'Insurer' },
+  { key: 'policyNumber', label: 'Policy number' },
+  { key: 'validUntil', label: 'Valid until', type: 'date' },
+  { key: 'phone', label: 'Claims helpline', type: 'tel' },
+];
 
 export const EDITOR_TABS = [
   {
@@ -127,11 +137,36 @@ export const EDITOR_TABS = [
       { key: 'color', label: 'Colour' },
       { key: 'make', label: 'Make' },
       { key: 'model', label: 'Model' },
-      { key: 'insurer', label: 'Insurer' },
-      { key: 'policyNumber', label: 'Policy number' },
+      {
+        key: 'thirdParty',
+        label: 'Third-party insurance',
+        type: 'group',
+        hint: 'Required by law for every motor vehicle on the road.',
+        fields: [
+          ...COVER_FIELDS,
+          { key: 'coversOwnDamage', label: 'This policy covers own damage too, for the same dates (comprehensive)', type: 'bool', wide: true },
+        ],
+      },
+      {
+        key: 'ownDamage',
+        label: 'Own-damage insurance',
+        type: 'group',
+        hint: 'A separate own-damage policy, often from a different company, or the own-damage part of a new vehicle’s bundled policy, which ends sooner: enter it here with its own date. Leave it empty if the policy above covers both for the same dates.',
+        fields: COVER_FIELDS,
+      },
       { key: 'notes', label: 'Notes', wide: true },
     ],
-    blank: { plate: '', country: 'IND', type: 'Car', color: '', make: '', model: '', insurer: '', policyNumber: '', notes: '' },
+    blank: {
+      plate: '',
+      country: 'IND',
+      type: 'Car',
+      color: '',
+      make: '',
+      model: '',
+      thirdParty: { ...blankCover(), coversOwnDamage: false },
+      ownDamage: blankCover(),
+      notes: '',
+    },
   },
   {
     id: 'about',

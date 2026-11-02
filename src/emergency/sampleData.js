@@ -66,8 +66,15 @@ export const sampleData = {
       color: 'Silver',
       plate: 'TN 09 AB 1234',
       country: 'IND',
-      insurer: 'Sample Motor Insurance',
-      policyNumber: 'TEST-VEH-7788',
+      // One comprehensive policy for both covers.
+      thirdParty: {
+        insurer: 'Sample Motor Insurance',
+        policyNumber: 'TEST-VEH-7788',
+        validUntil: '2027-01-31',
+        phone: '+91 00000 00010',
+        coversOwnDamage: true,
+      },
+      ownDamage: { insurer: '', policyNumber: '', validUntil: '', phone: '' },
       notes: 'First-aid kit and fire extinguisher in the boot',
     },
     {
@@ -77,8 +84,15 @@ export const sampleData = {
       color: 'Black',
       plate: 'TN 09 CD 5678',
       country: 'IND',
-      insurer: '',
-      policyNumber: '',
+      // Bought new: five years of third-party from one company, own damage renewed with another.
+      thirdParty: {
+        insurer: 'Sample General Insurance',
+        policyNumber: 'TEST-TP-2201',
+        validUntil: '2029-08-14',
+        phone: '',
+        coversOwnDamage: false,
+      },
+      ownDamage: { insurer: 'Example Insurance Co.', policyNumber: 'TEST-OD-5530', validUntil: '2027-08-13', phone: '+91 00000 00011' },
       notes: '',
     },
   ],

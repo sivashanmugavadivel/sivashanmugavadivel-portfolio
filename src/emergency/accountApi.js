@@ -29,6 +29,7 @@ import {
   PIN_LENGTH,
 } from './config';
 import { blankProfile } from './sampleData';
+import { profileWithCovers } from './vehicles';
 
 // import.meta.env.DEV is a build-time false in production, so the demo store and its sample
 // data are left out of the build entirely.
@@ -402,8 +403,9 @@ export function loadMember(uid) {
   );
 }
 
-export function loadProfile(uid) {
-  return run(
+/** The page, or null if it was never saved. Vehicles come in the two-cover shape (vehicles.js). */
+export async function loadProfile(uid) {
+  const profile = await run(
     'Couldn’t load the profile.',
     (demo) => demo.loadProfile(uid),
     async () => {
@@ -411,6 +413,7 @@ export function loadProfile(uid) {
       return snap.exists() ? toPlain(snap.data()) : null;
     },
   );
+  return profileWithCovers(profile);
 }
 
 /** Saves the whole profile and returns it as saved (updatedAt = now). */

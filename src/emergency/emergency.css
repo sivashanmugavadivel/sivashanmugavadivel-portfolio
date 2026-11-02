@@ -964,6 +964,12 @@
 .em-details div { display: contents; }
 .em-details dt { color: var(--em-ink-2); }
 .em-details dd { font-weight: 700; }
+/* An insurance cover: the insurer, its policy and dates, and Call when there's a helpline. A policy
+   number like 3001/A/123456789/00/000 has nowhere to break, and would push a 320px screen sideways. */
+.em-cover { display: grid; gap: 4px; justify-items: start; overflow-wrap: anywhere; }
+.em-details .em-cover .em-sub { font-weight: 400; }
+.em-details .em-cover .em-cover__expired { color: var(--em-red-text); font-weight: 700; }
+.em-cover__call { margin-top: 4px; }
 
 /* ---------- 8. About ---------- */
 .em-about {

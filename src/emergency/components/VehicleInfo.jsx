@@ -1,5 +1,7 @@
-import { Car } from 'lucide-react';
+import { Car, Phone } from 'lucide-react';
 import Section from './Section';
+import { formatDay, isPastDay, telHref } from '../utils';
+import { vehicleCovers } from '../vehicles';
 
 /** Section 7 */
 export default function VehicleInfo({ vehicles = [] }) {
@@ -30,18 +32,32 @@ export default function VehicleInfo({ vehicles = [] }) {
                     {v.type && ` (${v.type.toLowerCase()})`}
                   </dd>
                 </div>
-                {v.insurer && (
-                  <div>
-                    <dt>Insurer</dt>
-                    <dd>{v.insurer}</dd>
+                {vehicleCovers(v).map((c) => (
+                  <div key={c.key}>
+                    <dt>{c.label}</dt>
+                    <dd className="em-cover">
+                      {c.insurer && <span>{c.insurer}</span>}
+                      {(c.both || c.policyNumber || c.validUntil) && (
+                        <span className="em-sub em-sub--split">
+                          {c.both && <span>Third-party and own damage</span>}
+                          {c.policyNumber && <span>Policy {c.policyNumber}</span>}
+                          {c.validUntil &&
+                            (isPastDay(c.validUntil) ? (
+                              <span className="em-cover__expired">Expired {formatDay(c.validUntil)}</span>
+                            ) : (
+                              <span>Valid until {formatDay(c.validUntil)}</span>
+                            ))}
+                        </span>
+                      )}
+                      {c.phone && (
+                        <a className="em-btn em-cover__call" href={telHref(c.phone)}>
+                          <Phone aria-hidden="true" /> Call insurer
+                          <span className="em-sr-only"> ({c.both ? 'vehicle insurance' : c.label.toLowerCase()})</span>
+                        </a>
+                      )}
+                    </dd>
                   </div>
-                )}
-                {v.policyNumber && (
-                  <div>
-                    <dt>Policy</dt>
-                    <dd>{v.policyNumber}</dd>
-                  </div>
-                )}
+                ))}
                 {v.notes && (
                   <div>
                     <dt>Notes</dt>
